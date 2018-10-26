@@ -29,3 +29,7 @@ A Discord Bot with all kinds of commands split up into modular categories. Open 
    * Toggling a Welcome message
 
 **By default, the leveling system and the welcome messages are disabled.**
+
+# Bot Moderation
+If you fork this bot and want to become a bot moderator, let me know and I will get back to you.
+Bot moderation will *not* be granted to just anyone.
