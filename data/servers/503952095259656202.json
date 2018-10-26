@@ -1,0 +1,31 @@
+{
+    "id": 503952095259656202,
+    "inactive_commands": {},
+    "join_message": {
+        "active": false,
+        "channel": null
+    },
+    "members": {
+        "415162091654348800": {
+            "avatar": null,
+            "discriminator": "6242",
+            "experience": 0,
+            "id": 415162091654348800,
+            "last_message": {
+                "day": 26,
+                "hour": 20,
+                "minute": 23,
+                "month": 10,
+                "second": 52,
+                "year": 2018
+            },
+            "level": 1,
+            "moderator": true,
+            "name": "Rohith",
+            "nickname": null
+        }
+    },
+    "name": "Telugu Gamer",
+    "ownerId": 415162091654348800,
+    "ranking": false
+}

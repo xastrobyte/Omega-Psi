@@ -1,0 +1,47 @@
+{
+    "id": 388887826017550339,
+    "inactive_commands": {},
+    "join_message": {
+        "active": false,
+        "channel": null
+    },
+    "members": {
+        "237079931354349568": {
+            "avatar": "2e996c73473d65de29a9ee1e52aa8514",
+            "experience": 0,
+            "id": 237079931354349568,
+            "last_message": {
+                "day": 24,
+                "hour": 18,
+                "minute": 46,
+                "month": 10,
+                "second": 29,
+                "year": 2018
+            },
+            "level": 1,
+            "moderator": true,
+            "name": "NSWsam",
+            "nickname": "Sam"
+        },
+        "373317798430244864": {
+            "avatar": "ca01c5bd6200cf04357d9692e9f76bc5",
+            "experience": 0,
+            "id": 373317798430244864,
+            "last_message": {
+                "day": 25,
+                "hour": 8,
+                "minute": 1,
+                "month": 10,
+                "second": 10,
+                "year": 2018
+            },
+            "level": 1,
+            "moderator": false,
+            "name": "FellowHashbrown",
+            "nickname": "almando"
+        }
+    },
+    "name": "sams discord",
+    "ownerId": 237079931354349568,
+    "ranking": false
+}

@@ -1,0 +1,30 @@
+{
+    "id": 485909185838579712,
+    "inactive_commands": {},
+    "join_message": {
+        "active": false,
+        "channel": null
+    },
+    "members": {
+        "254838455320838145": {
+            "avatar": "cd8456b51ab624f4cd1f83e0fbcdf69d",
+            "experience": 0,
+            "id": 254838455320838145,
+            "last_message": {
+                "day": 25,
+                "hour": 4,
+                "minute": 16,
+                "month": 10,
+                "second": 23,
+                "year": 2018
+            },
+            "level": 1,
+            "moderator": true,
+            "name": "Saith",
+            "nickname": null
+        }
+    },
+    "name": "Saith",
+    "ownerId": 254838455320838145,
+    "ranking": false
+}

@@ -1,0 +1,31 @@
+{
+    "id": 502017945140985856,
+    "inactive_commands": {},
+    "join_message": {
+        "active": true,
+        "channel": 502018953099345930
+    },
+    "members": {
+        "373317798430244864": {
+            "avatar": "ca01c5bd6200cf04357d9692e9f76bc5",
+            "discriminator": "4323",
+            "experience": 0,
+            "id": 373317798430244864,
+            "last_message": {
+                "day": 25,
+                "hour": 20,
+                "minute": 57,
+                "month": 10,
+                "second": 7,
+                "year": 2018
+            },
+            "level": 1,
+            "moderator": true,
+            "name": "FellowHashbrown",
+            "nickname": null
+        }
+    },
+    "name": "2098",
+    "ownerId": 373317798430244864,
+    "ranking": false
+}
