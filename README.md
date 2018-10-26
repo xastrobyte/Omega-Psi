@@ -1,4 +1,4 @@
-# omega-psi-py
+# Omega Psi
 A Discord Bot with all kinds of commands split up into modular categories. Open to command requests and feature requests.
 
 ## What does it include?
@@ -31,11 +31,11 @@ If the above link does not work, just go [here]()
 
 **By default, the leveling system and the welcome messages are disabled.**
 
-# Bugs, Error, and Feedback
+## Bugs, Error, and Feedback
 If you find any bugs in the bot, there's a command you can use to send a report straight to any bot moderator.
  * `omega sendBug <messageType> <message>`
  * For more information about the message types, use `omega help sendBug` in the bot.
 
-# Bot Moderation
+## Bot Moderation
 If you fork this bot and want to become a bot moderator, let me know and I will get back to you.
 Bot moderation will *not* be granted to just anyone.
