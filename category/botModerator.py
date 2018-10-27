@@ -4,6 +4,7 @@ from category.gif import Gif
 from category.insult import Insult
 from category.math import Math
 from category.rank import Rank
+from category.weather import Weather
 
 from util.command.command import Command
 from util.file.omegaPsi import OmegaPsi
@@ -203,7 +204,8 @@ class BotModerator(Category):
             "Gif": Gif(None),
             "Insult": Insult(None),
             "Math": Math(None),
-            "Rank": Rank(None)
+            "Rank": Rank(None),
+            "Weather": Weather(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
