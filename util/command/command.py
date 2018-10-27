@@ -432,6 +432,49 @@ class Command:
                     )
         
         return html
+    
+    def getMarkdown(self):
+        """Returns the markdown render text for the Command.\n
+        """
+
+        # Setup markdown Text
+        markdown = ""
+
+        # Add Commands and Placeholder Parameters
+        placeholderParameters = []
+        for parameter in self.getParameters():
+            placeholderParameters.append("{}{}{}".format(
+                "[" if self.getParameters()[parameter].isOptional() else "<",
+                parameter,
+                "]" if self.getParameters()[parameter].isOptional() else ">"
+            ))
+        
+        markdown += ("  * `{} {}` - {}\n").format(
+            " | ".join(self.getAlternatives()),
+            " ".join(placeholderParameters) if len(placeholderParameters) > 0 else "None",
+            self.getInfo()
+        )
+
+       # Setup Accepted Parameter Fields
+        for parameter in self.getParameters():
+            parameterName = parameter
+            parameterObject = self.getParameters()[parameter]
+
+            # Only add if there are accepted parameters
+            if len(parameterObject.getAcceptedParameters()) > 0:
+                markdown += ("    * {}\n").format(
+                    "Accepted Parameters For " + parameterName
+                )
+
+                # Iterate through all accepted parameters and add them to a single string
+                for acceptedParameter in parameterObject.getAcceptedParameters():
+                    acceptedObject = parameterObject.getAcceptedParameters()[acceptedParameter]
+                    markdown += ("      * `{}` - {}\n").format(
+                        " | ".join(acceptedObject.getAlternatives()),
+                        acceptedObject.getInfo()
+                    )
+        
+        return markdown
 
 # Timeout Decorator
 class TimeoutError(Exception): pass
