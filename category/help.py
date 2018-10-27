@@ -4,6 +4,7 @@ from category.gif import Gif
 from category.insult import Insult
 from category.math import Math
 from category.rank import Rank
+from category.weather import Weather
 from category.serverModerator import ServerModerator
 from category.botModerator import BotModerator
 
@@ -13,7 +14,7 @@ from util.file.server import Server
 
 from util.utils import sendMessage
 
-import discord
+import discord, os
 
 class Help(Category):
 
@@ -25,6 +26,8 @@ class Help(Category):
         "Feedback": 0x00FFFF,
         "Moderator": 0xAA0000
     }
+    
+    MARKDOWN_LOCATION = "commands.md"
 
     def __init__(self, client):
         super().__init__(client, "Help")
@@ -246,6 +249,19 @@ class Help(Category):
             }
 
         })
+        
+        self._markdown = Command({
+            "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
+            "info": "Creates and sends the markdown file for the commands.",
+            "bot_moderator_only": True,
+            "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the markdown file, you don't need any parameters."
+                    ]
+                }
+            }
+        })
 
         self.setCommands([
             self._help,
@@ -262,6 +278,7 @@ class Help(Category):
             "Insult": Insult(None),
             "Math": Math(None),
             "Rank": Rank(None),
+            "Weather": Weather(None),
             "Server Moderator": ServerModerator(None),
             "Bot Moderator": BotModerator(None)
         }
@@ -581,7 +598,44 @@ class Help(Category):
                     embed = embed
                 )
         
-        return embed
+        return discord.Embed(
+            title = "Message Sent",
+            description = "Your `{}` report was sent.\nMessage: {}\n".format(
+                messageType, message
+            ),
+            colour = color
+        )
+    
+    async def markdown(self, author):
+        """Returns the markdown file for the commands.\n"
+        """
+
+        # Create markdown text
+        markdown = "# Commands\n"
+
+        # Go through categories
+        for category in self._categories:
+            markdown += self._categories[category].getMarkdown()
+        
+        # Open file
+        mdFile = open(Help.MARKDOWN_LOCATION, "w")
+        mdFile.write(markdown)
+        mdFile.close()
+
+        mdFile = open(Help.MARKDOWN_LOCATION, "r")
+
+        # Send file to author
+        await author.send(
+            file = discord.File(mdFile)
+        )
+
+        os.remove(Help.MARKDOWN_LOCATION)
+
+        return discord.Embed(
+            title = "File Sent",
+            description = "The markdown file was sent to your DM's",
+            colour = Help.EMBED_COLOR
+        )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -703,6 +757,25 @@ class Help(Category):
                         self.client,
                         message,
                         embed = await self.run(message, self._sendBug, self.sendBug, message.guild, message.author, parameters[0], " ".join(parameters[1:]))
+                    )
+                    
+            # Markdown
+            elif command in self._markdown.getAlternatives():
+
+                # No Parameters Exist
+                if len(parameters) == 0:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await self.run(message, self._markdown, self.markdown, message.author)
+                    )
+                
+                # 1 or More Parameters Exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = self.getErrorMessage(self._markdown, Category.TOO_MANY_PARAMETERS)
                     )
 
 def setup(client):
