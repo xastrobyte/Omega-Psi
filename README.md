@@ -27,7 +27,7 @@ A Discord Bot with all kinds of commands split up into modular categories. Open 
    * Toggling a Welcome message
 ### Full Command List
 For the full command list, go [here](https://Omega-Psi--fellowhashbrown.repl.co) for pretty-printed HTML.
-If the above link does not work, just go [here](omega-psi-py/category/commands.md)
+If the above link does not work, just go [here](category/commands.md)
 
 **By default, the leveling system and the welcome messages are disabled.**
 
