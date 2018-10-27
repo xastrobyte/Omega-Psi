@@ -12,6 +12,10 @@ def home():
     # Setup Color and Table Border Styles
     styles = (
         "<style>\n" +
+        "   body {\n" +
+        "       background-color: #202020;\n" +
+        "       color: #EEEEEE;\n" +
+        "   }\n" +
         "   table {\n" +
         "       border-style: hidden;\n" +
         "   }\n" +
