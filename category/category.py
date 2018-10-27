@@ -4,7 +4,7 @@ from util.file.private import Private
 
 from util.utils import censor
 
-import asyncio, discord, inspect, shlex
+import discord, inspect, shlex
 
 class Category:
 
@@ -45,6 +45,10 @@ class Category:
     NOT_IN_VOICE_CHANNEL = "NOT_IN_VOICE_CHANNEL"
 
     # Rank Errors
+    
+    # Weather Errors
+    INVALID_LOCATION_TYPE = "INVALID_LOCATION_TYPE"
+    INVALID_LOCATION = "INVALID_LOCATION"
 
     # Server Moderator Errors
     NOT_ENOUGH_MEMBERS = "NOT_ENOUGH_MEMBERS"
@@ -218,6 +222,21 @@ class Category:
             html += cmd.getHTML() + "\n"
         
         return html
+   
+    def getMarkdown(self):
+        """Returns the Markdown text for a markdown file
+        """
+
+        # Setup Markdown Text
+        markdown = "## {}\n".format(
+            self._category
+        )
+
+        # Iterate through commands
+        for cmd in self._commands:
+            markdown += cmd.getMarkdown() + "\n"
+        
+        return markdown
 
     async def run(self, discordMessage, commandObject, func, *args, **kwargs):
         """Runs a command while testing if the Command is globally or locally inactive.\n
