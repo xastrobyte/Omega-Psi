@@ -32,13 +32,6 @@ async def sendMessage(client, origMessage, *, message = None, embed = None, file
         # Message is a filename
         elif filename != None:
             await channel.send(file = discord.File(filename))
-        
-        # Message is invalid
-        else:
-            await sendErrorMessage(
-                client,
-                "An invalid message type was entered: {}".format(type(origMessage))
-            )
     
     except:
         error = traceback.format_exc()
