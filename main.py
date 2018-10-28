@@ -17,10 +17,12 @@ omegaPsi.remove_command("help")
 extensions = [
     "category.help",
     "category.code",
+    "category.game",
     "category.gif",
     "category.insult",
     "category.math",
     "category.rank",
+    "category.weather",
     "category.serverModerator",
     "category.botModerator"
 ]
