@@ -1,5 +1,6 @@
 from category.category import Category
 from category.code import Code
+from cateogry.game import Game
 from category.gif import Gif
 from category.insult import Insult
 from category.math import Math
@@ -8,6 +9,7 @@ from category.weather import Weather
 
 from util.command.command import Command
 from util.file.omegaPsi import OmegaPsi
+from util.file.server import Server
 from util.utils import sendMessage
 
 import discord
@@ -188,6 +190,19 @@ class BotModerator(Category):
                 }
             }
         })
+        
+        self._kill = Command({
+            "alternatives": ["stop", "quit", "kill"],
+            "info": "Kills the bot.",
+            "bot_moderator_only": True,
+            "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to kill the bot, you don't need any parameters."
+                    ]
+                }
+            }
+        })
     
         self.setCommands([
             self._addModerator,
@@ -196,11 +211,13 @@ class BotModerator(Category):
             self._deactivate,
             self._info,
             self._servers,
-            self._status
+            self._status,
+            self._kill
         ])
 
         self._categories = {
             "Code": Code(None),
+            "Game": Game(None),
             "Gif": Gif(None),
             "Insult": Insult(None),
             "Math": Math(None),
@@ -632,6 +649,22 @@ class BotModerator(Category):
                         message,
                         embed = await self.run(message, self._status, self.setStatus, parameters[0], " ".join(parameters[1:]))
                     )
+            
+            # Kill Command
+            elif command in self._kill.getAlternatives():
+
+                # 0 Parameters Exist
+                if len(parameters) == 0:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = discord.Embed(
+                            title = "Bot Killed",
+                            description = "Omega Psi was killed.",
+                            colour = BotModerator.EMBED_COLOR
+                        )
+                    )
+                    await self.client.logout()
 
 def setup(client):
     client.add_cog(BotModerator(client))
