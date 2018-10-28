@@ -4,7 +4,7 @@ A Discord Bot with all kinds of commands split up into modular categories. Open 
 ## What does it include?
 
 ### Prefix: `omega`
-  For right now, the prefix cannot be changed for an individual server. However, that will be implemented soon.
+  The prefixes can be customized. For this bot, you can add multiple prefixes. You **cannot** remove the default prefix.
 ### Fun Commands:
  * Gifs
  * Insults
