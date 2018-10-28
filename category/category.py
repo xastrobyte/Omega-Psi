@@ -27,6 +27,14 @@ class Category:
     
     # Code Errors
     INVALID_LANGUAGE = "INVALID_LANGUAGE"
+    
+    # Game Errors
+    ALREADY_GUESSED = "ALREADY_GUESSED"
+    NOT_A_LETTER = "NOT_A_LETTER"
+    LETTER_TOO_LONG = "LETTER_TOO_LONG"
+    
+    INVALID_DIFFICULTY = "INVALID_DIFFICULTY"
+    INVALID_INPUT = "INVALID_INPUT"
 
     # Gif Errors
     NO_GIFS_FOUND = "NO_GIFS_FOUND"
@@ -71,16 +79,21 @@ class Category:
     # Static Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def parseText(text):
+    def parseText(prefixes, text):
         """Parses text and splits it into a command and parameters.\n
 
+        prefixes - The prefixes that are valid.\n
         text - The text to parse and split.\n
         """
 
         # Try splitting text
         try:
             # Remove the prefix; This function will only be called in on_message
-            text = text[len(OmegaPsi.PREFIX):]
+            for prefix in prefixes:
+                if text.startswith(prefix):
+                    text = text[len(prefix):]
+                    break
+            
             split = shlex.split(text)
 
             # Command is first index ; Parameters are everything after
