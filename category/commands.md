@@ -43,8 +43,24 @@
       * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
       * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
 
+  * `markdown | getMarkdown | md | getMd None` - Creates and sends the markdown file for the commands.
+
 ## Code
   * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
+
+## Game
+  * `hangman | playHangman [difficulty]` - Let's you play hangman!
+    * Accepted Parameters For difficulty
+      * `easy | simple | e` - Play an easy game of hangman.
+      * `medium | m` - Play a medium game of hangman.
+      * `hard | difficult | h` - Play a hard game of hangman.
+      * `quit | q | exit` - Allows you to quit the hangman game.
+
+  * `scramble [difficulty]` - Allows you to guess an unscrambled word.
+    * Accepted Parameters For difficulty
+      * `normal | n | easy | e` - Only each word is scrambled.
+      * `expert | hard | difficult` - The entire phrase is scrambled.
+      * `quit | q | exit` - Allows you to quit the scramble game.
 
 ## Gif
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
@@ -75,23 +91,23 @@
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
 ## Math
-  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
-
-  * `factorial | ! <number>` - Gets the factorial of a number.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
-
-  * `expand | exp | e <expression>` - Expands a mathematical expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+  * `factor | f <expression>` - Factors a mathematical expression.
 
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
-
-  * `factor | f <expression>` - Factors a mathematical expression.
 
   * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
 
   * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+
+  * `factorial | ! <number>` - Gets the factorial of a number.
+
+  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+
+  * `expand | exp | e <expression>` - Expands a mathematical expression.
+
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
 ## Rank
   * `rank | r None` - Shows you your current level and experience in this server.
@@ -119,6 +135,10 @@
   * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - Allows you to set the channel that the Join Messages are sent in.
 
   * `setLevel | setLvl <level> <member...>` - Allows you to set the level of a member, or members, in the server.
+
+  * `addPrefix | addPre <prefix>` - Allows you to add a prefix for this server.
+
+  * `removePrefix | removePre | remPre <prefix>` - Allows you to remove a prefix from this server.
 
   * `setServerName | setSvrName <name>` - Allows you to set the Server's name.
 
@@ -156,8 +176,9 @@
 
   * `setStatus | status <activity> <text>` - Allows you to change the presence of the bot.
     * Accepted Parameters For activity
-      * `playing` - The playing activity type.
-      * `streaming` - The streaming activity type.
-      * `listening` - The listening activity type.
-      * `watching` - The watching activity type.
+      * `playing | Playing` - The playing activity type.
+      * `streaming | Streaming` - The streaming activity type.
+      * `listening | Listening` - The listening activity type.
+      * `watching | Watching` - The watching activity type.
 
+  * `stop | quit | kill None` - Kills the bot.
