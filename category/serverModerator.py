@@ -1,4 +1,5 @@
 from category.category import Category
+from category.game import Game
 from category.code import Code
 from category.gif import Gif
 from category.insult import Insult
@@ -7,7 +8,6 @@ from category.rank import Rank
 from category.weather import Weather
 
 from util.command.command import Command
-from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.utils import sendMessage
 
@@ -21,8 +21,6 @@ class ServerModerator(Category):
 
     def __init__(self, client):
         super().__init__(client, "Server Moderator")
-
-        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Bot Commands
@@ -264,6 +262,46 @@ class ServerModerator(Category):
                 Category.INVALID_LEVEL: {
                     "messages": [
                         "That doesn't seem to be a number. Try again."
+                    ]
+                }
+            }
+        })
+
+        self._addPrefix = Command({
+            "alternatives": ["addPrefix", "addPre"],
+            "info": "Allows you to add a prefix for this server.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "parameters": {
+                "prefix": {
+                    "info": "The prefix to add to this server.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to add a prefix to this server, you need to enter it in."
+                    ]
+                }
+            }
+        })
+
+        self._removePrefix = Command({
+            "alternatives": ["removePrefix", "removePre", "remPre"],
+            "info": "Allows you to remove a prefix from this server.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "parameters": {
+                "prefix": {
+                    "info": "The prefix to remove from this server.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to remove a prefix from this server, you need to enter it in."
                     ]
                 }
             }
@@ -631,6 +669,8 @@ class ServerModerator(Category):
             self._toggleJoinMessage,
             self._setJoinMessageChannel,
             self._setLevel,
+            self._addPrefix,
+            self._removePrefix,
 
             # Bot Commands
             self._setServerName,
@@ -646,6 +686,7 @@ class ServerModerator(Category):
 
         self._categories = {
             "Code": Code(None),
+            "Game": Game(None),
             "Gif": Gif(None),
             "Insult": Insult(None),
             "Math": Math(None),
@@ -941,6 +982,67 @@ class ServerModerator(Category):
             description = result,
             colour = ServerModerator.EMBED_COLOR
         )
+    
+    def addPrefix(self, discordServer, prefixes):
+        """Adds a prefix to the specified Discord Server.\n
+
+        discordServer - The Discord Server to add the prefix to.\n
+        prefixes - The prefix(es) to add.\n
+        """
+
+        # Iterate through the prefixes
+        addPrefixes = ""
+        addCount = 0
+        for prefix in prefixes:
+            temp = Server.addPrefix(discordServer, prefix)
+            addPrefixes += temp["message"]
+            addCount += temp["success_int"]
+        
+        return discord.Embed(
+            title = "Prefix{} {} added.".format(
+                "es" if addCount > 1 else "",
+                "not" if addCount == 0 else ""
+            ),
+            description = addPrefixes if addCount > 0 else "No prefixes were added.",
+            colour = ServerModerator.EMBED_COLOR
+        )
+    
+    def removePrefix(self, discordServer, prefixes):
+        """Removes a prefix from the specified Discord Server.\n
+
+        discordServer - The Discord Server to remove the prefix from.\n
+        prefixes - The prefix(es) to remove.\n
+        """
+
+        # No prefixes in list; Reset prefixes to default prefix
+        if len(prefixes) == 0:
+            Server.resetPrefixes(discordServer)
+
+            return discord.Embed(
+                title = "Prefixes Reset",
+                description = "All prefixes have been removed and the default has been set.",
+                colour = ServerModerator.EMBED_COLOR
+            )
+        
+        # Prefixes are in list
+        else:
+
+            # Iterate through prefixes
+            removePrefixes = ""
+            removeCount = 0
+            for prefix in prefixes:
+                temp = Server.removePrefix(discordServer, prefix)
+                removePrefixes += temp["message"]
+                removeCount += temp["success_int"]
+            
+            return discord.Embed(
+                title = "Prefix{} {} removed.".format(
+                    "es" if removeCount > 1 else ""
+                    "not" if removeCount == 0 else ""
+                ),
+                description = removePrefixes if removeCount > 0 else "No prefixes were removed.",
+                colour = ServerModerator.EMBED_COLOR
+            )
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods (Server Commands)
@@ -1351,12 +1453,10 @@ class ServerModerator(Category):
         """
 
         # Make sure message starts with the prefix
-        if message.content.startswith(OmegaPsi.PREFIX) and not message.author.bot:
+        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(message.content)
-            
-            # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
 
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # Bot Commands
@@ -1562,6 +1662,33 @@ class ServerModerator(Category):
                         message,
                         embed = await self.run(message, self._setLevel, self.setLevel, message.guild, parameters[0], message.mentions)
                     )
+            
+            # Add Prefix Command
+            elif command in self._addPrefix.getAlternatives():
+
+                # 0 Parameters Exist
+                if len(parameters) == 0:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = self.getErrorMessage(self._addPrefix, Category.NOT_ENOUGH_PARAMETERS)
+                    )
+                
+                # 1 or More Parameters Exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await self.run(message, self._addPrefix, self.addPrefix, message.guild, parameters)
+                    )
+                
+            # Remove Prefix Command
+            elif command in self._removePrefix.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._removePrefix, self.removePrefix, message.guild, parameters)
+                )
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # Server Commands
