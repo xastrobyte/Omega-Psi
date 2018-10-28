@@ -123,16 +123,10 @@ class Gif(Category):
         """
 
         # Make sure message starts with the prefix
-        if message.content.startswith(OmegaPsi.PREFIX) and not message.author.bot:
+        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            try:
-                command, parameters = Category.parseText(message.content)
-            
-            # Split failed, return None
-            except Exception as error:
-                print(error)
-                return None
+            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
