@@ -1,3 +1,5 @@
+from util.file.omegaPsi import OmegaPsi
+
 from datetime import datetime
 from random import choice as choose
 
@@ -11,7 +13,7 @@ class Server:
 
     # File Sources
     SERVER_FILE = "data/servers/{}.json"
-    XP_CARD_IMAGE = "util/level/CARD_{}_{}.png"
+    XP_CARD_IMAGE = "util/rank/CARD_{}_{}.png"
     XP_ICON_SOURCE = "https://cdn.discordapp.com/avatars/{}/{}.png?size=1024"
 
     # Update Member Actions
@@ -95,6 +97,7 @@ class Server:
 
         # Setup default values
         defaultValues = {
+            "prefixes": [OmegaPsi.PREFIX],
             "id": discordServer.id,
             "ownerId": discordServer.owner.id,
             "name": discordServer.name,
@@ -188,6 +191,125 @@ class Server:
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def startsWithPrefix(discordServer, message):
+        """Returns whether or not the message is a prefix for the specified Discord Server.\n
+
+        discordServer - The Discord Server to get the prefixes for.\n
+        message - The message to test.\n
+        """
+
+        # Get prefixes
+        prefixes = Server.getPrefixes(discordServer)
+
+        # See if message starts with any prefix
+        for prefix in prefixes:
+            if message.startswith(prefix):
+                return True
+
+        return False
+
+    def getPrefixes(discordServer):
+        """Returns the prefix for the specified Discord Server.\n
+
+        discordServer - The Discord Server to get the prefix of.\n
+        """
+
+        # Make sure discordServer is not None
+        if discordServer != None:
+
+            # Open server file
+            server = Server.openServer(discordServer)
+
+            # Get prefixes; Add spaces to any that are only alphas
+            prefixes = server["prefixes"]
+            for prefix in range(len(prefixes)):
+                if prefixes[prefix].isalpha() and not prefixes[prefix].endswith(" ") and len(prefixes[prefix]) > 1:
+                    prefixes[prefix] += " "
+
+            # Close server file
+            Server.closeServer(server)
+
+            return prefixes
+        
+        # Return default prefix
+        return [OmegaPsi.PREFIX]
+    
+    def resetPrefixes(discordServer): 
+        """Resest the prefixes in the specified Discord Server and sets it to the default.\n
+
+        discordServer - The Discord Server to reset the prefixes of.\n
+        """
+
+        # Open server file
+        server = Server.openServer(discordServer)
+
+        # Remove all prefixes
+        server["prefixes"] = [OmegaPsi.PREFIX]
+
+        # Close server file
+        Server.closeServer(server)
+    
+    def addPrefix(discordServer, prefix):
+        """Adds a prefix to the specified Discord Server.\n
+
+        discordServer - The Discord Server to add the prefix to.\n
+        prefix - The prefix to add.\n
+        """
+
+        # Open server file
+        server = Server.openServer(discordServer)
+        
+        # Only add if prefix does not already exist
+        if prefix not in server["prefixes"]:
+            server["prefixes"].append(prefix)
+            successInt = 1
+            successMessage = "`{}` was added as a prefix."
+        else:
+            successInt = 0
+            successMessage = "`{}` could not be added as a prefix. It already exists."
+
+        # Close server file
+        Server.closeServer(server)
+
+        return {"success_int": successInt, "message": successMessage.format(prefix) + "\n"}
+    
+    def removePrefix(discordServer, prefix):
+        """Removes a prefix from the specified Discord Server.\n
+
+        discordServer - The Discord Server to remove the prefix from.\n
+        prefix - The prefix to remove.\n
+        """
+
+        # Open server file
+        server = Server.openServer(discordServer)
+
+        # Add space if it is an alpha prefix and len is greater than 1
+        if len(prefix) > 1 and prefix.isalpha():
+            prefix += " "
+
+        # See if prefix is in the server prefixes
+        if prefix in server["prefixes"]:
+
+            if prefix == OmegaPsi.PREFIX:
+                successInt = 0
+                successMessage = "`{}` was not removed as a prefix. You cannot remove the default prefix."
+            else:
+                successInt = 1
+                successMessage = "`{}` was removed as a prefix."
+        
+        else:
+            successInt = 0
+            successMessage = "`{}` was not a prefix."
+        
+        # Only remove if the successInt is 1
+        if successInt == 1:
+            server["prefixes"].remove(prefix)
+
+        # Close server file
+        Server.closeServer(server)
+
+        return {"success_int": successInt, "message": successMessage.format(prefix) + "\n"}
 
     def updateMember(discordServer, discordMember, *, action = UPDATE_MEMBER):
         """Updates the Discord Member that belongs the Discord Server given.\n
