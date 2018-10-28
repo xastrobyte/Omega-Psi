@@ -506,10 +506,10 @@ class BotModerator(Category):
         """
 
         # Make sure message starts with the prefix
-        if message.content.startswith(OmegaPsi.PREFIX) and not message.author.bot:
+        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(message.content)
+            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
