@@ -1,5 +1,6 @@
 from category.category import Category
 from category.code import Code
+from category.game import Game
 from category.gif import Gif
 from category.insult import Insult
 from category.math import Math
@@ -274,6 +275,7 @@ class Help(Category):
         self._categories = {
             "Help": self,
             "Code": Code(None),
+            "Game": Game(None),
             "Gif": Gif(None),
             "Insult": Insult(None),
             "Math": Math(None),
@@ -383,6 +385,7 @@ class Help(Category):
         omegaPsi = OmegaPsi.openOmegaPsi()
 
         # Get name, owner, ranking, join message, inactive commands
+        serverPrefixes = server["prefixes"]
         serverName = server["name"]
         serverOwnerId = server["ownerId"]
         serverRanking = server["ranking"]
@@ -415,6 +418,7 @@ class Help(Category):
             )
 
         tags = {
+            "Prefixes": ", ".join(serverPrefixes),
             "Ranking": "Yes" if serverRanking else "No",
             "Join Message": "{}\n{}".format(
                 "Active" if serverJoinMessage else "Inactive",
@@ -648,10 +652,10 @@ class Help(Category):
         """
 
         # Make sure message starts with the prefix
-        if message.content.startswith(OmegaPsi.PREFIX) and not message.author.bot:
+        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(message.content)
+            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
