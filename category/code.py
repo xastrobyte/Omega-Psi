@@ -7,6 +7,8 @@ from util.utils import sendMessage
 import discord
 
 class Code(Category):
+    
+    DESCRIPTION = "Commands that have to do with coding!"
 
     MAX_BRAINFUCK_LENGTH = 2 ** 15 # 32736
 
