@@ -2,18 +2,25 @@ from category.category import Category
 
 from util.command.command import Command
 from util.file.server import Server
+from util.game.game import getNoGame, getQuitGame
 from util.game import hangman
 from util.game import scramble
 from util.utils import sendMessage
 
+from random import choice as choose
 import discord
 
 class Game(Category):
+
+    DESCRIPTION = "You can play games with these."
 
     EMBED_COLOR = 0xFF8000
 
     # Hangman Icon URL's
     HANGMAN_ICON = "https://i.ytimg.com/vi/r91yPViqRX0/maxresdefault.jpg"
+
+    # Rock, Paper, Scissors
+    RPS_ICON = ""
 
     # Scramble Icon URL's
     SCRAMBLE_ICON = "https://i.ytimg.com/vi/iW1Z0AZvWX8/hqdefault.jpg"
@@ -22,10 +29,9 @@ class Game(Category):
     SUCCESS_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-line/254000/172-512.png"
     FAILED_ICON = "https://png.pngtree.com/svg/20161229/fail_17487.png"
 
-    MAX_GUESSES = {
-        "hangman": 7,
-        "scramble": 10
-    }
+    MAX_HANGMAN_GUESSES = 7
+    MAX_SCRAMBLE_GUESSES = 10
+    MAX_RPS_GAMES = 9
 
     def __init__(self, client):
         super().__init__(client, "Game")
@@ -79,6 +85,48 @@ class Game(Category):
             }
         })
 
+        self._rps = Command({
+            "alternatives": ["rockPaperScissors", "rps"],
+            "info": "Allows you to play Rock Paper Scissors with me.",
+            "parameters": {
+                "action": {
+                    "info": "What action to start out with. (rock, paper, or scissors).",
+                    "optional": False,
+                    "accepted": {
+                        "rock": {
+                            "alternatives": ["rock", "r"],
+                            "info": "Do a rock action."
+                        },
+                        "paper": {
+                            "alternatives": ["paper", "p"],
+                            "info": "Do a paper action."
+                        },
+                        "scissors": {
+                            "alternatives": ["scissors", "s"],
+                            "info": "Do a scissor action."
+                        }
+                    }
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need to type in the action you want to do."
+                    ]
+                },
+                Category.INVALID_INPUT: {
+                    "messages": [
+                        "The input was invalid."
+                    ]
+                },
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to play rock, paper, scissors, you only need an amount of games."
+                    ]
+                }
+            }
+        })
+
         self._scramble = Command({
             "alternatives": ["scramble"],
             "info": "Allows you to guess an unscrambled word.",
@@ -123,11 +171,13 @@ class Game(Category):
 
         self.setCommands([
             self._hangman,
+            self._rps,
             self._scramble
         ])
 
         self._hangmanGames = {}
         self._scrambleGames = {}
+        self._rpsActions = ["rock", "paper", "scissors"]
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
@@ -166,24 +216,11 @@ class Game(Category):
                 # Check if user is playing a game
                 if authorId in self._hangmanGames[serverId]:
                     self._hangmanGames[serverId].pop(authorId)
-
-                    return discord.Embed(
-                        title = "Game Quit",
-                        description = "Your hangman game was successfully ended.",
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.SUCCESS_ICON
-                    )
+                    return getQuitGame("Hangman", Game.EMBED_COLOR, Game.SUCCESS_ICON)
                 
                 # User was not playing a game
                 else:
-                    return discord.Embed(
-                        title = "No Game",
-                        description = "You were not playing a hangman game.",
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.FAILED_ICON
-                    )
+                    return getNoGame("Hangman", Game.EMBED_COLOR, Game.FAILED_ICON)
             
             # Create game instance
             self._hangmanGames[serverId][authorId] = {
@@ -218,14 +255,14 @@ class Game(Category):
 
                 # Save word and amount of guesses
                 word = game["word"]
-                guesses = game["guesses"]
+                guesses = game["guesses"] + 1
 
                 # Delete game instance
                 self._hangmanGames[serverId].pop(authorId)
 
                 return discord.Embed(
                     title = "Guessed",
-                    description = "You guessed correctly! The word was {}\nGuesses: {}".format(
+                    description = "You guessed correctly! The word was {}\nIt took you {} guesses!".format(
                         word,
                         guesses
                     ),
@@ -261,7 +298,7 @@ class Game(Category):
             game["guesses"] += 1
 
             # See if guess limit was reached
-            if game["fails"] >= Game.MAX_GUESSES["hangman"]:
+            if game["fails"] >= Game.MAX_HANGMAN_GUESSES:
 
                 # Delete game instance
                 word = game["word"]
@@ -291,7 +328,11 @@ class Game(Category):
 
                 return discord.Embed(
                     title = "Success!",
-                    description = "The word was `{}`\nYou guessed in {} guesses.".format(game["word"], guesses),
+                    description = "The word was `{}`\nYou guessed in {} guess{}.".format(
+                        game["word"], 
+                        guesses,
+                        "es" if guesses > 1 else ""
+                    ),
                     colour = Game.EMBED_COLOR
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
@@ -310,6 +351,60 @@ class Game(Category):
                 value = hangman.getHangman(game["fails"])
             )
     
+    def rps(self, action):
+        """Starts or continues a Rock Paper Scissors game.\n
+
+        action - The action the Discord User did.\n
+        """
+
+        # Get a random rps action
+        botRps = choose(self._rpsActions)
+
+        # Get user's rps action
+        if action in self._rps.getAcceptedParameter("action", "rock").getAlternatives():
+            userRps = "rock"
+        elif action in self._rps.getAcceptedParameter("action", "paper").getAlternatives():
+            userRps = "paper"
+        elif action in self._rps.getAcceptedParameter("action", "scissors").getAlternatives():
+            userRps = "scissors"
+        
+        # Action was invalid
+        else:
+            return self.getErrorMessage(self._rps, Category.INVALID_INPUT)
+
+        # Check if values are the same
+        message = "You had {} and I had {}".format(
+            userRps, botRps
+        )
+        icon = Game.RPS_ICON
+        if botRps == userRps:
+            title = "Tied!"
+            message = "You and I both tied."
+        
+        elif (
+            (botRps == "rock" and userRps == "paper") or
+            (botRps == "paper" and userRps == "scissors") or
+            (botRps == "scissors" and userRps == "rock")
+        ):
+            title = "You Won!"
+            icon = Game.SUCCESS_ICON
+
+        elif (
+            (botRps == "rock" and userRps == "scissors") or
+            (botRps == "paper" and userRps == "rock") or
+            (botRps == "scissors" and userRps == "paper")
+        ):
+            title = "You Lost!"
+            icon = Game.FAILED_ICON
+        
+        return discord.Embed(
+            title = title,
+            description = message,
+            colour = Game.EMBED_COLOR
+        ).set_thumbnail(
+            url = icon
+        )
+
     def scramble(self, discordUser, *, difficulty = None, guess = None):
         """Starts or continues a scrambled word game.\n
 
@@ -339,24 +434,11 @@ class Game(Category):
                 # Check if user is playing a game
                 if authorId in self._scrambleGames[serverId]:
                     self._scrambleGames[serverId].pop(authorId)
-
-                    return discord.Embed(
-                        title = "Game Quit",
-                        description = "Your scramble game was successfully ended.",
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.SUCCESS_ICON
-                    )
+                    return getQuitGame("Scramble", Game.EMBED_COLOR, Game.SUCCESS_ICON)
 
                 # User was not playing a game
                 else:
-                    return discord.Embed(
-                        title = "No Game",
-                        description = "You were not playing a scramble game.",
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.FAILED_ICON
-                    )
+                    return getNoGame("Scramble", Game.EMBED_COLOR, Game.FAILED_ICON)
 
             # Create game
             word = scramble.generateWord().lower()
@@ -410,7 +492,7 @@ class Game(Category):
                         return self.getErrorMessage(self._scramble, Category.ALREADY_GUESSED)
 
                     # See if guess limit was reached
-                    if game["guesses"] + 1 >= Game.MAX_GUESSES["scramble"]:
+                    if game["guesses"] + 1 >= Game.MAX_SCRAMBLE_GUESSES:
 
                         # Delete game instance
                         word = game["word"]
@@ -433,7 +515,7 @@ class Game(Category):
                     return discord.Embed(
                         title = "Nope",
                         description = "That is not the word.\nAttempts Left: {}".format(
-                            Game.MAX_GUESSES["scramble"] - game["guesses"]
+                            Game.MAX_SCRAMBLE_GUESSES - game["guesses"]
                         ),
                         colour = Game.EMBED_COLOR
                     ).set_thumbnail(
@@ -501,6 +583,33 @@ class Game(Category):
                         self.client,
                         message,
                         embed = await self.run(message, self._hangman, self.hangman, message.author, difficulty = "".join(parameters))
+                    )
+                
+                # 2 or More Parameters Exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = self.getErrorMessage(self._hangman, Category.TOO_MANY_PARAMETERS)
+                    )
+            
+            # Rock Paper Scissors Command
+            elif command in self._rps.getAlternatives():
+
+                # 0 Parameters Exist
+                if len(parameters) == 0:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = self.getErrorMessage(self._rps, Category.NOT_ENOUGH_PARAMETERS)
+                    )
+                
+                # 1 Parameter Exists
+                elif len(parameters) == 1:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await self.run(message, self._rps, self.rps, parameters[0])
                     )
                 
                 # 2 or More Parameters Exist
