@@ -9,8 +9,7 @@
   * **[Weather](#Weather)** *Do you wanna know weather stuff? Here you go!*
   * **[Server Moderator](#Server-Moderator)** *Moderate your server with this. Owners have the only access to this at first.*
   * **[Bot Moderator](#Bot-Moderator)** *Very private stuff. Only bot moderators/developers can access this.*
-## Help 
-*Shows you the help menu*
+## Help
   * `help | h | ? [command]` - Gives you help on all commands or a specific command in the bot.
 
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
