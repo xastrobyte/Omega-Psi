@@ -1,6 +1,5 @@
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.file.private import Private
 
 from keepAlive import keepAlive
 from util.utils import sendMessage, sendErrorMessage, getChannel
@@ -23,6 +22,7 @@ extensions = [
     "category.math",
     "category.rank",
     "category.weather",
+    "category.misc",
     "category.serverModerator",
     "category.botModerator"
 ]
@@ -70,11 +70,6 @@ async def on_message(message):
                     omegaPsi, origMessage,
                     message = message, plain = True
                 )
-        
-        # Message was in private
-        else:
-            private = Private.openUser(message.author)
-            Private.closeUser(private)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Server Events
