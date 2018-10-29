@@ -1,3 +1,5 @@
+import discord
+
 def getNoGame(game, colour, icon):
     """Returns the embed used when there is no game being played.\n
 
