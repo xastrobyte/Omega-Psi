@@ -1,14 +1,14 @@
 # Commands
-  * [Help](#Help)
-  * [Code](#Code)
-  * [Game](#Game)
-  * [Gif](#Gif)
-  * [Insult](#Insult)
-  * [Math](#Math)
-  * [Rank](#Rank)
-  * [Weather](#Weather)
-  * [Server Moderator](#Server-Moderator)
-  * [Bot Moderator](#Bot-Moderator)
+  * **[Help](#Help)** *Shows you the help menu*
+  * **[Code](#Code)** *Commands that have to do with coding!*
+  * **[Game](#Game)** *You can play games with these*
+  * **[Gif](#Gif)** *Gifs make this up. That's about it.*
+  * **[Insult](#Insult)** *If you feel in the mood to be insulted, here ya are.*
+  * **[Math](#Math)** *Need help with math? These commands got your back.*
+  * **[Rank](#Rank)** *The ranking system is strong with this category.*
+  * **[Weather](#Weather)** *Do you wanna know weather stuff? Here you go!*
+  * **[Server Moderator](#Server-Moderator)** *Moderate your server with this. Owners have the only access to this at first.*
+  * **[Bot Moderator](#Bot-Moderator)** *Very private stuff. Only bot moderators/developers can access this.*
 ## Help
   * `help | h | ? [command]` - Gives you help on all commands or a specific command in the bot.
 
