@@ -14,6 +14,8 @@ import discord, sympy
 
 class Math(Category):
 
+    DESCRIPTION = "Need help with math? These commands got your back."
+
     EMBED_COLOR = 0xFF8000
 
     def __init__(self, client):
