@@ -1,17 +1,97 @@
 # Commands
-  * **[Help](#Help)** *Shows you the help menu*
-  * **[Code](#Code)** *Commands that have to do with coding!*
-  * **[Game](#Game)** *You can play games with these*
-  * **[Gif](#Gif)** *Gifs make this up. That's about it.*
-  * **[Insult](#Insult)** *If you feel in the mood to be insulted, here ya are.*
-  * **[Math](#Math)** *Need help with math? These commands got your back.*
-  * **[Rank](#Rank)** *The ranking system is strong with this category.*
-  * **[Weather](#Weather)** *Do you wanna know weather stuff? Here you go!*
-  * **[Server Moderator](#Server-Moderator)** *Moderate your server with this. Owners have the only access to this at first.*
-  * **[Bot Moderator](#Bot-Moderator)** *Very private stuff. Only bot moderators/developers can access this.*
+  * [Help](#Help)
+  * [Code](#Code)
+  * [Game](#Game)
+  * [Gif](#Gif)
+  * [Insult](#Insult)
+  * [Math](#Math)
+  * [Rank](#Rank)
+  * [Weather](#Weather)
+  * [Misc](#Misc)
+  * [Server Moderator](#Server-Moderator)
+  * [Bot Moderator](#Bot-Moderator)
 ## Help
-  * `help | h | ? [command]` - Gives you help on all commands or a specific command in the bot.
+  * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
+  * `markdown | getMarkdown | md | getMd ` - Creates and sends the markdown file for the commands.
+
+## Code
+  * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
+
+## Game
+  * `hangman | playHangman [difficulty]` - Let's you play hangman!
+    * Accepted Parameters For difficulty
+      * `easy | simple | e` - Play an easy game of hangman.
+      * `medium | m` - Play a medium game of hangman.
+      * `hard | difficult | h` - Play a hard game of hangman.
+      * `quit | q | exit` - Allows you to quit the hangman game.
+
+  * `rockPaperScissors | rps <action>` - Allows you to play Rock Paper Scissors with me.
+    * Accepted Parameters For action
+      * `rock | r` - Do a rock action.
+      * `paper | p` - Do a rock action.
+      * `scissors | s` - Do a rock action.
+
+  * `scramble [difficulty]` - Allows you to guess an unscrambled word.
+    * Accepted Parameters For difficulty
+      * `normal | n | easy | e` - Only each word is scrambled.
+      * `expert | hard | difficult` - The entire phrase is scrambled.
+      * `quit | q | exit` - Allows you to quit the scramble game.
+
+## Gif
+  * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
+
+  * `theOffice | office | o ` - Sends a random gif related to The Office.
+
+  * `parksAndRec | parks | pnr ` - Sends a random gif related to Parks and Rec.
+
+  * `brooklyn99 | b99 | 99 ` - Sends a random gif related to Brooklyn Nine-Nine.
+
+## Insult
+  * `insult | i [insultLevel]` - Sends you an insult.
+    * Accepted Parameters For insultLevel
+      * `touchy | t` - Soft insults for a soft person.
+      * `remorseful | remorse | r` - Harder insults. Might offend you.
+      * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
+
+  * `addInsult | addI | add <insultLevel> <insult>` - Allows you to add your own insult.
+    * Accepted Parameters For insultLevel
+      * `touchy | t` - Soft insults for a soft person.
+      * `remorseful | remorse | r` - Harder insults. Might offend you.
+      * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
+
+  * `listInsults | list | l [insultLevel]` - Lists the insults that can be sent.
+    * Accepted Parameters For insultLevel
+      * `touchy | t` - Soft insults for a soft person.
+      * `remorseful | remorse | r` - Harder insults. Might offend you.
+      * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
+
+## Math
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+
+  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+
+  * `factorial | ! <number>` - Gets the factorial of a number.
+
+  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+
+  * `expand | exp | e <expression>` - Expands a mathematical expression.
+
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
+
+  * `factor | f <expression>` - Factors a mathematical expression.
+
+## Rank
+  * `rank | r ` - Shows you your current level and experience in this server.
+
+## Weather
+  * `forecast | getWeather <location>` - Gets the weather for a specified location.
+
+## Miscellaneous
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
 
   * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
@@ -52,78 +132,6 @@
       * `error` - Something is going wrong but you don't know what.
       * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
       * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
-
-  * `markdown | getMarkdown | md | getMd ` - Creates and sends the markdown file for the commands.
-
-## Code
-  * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
-
-## Game
-  * `hangman | playHangman [difficulty]` - Let's you play hangman!
-    * Accepted Parameters For difficulty
-      * `easy | simple | e` - Play an easy game of hangman.
-      * `medium | m` - Play a medium game of hangman.
-      * `hard | difficult | h` - Play a hard game of hangman.
-      * `quit | q | exit` - Allows you to quit the hangman game.
-
-  * `scramble [difficulty]` - Allows you to guess an unscrambled word.
-    * Accepted Parameters For difficulty
-      * `normal | n | easy | e` - Only each word is scrambled.
-      * `expert | hard | difficult` - The entire phrase is scrambled.
-      * `quit | q | exit` - Allows you to quit the scramble game.
-
-## Gif
-  * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
-
-  * `theOffice | office | o ` - Sends a random gif related to The Office.
-
-  * `parksAndRec | parks | pnr ` - Sends a random gif related to Parks and Rec.
-
-  * `brooklyn99 | b99 | 99 ` - Sends a random gif related to Brooklyn Nine-Nine.
-
-## Insult
-  * `insult | i [insultLevel]` - Sends you an insult.
-    * Accepted Parameters For insultLevel
-      * `touchy | t` - Soft insults for a soft person.
-      * `remorseful | remorse | r` - Harder insults. Might offend you.
-      * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
-
-  * `addInsult | addI | add <insultLevel> <insult>` - Allows you to add your own insult.
-    * Accepted Parameters For insultLevel
-      * `touchy | t` - Soft insults for a soft person.
-      * `remorseful | remorse | r` - Harder insults. Might offend you.
-      * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
-
-  * `listInsults | list | l [insultLevel]` - Lists the insults that can be sent.
-    * Accepted Parameters For insultLevel
-      * `touchy | t` - Soft insults for a soft person.
-      * `remorseful | remorse | r` - Harder insults. Might offend you.
-      * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
-
-## Math
-  * `factor | f <expression>` - Factors a mathematical expression.
-
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
-
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
-
-  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
-
-  * `factorial | ! <number>` - Gets the factorial of a number.
-
-  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
-
-  * `expand | exp | e <expression>` - Expands a mathematical expression.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-## Rank
-  * `rank | r ` - Shows you your current level and experience in this server.
-
-## Weather
-  * `weather | getWeather <location>` - Gets the weather for a specified location.
 
 ## Server Moderator
   * `addMember | addM | am <member(s)...>` - Allows you to add a member, or members, to the server file manually.
@@ -192,4 +200,3 @@
       * `watching | Watching` - The watching activity type.
 
   * `stop | quit | kill ` - Kills the bot.
-
