@@ -8,6 +8,8 @@ from random import choice as choose
 import discord, json, os, urllib.request
 
 class Gif(Category):
+    
+    DESCRIPTION = "Gifs make this up. That's about it."
 
     EMBED_COLOR = 0x800080
 
