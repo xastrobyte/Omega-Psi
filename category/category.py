@@ -1,12 +1,18 @@
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.file.private import Private
 
 from util.utils import censor
 
+from random import choice as choose
 import discord, inspect, shlex
 
 class Category:
+
+    DESCRIPTION = "No description yet."
+
+    GITHUB = "https://www.github.com/FellowHashbrown/omega-psi-py/blob/master/category/commands.md"
+
+    EMBED_COLOR = 0xFF8080
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -19,6 +25,7 @@ class Category:
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
     CANT_BE_DEACTIVATED = "CANT_BE_DEACTIVATED"
+    CANT_BE_RUN = "CANT_BE_RUN"
 
     INVALID_PARAMETER = "INVALID_PARAMETER"
     INVALID_COMMAND = "INVALID_COMMAND"
@@ -27,11 +34,12 @@ class Category:
     
     # Code Errors
     INVALID_LANGUAGE = "INVALID_LANGUAGE"
-    
+
     # Game Errors
     ALREADY_GUESSED = "ALREADY_GUESSED"
     NOT_A_LETTER = "NOT_A_LETTER"
     LETTER_TOO_LONG = "LETTER_TOO_LONG"
+    TOO_MANY_GAMES = "TOO_MANY_GAMES"
     
     INVALID_DIFFICULTY = "INVALID_DIFFICULTY"
     INVALID_INPUT = "INVALID_INPUT"
@@ -40,6 +48,7 @@ class Category:
     NO_GIFS_FOUND = "NO_GIFS_FOUND"
 
     # Help Errors
+    INVALID_CATEGORY = "INVALID_CATEGORY"
 
     # Insult Errors
     INVALID_INSULT_LEVEL = "INVALID_INSULT_LEVEL"
@@ -53,7 +62,7 @@ class Category:
     NOT_IN_VOICE_CHANNEL = "NOT_IN_VOICE_CHANNEL"
 
     # Rank Errors
-    
+
     # Weather Errors
     INVALID_LOCATION_TYPE = "INVALID_LOCATION_TYPE"
     INVALID_LOCATION = "INVALID_LOCATION"
@@ -93,7 +102,7 @@ class Category:
                 if text.startswith(prefix):
                     text = text[len(prefix):]
                     break
-            
+                    
             split = shlex.split(text)
 
             # Command is first index ; Parameters are everything after
@@ -130,6 +139,62 @@ class Category:
         """
         self._commands = commands
     
+    def getCategoryName(self):
+        """Returns the category's name
+        """
+        return self._category
+    
+    def getCategory(self, category, *, isNSFW = False):
+        """Shows a help menu for a Category.\n
+
+        category - The category to get the help menu for.\n
+        """
+
+        # Create embed
+        categoryName = category.getCategoryName()
+        embed = discord.Embed(
+            title = categoryName,
+            description = "Help for the [{} Commands]({} \"{}\").".format(
+                categoryName,
+                Category.GITHUB + "#" + categoryName.replace(" ", "-"),
+                category.DESCRIPTION
+            ),
+            colour = Category.EMBED_COLOR
+        )
+
+        # Add the commands
+        fields = []
+        fieldText = ""
+        for command in category.getCommands():
+
+            commandText = command.getHelp(isNSFW = isNSFW) + "\n"
+
+            if len(fieldText) + len(commandText) >= OmegaPsi.MESSAGE_THRESHOLD:
+                fields.append(fieldText)
+                fieldText = ""
+            
+            fieldText += commandText
+        
+        if len(fieldText) > 0:
+            fields.append(fieldText)
+        
+        # Add the fields
+        count = 0
+        for field in fields:
+            count += 1
+
+            embed.add_field(
+                name = "Commands {}".format(
+                    "({} / {})".format(
+                        count, len(fields)
+                    ) if len(fields) > 1 else ""
+                ),
+                value = field,
+                inline = False
+            )
+        
+        return embed
+    
     def getCommands(self):
         """Returns the Commands in the Category.\n
         """
@@ -165,7 +230,18 @@ class Category:
          - isNSFW - Whether or not to return an NSFW result.\n
         """
 
-        error = commandObject.getError(errorType).getMessage()
+        errorMessages = {
+            Category.CANT_BE_RUN: [
+                "The `{}` command cannot be run in a private message."
+            ]
+        }
+
+        # Check if error is CANT_BE_RUN
+        if errorType == Category.CANT_BE_RUN:
+            error = choose(errorMessages[errorType]).format(commandObject.getAlternatives()[0])
+        
+        else:
+            error = commandObject.getError(errorType).getMessage()
         
         return discord.Embed(
             title = "Error",
@@ -235,7 +311,7 @@ class Category:
             html += cmd.getHTML() + "\n"
         
         return html
-   
+    
     def getMarkdown(self):
         """Returns the Markdown text for a markdown file
         """
@@ -340,7 +416,7 @@ class Category:
                     
                     # Command cannot be run in Private
                     else:
-                        return Private.getErrorMessage(Private.CANT_BE_RUN) # Returns Embed
+                        return self.getErrorMessage(commandObject, Category.CANT_BE_RUN)
             
             # Command is globally inactive
             else:
