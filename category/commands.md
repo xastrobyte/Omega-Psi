@@ -7,8 +7,8 @@
   * [Math](#Math)
   * [Rank](#Rank)
   * [Weather](#Weather)
-  * [Server Moderator](#Server Moderator)
-  * [Bot Moderator](#Bot Moderator)
+  * [Server Moderator](#Server-Moderator)
+  * [Bot Moderator](#Bot-Moderator)
 ## Help
   * `help | h | ? [command]` - Gives you help on all commands or a specific command in the bot.
 
