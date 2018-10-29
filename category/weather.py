@@ -1,7 +1,7 @@
 from category.category import Category
 
 from util.command.command import Command
-from util.file.omegaPsi import OmegaPsi
+from util.file.server import Server
 from util.weather.weather import getCity, getCountry, getSky, getCurrentTemp, getHighTemp, getLowTemp, getLongitude, getLatitude, getWindSpeed, getWindDirection, getLastUpdated, getWeatherIcon
 from util.utils import sendMessage
 
@@ -9,6 +9,8 @@ from datetime import datetime
 import discord, json, os, urllib.request
 
 class Weather(Category):
+
+    DESCRIPTION = "Do you wanna know weather stuff? Here you go!"
 
     EMBED_COLOR = 0x0044FF
 
@@ -22,7 +24,7 @@ class Weather(Category):
         # Commands
 
         self._weather = Command({
-            "alternatives": ["weather", "getWeather"],
+            "alternatives": ["forecast", "getWeather"],
             "info": "Gets the weather for a specified location.",
             "parameters": {
                 "location": {
