@@ -2,13 +2,15 @@ from category.category import Category
 
 from util.command.command import Command
 from util.file.server import Server
-from util.level.image import createRankImage
+from util.rank.image import createRankImage
 
 from util.utils import sendMessage
 
 import os
 
 class Rank(Category):
+
+    DESCRIPTION = "The ranking system is strong with this category."
 
     EMBED_COLOR = 0x008080
 
