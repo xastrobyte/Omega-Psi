@@ -451,7 +451,7 @@ class Command:
         
         markdown += ("  * `{} {}` - {}\n").format(
             " | ".join(self.getAlternatives()),
-            " ".join(placeholderParameters) if len(placeholderParameters) > 0 else "None",
+            " ".join(placeholderParameters) if len(placeholderParameters) > 0 else "",
             self.getInfo()
         )
 
