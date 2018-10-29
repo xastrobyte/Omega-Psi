@@ -8,7 +8,7 @@ A Discord Bot with all kinds of commands split up into modular categories. Open 
 ### Fun Commands:
  * Gifs
  * Insults
-    Note: Any NSFW insults will only be sent in an NSFW channel. There is no way around this.
+    * Note: Any NSFW insults will only be sent in an NSFW channel. There is no way around this.
  * Math Functions
  * Leveling
 ### Server Moderation Commands:
