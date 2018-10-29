@@ -11,6 +11,8 @@ import discord, os
 
 class Insult(Category):
 
+    DESCRIPTION = "If you feel in the mood to be insulted, here ya are."
+
     INSULTS_LOCATION = "data/insults/{}.txt"
 
     EMBED_COLOR = 0x800000
