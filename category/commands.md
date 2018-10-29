@@ -1,4 +1,5 @@
 # Commands
+  * [Help](help)
 ## Help
   * `help | h | ? [command]` - Gives you help on all commands or a specific command in the bot.
 
