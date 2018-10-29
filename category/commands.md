@@ -1,5 +1,14 @@
 # Commands
   * [Help](#Help)
+  * [Code](#Code)
+  * [Game](#Game)
+  * [Gif](#Gif)
+  * [Insult](#Insult)
+  * [Math](#Math)
+  * [Rank](#Rank)
+  * [Weather](#Weather)
+  * [Server Moderator](#Server Moderator)
+  * [Bot Moderator](#Bot Moderator)
 ## Help
   * `help | h | ? [command]` - Gives you help on all commands or a specific command in the bot.
 
@@ -183,3 +192,4 @@
       * `watching | Watching` - The watching activity type.
 
   * `stop | quit | kill None` - Kills the bot.
+
