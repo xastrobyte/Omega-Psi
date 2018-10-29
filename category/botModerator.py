@@ -6,6 +6,7 @@ from category.insult import Insult
 from category.math import Math
 from category.rank import Rank
 from category.weather import Weather
+from category.misc import Misc
 
 from util.command.command import Command
 from util.file.omegaPsi import OmegaPsi
@@ -15,6 +16,8 @@ from util.utils import sendMessage
 import discord
 
 class BotModerator(Category):
+    
+    DESCRIPTION = "Very private stuff. Only bot moderators/developers can access these."
 
     EMBED_COLOR = 0xA456B0
 
@@ -222,7 +225,8 @@ class BotModerator(Category):
             "Insult": Insult(None),
             "Math": Math(None),
             "Rank": Rank(None),
-            "Weather": Weather(None)
+            "Weather": Weather(None),
+            "Misc": Misc(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
