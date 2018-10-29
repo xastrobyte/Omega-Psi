@@ -29,8 +29,8 @@
   * `rockPaperScissors | rps <action>` - Allows you to play Rock Paper Scissors with me.
     * Accepted Parameters For action
       * `rock | r` - Do a rock action.
-      * `paper | p` - Do a rock action.
-      * `scissors | s` - Do a rock action.
+      * `paper | p` - Do a paper action.
+      * `scissors | s` - Do a scissor action.
 
   * `scramble [difficulty]` - Allows you to guess an unscrambled word.
     * Accepted Parameters For difficulty
