@@ -7,7 +7,7 @@
   * [Math](#Math)
   * [Rank](#Rank)
   * [Weather](#Weather)
-  * [Misc](#Misc)
+  * [Miscellaneous](#Miscellaneous)
   * [Server Moderator](#Server-Moderator)
   * [Bot Moderator](#Bot-Moderator)
 ## Help
