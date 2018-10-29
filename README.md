@@ -26,7 +26,7 @@ A Discord Bot with all kinds of commands split up into modular categories. Open 
    * Toggling Leveling
    * Toggling a Welcome message
 ### Full Command List
-If the above link does not work, just go [here](category/commands.md "Commands List")
+For a full command list, go [here](category/commands.md "Commands List")
 
 **By default, the leveling system and the welcome messages are disabled.**
 
