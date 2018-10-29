@@ -53,7 +53,7 @@
       * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
       * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
 
-  * `markdown | getMarkdown | md | getMd None` - Creates and sends the markdown file for the commands.
+  * `markdown | getMarkdown | md | getMd ` - Creates and sends the markdown file for the commands.
 
 ## Code
   * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
@@ -75,11 +75,11 @@
 ## Gif
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
-  * `theOffice | office | o None` - Sends a random gif related to The Office.
+  * `theOffice | office | o ` - Sends a random gif related to The Office.
 
-  * `parksAndRec | parks | pnr None` - Sends a random gif related to Parks and Rec.
+  * `parksAndRec | parks | pnr ` - Sends a random gif related to Parks and Rec.
 
-  * `brooklyn99 | b99 | 99 None` - Sends a random gif related to Brooklyn Nine-Nine.
+  * `brooklyn99 | b99 | 99 ` - Sends a random gif related to Brooklyn Nine-Nine.
 
 ## Insult
   * `insult | i [insultLevel]` - Sends you an insult.
@@ -120,7 +120,7 @@
   * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
 ## Rank
-  * `rank | r None` - Shows you your current level and experience in this server.
+  * `rank | r ` - Shows you your current level and experience in this server.
 
 ## Weather
   * `weather | getWeather <location>` - Gets the weather for a specified location.
@@ -138,9 +138,9 @@
 
   * `deactivate | disable <command> [reason]` - Allows you to deactivate a command in the server.
 
-  * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel None` - Allows you to toggle the ranking system in the server.
+  * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel ` - Allows you to toggle the ranking system in the server.
 
-  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg None` - Allows you to toggle the join message in the server.
+  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg ` - Allows you to toggle the join message in the server.
 
   * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - Allows you to set the channel that the Join Messages are sent in.
 
@@ -180,9 +180,9 @@
 
   * `deactivateGlobally | disableGlobally <command> [reason]` - Allows you to deactivate a command globally.
 
-  * `botInfo | bi None` - Allows you to get the info about the bot.
+  * `botInfo | bi ` - Allows you to get the info about the bot.
 
-  * `servers | botServers None` - Allows you to get a list of servers the bot is in.
+  * `servers | botServers ` - Allows you to get a list of servers the bot is in.
 
   * `setStatus | status <activity> <text>` - Allows you to change the presence of the bot.
     * Accepted Parameters For activity
@@ -191,5 +191,5 @@
       * `listening | Listening` - The listening activity type.
       * `watching | Watching` - The watching activity type.
 
-  * `stop | quit | kill None` - Kills the bot.
+  * `stop | quit | kill ` - Kills the bot.
 
