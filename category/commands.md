@@ -7,7 +7,7 @@
   * [Math](#Math)
   * [Rank](#Rank)
   * [Weather](#Weather)
-  * [Miscellaneous](#Miscellaneous)
+  * [Misc](#Misc)
   * [Server Moderator](#Server-Moderator)
   * [Bot Moderator](#Bot-Moderator)
 ## Help
@@ -17,6 +17,13 @@
 
 ## Code
   * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
+
+  * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
+
+  * `base64 | b64 <conversion> <text>` - Encodes or decodes text to base64.
+    * Accepted Parameters For conversion
+      * `encode | enc | e` - Encode text into base64.
+      * `decode | dec | d` - Decode text from base64.
 
 ## Game
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
@@ -67,9 +74,15 @@
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
 ## Math
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+
+  * `factor | f <expression>` - Factors a mathematical expression.
+
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
@@ -78,12 +91,6 @@
   * `expand | exp | e <expression>` - Expands a mathematical expression.
 
   * `integral | integrate <expression>` - Gets the integral of an expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
-
-  * `factor | f <expression>` - Factors a mathematical expression.
 
 ## Rank
   * `rank | r ` - Shows you your current level and experience in this server.
@@ -200,3 +207,4 @@
       * `watching | Watching` - The watching activity type.
 
   * `stop | quit | kill ` - Kills the bot.
+
