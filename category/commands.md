@@ -79,17 +79,15 @@
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
-## Weather
+## Internet
   * `urban | urbanDictionary | urbanDict <term>` - Gives you the top 5 urban dictionary entries for a term.
 
   * `forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Math
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
+  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
   * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
@@ -100,6 +98,8 @@
   * `solve | system <equation(s)>` - Solves an equation or a system of equations.
 
   * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `factor | f <expression>` - Factors a mathematical expression.
 
