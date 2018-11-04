@@ -1,14 +1,14 @@
 from category.category import Category
 from category.game import Game
 from category.code import Code
-from category.gif import Gif
+from category.image import Image
 from category.insult import Insult
+from category.internet import Internet
 from category.math import Math
 from category.rank import Rank
-from category.weather import Weather
 from category.misc import Misc
 
-from util.command.command import Command
+from util.command import Command
 from util.file.server import Server
 from util.utils import sendMessage
 
@@ -690,11 +690,11 @@ class ServerModerator(Category):
         self._categories = {
             "Code": Code(None),
             "Game": Game(None),
-            "Gif": Gif(None),
+            "Image": Image(None),
             "Insult": Insult(None),
+            "Internet": Internet(None),
             "Math": Math(None),
             "Rank": Rank(None),
-            "Weather": Weather(None),
             "Misc": Misc(None)
         }
     
@@ -778,11 +778,8 @@ class ServerModerator(Category):
         # Iterate through each member
         result = ""
         for member in members:
-            result += member.mention + (
-                " was successfully removed as moderator."
-            ) if Server.removeModerator(discordServer, member) else (
-                " is not a moderator."
-            )
+            removeModInfo = Server.removeModerator(discordServer, member)
+            result += removeModInfo["message"]
         
         return discord.Embed(
             name = "Removed Moderators",
