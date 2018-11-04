@@ -87,3 +87,33 @@ def censor(text, inCodeBlock = False):
         text = text.replace(profanity, censored)
     
     return text
+
+def splitText(text, size, byWord = True):
+    """Splits text up by size.\n
+
+     - text - The text to split.\n
+     - size - The maximum size of each string.\n
+     - byWord - Whether or not to split up the text by word or by letter.\n
+    """
+
+    # Split up by word
+    if byWord:
+        text = text.split(" ")
+
+    # Keep track of fields and fieldText
+    fields = []
+    fieldText = ""
+    for value in text:
+
+        value += " " if byWord else ""
+        
+        if len(fieldText) + len(value) >= size:
+            fields.append(fieldText)
+            fieldText = ""
+        
+        fieldText += value
+    
+    if len(fieldText) > 0:
+        fields.append(fieldText)
+    
+    return fields
