@@ -25,6 +25,7 @@ class Server:
     INACTIVE = "INACTIVE"
     ACTIVE = "ACTIVE"
     NO_ACCESS = "NO_ACCESS"
+    NO_ACCESS_CATEGORY = "NO_ACCESS_CATEGORY"
 
     # Bot Invite / Misc
     EMBED_COLOR = 0x56A0B0
@@ -115,7 +116,8 @@ class Server:
 
             # Open file
             with open(Server.SERVER_FILE.format(discordServer.id), "r") as serverFile:
-                serverDict = json.load(serverFile)
+                tempFile = serverFile.read()
+            serverDict = json.loads(tempFile)
             
             # See if default values are missing
             for value in defaultValues:
@@ -123,11 +125,10 @@ class Server:
                 # Check if value is not in server dictionary; Set default value
                 if value not in serverDict:
                     serverDict[value] = defaultValues[value]
-                
-                # Value was in; Check if value changed
-                else:
-                    serverDict["ownerId"] = discordServer.owner.id
-                    serverDict["name"] = discordServer.name
+            
+            # See if Server owner or Server name changed
+            serverDict["ownerId"] = discordServer.owner.id
+            serverDict["name"] = discordServer.name
             
             return serverDict
             
@@ -351,12 +352,11 @@ class Server:
             if value not in member:
                 member[value] = defaultValues[value]
             
-            # Value was in; Check if value changed
-            else:
-                member["name"] = discordMember.name
-                member["nickname"] = discordMember.nick
-                member["discriminator"] = discordMember.discriminator
-                member["avatar"] = discordMember.avatar
+        # Value was in; Check if value changed
+        member["name"] = discordMember.name
+        member["nickname"] = discordMember.nick
+        member["discriminator"] = discordMember.discriminator
+        member["avatar"] = discordMember.avatar
         
         # Close server file
         Server.closeServer(server)
@@ -422,16 +422,27 @@ class Server:
         # Open server file
         server = Server.openServer(discordServer)
 
-        # Check if member is a moderator
+        # Check if member is a moderator; Make sure member is not server owner
         success = False
-        if server["members"][str(discordMember.id)]["moderator"] and discordMember.id != int(os.environ["DISCORD_ME"]):
-            server["members"][str(discordMember.id)]["moderator"] = False
+
+        if discordMember.id == discordServer.owner.id:
+            successMessage = "You cannot remove {} as a moderator. They are the server owner."
+        
+        elif not server["members"][str(discordMember.id)]["moderator"]:
+            successMessage = "{} was not a moderator. No need to remove them."
+
+        else:
             success = True
+            successMessage = "{} was removed as a moderator."
+        
+        # Only remove if success is True
+        if success:
+            server["members"][str(discordMember.id)]["moderator"] = False
         
         # Close server file
         Server.closeServer(server)
         
-        return success
+        return {"success": success, "message": successMessage.format(discordMember.mention)}
 
     def activate(discordServer, commandObject):
         """Activates a Command in the Discord Server.\n
@@ -549,11 +560,11 @@ class Server:
             # Only run if ranking is active and message is not from a bot
             if Server.isRankingActive(discordServer) and not discordMember.bot:
 
-                # Open server file
-                server = Server.openServer(discordServer)
-
                 # Update member
                 Server.updateMember(discordServer, discordMember)
+
+                # Open server file
+                server = Server.openServer(discordServer)
 
                 # Update experience; Make sure last message was over the interval
                 previous = Server.dictToDatetime(server["members"][str(discordMember.id)]["last_message"])
@@ -604,7 +615,8 @@ class Server:
             # Return a level up text
             return choose([
                 "{} has leveled up to Level {}!",
-                "{}: Level {}."
+                "{}: Level {}.",
+                "Nice {}, you've leveled up to Level {}."
             ]).format(discordMember.mention, nextLevel)
         
         return None
@@ -787,13 +799,16 @@ class Server:
         # Keep a dictionary of errors and error messages
         errorMessages = {
             Server.INACTIVE: [
-                "This command is inactive right now."
+                "This command is inactive in this server right now."
             ],
             Server.ACTIVE: [
-                "This command is already active."
+                "This command is already active in this server."
             ],
             Server.NO_ACCESS: [
-                "You do not have access to this command."
+                "You do not have access to this command in this server."
+            ],
+            Server.NO_ACCESS_CATEGORY: [
+                "You do not have access to this category in this server."
             ]
         }
 
