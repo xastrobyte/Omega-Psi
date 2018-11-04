@@ -2,11 +2,11 @@
   * [Help](#Help)
   * [Code](#Code)
   * [Game](#Game)
-  * [Gif](#Gif)
+  * [Image](#Image)
   * [Insult](#Insult)
+  * [Internet](#Internet)
   * [Math](#Math)
   * [Rank](#Rank)
-  * [Weather](#Weather)
   * [Misc](#Misc)
   * [Server Moderator](#Server-Moderator)
   * [Bot Moderator](#Bot-Moderator)
@@ -45,7 +45,9 @@
       * `expert | hard | difficult` - The entire phrase is scrambled.
       * `quit | q | exit` - Allows you to quit the scramble game.
 
-## Gif
+  * `stats | gameStats ` - Gives you stats on the games you've won/lost.
+
+## Image
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
   * `theOffice | office | o ` - Sends a random gif related to The Office.
@@ -53,6 +55,10 @@
   * `parksAndRec | parks | pnr ` - Sends a random gif related to Parks and Rec.
 
   * `brooklyn99 | b99 | 99 ` - Sends a random gif related to Brooklyn Nine-Nine.
+
+  * `meme ` - Sends a random meme from Reddit.
+
+  * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
 
 ## Insult
   * `insult | i [insultLevel]` - Sends you an insult.
@@ -73,30 +79,32 @@
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
+## Weather
+  * `urban | urbanDictionary | urbanDict <term>` - Gives you the top 5 urban dictionary entries for a term.
+
+  * `forecast | getWeather <location>` - Gets the weather for a specified location.
+
 ## Math
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `factor | f <expression>` - Factors a mathematical expression.
-
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
   * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
-
   * `factorial | ! <number>` - Gets the factorial of a number.
 
-  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
 
   * `expand | exp | e <expression>` - Expands a mathematical expression.
 
+  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+
   * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `factor | f <expression>` - Factors a mathematical expression.
 
 ## Rank
   * `rank | r ` - Shows you your current level and experience in this server.
-
-## Weather
-  * `forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Miscellaneous
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
