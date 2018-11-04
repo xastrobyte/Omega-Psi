@@ -1,14 +1,14 @@
 from category.category import Category
 from category.code import Code
-from cateogry.game import Game
-from category.gif import Gif
+from category.game import Game
+from category.image import Image
 from category.insult import Insult
+from category.internet import Internet
 from category.math import Math
 from category.rank import Rank
-from category.weather import Weather
 from category.misc import Misc
 
-from util.command.command import Command
+from util.command import Command
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.utils import sendMessage
@@ -16,7 +16,7 @@ from util.utils import sendMessage
 import discord
 
 class BotModerator(Category):
-    
+
     DESCRIPTION = "Very private stuff. Only bot moderators/developers can access these."
 
     EMBED_COLOR = 0xA456B0
@@ -158,19 +158,19 @@ class BotModerator(Category):
                     "optional": False,
                     "accepted": {
                         "playing": {
-                            "alternatives": ["playing"],
+                            "alternatives": ["playing", "Playing"],
                             "info": "The playing activity type."
                         },
                         "streaming": {
-                            "alternatives": ["streaming"],
+                            "alternatives": ["streaming", "Streaming"],
                             "info": "The streaming activity type."
                         },
                         "listening": {
-                            "alternatives": ["listening"],
+                            "alternatives": ["listening", "Listening"],
                             "info": "The listening activity type."
                         },
                         "watching": {
-                            "alternatives": ["watching"],
+                            "alternatives": ["watching", "Watching"],
                             "info": "The watching activity type."
                         }
                     }
@@ -193,7 +193,7 @@ class BotModerator(Category):
                 }
             }
         })
-        
+
         self._kill = Command({
             "alternatives": ["stop", "quit", "kill"],
             "info": "Kills the bot.",
@@ -221,11 +221,11 @@ class BotModerator(Category):
         self._categories = {
             "Code": Code(None),
             "Game": Game(None),
-            "Gif": Gif(None),
+            "Image": Image(None),
             "Insult": Insult(None),
+            "Internet": Internet(None),
             "Math": Math(None),
             "Rank": Rank(None),
-            "Weather": Weather(None),
             "Misc": Misc(None)
         }
     
@@ -312,11 +312,11 @@ class BotModerator(Category):
                 if command.getAlternatives()[0] in bot["inactive_commands"]:
                     bot["inactive_commands"].pop(command.getAlternatives()[0])
                     result += "`{}` was activated globally.\n".format(
-                        commandObject.getAlternatives()[0]
+                        command.getAlternatives()[0]
                     )
                 else:
                     result += "`{}` is already globally active.\n".format(
-                        commandObject.getAlternatives()[0]
+                        command.getAlternatives()[0]
                     )
         
         else:
