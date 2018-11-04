@@ -1,16 +1,16 @@
 from category.category import Category
 from category.code import Code
 from category.game import Game
-from category.gif import Gif
+from category.image import Image
 from category.insult import Insult
+from category.internet import Internet
 from category.math import Math
 from category.rank import Rank
-from category.weather import Weather
 from category.misc import Misc
 from category.serverModerator import ServerModerator
 from category.botModerator import BotModerator
 
-from util.command.command import Command
+from util.command import Command
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
@@ -28,11 +28,11 @@ class Help(Category):
         "Help": ":question:",
         "Code": ":keyboard:",
         "Game": ":video_game:",
-        "Gif": ":film_frames:",
+        "Image": ":film_frames:",
         "Insult": ":exclamation:",
+        "Internet": ":desktop:",
         "Math": ":asterisk:",
         "Rank": ":up:",
-        "Weather": ":cloud:",
         "Misc": ":mag:",
         "Server Moderator": ":pick:",
         "Bot Moderator": ":gear:"
@@ -57,6 +57,11 @@ class Help(Category):
                 }
             },
             "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You don't need any more than 1 parameter in the help command."
+                    ]
+                },
                 Category.INVALID_CATEGORY: {
                     "messages": [
                         "That is not a valid category."
@@ -92,7 +97,7 @@ class Help(Category):
         self._categories = {
             "Help": {
                 "object": self,
-                "command": "help"
+                "command": "bot"
             },
             "Code": {
                 "object": Code(None),
@@ -102,13 +107,17 @@ class Help(Category):
                 "object": Game(None),
                 "command": "game"
             },
-            "Gif": {
-                "object": Gif(None),
-                "command": "gifs"
+            "Image": {
+                "object": Image(None),
+                "command": "image"
             },
             "Insult": {
                 "object": Insult(None),
                 "command": "insults"
+            },
+            "Internet": {
+                "object": Internet(None),
+                "command": "internet"
             },
             "Math": {
                 "object": Math(None),
@@ -116,13 +125,9 @@ class Help(Category):
             },
             "Rank": {
                 "object": Rank(None),
-                "command": "rank"
+                "command": "leveling"
             },
-            "Weather": {
-                "object": Weather(None),
-                "command": "weather"
-            },
-            "Miscellaneous": {
+            "Misc": {
                 "object": Misc(None),
                 "command": "misc"
             },
@@ -193,7 +198,8 @@ class Help(Category):
                         "[Need more? Hover me]({} \"{}\")"
                     ).format(
                         OmegaPsi.PREFIX, self._categories[category]["command"],
-                        Category.GITHUB, self._categories[category]["object"].DESCRIPTION
+                        Category.GITHUB + "#" + category.replace(" ", "-"), 
+                        self._categories[category]["object"].DESCRIPTION
                     )
                 )
         
@@ -212,9 +218,10 @@ class Help(Category):
         
         return False
 
-    def getHelpForCategory(self, categoryName, *, isNSFW = False):
+    def getHelpForCategory(self, discordMessage, categoryName, *, isNSFW = False):
         """Returns a help menu for a specific category.\n
 
+        discordMessage - The Discord Message that was sent.\n
         categoryName - The category to get help for.\n
 
         Keyword Arguments:\n
@@ -224,8 +231,25 @@ class Help(Category):
         # Iterate through categories to see if the command matches anything
         for category in self._categories:
             helpForCategory = self._categories[category]["command"]
+
+            # Category name matches current category
             if categoryName == helpForCategory:
-                return self.getCategory(self._categories[category]["object"], isNSFW = isNSFW)
+
+                # Get bot mod and server mod info
+                onBotModAndIsBotMod = category == "Bot Moderator" and OmegaPsi.isAuthorModerator(discordMessage.author)
+                if discordMessage.guild != None:
+                    onServerModAndIsServerMod = category == "Server Moderator" and Server.isAuthorModerator(discordMessage.guild, discordMessage.author)
+                else:
+                    onServerModAndIsServerMod = False
+                
+                if onBotModAndIsBotMod or onServerModAndIsServerMod or category not in ["Server Moderator", "Bot Moderator"]:
+                    return self.getCategory(self._categories[category]["object"], isNSFW = isNSFW)
+                
+                elif not onBotModAndIsBotMod:
+                    return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS_CATEGORY)
+                
+                elif not onServerModAndIsServerMod:
+                    return Server.getErrorMessage(Server.NO_ACCESS_CATEGORY)
         
         # Category did not match, send error message
         return self.getErrorMessage(self._help, Category.INVALID_CATEGORY)
@@ -334,7 +358,7 @@ class Help(Category):
 
                     # See if parameter is a category
                     if self.isCategoryName(parameters[0]):
-                        embed = await self.run(message, self._help, self.getHelpForCategory, parameters[0], isNSFW = isNSFW)
+                        embed = await self.run(message, self._help, self.getHelpForCategory, message, parameters[0], isNSFW = isNSFW)
                     else:
                         embed = await self.run(message, self._help, self.getHelpForCommand, parameters[0], isNSFW = isNSFW)
 
