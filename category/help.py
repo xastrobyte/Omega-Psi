@@ -1,4 +1,3 @@
-from category.category import Category
 from category.code import Code
 from category.game import Game
 from category.image import Image
@@ -10,15 +9,26 @@ from category.misc import Misc
 from category.serverModerator import ServerModerator
 from category.botModerator import BotModerator
 
-from util.command import Command
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
+from supercog import Category, Command
 import discord, os
 
 class Help(Category):
+    """Creates a Help extension.
+
+    This class holds the logic behind getting help for a category of commands or for a specific command.
+
+    Parameters:
+        client (discord.ClientUser): The Discord Client to use for sending messages.
+    """
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     DESCRIPTION = "Shows you the help menu."
 
@@ -38,15 +48,35 @@ class Help(Category):
         "Bot Moderator": ":gear:"
     }
 
+    GITHUB = "https://www.github.com/FellowHashbrown/omega-psi-py/blob/master/category/commands.md"
+
     MARKDOWN_LOCATION = "commands.md"
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    INVALID_CATEGORY = "INVALID_CATEGORY"
+    INVALID_COMMAND = "INVALID_COMMAND"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     def __init__(self, client):
+        """Creates a Help extension.
+
+        This class holds the logic behind getting help for a category of commands or for a specific command.
+
+        Parameters:
+            client (discord.ClientUser): The Discord Client to use for sending messages.
+        """
         super().__init__(client, "Help")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._help = Command({
+        self._help = Command(commandDict = {
             "alternatives": ["help", "h", "?"],
             "info": "Gives you help on all commands or a specific command in the bot.",
             "can_be_deactivated": False,
@@ -62,12 +92,12 @@ class Help(Category):
                         "You don't need any more than 1 parameter in the help command."
                     ]
                 },
-                Category.INVALID_CATEGORY: {
+                Help.INVALID_CATEGORY: {
                     "messages": [
                         "That is not a valid category."
                     ]
                 },
-                Category.INVALID_COMMAND: {
+                Help.INVALID_COMMAND: {
                     "messages": [
                         "That is not a valid command."
                     ]
@@ -75,7 +105,7 @@ class Help(Category):
             }
         })
 
-        self._markdown = Command({
+        self._markdown = Command(commandDict = {
             "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
             "info": "Creates and sends the markdown file for the commands.",
             "bot_moderator_only": True,
@@ -161,7 +191,8 @@ class Help(Category):
     def getHelpMenu(self, message):
         """Returns a full help menu on all the commands in Omega Psi.\n
 
-        message - The Discord Message to determine if moderator commands will be shown and if NSFW results can appear.\n
+        Parameters:
+            message (discord.Message): The Discord Message to determine if moderator commands will be shown and if NSFW results can appear.\n
         """
 
         # Setup Help Embed
@@ -198,7 +229,7 @@ class Help(Category):
                         "[Need more? Hover me]({} \"{}\")"
                     ).format(
                         OmegaPsi.PREFIX, self._categories[category]["command"],
-                        Category.GITHUB + "#" + category.replace(" ", "-"), 
+                        Help.GITHUB + "#" + category.replace(" ", "-"), 
                         self._categories[category]["object"].DESCRIPTION
                     )
                 )
@@ -208,7 +239,8 @@ class Help(Category):
     def isCategoryName(self, categoryName):
         """Returns whether or not the category is a category name.\n
 
-        categoryName - The category name to get.\n
+        Parameters:
+            categoryName (str): The category name to get.\n
         """
 
         # Iterate through categories
@@ -221,11 +253,10 @@ class Help(Category):
     def getHelpForCategory(self, discordMessage, categoryName, *, isNSFW = False):
         """Returns a help menu for a specific category.\n
 
-        discordMessage - The Discord Message that was sent.\n
-        categoryName - The category to get help for.\n
-
-        Keyword Arguments:\n
-         - isNSFW - Whether or not to show NSFW results.\n
+        Parameters:
+            discordMessage (discord.Message): The Discord Message that was sent.\n
+            categoryName (str): The category to get help for.\n
+            isNSFW (bool): Whether or not to show NSFW results.\n
         """
 
         # Iterate through categories to see if the command matches anything
@@ -243,7 +274,32 @@ class Help(Category):
                     onServerModAndIsServerMod = False
                 
                 if onBotModAndIsBotMod or onServerModAndIsServerMod or category not in ["Server Moderator", "Bot Moderator"]:
-                    return self.getCategory(self._categories[category]["object"], isNSFW = isNSFW)
+                    categoryHelp = self.getCategoryHelp(self._categories[category]["object"], isNSFW = isNSFW)
+
+                    embed = discord.Embed(
+                        title = categoryHelp["title"],
+                        description = "Help for the [{} Commands]({} \"{}\").".format(
+                            categoryHelp["title"],
+                            Help.GITHUB + "#" + categoryHelp["title"].replace(" ", "-"),
+                            self._categories[category]["object"].DESCRIPTION
+                        ),
+                        colour = Help.EMBED_COLOR
+                    )
+
+                    count = 0
+                    for field in categoryHelp["fields"]:
+                        count += 1
+                        embed.add_field(
+                            name = "Commands {}".format(
+                                "({} / {})".format(
+                                    count, len(categoryHelp["fields"])
+                                ) if len(categoryHelp["fields"]) > 1 else ""
+                            ),
+                            value = field,
+                            inline = False
+                        )
+                    
+                    return embed
                 
                 elif not onBotModAndIsBotMod:
                     return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS_CATEGORY)
@@ -252,28 +308,58 @@ class Help(Category):
                     return Server.getErrorMessage(Server.NO_ACCESS_CATEGORY)
         
         # Category did not match, send error message
-        return self.getErrorMessage(self._help, Category.INVALID_CATEGORY)
+        return getErrorMessage(self._help, Help.INVALID_CATEGORY)
     
     def getHelpForCommand(self, command, *, isNSFW = False):
         """Returns help for a specific command.\n
 
-        command - The command, or an alternative, to get help for.\n
-
-        Keyword Arguments:\n
-         - isNSFW - Whether or not to show NSFW results.\n
+        Parameters:
+            command (supercog.Command): The command, or an alternative, to get help for.\n
+            isNSFW (bool): Whether or not to show NSFW results.\n
         """
 
         # Iterate through Categories to see if the command matches anything
         for category in self._categories:
             helpForCommand = self._categories[category]["object"].getHelp(command, isNSFW = isNSFW)
             if helpForCommand != None:
-                return helpForCommand
+
+                embed = discord.Embed(
+                    title = command,
+                    description = "{}\n{}\n".format(
+                        helpForCommand["restriction"],
+                        helpForCommand["title"]
+                    ),
+                    colour = Help.EMBED_COLOR
+                )
+
+                # Iterate through accepted parameters
+                for accepted in helpForCommand["accepted"]:
+
+                    # Add each field for a single accepted parameter
+                    count = 0
+                    for field in helpForCommand["accepted"][accepted]:
+                        count += 1
+                        embed.add_field(
+                            name = "Accepted Parameters for `{}` {}".format(
+                                accepted,
+                                "({} / {})".format(
+                                    count, len(helpForCommand["accepted"][accepted])
+                                ) if len(helpForCommand["accepted"][accepted]) > 1 else ""
+                            ),
+                            value = field,
+                            inline = False
+                        )
+
+                return embed
             
         # Command did not match, send error message
-        return self.getErrorMessage(self._help, Category.INVALID_COMMAND)
+        return getErrorMessage(self._help, Help.INVALID_COMMAND)
     
     async def markdown(self, author):
         """Returns the markdown file for the commands.\n"
+
+        Parameters:
+            author (discord.User): The sender of the `markdown` command.
         """
 
         # Create markdown text
@@ -322,7 +408,8 @@ class Help(Category):
     async def on_message(self, message):
         """Parses a message and runs a Help Category command if it can.\n
 
-        message - The Discord Message to parse.\n
+        Parameters:
+            message (discord.Message): The Discord Message to parse.\n
         """
 
         # Make sure message starts with the prefix
@@ -339,7 +426,7 @@ class Help(Category):
                 # 0 Parameter Exist (full help menu)
                 if len(parameters) == 0:
 
-                    embed = await self.run(message, self._help, self.getHelpMenu, message)
+                    embed = await run(message, self._help, self.getHelpMenu, message)
 
                     await sendMessage(
                         self.client,
@@ -358,9 +445,9 @@ class Help(Category):
 
                     # See if parameter is a category
                     if self.isCategoryName(parameters[0]):
-                        embed = await self.run(message, self._help, self.getHelpForCategory, message, parameters[0], isNSFW = isNSFW)
+                        embed = await run(message, self._help, self.getHelpForCategory, message, parameters[0], isNSFW = isNSFW)
                     else:
-                        embed = await self.run(message, self._help, self.getHelpForCommand, parameters[0], isNSFW = isNSFW)
+                        embed = await run(message, self._help, self.getHelpForCommand, parameters[0], isNSFW = isNSFW)
 
                     await sendMessage(
                         self.client,
@@ -373,7 +460,7 @@ class Help(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._help, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._help, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Markdown
@@ -384,7 +471,7 @@ class Help(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._markdown, self.markdown, message.author)
+                        embed = await run(message, self._markdown, self.markdown, message.author)
                     )
                 
                 # 1 or More Parameters Exist
@@ -392,7 +479,7 @@ class Help(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._markdown, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._markdown, Category.TOO_MANY_PARAMETERS)
                     )
 
 def setup(client):
