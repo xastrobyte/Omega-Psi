@@ -1,11 +1,9 @@
-from category.category import Category
-
-from util.command.command import Command
 from util.file.server import Server
 from util.rank.image import createRankImage
 
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
+from supercog import Category, Command
 import os
 
 class Rank(Category):
@@ -20,9 +18,10 @@ class Rank(Category):
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._rank = Command({
+        self._rank = Command(commandDict = {
             "alternatives": ["rank", "r"],
             "info": "Shows you your current level and experience in this server.",
+            "run_in_private": False,
             "errors": {
                 Category.TOO_MANY_PARAMETERS: {
                     "messages": [
@@ -76,7 +75,7 @@ class Rank(Category):
                 # 0 Parameters Exist
                 if len(parameters) == 0:
 
-                    imageSource = await self.run(message, self._rank, self.getRank, message.author)
+                    imageSource = await run(message, self._rank, self.getRank, message.author)
                     
                     if type(imageSource) == str:
                         await sendMessage(
@@ -98,7 +97,7 @@ class Rank(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._rank, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._rank, Category.TOO_MANY_PARAMETERS)
                     )
 
 def setup(client):
