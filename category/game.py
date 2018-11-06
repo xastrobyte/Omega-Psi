@@ -1,20 +1,46 @@
-from category.category import Category
-
-from util.command.command import Command
 from util.file.server import Server
+from util.file.user import User
 from util.game.game import getNoGame, getQuitGame
 from util.game import hangman
 from util.game import scramble
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
 from random import choice as choose
+from supercog import Category, Command
 import discord
 
 class Game(Category):
+    """Creates a Game extension.
+
+    This class holds commands that involve minigames or any type of game stats.
+
+    Parameters:
+        client (discord.ClientUser): The Discord Client to use for sending messages.
+    """
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     DESCRIPTION = "You can play games with these."
 
     EMBED_COLOR = 0xFF8000
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    ALREADY_GUESSED = "ALREADY_GUESSED"
+    NOT_A_LETTER = "NOT_A_LETTER"
+    LETTER_TOO_LONG = "LETTER_TOO_LONG"
+    TOO_MANY_GAMES = "TOO_MANY_GAMES"
+    
+    INVALID_DIFFICULTY = "INVALID_DIFFICULTY"
+    INVALID_INPUT = "INVALID_INPUT"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Other Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     # Hangman Icon URL's
     HANGMAN_ICON = "https://i.ytimg.com/vi/r91yPViqRX0/maxresdefault.jpg"
@@ -33,20 +59,31 @@ class Game(Category):
     MAX_SCRAMBLE_GUESSES = 10
     MAX_RPS_GAMES = 9
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     def __init__(self, client):
+        """Creates a Game extension.
+
+        This class holds commands that involve minigames or any type of game stats.
+
+        Parameters:
+            client (discord.ClientUser): The Discord Client to use for sending messages.
+        """
         super().__init__(client, "Game")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._hangman = Command({
+        self._hangman = Command(commandDict = {
             "alternatives": ["hangman", "playHangman"],
             "info": "Let's you play hangman!",
             "parameters": {
                 "difficulty": {
                     "info": "The difficulty of hangman to play.",
                     "optional": True,
-                    "accepted": {
+                    "accepted_parameters": {
                         "easy": {
                             "alternatives": ["easy", "simple", "e"],
                             "info": "Play an easy game of hangman."
@@ -67,17 +104,17 @@ class Game(Category):
                 }
             },
             "errors": {
-                Category.ALREADY_GUESSED: {
+                Game.ALREADY_GUESSED: {
                     "messages": [
                         "You already guessed that letter."
                     ]
                 },
-                Category.INVALID_INPUT: {
+                Game.INVALID_INPUT: {
                     "messages": [
                         "The input was invalid."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Game.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to play a game of hangman, you only need the difficulty."
                     ]
@@ -85,14 +122,14 @@ class Game(Category):
             }
         })
 
-        self._rps = Command({
+        self._rps = Command(commandDict = {
             "alternatives": ["rockPaperScissors", "rps"],
             "info": "Allows you to play Rock Paper Scissors with me.",
             "parameters": {
                 "action": {
                     "info": "What action to start out with. (rock, paper, or scissors).",
                     "optional": False,
-                    "accepted": {
+                    "accepted_parameters": {
                         "rock": {
                             "alternatives": ["rock", "r"],
                             "info": "Do a rock action."
@@ -109,17 +146,17 @@ class Game(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Game.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "You need to type in the action you want to do."
                     ]
                 },
-                Category.INVALID_INPUT: {
+                Game.INVALID_INPUT: {
                     "messages": [
                         "The input was invalid."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Game.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to play rock, paper, scissors, you only need an amount of games."
                     ]
@@ -127,14 +164,14 @@ class Game(Category):
             }
         })
 
-        self._scramble = Command({
+        self._scramble = Command(commandDict = {
             "alternatives": ["scramble"],
             "info": "Allows you to guess an unscrambled word.",
             "parameters": {
                 "difficulty": {
                     "info": "The difficulty of the game.",
                     "optional": True,
-                    "accepted": {
+                    "accepted_parameters": {
                         "normal": {
                             "alternatives": ["normal", "n", "easy", "e"],
                             "info": "Only each word is scrambled."
@@ -151,19 +188,31 @@ class Game(Category):
                 }
             },
             "errors": {
-                Category.ALREADY_GUESSED: {
+                Game.ALREADY_GUESSED: {
                     "messages": [
                         "You already guessed that word."
                     ]
                 },
-                Category.INVALID_INPUT: {
+                Game.INVALID_INPUT: {
                     "messages": [
                         "The input was invalid."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Game.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "To guess a scrambled word, you only need the difficulty."
+                    ]
+                }
+            }
+        })
+
+        self._stats = Command(commandDict = {
+            "alternatives": ["stats", "gameStats"],
+            "info": "Gives you stats on the games you've won/lost.",
+            "errors": {
+                Game.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to check your game stats, you don't need any parameters."
                     ]
                 }
             }
@@ -172,7 +221,8 @@ class Game(Category):
         self.setCommands([
             self._hangman,
             self._rps,
-            self._scramble
+            self._scramble,
+            self._stats
         ])
 
         self._hangmanGames = {}
@@ -186,11 +236,10 @@ class Game(Category):
     def hangman(self, discordUser, *, difficulty = None, guess = None):
         """Creates a hangman game or continues a hangman game.\n
 
-        discordUser - The Discord User's to create a game or continue one.\n
-
-        Keyword Arguments:\n
-            difficulty - The difficulty of the game to create.\n
-            guess - The guess that the user made.\n
+        Parameters:
+            discordUser (discord.Member): The Discord User to create a game or continue one.\n
+            difficulty (str): The difficulty of the game to create.\n
+            guess (chr): The guess that the user made.\n
         """
 
         # Check if game was started in server
@@ -257,8 +306,9 @@ class Game(Category):
                 word = game["word"]
                 guesses = game["guesses"] + 1
 
-                # Delete game instance
+                # Delete game instance; Update stats
                 self._hangmanGames[serverId].pop(authorId)
+                User.updateHangman(discordUser, didWin = True)
 
                 return discord.Embed(
                     title = "Guessed",
@@ -279,11 +329,11 @@ class Game(Category):
 
             # Make sure guess is a letter; Not number
             if guess.isnumeric():
-                return self.getErrorMessage(self._hangman, Category.NOT_A_LETTER)
+                return getErrorMessage(self._hangman, Game.INVALID_INPUT)
             
             # Make sure guess was not already guessed
             if guess in game["guessed"]:
-                return self.getErrorMessage(self._hangman, Category.ALREADY_GUESSED)
+                return getErrorMessage(self._hangman, Game.ALREADY_GUESSED)
             
             # Guess was not already guessed; See if it was in word and add to found
             if guess in game["word"]:
@@ -304,6 +354,7 @@ class Game(Category):
                 word = game["word"]
                 fails = game["fails"]
                 self._hangmanGames[serverId].pop(authorId)
+                User.updateHangman(discordUser, didWin = False)
 
                 return discord.Embed(
                     title = "Game Ended - Word: `{}`".format(word),
@@ -325,6 +376,7 @@ class Game(Category):
                 word = game["word"]
                 guesses = game["guesses"]
                 self._hangmanGames[serverId].pop(authorId)
+                User.updateHangman(discordUser, didWin = True)
 
                 return discord.Embed(
                     title = "Success!",
@@ -351,10 +403,12 @@ class Game(Category):
                 value = hangman.getHangman(game["fails"])
             )
     
-    def rps(self, action):
+    def rps(self, discordUser, action):
         """Starts or continues a Rock Paper Scissors game.\n
 
-        action - The action the Discord User did.\n
+        Parameters:
+            discordUser: The Discord User that played the game.\n
+            action: The action the Discord User did.\n
         """
 
         # Get a random rps action
@@ -370,7 +424,7 @@ class Game(Category):
         
         # Action was invalid
         else:
-            return self.getErrorMessage(self._rps, Category.INVALID_INPUT)
+            return getErrorMessage(self._rps, Game.INVALID_INPUT)
 
         # Check if values are the same
         message = "You had {} and I had {}".format(
@@ -388,6 +442,7 @@ class Game(Category):
         ):
             title = "You Won!"
             icon = Game.SUCCESS_ICON
+            User.updateRPS(discordUser, didWin = True)
 
         elif (
             (botRps == "rock" and userRps == "scissors") or
@@ -396,6 +451,7 @@ class Game(Category):
         ):
             title = "You Lost!"
             icon = Game.FAILED_ICON
+            User.updateRPS(discordUser, didWin = False)
         
         return discord.Embed(
             title = title,
@@ -408,7 +464,8 @@ class Game(Category):
     def scramble(self, discordUser, *, difficulty = None, guess = None):
         """Starts or continues a scrambled word game.\n
 
-        discordUser - The Discord User that started the game.\n
+        Parameters:
+            discordUser: The Discord User that started the game.\n
         """
 
         # Check if game was started in server
@@ -453,7 +510,7 @@ class Game(Category):
             # Return embed
             return discord.Embed(
                 title = "Scrambled",
-                description = "Unscramble this word/phrase. Good luck.\n{}".format(
+                description = "Unscramble this word/phrase. Good luck.\n`{}`".format(
                     game["scrambled"]
                 ),
                 colour = Game.EMBED_COLOR
@@ -475,6 +532,7 @@ class Game(Category):
                     word = game["word"]
                     guesses = game["guesses"] + 1
                     self._scrambleGames[serverId].pop(authorId)
+                    User.updateScramble(discordUser, didWin = True)
 
                     return discord.Embed(
                         title = "Correct!",
@@ -489,7 +547,7 @@ class Game(Category):
 
                     # See if guess was already guessed
                     if guess in game["guessed"]:
-                        return self.getErrorMessage(self._scramble, Category.ALREADY_GUESSED)
+                        return getErrorMessage(self._scramble, Game.ALREADY_GUESSED)
 
                     # See if guess limit was reached
                     if game["guesses"] + 1 >= Game.MAX_SCRAMBLE_GUESSES:
@@ -497,6 +555,7 @@ class Game(Category):
                         # Delete game instance
                         word = game["word"]
                         self._scrambleGames[serverId].pop(authorId)
+                        User.updateScramble(discordUser, didWin = False)
 
                         return discord.Embed(
                             title = "Failed",
@@ -514,13 +573,63 @@ class Game(Category):
 
                     return discord.Embed(
                         title = "Nope",
-                        description = "That is not the word.\nAttempts Left: {}".format(
-                            Game.MAX_SCRAMBLE_GUESSES - game["guesses"]
+                        description = "That is not the word.\nAttempts Left: {}\n`{}`".format(
+                            Game.MAX_SCRAMBLE_GUESSES - game["guesses"],
+                            game["scrambled"]
                         ),
                         colour = Game.EMBED_COLOR
                     ).set_thumbnail(
                         url = Game.SCRAMBLE_ICON
                     )
+    
+    def stats(self, discordUser):
+        """Shows the stats for the specified Discord User.\n
+
+        Parameters:
+            discordUser: The Discord User to get the stats of.\n
+        """
+
+        # Open user file
+        user = User.openUser(discordUser)
+
+        # Get game stats
+        games = {
+            ":skull_crossbones: Hangman": user["stats"]["hangman"].copy(),
+            ":scissors: Rock Paper Scissors": user["stats"]["rps"].copy(),
+            ":cyclone: Scramble": user["stats"]["scramble"].copy()
+        }
+
+        # Close user file
+        User.closeUser(user)
+
+        embed = discord.Embed(
+            title = "Stats",
+            description = "Game Stats for {}".format(discordUser.mention),
+            colour = Game.EMBED_COLOR
+        )
+
+        # Add each game
+        for game in games:
+
+            # Get won / lost ratio
+            if games[game]["won"] == 0 and games[game]["lost"] == 0:
+                winLostRatio = 0
+            elif games[game]["lost"] == 0:
+                winLostRatio = round(games[game]["won"], 2)
+            else:
+                winLostRatio = round(games[game]["won"] / games[game]["lost"], 2)
+
+            embed.add_field(
+                name = game + "({})".format(
+                    winLostRatio
+                ),
+                value = "Won: {}\nLost: {}\n".format(
+                    games[game]["won"],
+                    games[game]["lost"]
+                )
+            )
+        
+        return embed
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Helper Methods
@@ -529,9 +638,10 @@ class Game(Category):
     def isPlayerInGame(self, gameDict, author, server = None):
         """Returns whether or not a player is in a game dictionary.\n
 
-        gameDict - The game dictionary to look in.\n
-        author - The player.\n
-        server - The server. Defaults to \"private\".\n
+        Parameters:
+            gameDict (dict): The game dictionary to look in.\n
+            author (discord.User): The player.\n
+            server (discord.Server): The server. Defaults to \"private\".\n
         """
 
         # Get server and author ID's
@@ -559,7 +669,8 @@ class Game(Category):
     async def on_message(self, message):
         """Parses a message and runs a Game Category command if it can.\n
 
-        message - The Discord Message to parse.\n
+        Parameters:
+            message (discord.Message): The Discord Message to parse.\n
         """
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -582,7 +693,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._hangman, self.hangman, message.author, difficulty = "".join(parameters))
+                        embed = await run(message, self._hangman, self.hangman, message.author, difficulty = "".join(parameters))
                     )
                 
                 # 2 or More Parameters Exist
@@ -590,7 +701,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._hangman, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._hangman, Game.TOO_MANY_PARAMETERS)
                     )
             
             # Rock Paper Scissors Command
@@ -601,7 +712,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._rps, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._rps, Game.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 Parameter Exists
@@ -609,7 +720,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._rps, self.rps, parameters[0])
+                        embed = await run(message, self._rps, self.rps, message.author, parameters[0])
                     )
                 
                 # 2 or More Parameters Exist
@@ -617,7 +728,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._hangman, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._hangman, Game.TOO_MANY_PARAMETERS)
                     )
             
             # Scramble Command
@@ -628,7 +739,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._scramble, self.scramble, message.author, difficulty = "".join(parameters))
+                        embed = await run(message, self._scramble, self.scramble, message.author, difficulty = "".join(parameters))
                     )
                 
                 # 2 or More Parameters Exist
@@ -636,7 +747,26 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._scramble, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._scramble, Game.TOO_MANY_PARAMETERS)
+                    )
+            
+            # Stats Command
+            elif command in self._stats.getAlternatives():
+
+                # 0 Parameters Exist
+                if len(parameters) == 0:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await run(message, self._stats, self.stats, message.author)
+                    )
+                
+                # 1 or More Parameters Exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = getErrorMessage(self._stats, Game.TOO_MANY_PARAMETERS)
                     )
         
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
