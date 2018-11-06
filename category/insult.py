@@ -1,15 +1,17 @@
-from category.category import Category
-
-from util.command.command import Command
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
 from random import choice as choose
 
+from supercog import Category, Command
 import discord, os
 
 class Insult(Category):
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     DESCRIPTION = "If you feel in the mood to be insulted, here ya are."
 
@@ -17,20 +19,26 @@ class Insult(Category):
 
     EMBED_COLOR = 0x800000
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    INVALID_INSULT_LEVEL = "INVALID_INSULT_LEVEL"
+
     def __init__(self, client):
         super().__init__(client, "Insult")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._insult = Command({
+        self._insult = Command(commandDict = {
             "alternatives": ["insult", "i"],
             "info": "Sends you an insult.",
             "parameters": {
                 "insultLevel": {
                     "optional": True,
                     "info": "The level of insult to send.",
-                    "accepted": {
+                    "accepted_parameters": {
                         "touchy": {
                             "alternatives": ["touchy", "t"],
                             "info": "Soft insults for a soft person.",
@@ -52,7 +60,7 @@ class Insult(Category):
                         "Whoa man. The insult command doesn't take more than a single parameter."
                     ]
                 },
-                Category.INVALID_INSULT_LEVEL: {
+                Insult.INVALID_INSULT_LEVEL: {
                     "messages": [
                         "That is not a valid insult level. Try `{}help insult` to see the insult levels.".format(OmegaPsi.PREFIX)
                     ]
@@ -60,14 +68,14 @@ class Insult(Category):
             }
         })
 
-        self._add = Command({
+        self._add = Command(commandDict = {
             "alternatives": ["addInsult", "addI", "add"],
             "info": "Allows you to add your own insult.",
             "parameters": {
                 "insultLevel": {
                     "optional": False,
                     "info": "The level of insult to add.",
-                    "accepted": {
+                    "accepted_parameters": {
                         "touchy": {
                             "alternatives": ["touchy", "t"],
                             "info": "Soft insults for a soft person.",
@@ -98,7 +106,7 @@ class Insult(Category):
                         "Whoa man. The add insult command doesn't take more than two parameters."
                     ]
                 },
-                Category.INVALID_INSULT_LEVEL: {
+                Insult.INVALID_INSULT_LEVEL: {
                     "messages": [
                         "That is not a valid insult level. Try `!help addInsult` to see the insult levels."
                     ]
@@ -106,14 +114,14 @@ class Insult(Category):
             }
         })
 
-        self._list = Command({
+        self._list = Command(commandDict = {
             "alternatives": ["listInsults", "list", "l"],
             "info": "Lists the insults that can be sent.",
             "parameters": {
                 "insultLevel": {
                     "optional": True,
                     "info": "The level of insult to send.",
-                    "accepted": {
+                    "accepted_parameters": {
                         "touchy": {
                             "alternatives": ["touchy", "t"],
                             "info": "Soft insults for a soft person.",
@@ -135,7 +143,7 @@ class Insult(Category):
                         "Whoa man. The list command doesn't take more than a single parameter."
                     ]
                 },
-                Category.INVALID_INSULT_LEVEL: {
+                Insult.INVALID_INSULT_LEVEL: {
                     "messages": [
                         "That is not a valid insult level. Try `!help listInsults` to see the insult levels."
                     ]
@@ -186,7 +194,7 @@ class Insult(Category):
         
         # Insult level was invalid
         else:
-            return self.getErrorMessage(self._insult, Category.INVALID_INSULT_LEVEL)
+            return getErrorMessage(self._insult, Insult.INVALID_INSULT_LEVEL)
         
         # Load insults file for insult level
         temp = open(Insult.INSULTS_LOCATION.format(insultLevel), "r")
@@ -231,7 +239,7 @@ class Insult(Category):
         
         # Insult level is invalid
         else:
-            return self.getErrorMessage(self._add, Category.INVALID_INSULT_LEVEL)
+            return getErrorMessage(self._add, Invalid.INVALID_INSULT_LEVEL)
         
         # Load insults file for insult level
         temp = open(Insult.INSULTS_LOCATION.format(insultLevel), "a")
@@ -354,7 +362,7 @@ class Insult(Category):
         
         # Insult level is invalid
         else:
-            return self.getErrorMessage(self._list, Category.INVALID_INSULT_LEVEL)
+            return getErrorMessage(self._list, Insult.INVALID_INSULT_LEVEL)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -388,7 +396,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(
+                        embed = await run(
                             message, self._insult, self.insult,
                             None if len(parameters) == 0 else parameters[0],
                             isNSFW
@@ -400,7 +408,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._insult, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._insult, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Add Insult Command
@@ -411,7 +419,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._add, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._add, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist (Add Insult)
@@ -419,7 +427,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(
+                        embed = await run(
                             message, self._add, self.addInsult,
                             parameters[0], parameters[1]
                         )
@@ -430,7 +438,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._add, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._add, Category.TOO_MANY_PARAMETERS)
                     )
             
             # List Insults Command
@@ -441,7 +449,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(
+                        embed = await run(
                             message, self._list, self.listInsults,
                             None if len(parameters) == 0 else parameters[0]
                         )
@@ -452,7 +460,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._list, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._list, Category.TOO_MANY_PARAMETERS)
                     )
 
 def setup(client):
