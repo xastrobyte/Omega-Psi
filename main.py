@@ -17,11 +17,11 @@ extensions = [
     "category.help",
     "category.code",
     "category.game",
-    "category.gif",
+    "category.image",
     "category.insult",
     "category.math",
     "category.rank",
-    "category.weather",
+    "category.internet",
     "category.misc",
     "category.serverModerator",
     "category.botModerator"
@@ -88,8 +88,12 @@ async def on_server_join(server):
         ),
         embed = discord.Embed(
             title = "Omega Psi Joined a Server",
-            description = "<@{}>".format(),
+            description = "Server Name: {}".format(server.name),
             colour = 0x00FF80
+        ).add_field(
+            name = "Server Owner: {}".format(server.owner.mention),
+            value = " ",
+            inline = False
         )
     )
 
@@ -102,7 +106,10 @@ async def on_server_remove(server):
 
 @omegaPsi.event
 async def on_server_update(before, after):
-    pass
+    
+    # Change server name in files and owner if changed
+    server = Server.openServer(after)
+    Server.closeServer(server)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Channel Events
@@ -132,6 +139,8 @@ async def on_member_join(member):
 
     # Update member
     Server.updateMember(member.guild, member)
+
+    # Assign role based off of invite used
 
     # Send message in join message channel
     if server["join_message"]["active"]:
