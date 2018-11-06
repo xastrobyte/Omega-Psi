@@ -1,22 +1,49 @@
-from category.category import Category
-
-from util.command.command import Command, timeout
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run, timeout
 
 from sympy.abc import x
 from sympy.parsing.sympy_parser import parse_expr
 from sympy.parsing.sympy_parser import standard_transformations
 from sympy.parsing.sympy_parser import implicit_multiplication_application
 
+from supercog import Category, Command
 import discord, sympy
 
 class Math(Category):
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     DESCRIPTION = "Need help with math? These commands got your back."
 
     EMBED_COLOR = 0xFF8000
+
+    APPENDAGES = {
+        "0": "th",
+        "1": "st",
+        "2": "nd",
+        "3": "rd",
+        "4": "th",
+        "5": "th",
+        "6": "th",
+        "7": "th",
+        "8": "th",
+        "9": "th"
+    }
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    NO_VARIABLES = "NO_VARIABLES"
+
+    INVALID_INPUT = "INVALID_INPUT"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
         super().__init__(client, "Math")
@@ -24,7 +51,7 @@ class Math(Category):
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._simplify = Command({
+        self._simplify = Command(commandDict = {
             "alternatives": ["simplify", "simp", "evaluate", "eval"],
             "info": "Simplifies a mathematical expression.",
             "parameters": {
@@ -42,7 +69,7 @@ class Math(Category):
             }
         })
 
-        self._expand = Command({
+        self._expand = Command(commandDict = {
             "alternatives": ["expand", "exp", "e"],
             "info": "Expands a mathematical expression.",
             "parameters": {
@@ -65,7 +92,7 @@ class Math(Category):
             }
         })
 
-        self._factor = Command({
+        self._factor = Command(commandDict = {
             "alternatives": ["factor", "f"],
             "info": "Factors a mathematical expression.",
             "parameters": {
@@ -88,7 +115,7 @@ class Math(Category):
             }
         })
 
-        self._factorial = Command({
+        self._factorial = Command(commandDict = {
             "alternatives": ["factorial", "!"],
             "info": "Gets the factorial of a number.",
             "parameters": {
@@ -103,6 +130,11 @@ class Math(Category):
                         "To get the factorial of a number, you need a number."
                     ]
                 },
+                Math.INVALID_INPUT: {
+                    "messages": [
+                        "That is not a number."
+                    ]
+                },
                 Category.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "To get the factorial of a number, you need 1 number."
@@ -111,7 +143,7 @@ class Math(Category):
             }
         })
 
-        self._fibonacci = Command({
+        self._fibonacci = Command(commandDict = {
             "alternatives": ["fibonacci", "fib"],
             "info": "Gets the fibonacci number of a number.",
             "parameters": {
@@ -126,6 +158,11 @@ class Math(Category):
                         "To get the fibonacci number of a number, you need a number."
                     ]
                 },
+                Math.INVALID_INPUT: {
+                    "messages": [
+                        "That is not a number."
+                    ]
+                },
                 Category.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "To get the fibonacci number of a number, you need 1 number."
@@ -134,7 +171,7 @@ class Math(Category):
             }
         })
 
-        self._solve = Command({
+        self._solve = Command(commandDict = {
             "alternatives": ["solve", "system"],
             "info": "Solves an equation or a system of equations.",
             "parameters": {
@@ -152,7 +189,7 @@ class Math(Category):
             }
         })
 
-        self._substitute = Command({
+        self._substitute = Command(commandDict = {
             "alternatives": ["substitute", "subs"],
             "info": "Substitutes variables in an equation.",
             "parameters": {
@@ -170,11 +207,16 @@ class Math(Category):
                     "messages": [
                         "In order to substitute variables in an expression, you need the expression and the variables."
                     ]
+                },
+                Math.NO_VARIABLES: {
+                    "messages": [
+                        "There are no variables to substitute."
+                    ]
                 }
             }
         })
 
-        self._derivative = Command({
+        self._derivative = Command(commandDict = {
             "alternatives": ["derivative", "derivate", "dv"],
             "info": "Gets the derivative of an expression.",
             "parameters": {
@@ -197,7 +239,7 @@ class Math(Category):
             }
         })
 
-        self._integral = Command({
+        self._integral = Command(commandDict = {
             "alternatives": ["integral", "integrate"],
             "info": "Gets the integral of an expression.",
             "parameters": {
@@ -247,16 +289,17 @@ class Math(Category):
         """
         
         # Standardize expression
+        originalExpression = expression
         expression = expression.replace(" ", "")
         try:
+            result = str(eval(expression))
+        except:
             expression = self._standardize(expression)
             result = str(sympy.simplify(expression)).replace("**", "^").replace("*", "")
-        except:
-            result = eval(result)
 
         # Return the result in an embed
         return discord.Embed(
-            name = "Result",
+            title = "Evaluation of `{}`".format(originalExpression),
             description = result,
             colour = Math.EMBED_COLOR
         )
@@ -269,11 +312,12 @@ class Math(Category):
         """
 
         # Standardize expression
+        originalExpression = expression
         expression = self._standardize(expression)
 
         # Return the result in an embed
         return discord.Embed(
-            name = "Result",
+            title = "Expansion of `{}`".format(originalExpression),
             description = str(sympy.simplify(expression)).replace("**", "^").replace("*", ""),
             colour = Math.EMBED_COLOR
         )
@@ -286,11 +330,12 @@ class Math(Category):
         """
         
         # Standardize expression
+        originalExpression = expression
         expression = self._standardize(expression)
 
         # Return the result in an embed
         return discord.Embed(
-            name = "Result",
+            title = "Factoring of `{}`".format(originalExpression),
             description = str(sympy.factor(expression)).replace("**", "^").replace("*", ""),
             colour = Math.EMBED_COLOR
         )
@@ -303,12 +348,18 @@ class Math(Category):
         """
         
         # Loop through number
+        originalNumber = number
+        try:
+            number = int(number)
+        except:
+            return getErrorMessage(self._factorial, Math.INVALID_INPUT)
+
         for n in range(number - 1, 0, -1):
             number *= n
 
         # Setup embed
         embed = discord.Embed(
-            name = "Result",
+            title = "Factorial of `{}`".format(originalNumber),
             description = " ",
             colour = Math.EMBED_COLOR
         )
@@ -353,6 +404,7 @@ class Math(Category):
         """
         
         # Standardize each expression
+        originalExpression = "\n".join(expressions)
         for exp in range(len(expressions)):
 
             # Check if expression has "="
@@ -375,8 +427,8 @@ class Math(Category):
             )
         
         return discord.Embed(
-            name = "Result",
-            description = result,
+            title = "Solution",
+            description = "`{}`\n".format(originalExpression) + result,
             colour = Math.EMBED_COLOR
         )
     
@@ -389,6 +441,7 @@ class Math(Category):
         """
         
         # Turn variables into a variable dictionary
+        originalExpression = expression
         varDict = {}
         for variable in variables:
 
@@ -400,13 +453,13 @@ class Math(Category):
         
         variables = varDict
         if len(variables) == 0:
-            return self.getErrorMessage(self._substitute, Category.NO_VARIABLES)
+            return getErrorMessage(self._substitute, Math.NO_VARIABLES)
         
         # Standardize expression
         expression = self._standardize(expression)
 
         return discord.Embed(
-            name = "Result",
+            title = "Subsitution of `{}`".format(originalExpression),
             description = str(eval(str(expression.subs(variables)))),
             colour = Math.EMBED_COLOR
         )
@@ -419,8 +472,11 @@ class Math(Category):
         """
 
         return discord.Embed(
-            name = "Result",
-            description = self._fibonacciHelper(number),
+            title = "`{}{}` Fibonacci number".format(
+                number,
+                Math.APPENDAGES[str(number)[-1]]
+            ),
+            description = str(self._fibonacciHelper(number)),
             colour = Math.EMBED_COLOR
         )
     
@@ -431,6 +487,11 @@ class Math(Category):
         """
 
         # Check if number is less than 2
+        try:
+            number = int(number)
+        except:
+            return getErrorMessage(self._fibonacci, Math.INVALID_INPUT)
+            
         if number < 2:
             return number
         
@@ -451,10 +512,11 @@ class Math(Category):
         """
         
         # Standardize expression
+        originalExpression = expression
         expression = self._standardize(expression)
 
         return discord.Embed(
-            name = "Result",
+            title = "Derivative of `{}`".format(originalExpression),
             description = str(sympy.diff(expression)).replace("**", "^").replace("*", ""),
             colour = Math.EMBED_COLOR
         )
@@ -467,10 +529,11 @@ class Math(Category):
         """
         
         # Standardize expression
+        originalExpression = expression
         expression = self._standardize(expression)
 
         return discord.Embed(
-            name = "Result",
+            title = "Integral of `{}`".format(originalExpression),
             description = str(sympy.integrate(expression, x)).replace("**", "^").replace("*", ""),
             colour = Math.EMBED_COLOR
         )
@@ -510,7 +573,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._simplify, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._simplify, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 or More Parameter Exists (simplify)
@@ -518,7 +581,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._simplify, self.simplify, " ".join(parameters))
+                        embed = await run(message, self._simplify, self.simplify, " ".join(parameters))
                     )
             
             # Expand Command
@@ -529,7 +592,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._expand, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._expand, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 Parameter Exists (expand)
@@ -537,7 +600,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._expand, self.expand, parameters[0])
+                        embed = await run(message, self._expand, self.expand, parameters[0])
                     )
 
                 # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
@@ -545,7 +608,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._expand, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._expand, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Factor Command
@@ -556,7 +619,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._factor, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._factor, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 Parameter Exists (factor)
@@ -564,7 +627,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._factor, self.factor, parameters[0])
+                        embed = await run(message, self._factor, self.factor, parameters[0])
                     )
 
                 # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
@@ -572,7 +635,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._factor, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._factor, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Factorial Command
@@ -583,7 +646,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._factorial, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._factorial, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 Parameter Exists (factorial)
@@ -591,7 +654,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._factorial, self.factor, parameters[0])
+                        embed = await run(message, self._factorial, self.factorial, parameters[0])
                     )
 
                 # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
@@ -599,7 +662,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._factorial, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._factorial, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Solve Command
@@ -610,7 +673,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._solve, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._solve, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 or More Parameter Exists (solve)
@@ -618,7 +681,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._solve, self.solve, parameters)
+                        embed = await run(message, self._solve, self.solve, parameters)
                     )
             
             # Substitute Command
@@ -629,7 +692,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._substitute, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._substitute, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 2 or More Parameter Exists (substitute)
@@ -637,7 +700,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._substitute, self.substitute, parameters[0], parameters[1:])
+                        embed = await run(message, self._substitute, self.substitute, parameters[0], parameters[1:])
                     )
             
             # Fibonacci Command
@@ -648,7 +711,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._fibonacci, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._fibonacci, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 Parameter Exists (fibonacci)
@@ -656,7 +719,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._fibonacci, self.fibonacci, parameters[0])
+                        embed = await run(message, self._fibonacci, self.fibonacci, parameters[0])
                     )
 
                 # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
@@ -664,7 +727,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._fibonacci, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._fibonacci, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Derivative Command
@@ -675,7 +738,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._derivative, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._derivative, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 Parameter Exists (derivative)
@@ -683,7 +746,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._derivative, self.derivative, parameters[0])
+                        embed = await run(message, self._derivative, self.derivative, parameters[0])
                     )
 
                 # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
@@ -691,7 +754,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._derivative, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._derivative, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Integral Command
@@ -702,7 +765,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._integral, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._integral, Category.NOT_ENOUGH_PARAMETERS)
                     )
 
                 # 1 Parameter Exists (integral)
@@ -710,7 +773,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._integral, self.integral, parameters[0])
+                        embed = await run(message, self._integral, self.integral, parameters[0])
                     )
 
                 # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
@@ -718,7 +781,7 @@ class Math(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._integral, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._integral, Category.TOO_MANY_PARAMETERS)
                     )
 
 def setup(client):
