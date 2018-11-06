@@ -21,26 +21,26 @@
   * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
 
   * `base64 | b64 <conversion> <text>` - Encodes or decodes text to base64.
-    * Accepted Parameters For conversion
+    * Accepted Parameters for `conversion`
       * `encode | enc | e` - Encode text into base64.
       * `decode | dec | d` - Decode text from base64.
 
 ## Game
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
-    * Accepted Parameters For difficulty
+    * Accepted Parameters for `difficulty`
       * `easy | simple | e` - Play an easy game of hangman.
       * `medium | m` - Play a medium game of hangman.
       * `hard | difficult | h` - Play a hard game of hangman.
       * `quit | q | exit` - Allows you to quit the hangman game.
 
   * `rockPaperScissors | rps <action>` - Allows you to play Rock Paper Scissors with me.
-    * Accepted Parameters For action
+    * Accepted Parameters for `action`
       * `rock | r` - Do a rock action.
       * `paper | p` - Do a paper action.
       * `scissors | s` - Do a scissor action.
 
   * `scramble [difficulty]` - Allows you to guess an unscrambled word.
-    * Accepted Parameters For difficulty
+    * Accepted Parameters for `difficulty`
       * `normal | n | easy | e` - Only each word is scrambled.
       * `expert | hard | difficult` - The entire phrase is scrambled.
       * `quit | q | exit` - Allows you to quit the scramble game.
@@ -62,19 +62,19 @@
 
 ## Insult
   * `insult | i [insultLevel]` - Sends you an insult.
-    * Accepted Parameters For insultLevel
+    * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
   * `addInsult | addI | add <insultLevel> <insult>` - Allows you to add your own insult.
-    * Accepted Parameters For insultLevel
+    * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
   * `listInsults | list | l [insultLevel]` - Lists the insults that can be sent.
-    * Accepted Parameters For insultLevel
+    * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
@@ -85,23 +85,23 @@
   * `forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Math
-  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `factorial | ! <number>` - Gets the factorial of a number.
-
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
-
-  * `expand | exp | e <expression>` - Expands a mathematical expression.
-
-  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
-
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `factor | f <expression>` - Factors a mathematical expression.
+
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+
+  * `factorial | ! <number>` - Gets the factorial of a number.
+
+  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+
+  * `expand | exp | e <expression>` - Expands a mathematical expression.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
 ## Rank
   * `rank | r ` - Shows you your current level and experience in this server.
@@ -110,7 +110,7 @@
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
 
   * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
-    * Accepted Parameters For permissions...
+    * Accepted Parameters for `permissions...`
       * `administrator | admin` - Gives the bot administrator privileges.
       * `viewAuditLog | auditLog | audit` - Gives the bot access to the audit log.
       * `manageServer | mngSvr` - Gives the bot permission to manage the server.
@@ -142,11 +142,13 @@
       * `prioritySpeaker` - Gives the bot permission to the priority speaker.
 
   * `sendBug | bug | error | feedback <messageType> <message>` - Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.
-    * Accepted Parameters For messageType
+    * Accepted Parameters for `messageType`
       * `bug` - The type of message is a bug in Omega Psi.
       * `error` - Something is going wrong but you don't know what.
       * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
       * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
+
+  * `ping ` - Pings the bot.
 
 ## Server Moderator
   * `addMember | addM | am <member(s)...>` - Allows you to add a member, or members, to the server file manually.
@@ -176,7 +178,7 @@
   * `setServerName | setSvrName <name>` - Allows you to set the Server's name.
 
   * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - Allows you to create an invite to this server.
-    * Accepted Parameters For infinite
+    * Accepted Parameters for `infinite`
       * `True | true | T | t | Yes | yes | Y | y` - Set the server invite to never expire.
       * `False | false | F | f | No | no | N | n` - Set the server invite to expire.
 
@@ -208,7 +210,7 @@
   * `servers | botServers ` - Allows you to get a list of servers the bot is in.
 
   * `setStatus | status <activity> <text>` - Allows you to change the presence of the bot.
-    * Accepted Parameters For activity
+    * Accepted Parameters for `activity`
       * `playing | Playing` - The playing activity type.
       * `streaming | Streaming` - The streaming activity type.
       * `listening | Listening` - The listening activity type.
