@@ -1,13 +1,15 @@
-from category.category import Category
-
-from util.command import Command
 from util.file.server import Server
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
 from random import choice as choose
+from supercog import Category, Command
 import discord, json, os, urllib.request, requests
 
 class Image(Category):
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     DESCRIPTION = "Anything having to do with images is here."
 
@@ -25,13 +27,24 @@ class Image(Category):
     NASA_RANDOM = "https://images-api.nasa.gov/search?media_type=image&year_start=1960"
     NASA_SEARCH = "https://images-api.nasa.gov/search?q={}&media_type=image"
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    NO_GIFS_FOUND = "NO_GIFS_FOUND"
+    NO_IMAGE = "NO_IMAGE"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     def __init__(self, client):
         super().__init__(client, "Image")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._gif = Command({
+        self._gif = Command(commandDict = {
             "alternatives": ["gif", "giphy", "g"],
             "info": "Sends a random gif from Giphy.",
             "parameters": {
@@ -41,7 +54,7 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NO_GIFS_FOUND: {
+                Image.NO_GIFS_FOUND: {
                     "messages": [
                         "Hmmm. No gifs were found with those keywords. Perhaps broaden your search?"
                     ]
@@ -49,7 +62,7 @@ class Image(Category):
             }
         })
 
-        self._theOffice = Command({
+        self._theOffice = Command(commandDict = {
             "alternatives": ["theOffice", "office", "o"],
             "info": "Sends a random gif related to The Office.",
             "errors": {
@@ -61,7 +74,7 @@ class Image(Category):
             }
         })
 
-        self._parksAndRec = Command({
+        self._parksAndRec = Command(commandDict = {
             "alternatives": ["parksAndRec", "parks", "pnr"],
             "info": "Sends a random gif related to Parks and Rec.",
             "errors": {
@@ -73,7 +86,7 @@ class Image(Category):
             }
         })
 
-        self._brooklyn99 = Command({
+        self._brooklyn99 = Command(commandDict = {
             "alternatives": ["brooklyn99", "b99", "99"],
             "info": "Sends a random gif related to Brooklyn Nine-Nine.",
             "errors": {
@@ -85,7 +98,7 @@ class Image(Category):
             }
         })
 
-        self._meme = Command({
+        self._meme = Command(commandDict = {
             "alternatives": ["meme"],
             "info": "Sends a random meme from Reddit.",
             "errors": {
@@ -94,7 +107,7 @@ class Image(Category):
                         "In order to get a meme, you don't need any parameters."
                     ]
                 },
-                Category.NO_IMAGE: {
+                Image.NO_IMAGE: {
                     "messages": [
                         "Somehow there were no memes found??? Idk try again."
                     ]
@@ -102,7 +115,7 @@ class Image(Category):
             }
         })
 
-        self._nasaImage = Command({
+        self._nasaImage = Command(commandDict = {
             "alternatives": ["nasa", "NASA", "nasaImage", "NASAImage", "nasaImg", "NASAImg"],
             "info": "Gives you a random NASA image given a search term or no search term.",
             "parameters": {
@@ -112,7 +125,7 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NO_IMAGE: {
+                Image.NO_IMAGE: {
                     "messages": [
                         "There were no images matching that search. Try again or broaden your search term."
                     ]
@@ -160,7 +173,7 @@ class Image(Category):
             if len(gifsData) > 0:
                 gifData = choose(gifsData["data"])
             else:
-                return self.getErrorMessage(self._gif, Category.NO_GIFS_FOUND)
+                return getErrorMessage(self._gif, Image.NO_GIFS_FOUND)
         
         return discord.Embed(
             name = "Gif Result",
@@ -188,7 +201,7 @@ class Image(Category):
 
         # Make sure there are reddit posts
         if len(redditData["data"]["children"]) == 0:
-            return self.getErrorMessage(self._meme, Category.NO_IMAGE)
+            return getErrorMessage(self._meme, Image.NO_IMAGE)
         
         # Choose random reddit post
         redditPost = choose(redditData["data"]["children"])["data"]
@@ -231,7 +244,7 @@ class Image(Category):
 
         # Check if there are no images
         if len(imageData["collection"]["items"]) == 0:
-            return self.getErrorMessage(self._nasaImage, Category.NO_IMAGE)
+            return getErrorMessage(self._nasaImage, Image.NO_IMAGE)
         
         # Choose random item from collection
         item = choose(imageData["collection"]["items"])
@@ -269,7 +282,7 @@ class Image(Category):
 
             # Gif Command
             if command in self._gif.getAlternatives():
-                result = await self.run(message, self._gif, self.gif, " ".join(parameters) if len(parameters) > 0 else "random")
+                result = await run(message, self._gif, self.gif, " ".join(parameters) if len(parameters) > 0 else "random")
 
                 if type(result) == discord.Embed:
                     await sendMessage(
@@ -293,7 +306,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        message = await self.run(message, self._theOffice, self.gif, "the office")
+                        message = await run(message, self._theOffice, self.gif, "the office")
                     )
                 
                 # 1 or More Parameters Exist
@@ -301,7 +314,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._theOffice, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._theOffice, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Parks and Rec Command
@@ -312,7 +325,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        message = await self.run(message, self._parksAndRec, self.gif, "parks and rec")
+                        message = await run(message, self._parksAndRec, self.gif, "parks and rec")
                     )
                 
                 # 1 or More Parameters Exist
@@ -320,7 +333,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._parksAndRec, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._parksAndRec, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Brooklyn 99 Command
@@ -331,7 +344,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        message = await self.run(message, self._brooklyn99, self.gif, "brooklyn 99")
+                        message = await run(message, self._brooklyn99, self.gif, "brooklyn 99")
                     )
                 
                 # 1 or More Parameters Exist
@@ -339,12 +352,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._brooklyn99, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._brooklyn99, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Meme Command
             elif command in self._meme.getAlternatives():
-                result = await self.run(message, self._meme, self.meme)
+                result = await run(message, self._meme, self.meme)
 
                 if type(result) == discord.Embed:
                     await sendMessage(
@@ -355,7 +368,7 @@ class Image(Category):
 
             # NASA Image Command
             elif command in self._nasaImage.getAlternatives():
-                result = await self.run(message, self._nasaImage, self.nasaImage, " ".join(parameters) if len(parameters) > 0 else "random")
+                result = await run(message, self._nasaImage, self.nasaImage, " ".join(parameters) if len(parameters) > 0 else "random")
 
                 if type(result) == discord.Embed:
                     await sendMessage(
