@@ -1,17 +1,19 @@
-from category.category import Category
-
-from util.command import Command
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.weather.weather import getCity, getCountry, getSky, getCurrentTemp, getHighTemp, getLowTemp, getLongitude, getLatitude, getWindSpeed, getWindDirection, getLastUpdated, getWeatherIcon
-from util.utils import sendMessage, splitText
+from util.utils import sendMessage, getErrorMessage, splitText, run
 
 from datetime import datetime
+from supercog import Category, Command
 import discord, json, os, urllib.request
 
 class Internet(Category):
 
-    DESCRIPTION = "Do you wanna know weather stuff? Here you go!"
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    DESCRIPTION = "All commands that deal with the internet are here."
 
     EMBED_COLOR = 0x0044FF
 
@@ -20,14 +22,27 @@ class Internet(Category):
 
     URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dictionary_--_logo.jpg/revision/latest?cb=20161002212954"
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    NO_TERM = "NO_TERM"
+    NOT_NSFW = "NOT_NSFW"
+
+    INVALID_LOCATION = "INVALID_LOCATION"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     def __init__(self, client):
-        super().__init__(client, "Weather")
+        super().__init__(client, "Internet")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
 
-        self._urban = Command({
+        self._urban = Command(commandDict = {
             "alternatives": ["urban", "urbanDictionary", "urbanDict"],
             "info": "Gives you the top 5 urban dictionary entries for a term.",
             "parameters": {
@@ -42,12 +57,12 @@ class Internet(Category):
                         "You need the term to look something up in urban dictionary."
                     ]
                 },
-                Category.NO_TERM: {
+                Internet.NO_TERM: {
                     "messages": [
                         "The term you entered does not exist on urban dictionary."
                     ]
                 },
-                Category.NOT_NSFW: {
+                Internet.NOT_NSFW: {
                     "messages": [
                         "You can't run this in this channel. You must be in an NSFW channel."
                     ]
@@ -55,7 +70,7 @@ class Internet(Category):
             }
         })
 
-        self._weather = Command({
+        self._weather = Command(commandDict = {
             "alternatives": ["forecast", "getWeather"],
             "info": "Gets the weather for a specified location.",
             "parameters": {
@@ -70,7 +85,7 @@ class Internet(Category):
                         "In order to get the weather for a place, you need the location."
                     ]
                 },
-                Category.INVALID_LOCATION: {
+                Internet.INVALID_LOCATION: {
                     "messages": [
                         "The location you entered is not valid."
                     ]
@@ -111,7 +126,7 @@ class Internet(Category):
                 with urllib.request.urlopen(urlCall) as url:
                     urbanData = json.load(url)
             except:
-                return self.getErrorMessage(self._urban, Category.NO_TERM)
+                return getErrorMessage(self._urban, Internet.NO_TERM)
             
             # Get first 5 values (or values if there are less than 5)
             if len(urbanData["list"]) < 5:
@@ -153,7 +168,7 @@ class Internet(Category):
             return embed
         
         # Channel is not NSFW
-        return self.getErrorMessage(self._urban, Category.NOT_NSFW)
+        return getErrorMessage(self._urban, Internet.NOT_NSFW)
 
     def weather(self, location):
         """Returns the current weather for the specified location.\n
@@ -172,7 +187,7 @@ class Internet(Category):
             with urllib.request.urlopen(urlCall) as url:
                 weatherData = json.load(url)
         except:
-            return self.getErrorMessage(self._weather, Category.INVALID_LOCATION)
+            return getErrorMessage(self._weather, Internet.INVALID_LOCATION)
         
         # Get necessary values
         # Values we want to use include:
@@ -253,7 +268,7 @@ class Internet(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._urban, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._urban, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -261,7 +276,7 @@ class Internet(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._urban, self.urban, " ".join(parameters), message.channel)
+                        embed = await run(message, self._urban, self.urban, " ".join(parameters), message.channel)
                     )
 
             # Weather Command
@@ -272,7 +287,7 @@ class Internet(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._weather, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._weather, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -280,7 +295,7 @@ class Internet(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._weather, self.weather, " ".join(parameters))
+                        embed = await run(message, self._weather, self.weather, " ".join(parameters))
                     )
 
 def setup(client):
