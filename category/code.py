@@ -1,29 +1,58 @@
-from category.category import Category
+from util.code.code import tenToNumber, numberToTen
+from util.file.server import Server
+from util.utils import sendMessage, getErrorMessage, run, timeout
 
-from util.command.command import Command, timeout
-from util.file.omegaPsi import OmegaPsi
-from util.utils import sendMessage
-
-import discord
+from supercog import Category, Command
+import discord, base64
 
 class Code(Category):
+    """Creates a Code extension.
+
+    This class holds commands that are used often in coding or computer science.
+
+    Parameters:
+        client (discord.ClientUser): The Discord Client to use for sending messages.
+    """
     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     DESCRIPTION = "Commands that have to do with coding!"
 
     MAX_BRAINFUCK_LENGTH = 2 ** 15 # 32736
 
     EMBED_COLOR = 0xFFFF00
 
-    REPL_IT_URL = "https://repl.it/data/repls/35a0ee83-68a1-416e-bafb-c45c765060bb/gen_repl_token"
-    REPL_IT_EVAL = "wss://eval.repl.it/ws"
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    START_BASE_MISMATCH = "START_BASE_MISMATCH"
+    END_BASE_MISMATCH = "END_BASE_MISMATCH"
+
+    INVALID_START_BASE = "INVALID_START_BASE"
+    INVALID_END_BASE = "INVALID_END_BASE"
+    INVALID_PARAMETER = "INVALID_PARAMETER"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
+        """Creates a Code extension.
+
+        This class holds commands that are used often in coding or computer science.
+
+        Parameters:
+            client (discord.ClientUser): The Discord Client to use for sending messages.
+        """
         super().__init__(client, "Code")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._brainfuck = Command({
+        self._brainfuck = Command(commandDict = {
             "alternatives": ["brainfuck", "brainf", "bf"],
             "info": "Runs brainfuck code. Kinda confusing stuff at first glance.",
             "parameters": {
@@ -50,8 +79,98 @@ class Code(Category):
             }
         })
 
+        self._convert = Command(commandDict = {
+            "alternatives": ["convert", "conversion", "baseConversion", "baseConverter"],
+            "info": "Converts a number from one base to another base.",
+            "parameters": {
+                "startBase": {
+                    "info": "The base the number starts at.",
+                    "optional": True
+                },
+                "endBase": {
+                    "info": "The base the number ends at.",
+                    "optional": False
+                },
+                "number": {
+                    "info": "The number to convert.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need at least the end base and the number to convert."
+                    ]
+                },
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You only need the start base, the end base, and the number."
+                    ]
+                },
+                Code.INVALID_START_BASE: {
+                    "messages": [
+                        "The start base you entered is not a valid base."
+                    ]
+                },
+                Code.INVALID_END_BASE: {
+                    "messages": [
+                        "The end base you entered is not a valid base."
+                    ]
+                },
+                Code.START_BASE_MISMATCH: {
+                    "messages": [
+                        "The number you entered does not match the start base."
+                    ]
+                },
+                Code.END_BASE_MISMATCH: {
+                    "messages": [
+                        "The number you entered does not match the end base."
+                    ]
+                }
+            }
+        })
+
+        self._base64 = Command(commandDict = {
+            "alternatives": ["base64", "b64"],
+            "info": "Encodes or decodes text to base64.",
+            "parameters": {
+                "conversion": {
+                    "info": "Whether to encode/decode text into/from base64.",
+                    "optional": False,
+                    "accepted_parameters": {
+                        "encode": {
+                            "alternatives": ["encode", "enc", "e"],
+                            "info": "Encode text into base64."
+                        },
+                        "decode": {
+                            "alternatives": ["decode", "dec", "d"],
+                            "info": "Decode text from base64."
+                        }
+                    }
+                },
+                "text": {
+                    "info": "The text to encode.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to encode or decode text, you need the conversion type and the text."
+                    ]
+                },
+                Code.INVALID_PARAMETER: {
+                    "messages": [
+                        "That is not a valid conversion type."
+                    ]
+                }
+            }
+        })
+
         self.setCommands([
-            self._brainfuck
+            self._brainfuck,
+            self._convert,
+            self._base64
         ])
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -62,8 +181,9 @@ class Code(Category):
     def brainfuck(self, code, parameters = []):
         """Runs brainfuck code and returns the result.\n
 
-        code - The brainfuck code to run.\n
-        parameters - The parameters to insert into the brainfuck code.\n
+        Parameters:
+            code: The brainfuck code to run.\n
+            parameters: The parameters to insert into the brainfuck code.\n
         """
 
         # Remove all invalid symbols
@@ -114,7 +234,7 @@ class Code(Category):
                 if paramPointer >= len(parameters):
                     data[dataPointer] = 0
                 else:
-                    data[dataPointer] = parameters[paramPointer][0]
+                    data[dataPointer] = ord(parameters[paramPointer])
                 paramPointer += 1
             
             # char is [ (open loop)
@@ -148,6 +268,91 @@ class Code(Category):
             description = output,
             colour = Code.EMBED_COLOR
         )
+    
+    def convert(self, startBase, endBase, number):
+        """Converts a number from the start base to the end base.\n
+
+        Parameters:
+            startBase: The base to convert from.\n
+            endBase: The base to convert to.\n
+            number: The number to convert.\n
+        """
+
+        # Try converting startBase and endBase to numbers
+        try:
+            startBase = int(startBase)
+            if startBase > 64 or startBase < 2:
+                raise Exception()
+        except:
+            return getErrorMessage(self._convert, Category.INVALID_START_BASE)
+
+        try:
+            endBase = int(endBase)
+            if endBase > 64 or endBase < 2:
+                raise Exception()
+        except:
+            return getErrorMessage(self._convert, Category.INVALID_END_BASE)
+
+        # Try converting number from startBase to base-10
+        # Test to see if number is not zero
+        start = number
+        title = "Base-{} to Base-{}".format(startBase, endBase)
+        description = "`{} --> {}`".format(start, number)
+
+        if number not in ["0", 0]:
+            number = numberToTen(number, startBase)
+
+            # Check if number is None; Invalid number for base
+            if number == None:
+                return getErrorMessage(self._convert, Category.START_BASE_MISMATCH)
+            
+            # Try converting base-10 to endBase
+            number = tenToNumber(number, endBase)
+
+            # Check if number is None; Invalid base
+            if number == None:
+                return getErrorMessage(self._convert, Category.END_BASE_MISMATCH)
+            
+            # Return number
+            description = "`{} --> {}`".format(start, number)
+        
+        return discord.Embed(
+            title = title,
+            description = description,
+            colour = Code.EMBED_COLOR
+        )
+    
+    def base64(self, conversionType, text):
+        """Encodes or decodes text to or from base64.\n
+
+        Parameters:
+            conversionType: Whether to encode or decode text.\n
+            text: The text to encode or decode.\n
+        """
+
+        # Conversion is Encode
+        if conversionType in self._base64.getAcceptedParameter("conversion", "encode").getAlternatives():
+            converted = base64.b64encode(text.encode()).decode()
+            encoded = True
+        
+        # Conversion is Decode
+        elif conversionType in self._base64.getAcceptedParameter("conversion", "decode").getAlternatives():
+            converted = base64.b64decode(text.encode()).decode()
+            encoded = False
+        
+        # Conversion is Invalid
+        else:
+            return getErrorMessage(self._base64, Category.INVALID_PARAMETER)
+        
+        # Return conversion
+        return discord.Embed(
+            title = "`{}` {} Base64".format(
+                text if len(text) < 180 else "[text is greater than 200 characters]",
+                "encoded to" if encoded else "decoded from"
+            ),
+            description = converted,
+            colour = Code.EMBED_COLOR
+        )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -156,7 +361,8 @@ class Code(Category):
     async def on_message(self, message):
         """Parses a message and runs a Code Category command if it can
 
-        message - The Discord Message to parse.\n
+        Parameters:
+            message: The Discord Message to parse.\n
         """
 
         # Make sure message starts with the prefix
@@ -175,7 +381,7 @@ class Code(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._brainfuck, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._brainfuck, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or 2 Parameters Exist (Code only or Code and Parameters)
@@ -184,9 +390,9 @@ class Code(Category):
                         self.client,
                         message,
                         embed = (
-                            await self.run(message, self._brainfuck, self.brainfuck, parameters[0]) 
+                            await run(message, self._brainfuck, self.brainfuck, parameters[0]) 
                             if len(parameters) == 1 else
-                            await self.run(message, self._brainfuck, self.brainfuck, parameters[0], parameters[1])
+                            await run(message, self._brainfuck, self.brainfuck, parameters[0], parameters[1])
                         )
                     )
                 
@@ -195,7 +401,63 @@ class Code(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._brainfuck, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._brainfuck, Category.TOO_MANY_PARAMETERS)
+                    )
+            
+            # Convert Command
+            elif command in self._convert.getAlternatives():
+
+                # Less than 2 Parameters Exist
+                if len(parameters) < 2:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = getErrorMessage(self._convert, Category.NOT_ENOUGH_PARAMETERS)
+                    )
+
+                # 2 or 3 Parameters Exist
+                elif len(parameters) in [2, 3]:
+
+                    if len(parameters) == 3:
+                        startBase = parameters[0]
+                        endBase = parameters[1]
+                        number = parameters[2]
+                    else:
+                        startBase = 10
+                        endBase = parameters[0]
+                        number = parameters[1]
+
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await run(message, self._convert, self.convert, startBase, endBase, number)
+                    )
+                
+                # More than 3 Parameters Exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = getErrorMessage(self._convert, Category.TOO_MANY_PARAMETERS)
+                    )
+            
+            # Base64 Command
+            elif command in self._base64.getAlternatives():
+
+                # Less than 2 Parameters
+                if len(parameters) < 2:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = getErrorMessage(self._base64, Category.NOT_ENOUGH_PARAMETERS)
+                    )
+                
+                # 2 or More Parameters Exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await run(message, self._base64, self.base64, parameters[0], " ".join(parameters[1:]))
                     )
 
 def setup(client):
