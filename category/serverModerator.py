@@ -1,4 +1,3 @@
-from category.category import Category
 from category.game import Game
 from category.code import Code
 from category.image import Image
@@ -8,19 +7,46 @@ from category.math import Math
 from category.rank import Rank
 from category.misc import Misc
 
-from util.command import Command
 from util.file.server import Server
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
+from supercog import Category, Command
 import discord
 
 class ServerModerator(Category):
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     DESCRIPTION = "Moderate your server with this. Owners have the only access to this at first."
 
     EMBED_COLOR = 0xAAAA00
 
     MAX_INVITE_AGE = 60 * 60 * 24 # 24 hours
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+
+    BOT_MISSING_PERMISSION = "BOT_MISSING_PERMISSION"
+    MEMBER_MISSING_PERMISSION = "MEMBER_MISSING_PERMISSION"
+
+    NO_ROLES = "NO_ROLE"
+    NO_MEMBER = "NO_MEMBER"
+    TOO_MANY_MEMBERS = "TOO_MANY_MEMBERS"
+
+    INVALID_COMMAND = "INVALID_COMMAND"
+    INVALID_LEVEL = "INVALID_LEVEL"
+    INVALID_COLOR = "INVALID_COLOR"
+    INVALID_ROLE = "INVALID_ROLE"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
         super().__init__(client, "Server Moderator")
@@ -29,7 +55,7 @@ class ServerModerator(Category):
         # Bot Commands
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-        self._addMember = Command({
+        self._addMember = Command(commandDict = {
             "alternatives": ["addMember", "addM", "am"],
             "info": "Allows you to add a member, or members, to the server file manually.",
             "run_in_private": False,
@@ -50,7 +76,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._removeMember = Command({
+        self._removeMember = Command(commandDict = {
             "alternatives": ["removeMember", "removeM", "rm"],
             "info": "Allows you to remove a member, or members, from the server file manually.",
             "run_in_private": False,
@@ -71,7 +97,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._addModerator = Command({
+        self._addModerator = Command(commandDict = {
             "alternatives": ["addModerator", "addMod"],
             "info": "Allows you to add a moderator, or moderators, to the server (only for Omega Psi).",
             "run_in_private": False,
@@ -92,7 +118,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._removeModerator = Command({
+        self._removeModerator = Command(commandDict = {
             "alternatives": ["removeModerator", "removeMod", "remMod"],
             "info": "Allows you to remove a moderator, or moderators, from the server (only for Omega Psi).",
             "run_in_private": False,
@@ -113,7 +139,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._activate = Command({
+        self._activate = Command(commandDict = {
             "alternatives": ["activate", "enable"],
             "info": "Allows you to activate a command, or commands, in the server.",
             "run_in_private": False,
@@ -131,12 +157,12 @@ class ServerModerator(Category):
                         "In order to activate a command, you need to type it in."
                     ]
                 },
-                Category.ACTIVE: {
+                ServerModerator.ACTIVE: {
                     "messages": [
                         "This command is already active."
                     ]
                 },
-                Category.INVALID_COMMAND: {
+                ServerModerator.INVALID_COMMAND: {
                     "messages": [
                         "That is not a valid command."
                     ]
@@ -144,7 +170,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._deactivate = Command({
+        self._deactivate = Command(commandDict = {
             "alternatives": ["deactivate", "disable"],
             "info": "Allows you to deactivate a command in the server.",
             "run_in_private": False,
@@ -171,12 +197,12 @@ class ServerModerator(Category):
                         "You have too many parameters. Make sure you put the reason in quotes (\")."
                     ]
                 },
-                Category.INACTIVE: {
+                ServerModerator.INACTIVE: {
                     "messages": [
                         "This command is already inactive."
                     ]
                 },
-                Category.INVALID_COMMAND: {
+                ServerModerator.INVALID_COMMAND: {
                     "messages": [
                         "That is not a valid command."
                     ]
@@ -184,7 +210,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._toggleRanking = Command({
+        self._toggleRanking = Command(commandDict = {
             "alternatives": ["toggleRanking", "toggleLeveling", "toggleRank", "toggleLevel", "togRank", "togLevel"],
             "info": "Allows you to toggle the ranking system in the server.",
             "run_in_private": False,
@@ -199,7 +225,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._toggleJoinMessage = Command({
+        self._toggleJoinMessage = Command(commandDict = {
             "alternatives": ["toggleJoinMessage", "toggleJoinMsg", "togJoinMessage", "togJoinMsg"],
             "info": "Allows you to toggle the join message in the server.",
             "run_in_private": False,
@@ -214,7 +240,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._setJoinMessageChannel = Command({
+        self._setJoinMessageChannel = Command(commandDict = {
             "alternatives": ["setJoinMessageChannel", "setJoinMsgChannel", "setJoinMsgChan"],
             "info": "Allows you to set the channel that the Join Messages are sent in.",
             "run_in_private": False,
@@ -240,7 +266,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._setLevel = Command({
+        self._setLevel = Command(commandDict = {
             "alternatives": ["setLevel", "setLvl"],
             "info": "Allows you to set the level of a member, or members, in the server.",
             "run_in_private": False,
@@ -262,7 +288,7 @@ class ServerModerator(Category):
                         "In order to set the level of member(s), you need the level and the member(s)."
                     ]
                 },
-                Category.INVALID_LEVEL: {
+                ServerModerator.INVALID_LEVEL: {
                     "messages": [
                         "That doesn't seem to be a number. Try again."
                     ]
@@ -270,7 +296,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._addPrefix = Command({
+        self._addPrefix = Command(commandDict = {
             "alternatives": ["addPrefix", "addPre"],
             "info": "Allows you to add a prefix for this server.",
             "run_in_private": False,
@@ -290,7 +316,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._removePrefix = Command({
+        self._removePrefix = Command(commandDict = {
             "alternatives": ["removePrefix", "removePre", "remPre"],
             "info": "Allows you to remove a prefix from this server.",
             "run_in_private": False,
@@ -314,7 +340,7 @@ class ServerModerator(Category):
         # Server Commands
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-        self._setServerName = Command({
+        self._setServerName = Command(commandDict = {
             "alternatives": ["setServerName", "setSvrName"],
             "info": "Allows you to set the Server's name.",
             "restriction_info": "You and Omega Psi must have manage_server permissions.",
@@ -332,12 +358,12 @@ class ServerModerator(Category):
                         "In order to set the name of the Server, you must type in the name."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `manage_server` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `manage_server` permission in this server."
                     ]
@@ -345,7 +371,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._createInvite = Command({
+        self._createInvite = Command(commandDict = {
             "alternatives": ["createInvite", "createServerInvite", "getInvite", "getServerInvite"],
             "info": "Allows you to create an invite to this server.",
             "restriction_info": "You and Omega Psi must have create_instant_invite permissions.",
@@ -355,7 +381,7 @@ class ServerModerator(Category):
                 "infinite": {
                     "info": "Whether or not to make the invite an infinite invite.",
                     "optional": True,
-                    "accepted": {
+                    "accepted_parameters": {
                         "True": {
                             "alternatives": ["True", "true", "T", "t", "Yes", "yes", "Y", "y"],
                             "info": "Set the server invite to never expire."
@@ -373,12 +399,12 @@ class ServerModerator(Category):
                         "That is not a valid parameter."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `create_instant_invite` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `create_instant_invite` permission in this server."
                     ]
@@ -386,7 +412,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._addRole = Command({
+        self._addRole = Command(commandDict = {
             "alternatives": ["addRole"],
             "info": "Adds a role to the server.",
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
@@ -408,7 +434,7 @@ class ServerModerator(Category):
                         "In order to add a role, you need to type in the name of the role."
                     ]
                 },
-                Category.INVALID_COLOR: {
+                ServerModerator.INVALID_COLOR: {
                     "messages": [
                         "That is not a valid color."
                     ]
@@ -418,12 +444,12 @@ class ServerModerator(Category):
                         "In order to add a role, you only need a name and the color. Nothing more."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `manage_roles` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `manage_roles` permission in this server."
                     ]
@@ -431,7 +457,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._removeRole = Command({
+        self._removeRole = Command(commandDict = {
             "alternatives": ["removeRole"],
             "info": "Removes a role from the server.",
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
@@ -449,7 +475,7 @@ class ServerModerator(Category):
                         "In order to remove a role, you need to tag it."
                     ]
                 },
-                Category.INVALID_ROLE: {
+                ServerModerator.INVALID_ROLE: {
                     "messages": [
                         "The role you tagged does not seem to be a valid role."
                     ]
@@ -459,12 +485,12 @@ class ServerModerator(Category):
                         "In order to remove a role, you can only mention one."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `manage_roles` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `manage_roles` permission in this server."
                     ]
@@ -472,7 +498,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._kickMember = Command({
+        self._kickMember = Command(commandDict = {
             "alternatives": ["kickMember", "kickMbr"],
             "info": "Kicks a member, or members, from the server.",
             "restriction_info": "You and Omega Psi must have kick_members permissions.",
@@ -490,12 +516,12 @@ class ServerModerator(Category):
                         "In order to kick a member, or members, you need to mention them."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `kick_members` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `kick_members` permission in this server."
                     ]
@@ -503,7 +529,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._banMember = Command({
+        self._banMember = Command(commandDict = {
             "alternatives": ["banMember", "banMbr"],
             "info": "Bans a member, or members, from the server.",
             "restriction_info": "You and Omega Psi must have ban_members permissions.",
@@ -521,12 +547,12 @@ class ServerModerator(Category):
                         "In order to ban a member, or members, you need to mention them."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `ban_members` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `ban_members` permission in this server."
                     ]
@@ -534,7 +560,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._addMemberRole = Command({
+        self._addMemberRole = Command(commandDict = {
             "alternatives": ["addMemberRole", "addMbrRole", "giveRole"],
             "info": "Gives a member the mentioned role(s).",
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
@@ -551,27 +577,27 @@ class ServerModerator(Category):
                 }
             },
             "errors": {
-                Category.NO_MEMBER: {
+                ServerModerator.NO_MEMBER: {
                     "messages": [
                         "In order to add the role(s) to a member, you need to mention the member."
                     ]
                 },
-                Category.NO_ROLES: {
+                ServerModerator.NO_ROLES: {
                     "messages": [
                         "In order to add roles to a member, you need to mention at least one role."
                     ]
                 },
-                Category.TOO_MANY_MEMBERS: {
+                ServerModerator.TOO_MANY_MEMBERS: {
                     "messages": [
                         "You can't mention more than one member at a time."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `manage_roles` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `manage_roles` permission in this server."
                     ]
@@ -579,7 +605,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._removeMemberRole = Command({
+        self._removeMemberRole = Command(commandDict = {
             "alternatives": ["removeMemberRole", "removeMbrRole", "takeRole"],
             "info": "Removes the mentioned role(s) from a member.",
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
@@ -596,27 +622,27 @@ class ServerModerator(Category):
                 }
             },
             "errors": {
-                Category.NO_MEMBER: {
+                ServerModerator.NO_MEMBER: {
                     "messages": [
                         "In order to remove the role(s) from a member, you need to mention the member."
                     ]
                 },
-                Category.NO_ROLES: {
+                ServerModerator.NO_ROLES: {
                     "messages": [
                         "In order to remove roles from a member, you need to mention the roles."
                     ]
                 },
-                Category.TOO_MANY_MEMBERS: {
+                ServerModerator.TOO_MANY_MEMBERS: {
                     "messages": [
                         "You can't mention more than one member at a time."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `manage_roles` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `manage_roles` permission in this server."
                     ]
@@ -624,7 +650,7 @@ class ServerModerator(Category):
             }
         })
 
-        self._setMemberRoles = Command({
+        self._setMemberRoles = Command(commandDict = {
             "alternatives": ["setMemberRoles", "setMbrRoles", "setRoles"],
             "info": "Sets the roles for a member.",
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
@@ -646,12 +672,12 @@ class ServerModerator(Category):
                         "In order to set the role, or roles, of a member, you need to mention the member and mention the roles."
                     ]
                 },
-                Category.BOT_MISSING_PERMISSION: {
+                ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
                         "The bot does not have the `manage_roles` permission in this server."
                     ]
                 },
-                Category.MEMBER_MISSING_PERMISSION: {
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
                         "You do not have the `manage_roles` permission in this server."
                     ]
@@ -971,7 +997,7 @@ class ServerModerator(Category):
         
         # Level is not an integer, return an error
         except:
-            return self.getErrorMessage(self._setLevel, Category.INVALID_LEVEL)
+            return getErrorMessage(self._setLevel, ServerModerator.INVALID_LEVEL)
         
         # Set the level of each member
         result = ""
@@ -1075,10 +1101,10 @@ class ServerModerator(Category):
             
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._setServerName, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._setServerName, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._setServerName, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._setServerName, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     async def createInvite(self, author, discordChannel, infinite):
         """Creates an Instant Invite for the Discord Server.\n
@@ -1101,10 +1127,10 @@ class ServerModerator(Category):
             
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._createInvite, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._createInvite, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._createInvite, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._createInvite, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     async def addRole(self, author, discordServer, roleName, colorHex):
         """Adds a role to the specified Discord Server.\n
@@ -1125,7 +1151,7 @@ class ServerModerator(Category):
                 
                 # Evaluation failed; Invalid color
                 except:
-                    return self.getErrorMessage(self._addRole, Category.INVALID_COLOR)
+                    return getErrorMessage(self._addRole, ServerModerator.INVALID_COLOR)
 
                 # Create role
                 role = await discordServer.create_role(
@@ -1143,10 +1169,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._addRole, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._addRole, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._addRole, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._addRole, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     async def removeRole(self, author, discordServer, role):
         """Removes a role from the specified Discord Server.\n
@@ -1179,10 +1205,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._removeRole, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._removeRole, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._removeRole, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._removeRole, ServerModerator.MEMBER_MISSING_PERMISSION)
 
     async def kickMember(self, author, discordServer, discordMember):
         """Kicks the specified Discord Member from the Discord Server.\n
@@ -1206,10 +1232,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._kickMember, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._kickMember, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._kickMember, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._kickMember, ServerModerator.MEMBER_MISSING_PERMISSION)
 
     async def banMember(self, author, discordServer, discordMember):
         """Bans the specified Discord Member from the Discord Server.\n
@@ -1233,10 +1259,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._banMember, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._banMember, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._banMember, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._banMember, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     async def addMemberRole(self, author, discordMember, discordRoles):
         """Adds the Discord Roles to the Discord Member.\n
@@ -1305,10 +1331,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._addMemberRoles, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._addMemberRoles, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._addMemberRoles, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._addMemberRoles, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     async def removeMemberRoles(self, author, discordMember, discordRoles):
         """Removes the Discord Roles from the Discord Member.\n
@@ -1377,10 +1403,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._removeMemberRoles, Category.BOT_MISSING_PERMISSION)
+                return getErrorMessage(self._removeMemberRoles, ServerModerator.BOT_MISSING_PERMISSION)
         
         # Author does not have permission
-        return self.getErrorMessage(self._removeMemberRoles, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._removeMemberRoles, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     async def setMemberRoles(self, author, discordMember, discordRoles):
         """Sets the Discord Roles to the Discord Member.\n
@@ -1438,10 +1464,10 @@ class ServerModerator(Category):
 
             # Bot does not have permission
             except discord.Forbidden:
-                return self.getErrorMessage(self._setMemberRoles, Category.BOT_MISSING_PERMISSION) 
+                return getErrorMessage(self._setMemberRoles, ServerModerator.BOT_MISSING_PERMISSION) 
         
         # Author does not have permission
-        return self.getErrorMessage(self._setMemberRoles, Category.MEMBER_MISSING_PERMISSION)
+        return getErrorMessage(self._setMemberRoles, ServerModerator.MEMBER_MISSING_PERMISSION)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -1471,7 +1497,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addMember, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._addMember, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1479,7 +1505,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._addMember, self.addMember, message.guild, message.mentions)
+                        embed = await run(message, self._addMember, self.addMember, message.guild, message.mentions)
                     )
                 
             # Remove Member Command
@@ -1490,7 +1516,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeMember, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._removeMember, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1498,7 +1524,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._removeMember, self.removeMember, message.guild, message.mentions)
+                        embed = await run(message, self._removeMember, self.removeMember, message.guild, message.mentions)
                     )
                 
             # Add Moderator Command
@@ -1509,7 +1535,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addModerator, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._addModerator, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1517,7 +1543,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._addModerator, self.addModerator, message.guild, message.mentions)
+                        embed = await run(message, self._addModerator, self.addModerator, message.guild, message.mentions)
                     )
             
             # Remove Moderator Command
@@ -1528,7 +1554,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeModerator, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._removeModerator, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1536,7 +1562,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._removeModerator, self.removeModerator, message.guild, message.mentions)
+                        embed = await run(message, self._removeModerator, self.removeModerator, message.guild, message.mentions)
                     )
             
             # Activate Command
@@ -1546,7 +1572,7 @@ class ServerModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await self.run(message, self._activate, self.activate, message.guild, parameters)
+                    embed = await run(message, self._activate, self.activate, message.guild, parameters)
                 )
             
             # Deactivate Command
@@ -1557,7 +1583,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._deactivate, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._deactivate, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or 2 Parameters Exist
@@ -1570,14 +1596,14 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._deactivate, self.deactivate, message.guild, parameters[0], reason)
+                        embed = await run(message, self._deactivate, self.deactivate, message.guild, parameters[0], reason)
                     )
                 
                 # 3 or More Parameters Exist
                 else:
                     await sendMessage(
                         self.client,
-                        message, embed = self.getErrorMessage(self._deactivate, Category.TOO_MANY_PARAMETERS)
+                        message, embed = getErrorMessage(self._deactivate, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Toggle Ranking Command
@@ -1588,7 +1614,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._toggleRanking, self.toggleRanking, message.guild)
+                        embed = await run(message, self._toggleRanking, self.toggleRanking, message.guild)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1596,7 +1622,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._toggleRanking, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._toggleRanking, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Toggle Join Message Command
@@ -1607,7 +1633,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._toggleJoinMessage, self.toggleJoinMessage, message.guild)
+                        embed = await run(message, self._toggleJoinMessage, self.toggleJoinMessage, message.guild)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1615,7 +1641,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._toggleJoinMessage, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._toggleJoinMessage, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Set Join Message Channel Command
@@ -1626,7 +1652,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setJoinMessageChannel, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._setJoinMessageChannel, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 Parameter Exists
@@ -1634,7 +1660,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._setJoinMessageChannel, self.setJoinMessageChannel, message.guild, message.channel_mentions[0])
+                        embed = await run(message, self._setJoinMessageChannel, self.setJoinMessageChannel, message.guild, message.channel_mentions[0])
                     )
                 
                 # 2 or More Parameters Exist
@@ -1642,7 +1668,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setJoinMessageChannel, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._setJoinMessageChannel, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Set Level Command
@@ -1653,7 +1679,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setLevel, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._setLevel, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 or More Parameters Exist
@@ -1661,7 +1687,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._setLevel, self.setLevel, message.guild, parameters[0], message.mentions)
+                        embed = await run(message, self._setLevel, self.setLevel, message.guild, parameters[0], message.mentions)
                     )
             
             # Add Prefix Command
@@ -1672,7 +1698,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addPrefix, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._addPrefix, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1680,7 +1706,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._addPrefix, self.addPrefix, message.guild, parameters)
+                        embed = await run(message, self._addPrefix, self.addPrefix, message.guild, parameters)
                     )
                 
             # Remove Prefix Command
@@ -1688,7 +1714,7 @@ class ServerModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await self.run(message, self._removePrefix, self.removePrefix, message.guild, parameters)
+                    embed = await run(message, self._removePrefix, self.removePrefix, message.guild, parameters)
                 )
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1703,7 +1729,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setServerName, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._setServerName, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1711,7 +1737,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._setServerName, self.setServerName, message.author, message.guild, " ".join(parameters))
+                        embed = await run(message, self._setServerName, self.setServerName, message.author, message.guild, " ".join(parameters))
                     )
             
             # Create Invite Command
@@ -1719,7 +1745,7 @@ class ServerModerator(Category):
 
                 # 0 or 1 Parameters Exist
                 if len(parameters) in [0, 1]:
-                    result = await self.run(message, self._createInvite, self.createInvite, message.author, message.channel, " ".join(parameters))
+                    result = await run(message, self._createInvite, self.createInvite, message.author, message.channel, " ".join(parameters))
 
                     if type(result) == discord.Embed:
                         await sendMessage(
@@ -1740,7 +1766,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._createInvite, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._createInvite, Category.TOO_MANY_PARAMETERS)
                     )
                 
             # Add Roles Command
@@ -1751,7 +1777,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addRole, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._addRole, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or 2 Parameters Exist
@@ -1759,7 +1785,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._addRole, self.addRole, message.author, message.guild, parameters[0], parameters[1])
+                        embed = await run(message, self._addRole, self.addRole, message.author, message.guild, parameters[0], parameters[1])
                     )
                 
                 # More than 2 Parametes Exist
@@ -1767,7 +1793,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addRole, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._addRole, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Remove Role Command
@@ -1778,7 +1804,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeRole, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._removeRole, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # A role was mentioned
@@ -1786,7 +1812,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._removeRole, self.removeRole, message.author, message.guild, message.role_mentions[0])
+                        embed = await run(message, self._removeRole, self.removeRole, message.author, message.guild, message.role_mentions[0])
                     )
                 
                 # More than 1 role was mentioned
@@ -1794,7 +1820,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeRole, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._removeRole, Category.TOO_MANY_PARAMETERS)
                     )
             
             # Kick Member Command
@@ -1805,7 +1831,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._kickMember, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._kickMember, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # Members were mentioned
@@ -1813,7 +1839,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._kickMember, self.kickMember, message.author, message.guild, message.mentions)
+                        embed = await run(message, self._kickMember, self.kickMember, message.author, message.guild, message.mentions)
                     )
 
             # Ban Member Command
@@ -1824,7 +1850,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._banMember, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._banMember, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # Members were mentioned
@@ -1832,7 +1858,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._banMember, self.banMember, message.author, message.guild, message.mentions)
+                        embed = await run(message, self._banMember, self.banMember, message.author, message.guild, message.mentions)
                     )
         
             # Add Member Role Command
@@ -1843,7 +1869,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addMemberRole, Category.NO_MEMBER)
+                        embed = getErrorMessage(self._addMemberRole, ServerModerator.NO_MEMBER)
                     )
                 
                 # No roles were mentioned
@@ -1851,7 +1877,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addMemberRole, Category.NO_ROLES)
+                        embed = getErrorMessage(self._addMemberRole, ServerModerator.NO_ROLES)
                     )
                 
                 # A member and a role were mentioned
@@ -1859,7 +1885,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._addMemberRole, self.addMemberRole, message.author, message.mentions[0], message.role_mentions)
+                        embed = await run(message, self._addMemberRole, self.addMemberRole, message.author, message.mentions[0], message.role_mentions)
                     )
                 
                 # More than 1 member was mentioned
@@ -1867,7 +1893,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addMemberRole, Category.TOO_MANY_MEMBERS)
+                        embed = getErrorMessage(self._addMemberRole, ServerModerator.TOO_MANY_MEMBERS)
                     )
 
             # Remove Member Role Command
@@ -1878,7 +1904,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeMemberRole, Category.NO_MEMBER)
+                        embed = getErrorMessage(self._removeMemberRole, ServerModerator.NO_MEMBER)
                     )
                 
                 # No roles were mentioned
@@ -1886,7 +1912,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeMemberRole, Category.NO_ROLES)
+                        embed = getErrorMessage(self._removeMemberRole, ServerModerator.NO_ROLES)
                     )
                 
                 # A member and a role were mentioned
@@ -1894,7 +1920,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._removeMemberRole, self.removeMemberRole, message.author, message.mentions[0], message.role_mentions)
+                        embed = await run(message, self._removeMemberRole, self.removeMemberRole, message.author, message.mentions[0], message.role_mentions)
                     )
                 
                 # More than 1 member was mentioned
@@ -1902,7 +1928,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeMemberRole, Category.TOO_MANY_MEMBERS)
+                        embed = getErrorMessage(self._removeMemberRole, ServerModerator.TOO_MANY_MEMBERS)
                     )
 
             # Set Member Roles Command
@@ -1913,7 +1939,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setMemberRoles, Category.NO_MEMBER)
+                        embed = getErrorMessage(self._setMemberRoles, ServerModerator.NO_MEMBER)
                     )
                 
                 # No roles were mentioned
@@ -1921,7 +1947,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setMemberRoles, Category.NO_ROLES)
+                        embed = getErrorMessage(self._setMemberRoles, ServerModerator.NO_ROLES)
                     )
                 
                 # A member and a role were mentioned
@@ -1929,7 +1955,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._setMemberRoles, self.setMemberRoles, message.author, message.mentions[0], message.role_mentions)
+                        embed = await run(message, self._setMemberRoles, self.setMemberRoles, message.author, message.mentions[0], message.role_mentions)
                     )
                 
                 # More than 1 member was mentioned
@@ -1937,7 +1963,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._setMemberRoles, Category.TOO_MANY_MEMBERS)
+                        embed = getErrorMessage(self._setMemberRoles, ServerModerator.TOO_MANY_MEMBERS)
                     )
 
 def setup(client):
