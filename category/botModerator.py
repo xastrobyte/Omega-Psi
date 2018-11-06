@@ -1,4 +1,3 @@
-from category.category import Category
 from category.code import Code
 from category.game import Game
 from category.image import Image
@@ -8,26 +7,60 @@ from category.math import Math
 from category.rank import Rank
 from category.misc import Misc
 
-from util.command import Command
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage
+from util.utils import sendMessage, getErrorMessage, run
 
+from supercog import Category, Command
 import discord
 
 class BotModerator(Category):
+    """Creates a BotModerator extension.
+
+    This class holds commands that are designated to Bot Moderators only.
+    Every command in this class should have the `bot_moderator_only` tag set to `True`.
+
+    Parameters:
+        client (discord.ClientUser): The Discord Client to use for sending messages.
+    """
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Class Fields
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     DESCRIPTION = "Very private stuff. Only bot moderators/developers can access these."
 
     EMBED_COLOR = 0xA456B0
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    CANT_BE_DEACTIVATED = "CANT_BE_DEACTIVATED"
+
+    INVALID_ACTIVITY = "INVALID_ACTIVITY"
+    INVALID_COMMAND = "INVALID_COMMAND"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     def __init__(self, client):
+        """Creates a BotModerator extension.
+
+        This class holds commands that are designated to Bot Moderators only.
+        Every command in this class should have the `bot_moderator_only` tag set to `True`.
+
+        Parameters:
+            client (discord.ClientUser): The Discord Client to use for sending messages.
+        """
         super().__init__(client, "Bot Moderator")
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
-        self._addModerator = Command({
+        self._addModerator = Command(commandDict = {
             "alternatives": ["addBotModerator", "addBotMod", "abm"],
             "info": "Allows you to add a bot moderator to the bot.",
             "bot_moderator_only": True,
@@ -38,7 +71,7 @@ class BotModerator(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                BotModerator.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to add a bot moderator, you need to mention them."
                     ]
@@ -46,7 +79,7 @@ class BotModerator(Category):
             }
         })
 
-        self._removeModerator = Command({
+        self._removeModerator = Command(commandDict = {
             "alternatives": ["removeBotModerator", "removeBotMod", "remBotMod", "rbm"],
             "info": "Allows you to remove a bot moderator from the bot.",
             "bot_moderator_only": True,
@@ -57,7 +90,7 @@ class BotModerator(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                BotModerator.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to remove a bot moderator, you need to mention them."
                     ]
@@ -65,7 +98,7 @@ class BotModerator(Category):
             }
         })
 
-        self._activate = Command({
+        self._activate = Command(commandDict = {
             "alternatives": ["activateGlobally", "enableGlobally"],
             "info": "Allows you to activate a command, or commands, globally.",
             "bot_moderator_only": True,
@@ -76,12 +109,12 @@ class BotModerator(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                BotModerator.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to activate a command globally, you need to type it in."
                     ]
                 },
-                Category.INVALID_COMMAND: {
+                BotModerator.INVALID_COMMAND: {
                     "messages": [
                         "That is not a valid command."
                     ]
@@ -89,7 +122,7 @@ class BotModerator(Category):
             }
         })
 
-        self._deactivate = Command({
+        self._deactivate = Command(commandDict = {
             "alternatives": ["deactivateGlobally", "disableGlobally"],
             "info": "Allows you to deactivate a command globally.",
             "bot_moderator_only": True,
@@ -104,17 +137,17 @@ class BotModerator(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                BotModerator.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to deactivate a command globally, you need to type it in."
                     ]
                 },
-                Category.INVALID_COMMAND: {
+                BotModerator.INVALID_COMMAND: {
                     "messages": [
                         "That is not a valid command."
                     ]
                 },
-                Category.CANT_BE_DEACTIVATED: {
+                BotModerator.CANT_BE_DEACTIVATED: {
                     "messages": [
                         "This command cannot be deactivated."
                     ]
@@ -122,12 +155,12 @@ class BotModerator(Category):
             }
         })
 
-        self._info = Command({
+        self._info = Command(commandDict = {
             "alternatives": ["botInfo", "bi"],
             "info": "Allows you to get the info about the bot.",
             "bot_moderator_only": True,
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get info about the bot, or the servers it's in, you don't need anything else."
                     ]
@@ -135,12 +168,12 @@ class BotModerator(Category):
             }
         })
 
-        self._servers = Command({
+        self._servers = Command(commandDict = {
             "alternatives": ["servers", "botServers"],
             "info": "Allows you to get a list of servers the bot is in.",
             "bot_moderator_only": True,
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get a list of servers the bot is in, you don't need any parameters."
                     ]
@@ -148,7 +181,7 @@ class BotModerator(Category):
             }
         })
 
-        self._status = Command({
+        self._status = Command(commandDict = {
             "alternatives": ["setStatus", "status"],
             "info": "Allows you to change the presence of the bot.",
             "bot_moderator_only": True,
@@ -156,7 +189,7 @@ class BotModerator(Category):
                 "activity": {
                     "info": "The activity to set for the presence.",
                     "optional": False,
-                    "accepted": {
+                    "accepted_parameters": {
                         "playing": {
                             "alternatives": ["playing", "Playing"],
                             "info": "The playing activity type."
@@ -181,12 +214,12 @@ class BotModerator(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                BotModerator.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to set the status, you need the status type and the text to set."
                     ]
                 },
-                Category.INVALID_ACTIVITY: {
+                BotModerator.INVALID_ACTIVITY: {
                     "messages": [
                         "The given activity is not a valid activity."
                     ]
@@ -194,12 +227,12 @@ class BotModerator(Category):
             }
         })
 
-        self._kill = Command({
+        self._kill = Command(commandDict = {
             "alternatives": ["stop", "quit", "kill"],
             "info": "Kills the bot.",
             "bot_moderator_only": True,
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to kill the bot, you don't need any parameters."
                     ]
@@ -236,7 +269,8 @@ class BotModerator(Category):
     def addModerator(self, members):
         """Adds bot moderators to the bot.\n
 
-        members - The Discord Users to add as a bot moderator.\n
+        Parameters:
+            members: The Discord Users to add as a bot moderator.\n
         """
         
         # Iterate through each member
@@ -258,7 +292,8 @@ class BotModerator(Category):
     def removeModerator(self, members):
         """Removes a bot moderator from the bot.\n
 
-        members - The Discord Users to remove as a bot moderator.\n
+        Parameters:
+            members: The Discord Users to remove as a bot moderator.\n
         """
         
         # Iterate through each member
@@ -280,7 +315,8 @@ class BotModerator(Category):
     def activate(self, commands):
         """Activates commands globally in the bot.\n
 
-        commands - The commands to globally activate.\n
+        Parameters:
+            commands: The commands to globally activate.\n
         """
         
         # Open bot file
@@ -337,8 +373,9 @@ class BotModerator(Category):
     def deactivate(self, command, reason):
         """Deactivates a command globally in the bot.\n
 
-        command - The command to globally deactivate.\n
-        reason - The reason the command is being globally deactivated.\n
+        Parameters:
+            command: The command to globally deactivate.\n
+            reason: The reason the command is being globally deactivated.\n
         """
         
         # Open bot file
@@ -456,8 +493,9 @@ class BotModerator(Category):
     async def setStatus(self, activityType, text):
         """Sets the presence of the bot given the activity type and text.\n
 
-        activityType - The type of activity to set for the presence.\n
-        text - The text to set.\n
+        Parameters:
+            activityType: The type of activity to set for the presence.\n
+            text: The text to set.\n
         """
 
         # Get the specific activity type
@@ -504,9 +542,10 @@ class BotModerator(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     async def on_message(self, message):
-        """Parses a message and runs a Rank Category command if it can.\n
+        """Parses a message and runs a Rank BotModerator command if it can.\n
 
-        message - The Discord Message to parse.\n
+        Parameters:
+            message: The Discord Message to parse.\n
         """
 
         # Make sure message starts with the prefix
@@ -525,7 +564,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._addModerator, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._addModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -533,7 +572,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._addModerator, self.addModerator, message.mentions)
+                        embed = await run(message, self._addModerator, self.addModerator, message.mentions)
                     )
             
             # Remove Moderator Command
@@ -544,7 +583,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._removeModerator, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._removeModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or More Parameters Exist
@@ -552,7 +591,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._removeModerator, self.removeModerator, message.mentions)
+                        embed = await run(message, self._removeModerator, self.removeModerator, message.mentions)
                     )
 
             # Activate Command
@@ -562,7 +601,7 @@ class BotModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await self.run(message, self._activate, self.activate, parameters)
+                    embed = await run(message, self._activate, self.activate, parameters)
                 )
             
             # Deactivate Command
@@ -573,7 +612,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._deactivate, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._deactivate, BotModerator.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 1 or 2 Parameters Exist
@@ -586,7 +625,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._deactivate, self.deactivate, parameters[0], reason)
+                        embed = await run(message, self._deactivate, self.deactivate, parameters[0], reason)
                     )
                 
                 # 3 or More Parameters Exist
@@ -594,7 +633,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._deactivate, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._deactivate, BotModerator.TOO_MANY_PARAMETERS)
                     )
             
             # Info Command
@@ -605,7 +644,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._info, self.getInfo)
+                        embed = await run(message, self._info, self.getInfo)
                     )
                 
                 # 1 or More Parameters Exist
@@ -613,7 +652,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._info, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._info, BotModerator.TOO_MANY_PARAMETERS)
                     )
             
             # Servers Command
@@ -624,7 +663,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._servers, self.getServers)
+                        embed = await run(message, self._servers, self.getServers)
                     )
                 
                 # 1 or More Parameters Exist
@@ -632,7 +671,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._servers, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._servers, BotModerator.TOO_MANY_PARAMETERS)
                     )
             
             # Status Command
@@ -643,7 +682,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = self.getErrorMessage(self._status, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._status, BotModerator.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 or More Parameters Exist
@@ -651,7 +690,7 @@ class BotModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await self.run(message, self._status, self.setStatus, parameters[0], " ".join(parameters[1:]))
+                        embed = await run(message, self._status, self.setStatus, parameters[0], " ".join(parameters[1:]))
                     )
             
             # Kill Command
