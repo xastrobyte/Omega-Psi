@@ -1,6 +1,8 @@
+from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
-import discord, os, traceback
+from functools import wraps
+import discord, inspect, os, signal, traceback
 
 async def sendMessage(client, origMessage, *, message = None, embed = None, filename = None, plain = False):
     """A utility method to send a message to a channel that automatically handles exceptions.\n
@@ -117,3 +119,150 @@ def splitText(text, size, byWord = True):
         fields.append(fieldText)
     
     return fields
+
+def getErrorMessage(commandObject, errorType):
+    """Returns a Discord Embed object for an error type given.
+
+    Parameters:
+        commandObject: The Command to get the error from.
+        errorType: The type of error to return.
+    
+    Returns:
+        embed (discord.Embed)
+    """
+        
+    return discord.Embed(
+        title = "Error",
+        description = commandObject.getErrorMessage(errorType),
+        colour = 0xFF0000
+    )
+
+async def run(discordMessage, commandObject, func, *args, **kwargs):
+    """Runs a command while testing if the Command is globally or locally inactive.
+
+    Parameters:
+        discordMessage: The Discord Message that determines who ran the command and where it is being sent to.
+        commandObject: The Command that is being run.
+        func: The function that runs the actual code behind a Command.
+        *args: The arguments to put into the function.
+        **kwargs: The keyword arguments to put into the function.
+    
+    Returns:
+        embed (discord.Embed)
+    """
+
+    # Emulate Typing
+    async with discordMessage.channel.typing():
+
+        # Command is globally active
+        if OmegaPsi.isCommandActive(commandObject):
+
+            # Command is a Bot Moderator Command
+            if commandObject.isBotModeratorCommand():
+
+                # Author is a Bot Moderator
+                if OmegaPsi.isAuthorModerator(discordMessage.author):
+                    
+                    # Try running asynchronous function
+                    if inspect.iscoroutinefunction(func):
+                        return await func(*args, **kwargs)
+                    
+                    # Function is synchronous
+                    else:
+                        return func(*args, **kwargs) # All functions must return an embed
+                
+                # Author is not a Bot Moderator
+                else:
+                    return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS)
+
+            # Command is being run in a Server
+            elif discordMessage.guild != None:
+                
+                # Command is locally active
+                if Server.isCommandActive(discordMessage.guild, commandObject):
+
+                    # Command is a Server Moderator Command
+                    if commandObject.isServerModeratorCommand():
+
+                        # Author is a Server Moderator
+                        if Server.isAuthorModerator(discordMessage.guild, discordMessage.author):
+
+                            # Try running asynchronous function
+                            if inspect.iscoroutinefunction(func):
+                                return await func(*args, **kwargs)
+                            
+                            # Function is synchronous
+                            else:
+                                return func(*args, **kwargs) # All functions must return an embed
+                        
+                        # Author is not a Server Moderator
+                        else:
+                            return Server.getErrorMessage(Server.NO_ACCESS)
+                    
+                    # Command is not a Server Moderator Command
+                    else:
+
+                        # Try running asynchronous function
+                        if inspect.iscoroutinefunction(func):
+                            return await func(*args, **kwargs)
+                        
+                        # Function is synchronous
+                        else:
+                            return func(*args, **kwargs) # All functions must return an embed
+                
+                # Command is locally inactive
+                else:
+                    return Server.getErrorMessage(Server.INACTIVE) # Returns Embed
+            
+            # Command is being run in a Private Message
+            else:
+                
+                # Command can be run in Private
+                if commandObject.canBeRunInPrivate():
+
+                    # Try running asynchronous function
+                    if inspect.iscoroutinefunction(func):
+                        return await func(*args, **kwargs)
+                    
+                    # Function is synchronous
+                    else:
+                        return func(*args, **kwargs) # All functions must return an embed
+                
+                # Command cannot be run in Private
+                else:
+                    # return Category.getErrorMessage(commandObject, Category.CANT_BE_RUN)
+                    pass
+        
+        # Command is globally inactive
+        else:
+            return OmegaPsi.getErrorMessage(OmegaPsi.INACTIVE) # Returns Embed
+
+# Timeout Decorator
+class TimeoutError(Exception): pass
+def timeout(seconds = 10, error_message = "Function timed out"):
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            return discord.Embed(
+                title = "Error",
+                description = error_message,
+                colour = 0xFF0000
+            )
+        
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            except:
+                result = discord.Embed(
+                    title = "Error",
+                    description = error_message,
+                    colour = 0xFF0000
+                )
+            finally:
+                signal.alarm(0)
+            return result
+        
+        return wraps(func)(wrapper)
+    
+    return decorator
