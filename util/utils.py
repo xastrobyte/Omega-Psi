@@ -2,7 +2,10 @@ from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
 from functools import wraps
-import discord, inspect, os, signal, traceback
+from PIL import Image
+import discord, inspect, os, pygame, requests, signal, traceback
+
+pygame.init()
 
 async def sendMessage(client, origMessage, *, message = None, embed = None, filename = None, plain = False):
     """A utility method to send a message to a channel that automatically handles exceptions.\n
@@ -119,6 +122,31 @@ def splitText(text, size, byWord = True):
         fields.append(fieldText)
     
     return fields
+
+def loadImageFromUrl(url):
+    """Loads and returns an image from a URL
+
+    Parameters:
+        url (str): The URL to load the image from.
+
+    Returns:
+        image (pygame.image): The image.
+    """
+
+    # Make Request; Get Image through Pillow
+    request = requests.get(url, stream = True)
+    request.raw.decode_content = True
+    
+    pillowImage = Image.open(request.raw)
+
+    # Turn the Pillow Image into a Pygame Image
+    pillowImageMode = pillowImage.mode
+    pillowImageSize = pillowImage.size
+    pillowImageData = pillowImage.tobytes()
+
+    pygameImage = pygame.image.fromstring(pillowImageData, pillowImageSize, pillowImageMode)
+
+    return pygameImage
 
 def getErrorMessage(commandObject, errorType):
     """Returns a Discord Embed object for an error type given.
