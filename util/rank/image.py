@@ -1,7 +1,8 @@
 from util.file.server import Server
 
-from PIL import Image
-import pygame, requests
+from util.utils import loadImageFromUrl
+
+import pygame
 
 pygame.init()
 
@@ -94,6 +95,7 @@ def createRankImage(member):
     # Get necessary values for rank image
     ID = member["id"]
     name = member["name"]
+    nickname = member["nickname"]
     discriminator = member["discriminator"]
     avatar = member["avatar"]
     level = member["level"]
@@ -105,7 +107,10 @@ def createRankImage(member):
 
     # - Add Name
     nameText = nameRect.getFont().render(
-        "{} #{}".format(name, discriminator),
+        "{} #{}".format(
+            name if nickname == None else nickname, 
+            discriminator
+        ),
         True,
         nameRect.getColor()
     )
@@ -164,17 +169,7 @@ def createRankImage(member):
     if avatar != None:
 
         # Make Request; Get Image through Pillow
-        request = requests.get(Server.XP_ICON_SOURCE.format(ID, avatar), stream = True)
-        request.raw.decode_content = True
-        
-        pillowImage = Image.open(request.raw)
-
-        # Turn the Pillow Image into a Pygame Image
-        pillowImageMode = pillowImage.mode
-        pillowImageSize = pillowImage.size
-        pillowImageData = pillowImage.tobytes()
-
-        pygameImage = pygame.image.fromstring(pillowImageData, pillowImageSize, pillowImageMode)
+        pygameImage = loadImageFromUrl(Server.XP_ICON_SOURCE.format(ID, avatar))
 
         # Resize Pygame Image and add to Rank Image
         pygameImage = pygame.transform.scale(pygameImage, (
@@ -227,6 +222,9 @@ def convert(number):
             number = number[ : number.find(".") + 3]
 
             return number + conversion # Add conversion to end of the resulting shortened number
+    
+    # No conversion took place; Return regular number
+    return number
 
 def mapping(value, start1, stop1, start2, stop2):
     """Maps a value proportionally from a start range to a final range.\n
