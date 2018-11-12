@@ -348,6 +348,9 @@ class OmegaPsi:
 
         # Keep a dictionary of errors and error messages
         errorMessages = {
+            OmegaPsi.NO_ACCESS: [
+                "You do not have access to this."
+            ],
             OmegaPsi.INACTIVE: [
                 "This command is globally inactive right now."
             ],
