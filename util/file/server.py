@@ -96,11 +96,17 @@ class Server:
         discordServer - The Discord Server to load.\n
         """
 
+        # Get owner ID if owner returns None
+        if discordServer.owner == None:
+            ownerId = 0
+        else:
+            ownerId = discordServer.owner.id
+
         # Setup default values
         defaultValues = {
             "prefixes": [OmegaPsi.PREFIX],
             "id": discordServer.id,
-            "ownerId": discordServer.owner.id,
+            "ownerId": ownerId,
             "name": discordServer.name,
             "ranking": False,
             "join_message": {
@@ -127,7 +133,7 @@ class Server:
                     serverDict[value] = defaultValues[value]
             
             # See if Server owner or Server name changed
-            serverDict["ownerId"] = discordServer.owner.id
+            serverDict["ownerId"] = ownerId
             serverDict["name"] = discordServer.name
             
             return serverDict
