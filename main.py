@@ -10,8 +10,12 @@ from random import choice as choose
 import discord, os, sys, traceback
 
 # Open Bot client
-omegaPsi = Bot(command_prefix = OmegaPsi.PREFIX)
+omegaPsi = Bot(discord.ext.commands.when_mentioned_or(OmegaPsi.PREFIX))
 omegaPsi.remove_command("help")
+
+# Load Opus sound library
+# if not discord.opus.is_loaded():
+    # discord.opus.load_opus("libopus-0")
 
 extensions = [
     "category.help",
@@ -23,6 +27,7 @@ extensions = [
     "category.rank",
     "category.internet",
     "category.misc",
+    # "category.music",
     "category.serverModerator",
     "category.botModerator"
 ]
@@ -140,8 +145,6 @@ async def on_member_join(member):
     # Update member
     Server.updateMember(member.guild, member)
 
-    # Assign role based off of invite used
-
     # Send message in join message channel
     if server["join_message"]["active"]:
         await sendMessage(
@@ -173,7 +176,6 @@ async def on_member_remove(member):
 @omegaPsi.event
 async def on_member_update(before, after):
     """
-
     # Open server file
     server = Server.openServer(after.guild)
 
