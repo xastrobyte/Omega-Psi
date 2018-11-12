@@ -26,19 +26,25 @@ class User:
             "id": discordUser.id,
             "name": discordUser.name,
             "discriminator": discordUser.discriminator,
-            "stats": {
-                "hangman": {
-                    "won": 0,
-                    "lost": 0
-                },
-                "rps": {
-                    "won": 0,
-                    "lost": 0
-                },
-                "scramble": {
-                    "won": 0,
-                    "lost": 0
-                }
+            "connect_four": {
+                "won": 0,
+                "lost": 0
+            },
+            "hangman": {
+                "won": 0,
+                "lost": 0
+            },
+            "rps": {
+                "won": 0,
+                "lost": 0
+            },
+            "scramble": {
+                "won": 0,
+                "lost": 0
+            },
+            "tic_tac_toe": {
+                "won": 0,
+                "lost": 0
             }
         }
 
@@ -78,54 +84,93 @@ class User:
         # Open file
         with open(User.USER_FILE.format(userDict["id"]), "w") as userFile:
             userFile.write(json.dumps(userDict, sort_keys = True, indent = 4))
+        
+    def updateConnectFour(discordUser, *, didWin = False):
+        """Updates the connect four score.
+
+        Parameters:
+            discordUser (discord.User): The Discord User to update the connect four stats in.
+            didWin (bool): Whether or not the player won a connect four game.
+        """
+
+        # Open user file
+        user = User.openUser(discordUser)
+
+        # Update member connect four stats
+        user["connect_four"]["won"] += 1 if didWin else 0
+        user["connect_four"]["lost"] += 1 if not didWin else 0
+
+        # Close user file
+        User.closeUser(user)
     
     def updateHangman(discordUser, *, didWin = False):
-        """Updates the hangman score.\n
+        """Updates the hangman score.
 
-        - discordUser - The Discord User to update the hangman stats of.\n
-        - didWin - Whether or not the player won a hangman game.\n
+        Parameters:
+            discordUser (discord.User): The Discord User to update the hangman stats in.
+            didWin (bool): Whether or not the player won a hangman game.
         """
 
         # Open user file
         user = User.openUser(discordUser)
 
         # Update member hangman stats
-        user["stats"]["hangman"]["won"] += 1 if didWin else 0
-        user["stats"]["hangman"]["lost"] += 1 if not didWin else 0
+        user["hangman"]["won"] += 1 if didWin else 0
+        user["hangman"]["lost"] += 1 if not didWin else 0
 
         # Close user file
         User.closeUser(user)
     
     def updateRPS(discordUser, *, didWin = False):
-        """Updates the Rock, Paper, Scissors score.\n
+        """Updates the tic tac toe score.
 
-        - discordUser - The Discord User to update the Rock, Paper, Scissors stats in.\n
-        - didWin - Whether or not the player won a Rock, Paper, Scissors game.\n
+        Parameters:
+            discordUser (discord.User): The Discord User to update the rock paper scissors stats in.
+            didWin (bool): Whether or not the player won a rock paper scissors game.
         """
 
         # Open user file
         user = User.openUser(discordUser)
 
         # Update member RPS stats
-        user["stats"]["rps"]["won"] += 1 if didWin else 0
-        user["stats"]["rps"]["lost"] += 1 if not didWin else 0
+        user["rps"]["won"] += 1 if didWin else 0
+        user["rps"]["lost"] += 1 if not didWin else 0
 
         # Close user file
         User.closeUser(user)
     
     def updateScramble(discordUser, *, didWin = False):
-        """Updates the scramble score.\n
+        """Updates the tic tac toe score.
 
-        - discordUser - The Discord User to update the scramble stats in.\n
-        - didWin - Whether or not the player won a scramble game.\n
+        Parameters:
+            discordUser (discord.User): The Discord User to update the scramble stats in.
+            didWin (bool): Whether or not the player won a scramble game.
         """
 
         # Open user file
         user = User.openUser(discordUser)
 
         # Update member scramble stats
-        user["stats"]["scramble"]["won"] += 1 if didWin else 0
-        user["stats"]["scramble"]["lost"] += 1 if not didWin else 0
+        user["scramble"]["won"] += 1 if didWin else 0
+        user["scramble"]["lost"] += 1 if not didWin else 0
+
+        # Close user file
+        User.closeUser(user)
+    
+    def updateTicTacToe(discordUser, *, didWin = False):
+        """Updates the tic tac toe score.
+
+        Parameters:
+            discordUser (discord.User): The Discord User to update the tic tac toe stats in.
+            didWin (bool): Whether or not the player won a tic tac toe game.
+        """
+
+        # Open user file
+        user = User.openUser(discordUser)
+
+        # Update member tic tac toe stats
+        user["tic_tac_toe"]["won"] += 1 if didWin else 0
+        user["tic_tac_toe"]["lost"] += 1 if not didWin else 0
 
         # Close user file
         User.closeUser(user)
