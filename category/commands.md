@@ -26,11 +26,15 @@
       * `decode | dec | d` - Decode text from base64.
 
 ## Game
+  * `connectFour | connect4 | cf [difficulty]` - Play connect four with Omega Psi.
+    * Accepted Parameters for `difficulty`
+      * `quit | q | exit` - Allows you to quit the Connect 4 game.
+
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
     * Accepted Parameters for `difficulty`
-      * `easy | simple | e` - Play an easy game of hangman.
-      * `medium | m` - Play a medium game of hangman.
-      * `hard | difficult | h` - Play a hard game of hangman.
+      * `easy | simple | e` - Play an easy game of Hangman.
+      * `medium | m` - Play a medium game of Hangman.
+      * `hard | difficult | h` - Play a hard game of Hangman.
       * `quit | q | exit` - Allows you to quit the hangman game.
 
   * `rockPaperScissors | rps <action>` - Allows you to play Rock Paper Scissors with me.
@@ -45,6 +49,13 @@
       * `expert | hard | difficult` - The entire phrase is scrambled.
       * `quit | q | exit` - Allows you to quit the scramble game.
 
+  * `ticTacToe | ttt [difficulty]` - Lets you play a Tic-Tac-Toe game against Omega Psi.
+    * Accepted Parameters for `difficulty`
+      * `easy | simple | e` - Play an easy game of Tic-Tac-Toe.
+      * `medium | m` - Play a medium game of Tic-Tac-Toe.
+      * `hard | difficult | h` - Play a hard game of Tic-Tac-Toe.
+      * `quit | q | exit` - Quit your game of Tic-Tac-Toe.
+
   * `stats | gameStats ` - Gives you stats on the games you've won/lost.
 
 ## Image
@@ -57,6 +68,24 @@
   * `brooklyn99 | b99 | 99 ` - Sends a random gif related to Brooklyn Nine-Nine.
 
   * `meme ` - Sends a random meme from Reddit.
+
+  * `carSkidding | carSkid <carText> <straightText> <exitText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/carSkidding) image.
+
+  * `cardSlam <cardText> <bodyText> <tableText>` - Sends a generated meme based off of [this](https://i.imgur.com/GBMCNYM.jpg) image.
+
+  * `classroomStares <bubbleText>` - Sends a generated meme based off of [this](https://i.imgur.com/3QVQ2V5.jpg) image.
+
+  * `icarlyStopSign | icarlyStop <spencerText> [stopText] <gibbyText>` - Sends a generated meme based off of [this](https://i.imgur.com/MSaTVD2.jpg) image.
+
+  * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/mastersBlessing) image.
+
+  * `saveOne <personText> <leftBehindText> <savedText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/saveOneMeme) image.
+
+  * `spontaneousAnger | angerMeme <angerText> <questionText>` - Sends a generated meme based off of [this](https://i.imgur.com/o1NzXyW.jpg) image.
+
+  * `surprisedDwight <dwightText> <angelaText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/surprisedDwight) image.
+
+  * `surprisedPikachu <firstLine> <secondLine> <thirdLine> [fourthLine] [fifthLine]` - Sends a generated meme based off of [this](https://imgflip.com/s/meme/Surprised-Pikachu.jpg) image.
 
   * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
 
@@ -85,11 +114,17 @@
   * `forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Math
+  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+
+  * `expand | exp | e <expression>` - Expands a mathematical expression.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `factor | f <expression>` - Factors a mathematical expression.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
 
   * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
@@ -97,13 +132,13 @@
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
-  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
-
-  * `expand | exp | e <expression>` - Expands a mathematical expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
 ## Rank
+  * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
+    * Accepted Parameters for `interaction`
+      * `profanity | profane` - Check how many profane words you need to level up.
+      * `reactions | reacts` - Check how many reactions you need to level up.
+      * `normal | basic` - Check how many regular messages you need to send to level up.
+
   * `rank | r ` - Shows you your current level and experience in this server.
 
 ## Miscellaneous
@@ -217,4 +252,3 @@
       * `watching | Watching` - The watching activity type.
 
   * `stop | quit | kill ` - Kills the bot.
-
