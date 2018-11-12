@@ -74,6 +74,15 @@ def home():
         "           </td>\n" +
         "           <td id=\"primaryBorder\" style=\"width: 186px; text-align: center;\">\n" +
         "               <h3><strong>Action</strong></h3>\n" +
+        "               <p>What the command does</p>\n" +
+        "           </td>\n" +
+        "           <td id=\"primaryBorder\" style=\"width: 186px; text-align: center;\">\n" +
+        "               <h3><strong>Access</strong></h3>\n" +
+        "               <p>Who can access the command</p>\n" +
+        "           </td>\n" +
+        "           <td id=\"primaryBorder\" style=\"width: 186px; text-align: center;\">\n" +
+        "               <h3><strong>Private Channel</strong></h3>\n" +
+        "               <p>Whether it can be run in a private channel</p>\n" +
         "           </td>\n" +
         "       </tr>\n"
     )
@@ -88,7 +97,7 @@ def home():
     )
 
 def run():
-    app.run(host = "0.0.0.0", port = 8080)
+    app.run(host = "0.0.0.0", port = 5000)
 
 def keepAlive():
     thread = Thread(target = run)
