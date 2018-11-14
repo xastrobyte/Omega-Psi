@@ -7,6 +7,7 @@ from category.math import Math
 from category.rank import Rank
 from category.misc import Misc
 
+from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.utils import sendMessage, getErrorMessage, run
 
@@ -61,6 +62,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The member(s) to add.",
@@ -82,6 +84,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The member(s) to remove.",
@@ -103,6 +106,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The moderator(s) to add to the server.",
@@ -124,6 +128,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The moderator(s) to remove from the server.",
@@ -145,6 +150,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
             "parameters": {
                 "command": {
                     "info": "The command(s) to activate.",
@@ -176,6 +182,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
             "parameters": {
                 "command": {
                     "info": "The command to deactivate.",
@@ -216,6 +223,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "max_parameters": 0,
             "errors": {
                 Category.TOO_MANY_PARAMETERS: {
                     "messages": [
@@ -231,6 +239,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "max_parameters": 0,
             "errors": {
                 Category.TOO_MANY_PARAMETERS: {
                     "messages": [
@@ -246,6 +255,8 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 1,
+            "max_parameters": 1,
             "parameters": {
                 "channel": {
                     "info": "The channel the Join Messages are sent in.",
@@ -272,6 +283,7 @@ class ServerModerator(Category):
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
+            "min_parameters": 2,
             "parameters": {
                 "level": {
                     "info": "The level to set for the member(s).",
@@ -301,6 +313,7 @@ class ServerModerator(Category):
             "info": "Allows you to add a prefix for this server.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "prefix": {
                     "info": "The prefix to add to this server.",
@@ -321,6 +334,7 @@ class ServerModerator(Category):
             "info": "Allows you to remove a prefix from this server.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "prefix": {
                     "info": "The prefix to remove from this server.",
@@ -343,9 +357,10 @@ class ServerModerator(Category):
         self._setServerName = Command(commandDict = {
             "alternatives": ["setServerName", "setSvrName"],
             "info": "Allows you to set the Server's name.",
-            "restriction_info": "You and Omega Psi must have manage_server permissions.",
+            "restriction_info": "You and Omega Psi must have manage_guild permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "name": {
                     "info": "The new name of the Server.",
@@ -360,12 +375,12 @@ class ServerModerator(Category):
                 },
                 ServerModerator.BOT_MISSING_PERMISSION: {
                     "messages": [
-                        "The bot does not have the `manage_server` permission in this server."
+                        "The bot does not have the `manage_guild` permission in this server."
                     ]
                 },
                 ServerModerator.MEMBER_MISSING_PERMISSION: {
                     "messages": [
-                        "You do not have the `manage_server` permission in this server."
+                        "You do not have the `manage_guild` permission in this server."
                     ]
                 }
             }
@@ -377,6 +392,7 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have create_instant_invite permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "max_parameters": 1,
             "parameters": {
                 "infinite": {
                     "info": "Whether or not to make the invite an infinite invite.",
@@ -418,6 +434,8 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
+            "max_parameters": 2,
             "parameters": {
                 "name": {
                     "info": "The name of the role.",
@@ -463,6 +481,8 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
+            "max_parameters": 1,
             "parameters": {
                 "name": {
                     "info": "The name of the role to remove.",
@@ -504,6 +524,7 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have kick_members permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The member(s) to kick.",
@@ -535,6 +556,7 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have ban_members permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The member(s) to ban.",
@@ -566,6 +588,7 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 2,
             "parameters": {
                 "member": {
                     "info": "The member to give the role(s) to.",
@@ -611,9 +634,10 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 2,
             "parameters": {
                 "member": {
-                    "info": "The member to take the roles from.",
+                    "info": "The member to take the role(s) from.",
                     "optional": False
                 },
                 "role(s)...": {
@@ -656,9 +680,10 @@ class ServerModerator(Category):
             "restriction_info": "You and Omega Psi must have manage_roles permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
+            "min_parameters": 2,
             "parameters": {
                 "member": {
-                    "info": "The member to set the roles of.",
+                    "info": "The member to set the role(s) of.",
                     "optional": False
                 },
                 "role(s)...": {
@@ -728,262 +753,292 @@ class ServerModerator(Category):
     # Command Methods (Bot Commands)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def addMember(self, discordServer, members):
+    def addMember(self, author, discordServer, members):
         """Manually adds members mentioned to the specified Discord Server.\n
 
         discordServer - The Discord Server to manually add members to.\n
         members - The list of members to add.\n
         """
 
-        # Iterate through each member
-        result = ""
-        for member in members:
-            result += member.mention + (
-                " was successfully added."
-            ) if Server.updateMember(discordServer, member, Server.ADD_MEMBER) else (
-                " already existed in files."
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+
+            # Iterate through each member
+            result = ""
+            for member in members:
+                result += member.mention + (
+                    " was successfully added."
+                ) if Server.updateMember(discordServer, member, action = Server.ADD_MEMBER) else (
+                    " already existed in files."
+                )
+            
+            return discord.Embed(
+                name = "Added Members",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
             )
         
-        return discord.Embed(
-            name = "Added Members",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._addMember, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def removeMember(self, discordServer, members):
+    def removeMember(self, author, discordServer, members):
         """Manually removes members mentioned from the specified Discord Server.\n
 
         discordServer - The Discord Server to manually remove members from.\n
         members - The list of members to remove.\n
         """
 
-        # Iterate through each member
-        result = ""
-        for member in members:
-            result += member.mention + (
-                " was successfully removed."
-            ) if Server.removeMember(discordServer, member) else (
-                " didn't exist in files."
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+
+            # Iterate through each member
+            result = ""
+            for member in members:
+                result += member.mention + (
+                    " was successfully removed."
+                ) if Server.removeMember(discordServer, member) else (
+                    " didn't exist in files."
+                )
+            
+            return discord.Embed(
+                name = "Removed Members",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
             )
         
-        return discord.Embed(
-            name = "Removed Members",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._removeMember, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def addModerator(self, discordServer, members):
+    def addModerator(self, author, discordServer, members):
         """Manually adds moderators mentioned to the specified Discord Server.\n
 
         discordServer - The Discord Server to manually add moderators to.\n
         members - The list of moderators to add.\n
         """
 
-        # Iterate through each member
-        result = ""
-        for member in members:
-            result += member.mention + (
-                " was successfully added as a moderator."
-            ) if Server.addModerator(discordServer, member) else (
-                " is already a moderator."
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+
+            # Iterate through each member
+            result = ""
+            for member in members:
+                result += member.mention + (
+                    " was successfully added as a moderator."
+                ) if Server.addModerator(discordServer, member) else (
+                    " is already a moderator."
+                )
+            
+            return discord.Embed(
+                name = "Added Moderators",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
             )
         
-        return discord.Embed(
-            name = "Added Moderators",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._addModerator, ServerModerator.MEMBER_MISSING_PERMISSION)
 
-    def removeModerator(self, discordServer, members):
+    def removeModerator(self, author, discordServer, members):
         """Manually removes moderators mentioned from the specified Discord Server.\n
 
         discordServer - The Discord Server to manually remove moderators from.\n
         members - The list of moderators to remove.\n
         """
 
-        # Iterate through each member
-        result = ""
-        for member in members:
-            removeModInfo = Server.removeModerator(discordServer, member)
-            result += removeModInfo["message"]
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+
+            # Iterate through each member
+            result = ""
+            for member in members:
+                removeModInfo = Server.removeModerator(discordServer, member)
+                result += removeModInfo["message"]
+            
+            return discord.Embed(
+                name = "Removed Moderators",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
+            )
         
-        return discord.Embed(
-            name = "Removed Moderators",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._removeModerator, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def activate(self, discordServer, commands):
+    def activate(self, author, discordServer, commands):
         """Activates commands in the specified Discord Server.\n
 
         discordServer - The Discord Server to activate commands in.\n
         commands - The commands to activate.\n
         """
+
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
         
-        # Open server file
-        server = Server.openServer(discordServer)
+            # Open server file
+            server = Server.openServer(discordServer)
 
-        # Iterate through commands if commands are not empty
-        if len(commands) > 0:
-            result = ""
-            acCommands = []
-            for command in commands:
+            # Iterate through commands if commands are not empty
+            if len(commands) > 0:
+                result = ""
+                acCommands = []
+                for command in commands:
 
-                # Iterate through categories
-                added = False
-                for category in self._categories:
+                    # Iterate through categories
+                    added = False
+                    for category in self._categories:
 
-                    # Check if command was part of category
-                    commandObject = self._categories[category].getCommand(command)
-                    if commandObject != None:
-                        acCommands.append(commandObject)
-                        added = True
-                    
-                if not added:
-                    result += "`{}` is not a valid command.\n".format(
-                        command
-                    )
+                        # Check if command was part of category
+                        commandObject = self._categories[category].getCommand(command)
+                        if commandObject != None:
+                            acCommands.append(commandObject)
+                            added = True
+                        
+                    if not added:
+                        result += "`{}` is not a valid command.\n".format(
+                            command
+                        )
+                
+                # Activate commands
+                for command in acCommands:
+                    if command.getAlternatives()[0] in server["inactive_commands"]:
+                        server["inactive_commands"].pop(command.getAlternatives()[0])
+                        result += "`{}` was activated.\n".format(
+                            commandObject.getAlternatives()[0]
+                        )
+                    else:
+                        result += "`{}` is already active.\n".format(
+                            commandObject.getAlternatives()[0]
+                        )
             
-            # Activate commands
-            for command in acCommands:
-                if command.getAlternatives()[0] in server["inactive_commands"]:
-                    server["inactive_commands"].pop(command.getAlternatives()[0])
-                    result += "`{}` was activated.\n".format(
-                        commandObject.getAlternatives()[0]
-                    )
-                else:
-                    result += "`{}` is already active.\n".format(
-                        commandObject.getAlternatives()[0]
-                    )
+            # Activate all inactive commands
+            else:
+                result = ""
+                for command in server["inactive_commands"]:
+                    result += "`{}` was activated.\n".format(command)
+                server["inactive_commands"] = {}
+            
+            # Close server file
+            Server.closeServer(server)
+            
+            return discord.Embed(
+                name = "Activated",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
+            )
         
-        # Activate all inactive commands
         else:
-            result = ""
-            for command in server["inactive_commands"]:
-                result += "`{}` was activated.\n".format(command)
-            server["inactive_commands"] = {}
-        
-        # Close server file
-        Server.closeServer(server)
-        
-        return discord.Embed(
-            name = "Activated",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+            return getErrorMessage(self._activate, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def deactivate(self, discordServer, command, reason = None):
+    def deactivate(self, author, discordServer, command, reason):
         """Deactivates a command in the specified Discord Server.\n
 
         discordServer - The Discord Server to deactivate a command in.\n
         command - The command to deactivate.\n
         reason - The reason the command is being deactivated.\n
         """
-        
-        # Open server file
-        server = Server.openServer(discordServer)
 
-        # Check if command is valid
-        commandObject = None
-        for category in self._categories:
-            commandObject = self._categories[category].getCommand(command)
-            if commandObject != None:
-                break
-        if commandObject == None:
-            result = "`{}` is not a valid command.".format(
-                command
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+        
+            # Open server file
+            server = Server.openServer(discordServer)
+
+            # Check if command is valid
+            commandObject = None
+            for category in self._categories:
+                commandObject = self._categories[category].getCommand(command)
+                if commandObject != None:
+                    break
+            if commandObject == None:
+                result = "`{}` is not a valid command.".format(
+                    command
+                )
+            else:
+                server["inactive_commands"][commandObject.getAlternatives()[0]] = reason
+                result = "`{}` was deactivated.\nReason: {}".format(
+                    commandObject.getAlternatives()[0],
+                    reason
+                )
+            
+            # Close server file
+            Server.closeServer(server)
+
+            return discord.Embed(
+                name = "Deactivated",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
             )
+        
         else:
-            server["inactive_commands"][commandObject.getAlternatives()[0]] = reason
-            result = "`{}` was deactivated.\nReason: {}".format(
-                commandObject.getAlternatives()[0],
-                reason
-            )
-        
-        # Close server file
-        Server.closeServer(server)
-
-        return discord.Embed(
-            name = "Deactivated",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+            return getErrorMessage(self._deactivate, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def toggleRanking(self, discordServer):
+    def toggleRanking(self, author, discordServer):
         """Toggles the ranking system in the specified Discord Server.\n
 
         discordServer - The Discord Server to toggle the ranking system in.\n
         """
 
-        # Toggle ranking
-        Server.toggleRanking(discordServer)
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
 
-        if Server.isRankingActive(discordServer):
-            result = "Ranking has been activated."
-        else:
-            result = "Ranking has been deactivated."
+            # Toggle ranking
+            Server.toggleRanking(discordServer)
+
+            if Server.isRankingActive(discordServer):
+                result = "Ranking has been activated."
+            else:
+                result = "Ranking has been deactivated."
+            
+            return discord.Embed(
+                name = "Ranking",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
+            )
         
-        return discord.Embed(
-            name = "Ranking",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._toggleRanking, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def toggleJoinMessage(self, discordServer):
+    def toggleJoinMessage(self, author, discordServer):
         """Toggles the join messaging in the specified Discord Server.\n
 
         discordServer - The Discord Server to toggle the join messaging in.\n
         """
 
-        # Toggle join message
-        Server.toggleJoinMessage(discordServer)
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
 
-        if Server.isJoinMessageActive(discordServer):
-            result = "The join message has been activated."
-        else:
-            result = "The join message has been deactivated."
+            # Toggle join message
+            Server.toggleJoinMessage(discordServer)
+
+            if Server.isJoinMessageActive(discordServer):
+                result = "The join message has been activated."
+            else:
+                result = "The join message has been deactivated."
+            
+            return discord.Embed(
+                name = "Join Message",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
+            )
         
-        return discord.Embed(
-            name = "Join Message",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._toggleJoinMessage, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def setJoinMessageChannel(self, discordServer, discordChannel):
+    def setJoinMessageChannel(self, author, discordServer, discordChannel):
         """Sets the channel that the join message is sent to.\n
 
         discordServer - The Discord Server to set the channel of the join message.\n
         discordChannel - The Discord Channel to set where the join messages are sent to.\n
         """
 
-        success = Server.setJoinMessageChannel(discordServer, discordChannel)
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
 
-        return discord.Embed(
-            title = "Channel {} Set".format(
-                "Was" if success else "Was Not"
-            ),
-            description = "{} {} the join message channel.".format(
-                discordChannel.mention,
-                "was set as" if success else "is already"
+            success = Server.setJoinMessageChannel(discordServer, discordChannel)
+
+            return discord.Embed(
+                title = "Channel {} Set".format(
+                    "Was" if success else "Was Not"
+                ),
+                description = "{} {} the join message channel.".format(
+                    discordChannel.mention,
+                    "was set as" if success else "is already"
+                )
             )
-        )
+        
+        else:
+            return getErrorMessage(self._setJoinMessageChannel, ServerModerator.MEMBER_MISSION_PERMISSION)
     
-    def getJoinMessage(self, discordServer):
-        """Returns the info of join message in the specified Discord Server.\n
-
-        discordServer - The Discord Server to get the channel of the join messages.\n
-        """
-
-        return discord.Embed(
-            title = "Join Message",
-            description = "{}\n<#{}>".format(
-                "Active" if Server.isJoinMessageActive(discordServer) else "Inactive",
-                Server.getJoinMessageChannel(discordServer)
-            ),
-            colour = ServerModerator.EMBED_COLOR
-        )
-    
-    def setLevel(self, discordServer, level, members):
+    def setLevel(self, author, discordServer, level, members):
         """Sets the level of a member, or members, in the Discord Server.\n
 
         discordServer - The Discord Server to set member's levels in.\n
@@ -991,85 +1046,100 @@ class ServerModerator(Category):
         members - The members to set the level of.\n
         """
 
-        # See if the level is an integer
-        try:
-            level = int(level)
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+
+            # See if the level is an integer
+            try:
+                level = int(level)
+            
+            # Level is not an integer, return an error
+            except:
+                return getErrorMessage(self._setLevel, ServerModerator.INVALID_LEVEL)
+            
+            # Set the level of each member
+            result = ""
+            for member in members:
+                result += Server.setLevel(discordServer, member, level) + "\n"
+            
+            return discord.Embed(
+                name = "Result",
+                description = result,
+                colour = ServerModerator.EMBED_COLOR
+            )
         
-        # Level is not an integer, return an error
-        except:
-            return getErrorMessage(self._setLevel, ServerModerator.INVALID_LEVEL)
-        
-        # Set the level of each member
-        result = ""
-        for member in members:
-            result += Server.setLevel(discordServer, member, level) + "\n"
-        
-        return discord.Embed(
-            name = "Result",
-            description = result,
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._setLevel, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def addPrefix(self, discordServer, prefixes):
+    def addPrefix(self, author, discordServer, prefixes):
         """Adds a prefix to the specified Discord Server.\n
 
         discordServer - The Discord Server to add the prefix to.\n
         prefixes - The prefix(es) to add.\n
         """
 
-        # Iterate through the prefixes
-        addPrefixes = ""
-        addCount = 0
-        for prefix in prefixes:
-            temp = Server.addPrefix(discordServer, prefix)
-            addPrefixes += temp["message"]
-            addCount += temp["success_int"]
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+
+            # Iterate through the prefixes
+            addPrefixes = ""
+            addCount = 0
+            for prefix in prefixes:
+                temp = Server.addPrefix(discordServer, prefix)
+                addPrefixes += temp["message"]
+                addCount += temp["success_int"]
+            
+            return discord.Embed(
+                title = "Prefix{} {} added.".format(
+                    "es" if addCount > 1 else "",
+                    "not" if addCount == 0 else ""
+                ),
+                description = addPrefixes if addCount > 0 else "No prefixes were added.",
+                colour = ServerModerator.EMBED_COLOR
+            )
         
-        return discord.Embed(
-            title = "Prefix{} {} added.".format(
-                "es" if addCount > 1 else "",
-                "not" if addCount == 0 else ""
-            ),
-            description = addPrefixes if addCount > 0 else "No prefixes were added.",
-            colour = ServerModerator.EMBED_COLOR
-        )
+        else:
+            return getErrorMessage(self._addPrefix, ServerModerator.MEMBER_MISSING_PERMISSION)
     
-    def removePrefix(self, discordServer, prefixes):
+    def removePrefix(self, author, discordServer, prefixes):
         """Removes a prefix from the specified Discord Server.\n
 
         discordServer - The Discord Server to remove the prefix from.\n
         prefixes - The prefix(es) to remove.\n
         """
 
-        # No prefixes in list; Reset prefixes to default prefix
-        if len(prefixes) == 0:
-            Server.resetPrefixes(discordServer)
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
 
-            return discord.Embed(
-                title = "Prefixes Reset",
-                description = "All prefixes have been removed and the default has been set.",
-                colour = ServerModerator.EMBED_COLOR
-            )
-        
-        # Prefixes are in list
-        else:
+            # No prefixes in list; Reset prefixes to default prefix
+            if len(prefixes) == 0:
+                Server.resetPrefixes(discordServer)
 
-            # Iterate through prefixes
-            removePrefixes = ""
-            removeCount = 0
-            for prefix in prefixes:
-                temp = Server.removePrefix(discordServer, prefix)
-                removePrefixes += temp["message"]
-                removeCount += temp["success_int"]
+                return discord.Embed(
+                    title = "Prefixes Reset",
+                    description = "All prefixes have been removed and the default has been set.",
+                    colour = ServerModerator.EMBED_COLOR
+                )
             
-            return discord.Embed(
-                title = "Prefix{} {} removed.".format(
-                    "es" if removeCount > 1 else ""
-                    "not" if removeCount == 0 else ""
-                ),
-                description = removePrefixes if removeCount > 0 else "No prefixes were removed.",
-                colour = ServerModerator.EMBED_COLOR
-            )
+            # Prefixes are in list
+            else:
+
+                # Iterate through prefixes
+                removePrefixes = ""
+                removeCount = 0
+                for prefix in prefixes:
+                    temp = Server.removePrefix(discordServer, prefix)
+                    removePrefixes += temp["message"]
+                    removeCount += temp["success_int"]
+                
+                return discord.Embed(
+                    title = "Prefix{} {} removed.".format(
+                        "es" if removeCount > 1 else ""
+                        "not" if removeCount == 0 else ""
+                    ),
+                    description = removePrefixes if removeCount > 0 else "No prefixes were removed.",
+                    colour = ServerModerator.EMBED_COLOR
+                )
+        
+        else:
+            return getErrorMessage(self._removePrefix, ServerModerator.MEMBER_MISSING_PERMISSION)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods (Server Commands)
@@ -1083,7 +1153,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author has permissions
-        if author.top_role.permissions.manage_guild:
+        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Get old name and set new name of server
@@ -1114,7 +1184,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author has permissions
-        if author.top_role.permissions.create_instant_invite:
+        if author.guild_permissions.create_instant_invite or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Create the invite
@@ -1142,7 +1212,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.manage_roles:
+        if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Try to set role color from hex
@@ -1157,7 +1227,8 @@ class ServerModerator(Category):
                 role = await discordServer.create_role(
                     name = roleName,
                     hoist = True,
-                    colour = color
+                    colour = color,
+                    mentionable = True
                 )
 
                 # Bot had permission; Return success message
@@ -1182,7 +1253,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.manage_roles:
+        if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Role is not a Discord Role
@@ -1195,11 +1266,11 @@ class ServerModerator(Category):
                             break
                 
                 # Remove the role
-                await discordRole.delete()
+                await role.delete()
 
                 return discord.Embed(
                     name = "Role Deleted",
-                    description = "The role {} was removed.".format(role.mention),
+                    description = "The role `{}` was removed.".format(role.name),
                     colour = ServerModerator.EMBED_COLOR
                 )
 
@@ -1218,7 +1289,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.kick_members:
+        if author.guild_permissions.kick_members or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Kick the member
@@ -1245,7 +1316,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.ban_members:
+        if author.guild_permissions.ban_members or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Ban the member
@@ -1272,7 +1343,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.manage_roles:
+        if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Add the roles to the member
@@ -1344,7 +1415,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.manage_roles:
+        if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Remove the roles from the member
@@ -1416,7 +1487,7 @@ class ServerModerator(Category):
         """
 
         # Only run if bot and author have permissions
-        if author.top_role.permissions.manage_roles:
+        if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
             try:
 
                 # Sets the roles of the member by removing and then adding the roles
@@ -1505,7 +1576,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addMember, self.addMember, message.guild, message.mentions)
+                        embed = await run(message, self._addMember, self.addMember, message.author, message.guild, message.mentions)
                     )
                 
             # Remove Member Command
@@ -1524,7 +1595,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._removeMember, self.removeMember, message.guild, message.mentions)
+                        embed = await run(message, self._removeMember, self.removeMember, message.author, message.guild, message.mentions)
                     )
                 
             # Add Moderator Command
@@ -1543,7 +1614,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addModerator, self.addModerator, message.guild, message.mentions)
+                        embed = await run(message, self._addModerator, self.addModerator, message.author, message.guild, message.mentions)
                     )
             
             # Remove Moderator Command
@@ -1562,7 +1633,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._removeModerator, self.removeModerator, message.guild, message.mentions)
+                        embed = await run(message, self._removeModerator, self.removeModerator, message.author, message.guild, message.mentions)
                     )
             
             # Activate Command
@@ -1572,7 +1643,7 @@ class ServerModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await run(message, self._activate, self.activate, message.guild, parameters)
+                    embed = await run(message, self._activate, self.activate, message.author, message.guild, parameters)
                 )
             
             # Deactivate Command
@@ -1596,7 +1667,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._deactivate, self.deactivate, message.guild, parameters[0], reason)
+                        embed = await run(message, self._deactivate, self.deactivate, message.author, message.guild, parameters[0], reason)
                     )
                 
                 # 3 or More Parameters Exist
@@ -1614,7 +1685,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._toggleRanking, self.toggleRanking, message.guild)
+                        embed = await run(message, self._toggleRanking, self.toggleRanking, message.author, message.guild)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1633,7 +1704,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._toggleJoinMessage, self.toggleJoinMessage, message.guild)
+                        embed = await run(message, self._toggleJoinMessage, self.toggleJoinMessage, message.author, message.guild)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1660,7 +1731,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._setJoinMessageChannel, self.setJoinMessageChannel, message.guild, message.channel_mentions[0])
+                        embed = await run(message, self._setJoinMessageChannel, self.setJoinMessageChannel, message.author, message.guild, message.channel_mentions[0])
                     )
                 
                 # 2 or More Parameters Exist
@@ -1687,7 +1758,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._setLevel, self.setLevel, message.guild, parameters[0], message.mentions)
+                        embed = await run(message, self._setLevel, self.setLevel, message.author, message.guild, parameters[0], message.mentions)
                     )
             
             # Add Prefix Command
@@ -1706,7 +1777,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addPrefix, self.addPrefix, message.guild, parameters)
+                        embed = await run(message, self._addPrefix, self.addPrefix, message.author, message.guild, parameters)
                     )
                 
             # Remove Prefix Command
@@ -1714,7 +1785,7 @@ class ServerModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await run(message, self._removePrefix, self.removePrefix, message.guild, parameters)
+                    embed = await run(message, self._removePrefix, self.removePrefix, message.author, message.guild, parameters)
                 )
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
