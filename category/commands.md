@@ -219,7 +219,7 @@
   * `ping ` - Pings the bot.
 
 ## Server Moderator
-  *Moderate your server with this. Owners have the only access to this at first.*
+  *Moderate your server with this. Owners have the only access to this at first.*\n
   **In order to use these commands, you must have the Manage Server permissions.**
   * `addMember | addM | am <member(s)...>` - Allows you to add a member, or members, to the server file manually.
 
