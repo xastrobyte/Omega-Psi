@@ -11,13 +11,13 @@
   * [Server Moderator](#Server-Moderator)
   * [Bot Moderator](#Bot-Moderator)
 ## Help
-    *Shows you the help menu.*
+  *Shows you the help menu.*
   * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
   * `markdown | getMarkdown | md | getMd ` - Creates and sends the markdown file for the commands.
 
 ## Code
-    *Commands that have to do with coding!*
+  *Commands that have to do with coding!*
   * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
 
   * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
@@ -28,7 +28,7 @@
       * `decode | dec | d` - Decode text from base64.
 
 ## Game
-    *You can play games with these.*
+  *You can play games with these.*
   * `connectFour | connect4 | cf [difficulty] [sizeX] [sizeY]` - Play connect four with Omega Psi.
     * Accepted Parameters for `difficulty`
       * `quit | q | exit` - Allows you to quit the Connect 4 game.
@@ -70,7 +70,7 @@
   * `stats | gameStats ` - Gives you stats on the games you've won/lost.
 
 ## Image
-    *Anything having to do with images is here.*
+  *Anything having to do with images is here.*
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
   * `theOffice | office | o ` - Sends a random gif related to The Office.
@@ -118,7 +118,7 @@
   * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
 
 ## Insult
-    *If you feel in the mood to be insulted, here ya are.*
+  *If you feel in the mood to be insulted, here ya are.*
   * `insult | i [insultLevel]` - Sends you an insult.
     * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
@@ -138,13 +138,13 @@
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
 ## Internet
-    *All commands that deal with the internet are here.*
+  *All commands that deal with the internet are here.*
   * `urban | urbanDictionary | urbanDict <term>` - Gives you the top 5 urban dictionary entries for a term.
 
   * `forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Math
-    *Need help with math? These commands got your back.*
+  *Need help with math? These commands got your back.*
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `factor | f <expression>` - Factors a mathematical expression.
@@ -164,7 +164,7 @@
   * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
 ## Rank
-    *The ranking system is strong with this category.*
+  *The ranking system is strong with this category.*
   * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
     * Accepted Parameters for `interaction`
       * `profanity | profane` - Check how many profane words you need to level up.
@@ -174,7 +174,7 @@
   * `rank | r ` - Shows you your current level and experience in this server.
 
 ## Miscellaneous
-    *Other commands that don't really fit into a category yet.*
+  *Other commands that don't really fit into a category yet.*
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
 
   * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
@@ -219,8 +219,8 @@
   * `ping ` - Pings the bot.
 
 ## Server Moderator
-    *Moderate your server with this. Owners have the only access to this at first.*
-    **In order to use these commands, you must have the Manage Server permissions.**
+  *Moderate your server with this. Owners have the only access to this at first.*
+  **In order to use these commands, you must have the Manage Server permissions.**
   * `addMember | addM | am <member(s)...>` - Allows you to add a member, or members, to the server file manually.
 
   * `removeMember | removeM | rm <member(s)...>` - Allows you to remove a member, or members, from the server file manually.
@@ -267,7 +267,7 @@
   * `setMemberRoles | setMbrRoles | setRoles <member> <role(s)...>` - Sets the roles for a member.
 
 ## Bot Moderator
-    *Very private stuff. Only bot moderators/developers can access these.*
+  *Very private stuff. Only bot moderators/developers can access these.*
   * `addBotModerator | addBotMod | abm <member(s)...>` - Allows you to add a bot moderator to the bot.
 
   * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - Allows you to remove a bot moderator from the bot.
