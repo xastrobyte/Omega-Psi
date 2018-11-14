@@ -91,6 +91,8 @@ class Game(Category):
         self._connectFour = Command(commandDict = {
             "alternatives": ["connectFour", "connect4", "cf"],
             "info": "Play connect four with Omega Psi.",
+            "min_parameters": 1,
+            "max_parameters": 3,
             "parameters": {
                 "difficulty": {
                     "info": "The difficulty of Connect 4 to play.",
@@ -101,43 +103,43 @@ class Game(Category):
                             "info": "Allows you to quit the Connect 4 game."
                         }
                     }
+                },
+                "sizeX": {
+                    "info": "The width of the Connect 4 grid.",
+                    "optional": True,
+                    "accepted_parameters": {
+                        "small": {
+                            "alternatives": ["small", "s"],
+                            "info": "Make the width of the grid 5."
+                        },
+                        "medium": {
+                            "alternatives": ["medium", "m"],
+                            "info": "Make the width of the grid 7."
+                        },
+                        "large": {
+                            "alternatives": ["large", "l"],
+                            "info": "Make the width of the grid 9."
+                        }
+                    }
+                },
+                "sizeY": {
+                    "info": "The height of the Connect 4 grid.",
+                    "optional": True,
+                    "accepted_parameters": {
+                        "small": {
+                            "alternatives": ["small", "s"],
+                            "info": "Make the width of the grid 6."
+                        },
+                        "medium": {
+                            "alternatives": ["medium", "m"],
+                            "info": "Make the width of the grid 8."
+                        },
+                        "large": {
+                            "alternatives": ["large", "l"],
+                            "info": "Make the width of the grid 10."
+                        }
+                    }
                 }
-                # "sizeX": {
-                    # "info": "The width of the Connect 4 grid.",
-                    # "optional": True,
-                    # "accepted_parameters": {
-                        # "small": {
-                            # "alternatives": ["small", "s"],
-                            # "info": "Make the width of the grid 6."
-                        # },
-                        # "medium": {
-                            # "alternatives": ["medium", "m"],
-                            # "info": "Make the width of the grid 8."
-                        # },
-                        # "large": {
-                            # "alternatives": ["large", "l"],
-                            # "info": "Make the width of the grid 10."
-                        # }
-                    # }
-                # },
-                # "sizeY": {
-                    # "info": "The height of the Connect 4 grid.",
-                    # "optional": True,
-                    # "accepted_parameters": {
-                        # "small": {
-                            # "alternatives": ["small", "s"],
-                            # "info": "Make the width of the grid 6."
-                        # },
-                        # "medium": {
-                            # "alternatives": ["medium", "m"],
-                            # "info": "Make the width of the grid 8."
-                        # },
-                        # "large": {
-                            # "alternatives": ["large", "l"],
-                            # "info": "Make the width of the grid 10."
-                        # }
-                    # }
-                # }
             },
             "errors": {
                 Game.INVALID_SPOT: {
@@ -171,6 +173,7 @@ class Game(Category):
         self._hangman = Command(commandDict = {
             "alternatives": ["hangman", "playHangman"],
             "info": "Let's you play hangman!",
+            "max_parameters": 1,
             "parameters": {
                 "difficulty": {
                     "info": "The difficulty of hangman to play.",
@@ -196,14 +199,14 @@ class Game(Category):
                 }
             },
             "errors": {
-                Game.INVALID_DIFFICULTY: {
-                    "messages": [
-                        "That is not a valid difficulty."
-                    ]
-                },
                 Game.ALREADY_GUESSED: {
                     "messages": [
                         "You already guessed that letter."
+                    ]
+                },
+                Game.INVALID_DIFFICULTY: {
+                    "messages": [
+                        "That is not a valid difficulty."
                     ]
                 },
                 Game.INVALID_INPUT: {
@@ -222,6 +225,7 @@ class Game(Category):
         self._rps = Command(commandDict = {
             "alternatives": ["rockPaperScissors", "rps"],
             "info": "Allows you to play Rock Paper Scissors with me.",
+            "min_parameters": 1,
             "parameters": {
                 "action": {
                     "info": "What action to start out with. (rock, paper, or scissors).",
@@ -248,14 +252,14 @@ class Game(Category):
                         "You need to type in the action you want to do."
                     ]
                 },
-                Game.INVALID_INPUT: {
-                    "messages": [
-                        "The input was invalid."
-                    ]
-                },
                 Game.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to play rock, paper, scissors, you only need an amount of games."
+                    ]
+                },
+                Game.INVALID_INPUT: {
+                    "messages": [
+                        "The input was invalid."
                     ]
                 }
             }
@@ -264,6 +268,7 @@ class Game(Category):
         self._scramble = Command(commandDict = {
             "alternatives": ["scramble"],
             "info": "Allows you to guess an unscrambled word.",
+            "max_parameters": 1,
             "parameters": {
                 "difficulty": {
                     "info": "The difficulty of the game.",
@@ -285,6 +290,11 @@ class Game(Category):
                 }
             },
             "errors": {
+                Game.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "To guess a scrambled word, you only need the difficulty."
+                    ]
+                },
                 Game.INVALID_DIFFICULTY: {
                     "messages": [
                         "That is not a valid difficulty."
@@ -299,11 +309,6 @@ class Game(Category):
                     "messages": [
                         "The input was invalid."
                     ]
-                },
-                Game.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "To guess a scrambled word, you only need the difficulty."
-                    ]
                 }
             }
         })
@@ -311,6 +316,7 @@ class Game(Category):
         self._ticTacToe = Command(commandDict = {
             "alternatives": ["ticTacToe", "ttt"],
             "info": "Lets you play a Tic-Tac-Toe game against Omega Psi.",
+            "max_parameters": 1,
             "parameters": {
                 "difficulty": {
                     "info": "The difficulty of the Tic-Tac-Toe game.",
@@ -336,6 +342,11 @@ class Game(Category):
                 }
             },
             "errors": {
+                Game.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to play a game of Tic-Tac-Toe, you only need the difficulty."
+                    ]
+                },
                 Game.INVALID_DIFFICULTY: {
                     "messages": [
                         "That is not a valid difficulty."
@@ -349,11 +360,6 @@ class Game(Category):
                 Game.ALREADY_GUESSED: {
                     "messages": [
                         "That move was already taken."
-                    ]
-                },
-                Category.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to play a game of Tic-Tac-Toe, you only need the difficulty."
                     ]
                 }
             }
