@@ -12,7 +12,7 @@ from util.file.server import Server
 from util.utils import sendMessage, getErrorMessage, run
 
 from supercog import Category, Command
-import discord
+import discord, os
 
 class BotModerator(Category):
     """Creates a BotModerator extension.
@@ -64,6 +64,7 @@ class BotModerator(Category):
             "alternatives": ["addBotModerator", "addBotMod", "abm"],
             "info": "Allows you to add a bot moderator to the bot.",
             "bot_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The member(s) to add as a bot moderator.",
@@ -76,13 +77,15 @@ class BotModerator(Category):
                         "In order to add a bot moderator, you need to mention them."
                     ]
                 }
-            }
+            },
+            "command": self.addModerator
         })
 
         self._removeModerator = Command(commandDict = {
             "alternatives": ["removeBotModerator", "removeBotMod", "remBotMod", "rbm"],
             "info": "Allows you to remove a bot moderator from the bot.",
             "bot_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "member(s)...": {
                     "info": "The member(s) to remove as a bot moderator.",
@@ -95,13 +98,15 @@ class BotModerator(Category):
                         "In order to remove a bot moderator, you need to mention them."
                     ]
                 }
-            }
+            },
+            "command": self.removeModerator
         })
 
         self._activate = Command(commandDict = {
             "alternatives": ["activateGlobally", "enableGlobally"],
             "info": "Allows you to activate a command, or commands, globally.",
             "bot_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "command(s)": {
                     "info": "The command(s) to activate globally.",
@@ -119,13 +124,15 @@ class BotModerator(Category):
                         "That is not a valid command."
                     ]
                 }
-            }
+            },
+            "command": self.activate
         })
 
         self._deactivate = Command(commandDict = {
             "alternatives": ["deactivateGlobally", "disableGlobally"],
             "info": "Allows you to deactivate a command globally.",
             "bot_moderator_only": True,
+            "min_parameters": 1,
             "parameters": {
                 "command": {
                     "info": "The command to deactivate globally.",
@@ -152,39 +159,45 @@ class BotModerator(Category):
                         "This command cannot be deactivated."
                     ]
                 }
-            }
+            },
+            "command": self.deactivate
         })
 
         self._info = Command(commandDict = {
             "alternatives": ["botInfo", "bi"],
             "info": "Allows you to get the info about the bot.",
             "bot_moderator_only": True,
+            "max_parameters": 0,
             "errors": {
                 BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get info about the bot, or the servers it's in, you don't need anything else."
                     ]
                 }
-            }
+            },
+            "command": self.getInfo
         })
 
         self._servers = Command(commandDict = {
             "alternatives": ["servers", "botServers"],
             "info": "Allows you to get a list of servers the bot is in.",
             "bot_moderator_only": True,
+            "max_parameters": 0,
             "errors": {
                 BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get a list of servers the bot is in, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.getServers
         })
 
         self._status = Command(commandDict = {
             "alternatives": ["setStatus", "status"],
             "info": "Allows you to change the presence of the bot.",
             "bot_moderator_only": True,
+            "min_parameters": 2,
             "parameters": {
                 "activity": {
                     "info": "The activity to set for the presence.",
@@ -224,20 +237,38 @@ class BotModerator(Category):
                         "The given activity is not a valid activity."
                     ]
                 }
-            }
+            },
+            "command": self.setStatus
         })
 
         self._kill = Command(commandDict = {
             "alternatives": ["stop", "quit", "kill"],
             "info": "Kills the bot.",
             "bot_moderator_only": True,
+            "max_parameters": 0,
             "errors": {
                 BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to kill the bot, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.kill
+        })
+
+        self._debug = Command(commandDict = {
+            "alternatives": ["debug"],
+            "info": "Debugs the bot.",
+            "bot_moderator_only": True,
+            "max_parameters": 0,
+            "errors": {
+                BotModerator.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "To debug the bot, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.debug
         })
     
         self.setCommands([
@@ -248,7 +279,8 @@ class BotModerator(Category):
             self._info,
             self._servers,
             self._status,
-            self._kill
+            self._kill,
+            self._debug
         ])
 
         self._categories = {
@@ -272,6 +304,10 @@ class BotModerator(Category):
         Parameters:
             members: The Discord Users to add as a bot moderator.\n
         """
+
+        # Check if members list has no mentions
+        if len(members) < self._addModerator.getMinParameters():
+            return getErrorMessage(self._addModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
         
         # Iterate through each member
         result = ""
@@ -295,6 +331,10 @@ class BotModerator(Category):
         Parameters:
             members: The Discord Users to remove as a bot moderator.\n
         """
+
+        # Check if members list has no mentions
+        if len(members) < self._removeModerator.getMinParameters():
+            return getErrorMessage(self._removeModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
         
         # Iterate through each member
         result = ""
@@ -312,12 +352,19 @@ class BotModerator(Category):
             colour = BotModerator.EMBED_COLOR
         )
     
-    def activate(self, commands):
-        """Activates commands globally in the bot.\n
+    def activate(self, parameters):
+        """Activates commands globally in the bot.
 
         Parameters:
-            commands: The commands to globally activate.\n
+            parameters: The parameters to process.
         """
+
+        # Check if there are no parameters
+        if len(parameters) < self._activate.getMinParameters():
+            return getErrorMessage(self._activate, BotModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # Commands held in each parameter
+        commands = parameters
         
         # Open bot file
         bot = OmegaPsi.openOmegaPsi()
@@ -370,13 +417,23 @@ class BotModerator(Category):
             colour = BotModerator.EMBED_COLOR
         )
     
-    def deactivate(self, command, reason):
+    def deactivate(self, parameters):
         """Deactivates a command globally in the bot.\n
 
         Parameters:
             command: The command to globally deactivate.\n
             reason: The reason the command is being globally deactivated.\n
         """
+
+        # Check for minimum amount of parameters
+        if len(parameters) < self._deactivate.getMinParameters():
+            return getErrorMessage(self._deactivate, BotModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # Command to be deactivated is first parameter; Reason is every parameter after
+        command = parameters[0]
+        reason = "No Reason"
+        if len(parameters) > 1:
+            reason = " ".join(parameters[1:])
         
         # Open bot file
         bot = OmegaPsi.openOmegaPsi()
@@ -407,9 +464,13 @@ class BotModerator(Category):
             colour = BotModerator.EMBED_COLOR
         )
     
-    def getInfo(self):
+    def getInfo(self, parameters):
         """Returns the info on the bot.\n
         """
+
+        # Check if parameters exceeds maximum parameter
+        if len(parameters) > self._info.getMaxParameters():
+            return getErrorMessage(self._info, BotModerator.TOO_MANY_PARAMETERS)
 
         # Open the bot info
         omegaPsi = OmegaPsi.openOmegaPsi()
@@ -444,9 +505,13 @@ class BotModerator(Category):
         
         return embed
     
-    def getServers(self):
+    def getServers(self, parameters):
         """Returns a list of servers the bot is in.\n
         """
+
+        # Check if parameters exceeds maximum parameters
+        if len(parameters) > self._servers.getMaxParameters():
+            return getErrorMessage(self._servers, BotModerator.TOO_MANY_PARAMETERS)
 
         # Add results to fields
         fields = []
@@ -490,13 +555,21 @@ class BotModerator(Category):
         
         return embed
     
-    async def setStatus(self, activityType, text):
+    async def setStatus(self, parameters):
         """Sets the presence of the bot given the activity type and text.\n
 
         Parameters:
             activityType: The type of activity to set for the presence.\n
             text: The text to set.\n
         """
+
+        # Check if parameters is less than minimum parameters
+        if len(parameters) < self._status.getMinParameters():
+            return getErrorMessage(self._status, BotModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # Activity type is first parameter; Text is every parameter after
+        activityType = parameters[0]
+        text = " ".join(parameters[1:])
 
         # Get the specific activity type
         activityText = activityType
@@ -525,7 +598,8 @@ class BotModerator(Category):
             status = discord.Status.online,
             activity = discord.Activity(
                 name = text,
-                type = activityType
+                type = activityType,
+                url = "https://www.twitch.tv/FellowHashbrown"
             )
         )
 
@@ -537,12 +611,40 @@ class BotModerator(Category):
             colour = BotModerator.EMBED_COLOR
         )
     
+    async def kill(self, parameters):
+        """Kills the bot and logs out.
+        """
+
+        # Check if parameters exceeds maximum parameters
+        if len(parameters) > self._kill.getMaxParameters():
+            return getErrorMessage(self._kill, BotModerator.TOO_MANY_PARAMETERS)
+
+        return discord.Embed(
+            title = "Bot Killed",
+            description = "Omega Psi was killed (Process {})".format(os.getpid()),
+            colour = BotModerator.EMBED_COLOR
+        )
+    
+    def debug(self, parameters):
+        """Debugs the bot.
+        """
+
+        # Check if parameters exceeds maximum parameters
+        if len(parameters) > self._debug.getMaxParameters():
+            return getErrorMessage(self._debug, BotModerator.TOO_MANY_PARAMETERS)
+
+        return discord.Embed(
+            title = "Omega Psi Debugging",
+            description = "Process ID: {}".format(os.getpid()),
+            colour = BotModerator.EMBED_COLOR
+        )
+    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     async def on_message(self, message):
-        """Parses a message and runs a Rank BotModerator command if it can.\n
+        """Parses a message and runs a Bot Moderator command if it can.\n
 
         Parameters:
             message: The Discord Message to parse.\n
@@ -556,158 +658,21 @@ class BotModerator(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Add Moderator Command
-            if command in self._addModerator.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._addModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._addModerator, self.addModerator, message.mentions)
-                    )
-            
-            # Remove Moderator Command
-            elif command in self._removeModerator.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._removeModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._removeModerator, self.removeModerator, message.mentions)
+                        embed = await run(message, cmd, cmd.getCommand(), parameters)
                     )
 
-            # Activate Command
-            elif command in self._activate.getAlternatives():
-
-                # If parameters are empty, it will activate all inactive commands
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await run(message, self._activate, self.activate, parameters)
-                )
-            
-            # Deactivate Command
-            elif command in self._deactivate.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._deactivate, BotModerator.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 or 2 Parameters Exist
-                elif len(parameters) in [1, 2]:
-
-                    reason = None
-                    if len(parameters) == 2:
-                        reason = parameters[1]
+                    # See if kill command was called
+                    if command in self._kill.getAlternatives():
+                        await self.client.logout()
                     
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._deactivate, self.deactivate, parameters[0], reason)
-                    )
-                
-                # 3 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._deactivate, BotModerator.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Info Command
-            elif command in self._info.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._info, self.getInfo)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._info, BotModerator.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Servers Command
-            elif command in self._servers.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._servers, self.getServers)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._servers, BotModerator.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Status Command
-            elif command in self._status.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._status, BotModerator.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._status, self.setStatus, parameters[0], " ".join(parameters[1:]))
-                    )
-            
-            # Kill Command
-            elif command in self._kill.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = discord.Embed(
-                            title = "Bot Killed",
-                            description = "Omega Psi was killed.",
-                            colour = BotModerator.EMBED_COLOR
-                        )
-                    )
-                    await self.client.logout()
+                    # Don't try running other commands
+                    break
 
 def setup(client):
     client.add_cog(BotModerator(client))
