@@ -11,11 +11,13 @@
   * [Server Moderator](#Server-Moderator)
   * [Bot Moderator](#Bot-Moderator)
 ## Help
+    *Shows you the help menu.*
   * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
   * `markdown | getMarkdown | md | getMd ` - Creates and sends the markdown file for the commands.
 
 ## Code
+    *Commands that have to do with coding!*
   * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
 
   * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
@@ -26,9 +28,18 @@
       * `decode | dec | d` - Decode text from base64.
 
 ## Game
-  * `connectFour | connect4 | cf [difficulty]` - Play connect four with Omega Psi.
+    *You can play games with these.*
+  * `connectFour | connect4 | cf [difficulty] [sizeX] [sizeY]` - Play connect four with Omega Psi.
     * Accepted Parameters for `difficulty`
       * `quit | q | exit` - Allows you to quit the Connect 4 game.
+    * Accepted Parameters for `sizeX`
+      * `small | s` - Make the width of the grid 5.
+      * `medium | m` - Make the width of the grid 7.
+      * `large | l` - Make the width of the grid 9.
+    * Accepted Parameters for `sizeY`
+      * `small | s` - Make the width of the grid 6.
+      * `medium | m` - Make the width of the grid 8.
+      * `large | l` - Make the width of the grid 10.
 
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
     * Accepted Parameters for `difficulty`
@@ -59,6 +70,7 @@
   * `stats | gameStats ` - Gives you stats on the games you've won/lost.
 
 ## Image
+    *Anything having to do with images is here.*
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
   * `theOffice | office | o ` - Sends a random gif related to The Office.
@@ -69,7 +81,11 @@
 
   * `meme ` - Sends a random meme from Reddit.
 
-  * `carSkidding | carSkid <carText> <straightText> <exitText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/carSkidding) image.
+  * `burnLetter <letterText> <spongebobText>` - Sends a generated meme based off of [this](https://tinyurl.com/burnLetter) image.
+
+  * `butILikeThis | thisIsBetter <redCarText> <whiteCarText>` - Sends a generated meme based off of [this](https://tinyurl.com/butILikeThis) image.
+
+  * `carSkidding | carSkid <carText> <straightText> <exitText>` - Sends a generated meme based off of [this](https://tinyurl.com/carSkidding) image.
 
   * `cardSlam <cardText> <bodyText> <tableText>` - Sends a generated meme based off of [this](https://i.imgur.com/GBMCNYM.jpg) image.
 
@@ -77,19 +93,32 @@
 
   * `icarlyStopSign | icarlyStop <spencerText> [stopText] <gibbyText>` - Sends a generated meme based off of [this](https://i.imgur.com/MSaTVD2.jpg) image.
 
-  * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/mastersBlessing) image.
+  * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://tinyurl.com/mastersBlessing) image.
 
-  * `saveOne <personText> <leftBehindText> <savedText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/saveOneMeme) image.
+  * `armHandshake <handsText> <firstArm> <secondArm> [thirdArm] [fourthArm]` - Sends a generated meme based off of [this](https://tinyurl.com/twoArmHandshake) image.
+
+  * `puppetMeme <handText> <puppetText>` - Sends a generated meme based off of [this](https://tinyurl.com/puppetMeme) image.
+
+  * `runAway <chaserText> <runnerText>` - Sends a generated meme based off of [this](https://tinyurl.com/y9zqyq92) image.
+
+  * `saveOne <personText> <leftBehindText> <savedText>` - Sends a generated meme based off of [this](https://tinyurl.com/saveOneMeme) image.
+
+  * `sayItAgain | dexterMeme <topText> <bottomText>` - Sends a generated meme based off of [this](https://i.imgflip.com/16iyn1.jpg?a428353) image.
 
   * `spontaneousAnger | angerMeme <angerText> <questionText>` - Sends a generated meme based off of [this](https://i.imgur.com/o1NzXyW.jpg) image.
 
-  * `surprisedDwight <dwightText> <angelaText>` - Sends a generated meme based off of [this](https://www.tinyurl.com/surprisedDwight) image.
+  * `surprisedDwight <dwightText> <angelaText>` - Sends a generated meme based off of [this](https://tinyurl.com/surprisedDwight) image.
 
   * `surprisedPikachu <firstLine> <secondLine> <thirdLine> [fourthLine] [fifthLine]` - Sends a generated meme based off of [this](https://imgflip.com/s/meme/Surprised-Pikachu.jpg) image.
+
+  * `trojanHorse <hidersText> <horseText> <castleText> <welcomersText>` - Sends a generated meme based off of [this](https://i.imgur.com/pNR2At1.jpg) image.
+
+  * `whoKilledHannibal <ericAndreText> <gunText> <hannibalText> <questionText>` - Sends a generated meme based off of [this](https://i.imgflip.com/28s2gu.jpg) image.
 
   * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
 
 ## Insult
+    *If you feel in the mood to be insulted, here ya are.*
   * `insult | i [insultLevel]` - Sends you an insult.
     * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
@@ -109,19 +138,13 @@
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
 ## Internet
+    *All commands that deal with the internet are here.*
   * `urban | urbanDictionary | urbanDict <term>` - Gives you the top 5 urban dictionary entries for a term.
 
   * `forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Math
-  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
-
-  * `expand | exp | e <expression>` - Expands a mathematical expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
-
+    *Need help with math? These commands got your back.*
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `factor | f <expression>` - Factors a mathematical expression.
@@ -132,7 +155,16 @@
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
+  * `solve | system <equation(s)>` - Solves an equation or a system of equations.
+
+  * `expand | exp | e <expression>` - Expands a mathematical expression.
+
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+
 ## Rank
+    *The ranking system is strong with this category.*
   * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
     * Accepted Parameters for `interaction`
       * `profanity | profane` - Check how many profane words you need to level up.
@@ -142,6 +174,7 @@
   * `rank | r ` - Shows you your current level and experience in this server.
 
 ## Miscellaneous
+    *Other commands that don't really fit into a category yet.*
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
 
   * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
@@ -186,6 +219,8 @@
   * `ping ` - Pings the bot.
 
 ## Server Moderator
+    *Moderate your server with this. Owners have the only access to this at first.*
+    **In order to use these commands, you must have the Manage Server permissions.**
   * `addMember | addM | am <member(s)...>` - Allows you to add a member, or members, to the server file manually.
 
   * `removeMember | removeM | rm <member(s)...>` - Allows you to remove a member, or members, from the server file manually.
@@ -232,6 +267,7 @@
   * `setMemberRoles | setMbrRoles | setRoles <member> <role(s)...>` - Sets the roles for a member.
 
 ## Bot Moderator
+    *Very private stuff. Only bot moderators/developers can access these.*
   * `addBotModerator | addBotMod | abm <member(s)...>` - Allows you to add a bot moderator to the bot.
 
   * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - Allows you to remove a bot moderator from the bot.
@@ -248,7 +284,9 @@
     * Accepted Parameters for `activity`
       * `playing | Playing` - The playing activity type.
       * `streaming | Streaming` - The streaming activity type.
-      * `listening | Listening` - The listening activity type.
+      * `listening | Listening | listening to | Listening to` - The listening activity type.
       * `watching | Watching` - The watching activity type.
 
   * `stop | quit | kill ` - Kills the bot.
+
+  * `debug ` - Debugs the bot.
