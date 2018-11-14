@@ -55,6 +55,7 @@ class Code(Category):
         self._brainfuck = Command(commandDict = {
             "alternatives": ["brainfuck", "brainf", "bf"],
             "info": "Runs brainfuck code. Kinda confusing stuff at first glance.",
+            "min_parameters": 1,
             "parameters": {
                 "code": {
                     "optional": False,
@@ -82,6 +83,8 @@ class Code(Category):
         self._convert = Command(commandDict = {
             "alternatives": ["convert", "conversion", "baseConversion", "baseConverter"],
             "info": "Converts a number from one base to another base.",
+            "min_parameters": 2,
+            "max_parameters": 3,
             "parameters": {
                 "startBase": {
                     "info": "The base the number starts at.",
@@ -133,6 +136,7 @@ class Code(Category):
         self._base64 = Command(commandDict = {
             "alternatives": ["base64", "b64"],
             "info": "Encodes or decodes text to base64.",
+            "min_parameters": 2,
             "parameters": {
                 "conversion": {
                     "info": "Whether to encode/decode text into/from base64.",
@@ -178,13 +182,25 @@ class Code(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     @timeout()
-    def brainfuck(self, code, parameters = []):
+    def brainfuck(self, parameters):
         """Runs brainfuck code and returns the result.\n
 
         Parameters:
             code: The brainfuck code to run.\n
             parameters: The parameters to insert into the brainfuck code.\n
         """
+
+        # Check for not enough parameters
+        if len(parameters) < self._brainfuck.getMinParameters():
+            return getErrorMessage(self._brainfuck, Code.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        if len(parameters) > self._brainfuck.getMaxParameters():
+            return getErrorMessage(self._brainfuck, Code.TOO_MANY_PARAMETERS)
+        
+        code = parameters[0]
+        if len(parameters) == 2:
+            parameters = []
 
         # Remove all invalid symbols
         validSymbols = "<>+-.,[]"
@@ -269,7 +285,7 @@ class Code(Category):
             colour = Code.EMBED_COLOR
         )
     
-    def convert(self, startBase, endBase, number):
+    def convert(self, parameters):
         """Converts a number from the start base to the end base.\n
 
         Parameters:
@@ -277,6 +293,23 @@ class Code(Category):
             endBase: The base to convert to.\n
             number: The number to convert.\n
         """
+
+        # Check for not enough parameters
+        if len(parameters) < self._convert.getMinParameters():
+            return getErrorMessage(self._convert, Code.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        if len(parameters) > self._convert.getMaxParameters():
+            return getErrorMessage(self._convert, Code.TOO_MANY_PARAMETERS)
+
+        startBase = 10
+        endBase = parameters[0]
+        number = parameters[1]
+
+        if len(parameters) == 3:
+            startBase = parameters[0]
+            endBase = parameters[1]
+            number = parameters[2]
 
         # Try converting startBase and endBase to numbers
         try:
@@ -322,13 +355,21 @@ class Code(Category):
             colour = Code.EMBED_COLOR
         )
     
-    def base64(self, conversionType, text):
+    def base64(self, parameters):
         """Encodes or decodes text to or from base64.\n
 
         Parameters:
             conversionType: Whether to encode or decode text.\n
             text: The text to encode or decode.\n
         """
+
+        # Check for not enough parameters
+        if len(parameters) < self._base64.getMinParameters():
+            return getErrorMessage(self._base64, Code.NOT_ENOUGH_PARAMETERS)
+        
+        # Conversion type is first parameter; Text is all parameters after
+        conversionType = parameters[0]
+        text = " ".join(parameters[1:])
 
         # Conversion is Encode
         if conversionType in self._base64.getAcceptedParameter("conversion", "encode").getAlternatives():
@@ -373,91 +414,13 @@ class Code(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Brainfuck Command
-            if command in self._brainfuck.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._brainfuck, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 or 2 Parameters Exist (Code only or Code and Parameters)
-                elif len(parameters) in [1, 2]:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = (
-                            await run(message, self._brainfuck, self.brainfuck, parameters[0]) 
-                            if len(parameters) == 1 else
-                            await run(message, self._brainfuck, self.brainfuck, parameters[0], parameters[1])
-                        )
-                    )
-                
-                # 3 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._brainfuck, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Convert Command
-            elif command in self._convert.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._convert, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 2 or 3 Parameters Exist
-                elif len(parameters) in [2, 3]:
-
-                    if len(parameters) == 3:
-                        startBase = parameters[0]
-                        endBase = parameters[1]
-                        number = parameters[2]
-                    else:
-                        startBase = 10
-                        endBase = parameters[0]
-                        number = parameters[1]
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._convert, self.convert, startBase, endBase, number)
-                    )
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._convert, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Base64 Command
-            elif command in self._base64.getAlternatives():
-
-                # Less than 2 Parameters
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._base64, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._base64, self.base64, parameters[0], " ".join(parameters[1:]))
+                        embed = await run(message, cmd, cmd.getCommand(), parameters)
                     )
 
 def setup(client):
