@@ -56,6 +56,8 @@ class Help(Category):
     # Errors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    MEMBER_MISSING_PERMISSION = "MEMBER_MISSING_PERMISSION"
+
     INVALID_CATEGORY = "INVALID_CATEGORY"
     INVALID_COMMAND = "INVALID_COMMAND"
 
@@ -87,7 +89,7 @@ class Help(Category):
                 }
             },
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                Help.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "You don't need any more than 1 parameter in the help command."
                     ]
@@ -101,6 +103,11 @@ class Help(Category):
                     "messages": [
                         "That is not a valid command."
                     ]
+                },
+                Help.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the permission for that command."
+                    ]
                 }
             }
         })
@@ -110,7 +117,7 @@ class Help(Category):
             "info": "Creates and sends the markdown file for the commands.",
             "bot_moderator_only": True,
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                Help.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get the markdown file, you don't need any parameters."
                     ]
@@ -184,7 +191,7 @@ class Help(Category):
 
         # Iterate through categories
         for category in self._categories:
-            html += self._categories[category]["object"].getHTML() + "\n"
+            html += self._categories[category]["object"].getHTML(categoryStyle = "categoryBorder", commandStyle = "commandBorder", parameterStyle = "acceptedBorder", noBorderStyle = "noBorder") + "\n"
         
         return html
 
@@ -214,7 +221,7 @@ class Help(Category):
             # Keep track of server and bot moderator
             onBotModAndIsBotMod = category == "Bot Moderator" and OmegaPsi.isAuthorModerator(message.author)
             if message.guild != None:
-                onServerModAndIsServerMod = category == "Server Moderator" and Server.isAuthorModerator(message.guild, message.author)
+                onServerModAndIsServerMod = category == "Server Moderator" and Server.isAuthorModerator(message.guild, message.author) or OmegaPsi.isAuthorModerator(message.author)
             else:
                 onServerModAndIsServerMod = False
             
@@ -251,12 +258,12 @@ class Help(Category):
         return False
 
     def getHelpForCategory(self, discordMessage, categoryName, *, isNSFW = False):
-        """Returns a help menu for a specific category.\n
+        """Returns a help menu for a specific category.
 
         Parameters:
-            discordMessage (discord.Message): The Discord Message that was sent.\n
-            categoryName (str): The category to get help for.\n
-            isNSFW (bool): Whether or not to show NSFW results.\n
+            discordMessage (discord.Message): The Discord Message that was sent.
+            categoryName (str): The category to get help for.
+            isNSFW (bool): Whether or not to show NSFW results.
         """
 
         # Iterate through categories to see if the command matches anything
@@ -269,7 +276,7 @@ class Help(Category):
                 # Get bot mod and server mod info
                 onBotModAndIsBotMod = category == "Bot Moderator" and OmegaPsi.isAuthorModerator(discordMessage.author)
                 if discordMessage.guild != None:
-                    onServerModAndIsServerMod = category == "Server Moderator" and Server.isAuthorModerator(discordMessage.guild, discordMessage.author)
+                    onServerModAndIsServerMod = category == "Server Moderator" and Server.isAuthorModerator(discordMessage.guild, discordMessage.author) or OmegaPsi.isAuthorModerator(discordMessage.author)
                 else:
                     onServerModAndIsServerMod = False
                 
@@ -302,15 +309,15 @@ class Help(Category):
                     return embed
                 
                 elif not onBotModAndIsBotMod:
-                    return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS_CATEGORY)
+                    return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS)
                 
                 elif not onServerModAndIsServerMod:
-                    return Server.getErrorMessage(Server.NO_ACCESS_CATEGORY)
+                    return Server.getErrorMessage(Server.NO_ACCESS)
         
         # Category did not match, send error message
         return getErrorMessage(self._help, Help.INVALID_CATEGORY)
     
-    def getHelpForCommand(self, command, *, isNSFW = False):
+    def getHelpForCommand(self, discordMember, command, *, isNSFW = False):
         """Returns help for a specific command.\n
 
         Parameters:
@@ -321,7 +328,21 @@ class Help(Category):
         # Iterate through Categories to see if the command matches anything
         for category in self._categories:
             helpForCommand = self._categories[category]["object"].getHelp(command, isNSFW = isNSFW)
-            if helpForCommand != None:
+
+            # See if category is Bot Moderator or Server Moderator and author is a Bot Moderator or Server Moderator
+            onBotMod = category == "Bot Moderator"
+            isBotMod = OmegaPsi.isAuthorModerator(discordMember)
+            if discordMember.guild != None:
+                onServerMod = category == "Server Moderator"
+                isServerMod = Server.isAuthorModerator(discordMember.guild, discordMember) or OmegaPsi.isAuthorModerator(discordMember)
+            else:
+                onServerMod = isServerMod = False
+
+            if helpForCommand != None: 
+
+                # Check if serverMod command
+                if (onServerMod and not isServerMod) or (onBotMod and not isBotMod):
+                    return getErrorMessage(self._help, Help.MEMBER_MISSING_PERMISSION)
 
                 embed = discord.Embed(
                     title = command,
@@ -447,7 +468,7 @@ class Help(Category):
                     if self.isCategoryName(parameters[0]):
                         embed = await run(message, self._help, self.getHelpForCategory, message, parameters[0], isNSFW = isNSFW)
                     else:
-                        embed = await run(message, self._help, self.getHelpForCommand, parameters[0], isNSFW = isNSFW)
+                        embed = await run(message, self._help, self.getHelpForCommand, message.author, parameters[0], isNSFW = isNSFW)
 
                     await sendMessage(
                         self.client,
