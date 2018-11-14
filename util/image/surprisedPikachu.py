@@ -1,6 +1,6 @@
 from util.image.image import renderLines
 
-from util.utils import loadImageFromUrl
+from util.utils import loadImageFromUrl, splitText
 
 import pygame
 
@@ -10,6 +10,7 @@ IMAGE = "https://imgflip.com/s/meme/Surprised-Pikachu.jpg"
 
 # Text Angles, Colors, and Default Sizes
 FONT = pygame.font.SysFont("arial", 120)
+SIZE = 40
 COLOR = [0, 0, 0]
 
 def generateImage(lines):
@@ -30,13 +31,19 @@ def generateImage(lines):
     origin = [20, 20 * (len(lines) % 2)]
 
     for line in range(len(lines)):
-        pygameImage = renderLines(
-            pygameImage, [origin[0], origin[1] + line * spacing],
-            [lines[line]], FONT,
-            COLOR,
-            centeredX = False,
-            centeredY = False
-        )
+
+        # Split text
+        textLines = splitText(lines[line], SIZE)
+
+        # Add each line of text
+        for text in range(len(textLines)):
+
+            pygameImage = renderLines(
+                pygameImage, [origin[0], origin[1] + line * spacing + text * FONT.size(textLines[text])[1]],
+                [textLines[text]], FONT,
+                COLOR,
+                centered = [False, False]
+            )
 
     # Temporarily save image under util/image
     image = "util/image/SURPRISED_PIKACHU_{}.png".format(lines[0])
