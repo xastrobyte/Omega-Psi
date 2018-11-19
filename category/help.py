@@ -12,25 +12,16 @@ from category.botModerator import BotModerator
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage, run, censor
 
 from supercog import Category, Command
 import discord, os
 
 class Help(Category):
-    """Creates a Help extension.
-
-    This class holds the logic behind getting help for a category of commands or for a specific command.
-
-    Parameters:
-        client (discord.ClientUser): The Discord Client to use for sending messages.
-    """
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    DESCRIPTION = "Shows you the help menu."
 
     EMBED_COLOR = 0x00FF80
 
@@ -66,14 +57,15 @@ class Help(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        """Creates a Help extension.
-
-        This class holds the logic behind getting help for a category of commands or for a specific command.
-
-        Parameters:
-            client (discord.ClientUser): The Discord Client to use for sending messages.
-        """
-        super().__init__(client, "Help")
+        super().__init__(
+            client, 
+            "Help",
+            description = "Shows you the help menu.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -191,7 +183,7 @@ class Help(Category):
 
         # Iterate through categories
         for category in self._categories:
-            html += self._categories[category]["object"].getHTML(categoryStyle = "categoryBorder", commandStyle = "commandBorder", parameterStyle = "acceptedBorder", noBorderStyle = "noBorder") + "\n"
+            html += self._categories[category]["object"].getHTML() + "\n"
         
         return html
 
@@ -237,7 +229,7 @@ class Help(Category):
                     ).format(
                         OmegaPsi.PREFIX, self._categories[category]["command"],
                         Help.GITHUB + "#" + category.replace(" ", "-"), 
-                        self._categories[category]["object"].DESCRIPTION
+                        self._categories[category]["object"].getDescription()
                     )
                 )
         
@@ -285,10 +277,13 @@ class Help(Category):
 
                     embed = discord.Embed(
                         title = categoryHelp["title"],
-                        description = "Help for the [{} Commands]({} \"{}\").".format(
+                        description = "Help for the [{} Commands]({} \"{}\")\n{}\n".format(
                             categoryHelp["title"],
                             Help.GITHUB + "#" + categoryHelp["title"].replace(" ", "-"),
-                            self._categories[category]["object"].DESCRIPTION
+                            self._categories[category]["object"].getDescription(),
+                            "```diff\n- {}\n```".format(
+                                self._categories[category]["object"].getRestrictionInfo()
+                            ) if self._categories[category]["object"].getRestrictionInfo() != None else ""
                         ),
                         colour = Help.EMBED_COLOR
                     )
@@ -345,7 +340,7 @@ class Help(Category):
                     return getErrorMessage(self._help, Help.MEMBER_MISSING_PERMISSION)
 
                 embed = discord.Embed(
-                    title = command,
+                    title = censor(command) if not isNSFW else command,
                     description = "{}\n{}\n".format(
                         helpForCommand["restriction"],
                         helpForCommand["title"]
