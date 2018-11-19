@@ -16,8 +16,6 @@ class Math(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    DESCRIPTION = "Need help with math? These commands got your back."
-
     EMBED_COLOR = 0xFF8000
 
     APPENDAGES = {
@@ -46,7 +44,15 @@ class Math(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        super().__init__(client, "Math")
+        super().__init__(
+            client, 
+            "Math",
+            description = "Need help with math? These commands got your back.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -292,10 +298,10 @@ class Math(Category):
         originalExpression = expression
         expression = expression.replace(" ", "")
         try:
-            result = str(eval(expression))
-        except:
             expression = self._standardize(expression)
             result = str(sympy.simplify(expression)).replace("**", "^").replace("*", "")
+        except:
+            result = str(eval(expression))
 
         # Return the result in an embed
         return discord.Embed(
