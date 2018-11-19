@@ -24,6 +24,7 @@ class Server:
     # Errors
     INACTIVE = "INACTIVE"
     ACTIVE = "ACTIVE"
+    NSFW_CHANNEL = "NSFW_CHANNEL"
     NO_ACCESS = "NO_ACCESS"
     NO_ACCESS_CATEGORY = "NO_ACCESS_CATEGORY"
 
@@ -96,22 +97,15 @@ class Server:
         discordServer - The Discord Server to load.\n
         """
 
-        # Get owner ID if owner returns None
-        if discordServer.owner == None:
-            ownerId = 0
-        else:
-            ownerId = discordServer.owner.id
-
         # Setup default values
         defaultValues = {
             "prefixes": [OmegaPsi.PREFIX],
             "id": discordServer.id,
-            "ownerId": ownerId,
-            "name": discordServer.name,
             "ranking": False,
             "join_message": {
                 "active": False,
-                "channel": None
+                "channel": None,
+                "messages": Server.JOIN_MESSAGES
             },
             "inactive_commands": {},
             "members": {}
@@ -119,6 +113,10 @@ class Server:
 
         # Try to open file
         try:
+
+            # Check if servers folder exists
+            if not os.path.exists("data/servers"):
+                os.mkdir("data/servers")
 
             # Open file
             with open(Server.SERVER_FILE.format(discordServer.id), "r") as serverFile:
@@ -132,10 +130,6 @@ class Server:
                 if value not in serverDict:
                     serverDict[value] = defaultValues[value]
             
-            # See if Server owner or Server name changed
-            serverDict["ownerId"] = ownerId
-            serverDict["name"] = discordServer.name
-            
             return serverDict
             
         # File did not exist, create it
@@ -143,8 +137,6 @@ class Server:
             serverDict = defaultValues 
             Server.closeServer(serverDict)
 
-            # Add server owner as moderator
-            Server.addModerator(discordServer, discordServer.owner)
             return Server.openServer(discordServer)
     
     def closeServer(serverDict):
@@ -331,10 +323,6 @@ class Server:
         # Setup default values
         defaultValues = {
             "id": discordMember.id,
-            "name": discordMember.name,
-            "discriminator": discordMember.discriminator,
-            "nickname": discordMember.nick,
-            "avatar": discordMember.avatar,
             "moderator": False,
             "experience": 0,
             "level": 1,
@@ -357,12 +345,6 @@ class Server:
             # Check if value is not in member dictionary; Set default value
             if value not in member:
                 member[value] = defaultValues[value]
-            
-        # Value was in; Check if value changed
-        member["name"] = discordMember.name
-        member["nickname"] = discordMember.nick
-        member["discriminator"] = discordMember.discriminator
-        member["avatar"] = discordMember.avatar
         
         # Close server file
         Server.closeServer(server)
@@ -390,65 +372,6 @@ class Server:
         Server.closeServer(server)
 
         return success
-    
-    def addModerator(discordServer, discordMember):
-        """Makes the Discord Member a local moderator in the Discord Server.\n
-
-        discordServer - The Discord Server to make the Discord Member a local moderator in.\n
-        discordMember - The Discord Member to make a local moderator.\n
-        """
-
-        # Update member (will add if necessary)
-        Server.updateMember(discordServer, discordMember)
-
-        # Open server file
-        server = Server.openServer(discordServer)
-
-        # Check if member is not a moderator
-        success = False
-        if not server["members"][str(discordMember.id)]["moderator"]:
-            server["members"][str(discordMember.id)]["moderator"] = True
-            success = True
-        
-        # Close server file
-        Server.closeServer(server)
-
-        return success
-    
-    def removeModerator(discordServer, discordMember):
-        """Removes the Discord Member as a local moderator in the Discord Server.\n
-
-        discordServer - The Discord Server to remove the Discord Member as a local moderator in.\n
-        discordMemebr - The Discord Member to remove as a local moderator.\n
-        """
-
-        # Update member (will add if necessary)
-        Server.updateMember(discordServer, discordMember)
-
-        # Open server file
-        server = Server.openServer(discordServer)
-
-        # Check if member is a moderator; Make sure member is not server owner
-        success = False
-
-        if discordMember.id == discordServer.owner.id:
-            successMessage = "You cannot remove {} as a moderator. They are the server owner."
-        
-        elif not server["members"][str(discordMember.id)]["moderator"]:
-            successMessage = "{} was not a moderator. No need to remove them."
-
-        else:
-            success = True
-            successMessage = "{} was removed as a moderator."
-        
-        # Only remove if success is True
-        if success:
-            server["members"][str(discordMember.id)]["moderator"] = False
-        
-        # Close server file
-        Server.closeServer(server)
-        
-        return {"success": success, "message": successMessage.format(discordMember.mention)}
 
     def activate(discordServer, commandObject):
         """Activates a Command in the Discord Server.\n
@@ -699,6 +622,23 @@ class Server:
 
         return channelId
     
+    def getJoinMessage(discordServer):
+        """Returns a random join message for the server.
+        """
+
+        # Open the server file
+        server = Server.openServer(discordServer)
+
+        # Choose a join message
+        if "messages" not in server["join_message"]:
+            server["join_message"]["messages"] = Server.JOIN_MESSAGES
+        message = choose(server["join_message"]["messages"])
+
+        # Close the server file
+        Server.closeServer(server)
+
+        return message
+    
     def setJoinMessageChannel(discordServer, discordChannel):
         """Sets the Discord Channel that join messages are sent to in a Discord Server.\n
 
@@ -727,19 +667,7 @@ class Server:
         discordMember - The Discord Member to check if they are a moderator.\n
         """
 
-        # Add member if need be
-        Server.updateMember(discordServer, discordMember)
-
-        # Open the server file
-        server = Server.openServer(discordServer)
-
-        # Check if member is a moderator
-        isModerator = server["members"][str(discordMember.id)]["moderator"]
-
-        # Close the serverfile
-        Server.closeServer(server)
-
-        return isModerator
+        return discordMember.guild_permissions.manage_guild
     
     def isCommandActive(discordServer, commandObject):
         """Returns whether or not the command given is active.\n
@@ -804,6 +732,9 @@ class Server:
 
         # Keep a dictionary of errors and error messages
         errorMessages = {
+            Server.NSFW_CHANNEL: [
+                "You can only run NSFW commands in an NSFW channel."
+            ],
             Server.INACTIVE: [
                 "This command is inactive in this server right now."
             ],
@@ -825,3 +756,18 @@ class Server:
             description = error,
             colour = Server.EMBED_COLOR
         )
+    
+    def getNSFWChannelError():
+        return Server.getErrorMessage(Server.NSFW_CHANNEL)
+    
+    def getInactiveError():
+        return Server.getErrorMessage(Server.INACTIVE)
+    
+    def getActiveError():
+        return Server.getErrorMessage(Server.ACTIVE)
+    
+    def getNoAccessError():
+        return Server.getErrorMessage(Server.NO_ACCESS)
+    
+    def getNoAccessCategory():
+        return Server.getErrorMessage(Server.NO_ACCESS_CATEGORY)
