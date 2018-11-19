@@ -12,8 +12,6 @@ class Misc(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    DESCRIPTION = "Other commands that don't really fit into a category yet."
-
     EMBED_COLOR = 0x00FF80
 
     BUG_EMBED_COLORS = {
@@ -27,6 +25,8 @@ class Misc(Category):
     # Errors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    TOO_LONG = "TOO_LONG"
+
     INVALID_MEMBER = "INVALID_MEMBER"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -34,7 +34,15 @@ class Misc(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        super().__init__(client, "Miscellaneous")
+        super().__init__(
+            client, 
+            "Miscellaneous",
+            description = "Other commands that don't really fit into a category yet.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -273,8 +281,8 @@ class Misc(Category):
 
         # Get name, owner, ranking, join message, inactive commands
         serverPrefixes = server["prefixes"]
-        serverName = server["name"]
-        serverOwnerId = server["ownerId"]
+        serverName = discordServer.name
+        serverOwner = discordServer.owner
         serverRanking = server["ranking"]
         serverJoinMessage = server["join_message"]["active"]
         serverJoinMessageChannel = server["join_message"]["channel"]
@@ -285,8 +293,9 @@ class Misc(Category):
         # Create embed
         embed = discord.Embed(
             title = serverName,
-            description = "Owner: <@{}>".format(
-                serverOwnerId
+            description = "Owner: {} ({})".format(
+                serverOwner.mention,
+                serverOwner.name + "#" + serverOwner.discriminator
             ),
             colour = Misc.EMBED_COLOR
         )
@@ -343,11 +352,11 @@ class Misc(Category):
 
         # Get member
         member = Server.getMember(discordServer, discordMember)
-        memberName = member["name"]
-        memberDiscriminator = member["discriminator"]
-        memberId = member["id"]
-        memberNickname = member["nickname"]
-        memberModerator = member["moderator"]
+        memberName = discordMember.name
+        memberDiscriminator = discordMember.discriminator
+        memberId = discordMember.id
+        memberNickname = discordMember.nick
+        memberModerator = Server.isAuthorModerator(discordServer, discordMember)
         memberExperience = member["experience"]
         memberLevel = member["level"]
 
