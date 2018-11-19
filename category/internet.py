@@ -5,15 +5,13 @@ from util.utils import sendMessage, getErrorMessage, splitText, run
 
 from datetime import datetime
 from supercog import Category, Command
-import discord, json, os, urllib.request
+import discord, json, os, urllib.request, wikipedia
 
 class Internet(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    DESCRIPTION = "All commands that deal with the internet are here."
 
     EMBED_COLOR = 0x0044FF
 
@@ -27,7 +25,7 @@ class Internet(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     NO_TERM = "NO_TERM"
-    NOT_NSFW = "NOT_NSFW"
+    NO_PAGE = "NO_PAGE"
 
     INVALID_LOCATION = "INVALID_LOCATION"
 
@@ -36,7 +34,15 @@ class Internet(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        super().__init__(client, "Internet")
+        super().__init__(
+            client, 
+            "Internet",
+            description = "All commands that deal with the internet are here.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -45,6 +51,7 @@ class Internet(Category):
         self._urban = Command(commandDict = {
             "alternatives": ["urban", "urbanDictionary", "urbanDict"],
             "info": "Gives you the top 5 urban dictionary entries for a term.",
+            "nsfw": True,
             "parameters": {
                 "term": {
                     "info": "The term to look up in urban dictionary.",
@@ -61,17 +68,37 @@ class Internet(Category):
                     "messages": [
                         "The term you entered does not exist on urban dictionary."
                     ]
-                },
-                Internet.NOT_NSFW: {
+                }
+            },
+            "command": self.urban
+        })
+
+        self._wikipedia = Command(commandDict = {
+            "alternatives": ["wikipedia", "wiki"],
+            "info": "Gets a wikipedia entry you type in.",
+            "parameters": {
+                "term": {
+                    "info": "The search term, or phrase, you want to look up.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Internet.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
-                        "You can't run this in this channel. You must be in an NSFW channel."
+                        "In order to search something up on wikipedia, you need to type it in."
+                    ]
+                },
+                Internet.NO_PAGE: {
+                    "messages": [
+                        "There was no wikipedia entry found for that term."
                     ]
                 }
-            }
+            },
+            "command": self.wikipedia
         })
 
         self._weather = Command(commandDict = {
-            "alternatives": ["forecast", "getWeather"],
+            "alternatives": ["weather", "forecast", "getWeather"],
             "info": "Gets the weather for a specified location.",
             "parameters": {
                 "location": {
@@ -90,11 +117,13 @@ class Internet(Category):
                         "The location you entered is not valid."
                     ]
                 }
-            }
+            },
+            "command": self.weather
         })
 
         self.setCommands([
             self._urban,
+            self._wikipedia,
             self._weather
         ])
     
@@ -102,79 +131,124 @@ class Internet(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def urban(self, term, discordChannel):
+    def urban(self, parameters):
         """Returns the top 5 urban dictionary entries for the specified term.\n
 
          - term - The term to search on urban dictionary.\n
          - discordChannel - The Discord Channel the definition is being sent in.\n
         """
 
-        # See if discordChannel has NSFW tag
+        # Check for not enough parameters
+        if len(parameters) < self._urban.getMinParameters():
+            return getErrorMessage(self._urban, Internet.NOT_ENOUGH_PARAMETERS)
+        
+        term = " ".join(parameters)
+
+        # Use urllib to get the data in JSON
         try:
-            isNSFW = discordChannel.is_nsfw()
-        
-        # discordChannel is DM or Group; Make NSFW
+            urlCall = Internet.URBAN_API_CALL.format(term.replace(" ", "+"))
+            with urllib.request.urlopen(urlCall) as url:
+                urbanData = json.load(url)
         except:
-            isNSFW = True
-
-        # Only run function if isNSFW
-        if isNSFW:
-
-            # Use urllib to get the data in JSON
-            try:
-                urlCall = Internet.URBAN_API_CALL.format(term.replace(" ", "+"))
-                with urllib.request.urlopen(urlCall) as url:
-                    urbanData = json.load(url)
-            except:
-                return getErrorMessage(self._urban, Internet.NO_TERM)
-            
-            # Get first 5 values (or values if there are less than 5)
-            if len(urbanData["list"]) < 5:
-                definitions = urbanData["list"]
-            else:
-                definitions = urbanData["list"][:5]
-            
-            # Create discord embed
-            embed = discord.Embed(
-                title = "{} Results Of `{}`".format("Top 5" if len(definitions) > 5 else "", term),
-                description = " ",
-                colour = Internet.EMBED_COLOR
-            ).set_thumbnail(
-                url = Internet.URBAN_ICON
-            )
-
-            # Add definitions
-            defCount = 0
-            for definition in definitions:
-                defCount += 1
-
-                # Get definition; Split up into multiple fields if necessary
-                definitionFields = splitText(definition["definition"], OmegaPsi.MESSAGE_THRESHOLD)
-
-                count = 0
-                for field in definitionFields:
-                    count += 1
-                    embed.add_field(
-                        name = "Definition {} {}".format(
-                            defCount,
-                            "({} / {})".format(
-                                count, len(definitionFields)
-                            ) if len(definitionFields) > 1 else ""
-                        ),
-                        value = field,
-                        inline = False
-                    )
-            
-            return embed
+            return getErrorMessage(self._urban, Internet.NO_TERM)
         
-        # Channel is not NSFW
-        return getErrorMessage(self._urban, Internet.NOT_NSFW)
+        # Get first 5 values (or values if there are less than 5)
+        if len(urbanData["list"]) < 5:
+            definitions = urbanData["list"]
+        else:
+            definitions = urbanData["list"][:5]
+        
+        # Create discord embed
+        embed = discord.Embed(
+            title = "{} Results Of `{}`".format("Top 5" if len(definitions) > 5 else "", term),
+            description = " ",
+            colour = Internet.EMBED_COLOR
+        ).set_thumbnail(
+            url = Internet.URBAN_ICON
+        )
 
-    def weather(self, location):
+        # Add definitions
+        defCount = 0
+        for definition in definitions:
+            defCount += 1
+
+            # Get definition; Split up into multiple fields if necessary
+            definitionFields = splitText(definition["definition"], OmegaPsi.MESSAGE_THRESHOLD)
+
+            count = 0
+            for field in definitionFields:
+                count += 1
+                embed.add_field(
+                    name = "Definition {} {}".format(
+                        defCount,
+                        "({} / {})".format(
+                            count, len(definitionFields)
+                        ) if len(definitionFields) > 1 else ""
+                    ),
+                    value = field,
+                    inline = False
+                )
+        
+        return embed
+    
+    def wikipedia(self, parameters):
+        """Returns a wikipedia entry for the specified term.
+
+        Parameters:
+            term (str): The term to look up on wikipedia.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._wikipedia.getMinParameters():
+            return getErrorMessage(self._wikipedia, Internet.NOT_ENOUGH_PARAMETERS)
+        
+        term = " ".join(parameters)
+        
+        searchResults = wikipedia.search(term)
+        entry = None
+        for result in searchResults:
+
+            # Try getting the page
+            try:
+                entry = wikipedia.page(result)
+                break
+            
+            # Page failed
+            except:
+                continue
+        
+        # Page is still None, no page was found
+        if entry == None:
+            return getErrorMessage(self._wikipedia, Internet.NO_PAGE)
+        
+        content = entry.content
+        if len(content) > (1990 - len("...") - len(entry.url) - len(entry.title)):
+            content = entry.content[:1990 - len("...") - len(entry.url) - len(entry.title)]
+        
+        # The page was found, align the information properly
+        # Add Image, Summary, Title hyperlinked to Page
+        return discord.Embed(
+            title = entry.title,
+            description = "[{}]({})\n{}".format(
+                entry.title, entry.url,
+                content
+            ),
+            colour = Internet.EMBED_COLOR
+        ).set_thumbnail(
+            url = entry.images[0]
+        )
+
+    def weather(self, parameters):
         """Returns the current weather for the specified location.\n
 
         location - The location to get the weather of.\n
         """
+
+        # Check for not enough parameters
+        if len(parameters) < self._weather.getMinParameters():
+            return getErrorMessage(self._weather, Internet.NOT_ENOUGH_PARAMETERS)
+        
+        location = " ".join(parameters)
         
         # Get the url to call the API
         urlCall = Internet.WEATHER_API_CALL.format(
@@ -260,42 +334,13 @@ class Internet(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Urban Command
-            if command in self._urban.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._urban, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._urban, self.urban, " ".join(parameters), message.channel)
-                    )
-
-            # Weather Command
-            elif command in self._weather.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._weather, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._weather, self.weather, " ".join(parameters))
+                        embed = await run(message, cmd, cmd.getCommand(), parameters)
                     )
 
 def setup(client):
