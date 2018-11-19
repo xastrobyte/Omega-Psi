@@ -1,4 +1,5 @@
 from util.file.server import Server
+from util.file.omegaPsi import OmegaPsi
 from util.rank.image import createRankImage
 
 from util.utils import sendMessage, getErrorMessage, run
@@ -11,8 +12,6 @@ class Rank(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    DESCRIPTION = "The ranking system is strong with this category."
 
     EMBED_COLOR = 0x008080
 
@@ -27,7 +26,15 @@ class Rank(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        super().__init__(client, "Rank")
+        super().__init__(
+            client, 
+            "Rank",
+            description = "The ranking system is strong with this category.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -98,11 +105,8 @@ class Rank(Category):
         discordMember - The member to get the rank of.\n
         """
 
-        # Get member info from server
-        member = Server.getMember(discordMember.guild, discordMember)
-
         # Get and return the rank image file for the member
-        return createRankImage(member)
+        return createRankImage(discordMember)
     
     def levelUp(self, discordMember, interactionType = None):
         """Returns the amount of different interactions a Discord Member needs to level up.
