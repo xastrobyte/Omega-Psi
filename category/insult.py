@@ -13,9 +13,7 @@ class Insult(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    DESCRIPTION = "If you feel in the mood to be insulted, here ya are."
-
-    INSULTS_LOCATION = "data/insults/{}.txt"
+    INSULTS_LOCATION = "util/insult/{}.txt"
 
     EMBED_COLOR = 0x800000
 
@@ -26,7 +24,15 @@ class Insult(Category):
     INVALID_INSULT_LEVEL = "INVALID_INSULT_LEVEL"
 
     def __init__(self, client):
-        super().__init__(client, "Insult")
+        super().__init__(
+            client, 
+            "Insult",
+            description = "If you feel in the mood to be insulted, here ya are.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -239,7 +245,7 @@ class Insult(Category):
         
         # Insult level is invalid
         else:
-            return getErrorMessage(self._add, Invalid.INVALID_INSULT_LEVEL)
+            return getErrorMessage(self._add, Insult.INVALID_INSULT_LEVEL)
         
         # Load insults file for insult level
         temp = open(Insult.INSULTS_LOCATION.format(insultLevel), "a")
@@ -322,7 +328,7 @@ class Insult(Category):
                     insult += "\n"
                 
                 # Check if adding insult will exceed message threshold
-                if len(insultsText) + len(insult) >= int(os.environ["MESSAGE_THRESHOLD"]):
+                if len(insultsText) + len(insult) >= OmegaPsi.MESSAGE_THRESHOLD:
                     insultsFields.append(insultsText)
                     insultsText = ""
                 
