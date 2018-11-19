@@ -19,28 +19,6 @@ class OmegaPsi:
 
     MESSAGE_THRESHOLD = 1000
 
-    BOT_SHEET = 0
-    SERVER_SHEET = 1
-    USER_SHEET = 2
-
-    SHEET_JSON = {
-        "type": os.environ["TYPE"],
-        "project_id": os.environ["PROJECT_ID"],
-        "private_key_id": os.environ["PRIVATE_KEY_ID"],
-        "private_key": os.environ["PRIVATE_KEY"],
-        "client_email": os.environ["CLIENT_EMAIL"],
-        "client_id": os.environ["CLIENT_ID"],
-        "auth_uri": os.environ["AUTH_URI"],
-        "token_uri": os.environ["TOKEN_URI"],
-        "auth_provider_x509_cert_url": os.environ["AUTH_PROVIDER_X509_CERT_URL"],
-        "client_x509_cert_url": os.environ["CLIENT_X509_CERT_URL"]
-    }
-
-    SCOPES = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
-
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Helper Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -366,3 +344,12 @@ class OmegaPsi:
             description = error,
             colour = OmegaPsi.EMBED_COLOR
         )
+
+    def getNoAccessError():
+        return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS)
+    
+    def getInactiveError():
+        return OmegaPsi.getErrorMessage(OmegaPsi.INACTIVE)
+    
+    def getActiveError():
+        return OmegaPsi.getErrorMessage(OmegaPsi.ACTIVE)
