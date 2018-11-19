@@ -1,6 +1,8 @@
 # Omega Psi
 A Discord Bot with all kinds of commands split up into modular categories. Open to command requests and feature requests.
 
+![Omega Psi In Action](omegaPsiTest.gif)
+
 ## What does it include?
 
 ### Prefix: `omega`
