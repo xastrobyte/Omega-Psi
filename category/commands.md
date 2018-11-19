@@ -12,12 +12,14 @@
   * [Bot Moderator](#Bot-Moderator)
 ## Help
   *Shows you the help menu.*
+
   * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
   * `markdown | getMarkdown | md | getMd ` - Creates and sends the markdown file for the commands.
 
 ## Code
   *Commands that have to do with coding!*
+
   * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
 
   * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
@@ -29,17 +31,10 @@
 
 ## Game
   *You can play games with these.*
-  * `connectFour | connect4 | cf [difficulty] [sizeX] [sizeY]` - Play connect four with Omega Psi.
+
+  * `connectFour | connect4 | cf [difficulty]` - Play connect four with Omega Psi.
     * Accepted Parameters for `difficulty`
       * `quit | q | exit` - Allows you to quit the Connect 4 game.
-    * Accepted Parameters for `sizeX`
-      * `small | s` - Make the width of the grid 5.
-      * `medium | m` - Make the width of the grid 7.
-      * `large | l` - Make the width of the grid 9.
-    * Accepted Parameters for `sizeY`
-      * `small | s` - Make the width of the grid 6.
-      * `medium | m` - Make the width of the grid 8.
-      * `large | l` - Make the width of the grid 10.
 
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
     * Accepted Parameters for `difficulty`
@@ -69,8 +64,28 @@
 
   * `stats | gameStats ` - Gives you stats on the games you've won/lost.
 
+  * `blackOps3 | blackops3 | bo3 <platform> <username>` - Gives you stats on a specific player in Black Ops 3
+    * Accepted Parameters for `platform`
+      * `xbox | Xbox` - Get Black Ops 3 stats for Xbox.
+      * `playstation | psn | PSN` - Get Black Ops 3 stats for Playstation Network (PSN).
+
+  * `blackOps4 | blackops4 | bo4 <platform> <username>` - Gives you stats on a specific player in Black Ops 4
+    * Accepted Parameters for `platform`
+      * `xbox | Xbox` - Get Black Ops 4 stats for Xbox.
+      * `playstation | psn | PSN` - Get Black Ops 4 stats for Playstation Network (PSN).
+      * `battleNet` - Get Black Ops 4 stats for Battle.net.
+
+  * `fortnite <platform> <username>` - Gives you stats on a specific player in Fortnite.
+    * Accepted Parameters for `platform`
+      * `playstation | psn | ps` - Get Fortnite stats for Playstation 4.
+      * `xbox | Xbox` - Get Fortnite stats for Xbox.
+      * `pc | PC` - Get Fortnite stats for PC.
+
+  * `fortniteItemShop ` - Gives you the current items in the Fortnite Item Shop.
+
 ## Image
   *Anything having to do with images is here.*
+
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
   * `theOffice | office | o ` - Sends a random gif related to The Office.
@@ -119,6 +134,7 @@
 
 ## Insult
   *If you feel in the mood to be insulted, here ya are.*
+
   * `insult | i [insultLevel]` - Sends you an insult.
     * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
@@ -139,19 +155,25 @@
 
 ## Internet
   *All commands that deal with the internet are here.*
-  * `urban | urbanDictionary | urbanDict <term>` - Gives you the top 5 urban dictionary entries for a term.
 
-  * `forecast | getWeather <location>` - Gets the weather for a specified location.
+  * `urban | urbanDictionary | urbanDict <term>` - **`NSFW`** Gives you the top 5 urban dictionary entries for a term.
+
+  * `wikipedia | wiki <term>` - Gets a wikipedia entry you type in.
+
+  * `weather | forecast | getWeather <location>` - Gets the weather for a specified location.
 
 ## Math
   *Need help with math? These commands got your back.*
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
+
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
   * `factor | f <expression>` - Factors a mathematical expression.
 
-  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
@@ -159,12 +181,11 @@
 
   * `expand | exp | e <expression>` - Expands a mathematical expression.
 
-  * `integral | integrate <expression>` - Gets the integral of an expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
 
 ## Rank
   *The ranking system is strong with this category.*
+
   * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
     * Accepted Parameters for `interaction`
       * `profanity | profane` - Check how many profane words you need to level up.
@@ -175,6 +196,7 @@
 
 ## Miscellaneous
   *Other commands that don't really fit into a category yet.*
+
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
 
   * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
@@ -220,7 +242,7 @@
 
 ## Server Moderator
   *Moderate your server with this. Owners have the only access to this at first.*
-  
+
   **In order to use these commands, you must have the Manage Server permissions.**
   * `addMember | addM | am <member(s)...>` - Allows you to add a member, or members, to the server file manually.
 
@@ -269,6 +291,8 @@
 
 ## Bot Moderator
   *Very private stuff. Only bot moderators/developers can access these.*
+
+  **You must be a Bot Moderator to run these commands.**
   * `addBotModerator | addBotMod | abm <member(s)...>` - Allows you to add a bot moderator to the bot.
 
   * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - Allows you to remove a bot moderator from the bot.
@@ -279,7 +303,7 @@
 
   * `botInfo | bi ` - Allows you to get the info about the bot.
 
-  * `servers | botServers ` - Allows you to get a list of servers the bot is in.
+  * `servers | botServers [markdown]` - Allows you to get a list of servers the bot is in.
 
   * `setStatus | status <activity> <text>` - Allows you to change the presence of the bot.
     * Accepted Parameters for `activity`
