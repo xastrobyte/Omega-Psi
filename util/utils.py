@@ -123,6 +123,30 @@ def splitText(text, size, byWord = True):
     
     return fields
 
+def getSmallestRect(number):
+    """Gets the shortest and thinnest rectangle given a number.
+
+    Parameters:
+        number (int): The number to process.
+    """
+
+    # Get all factors of number
+    factors = []
+    for i in range(number, -1, -1):
+        for j in range(number):
+            if i * j == number:
+                factors.append([i, j])
+    
+    # Find smallest difference
+    diff = number
+    value = [factors[0]]
+    for factor in factors:
+        if abs(factor[0] - factor[1]) <= diff:
+            diff = abs(factor[0] - factor[1])
+            value = factor
+
+    return value
+
 def loadImageFromUrl(url):
     """Loads and returns an image from a URL
 
@@ -183,7 +207,7 @@ async def run(discordMessage, commandObject, func, *args, **kwargs):
     async with discordMessage.channel.typing():
 
         # Command is globally active
-        if OmegaPsi.isCommandActive(commandObject):
+        if OmegaPsi.isCommandActive(commandObject) or OmegaPsi.isAuthorModerator(discordMessage.author):
 
             # Command is a Bot Moderator Command
             if commandObject.isBotModeratorCommand():
@@ -213,7 +237,32 @@ async def run(discordMessage, commandObject, func, *args, **kwargs):
                     if commandObject.isServerModeratorCommand():
 
                         # Author is a Server Moderator
-                        if Server.isAuthorModerator(discordMessage.guild, discordMessage.author):
+                        if Server.isAuthorModerator(discordMessage.guild, discordMessage.author) or OmegaPsi.isAuthorModerator(discordMessage.author):
+
+                            # See if command is NSFW and being run in NSFW channel
+                            if not commandObject.isNSFW() or (commandObject.isNSFW() and discordMessage.channel.is_nsfw()):
+
+                                # Try running asynchronous function
+                                if inspect.iscoroutinefunction(func):
+                                    return await func(*args, **kwargs)
+                                
+                                # Function is synchronous
+                                else:
+                                    return func(*args, **kwargs) # All functions must return an embed
+                            
+                            # Command is NSFW being run in SFW channel
+                            else:
+                                return Server.getErrorMessage(Server.NSFW_CHANNEL)
+                        
+                        # Author is not a Server Moderator
+                        else:
+                            return Server.getErrorMessage(Server.NO_ACCESS)
+                    
+                    # Command is not a Server Moderator Command
+                    else:
+
+                        # See if command is NSFW and being run in NSFW channel
+                        if not commandObject.isNSFW() or (commandObject.isNSFW() and discordMessage.channel.is_nsfw()):
 
                             # Try running asynchronous function
                             if inspect.iscoroutinefunction(func):
@@ -223,20 +272,9 @@ async def run(discordMessage, commandObject, func, *args, **kwargs):
                             else:
                                 return func(*args, **kwargs) # All functions must return an embed
                         
-                        # Author is not a Server Moderator
+                        # Command is NSFW being run in SFW channel
                         else:
-                            return Server.getErrorMessage(Server.NO_ACCESS)
-                    
-                    # Command is not a Server Moderator Command
-                    else:
-
-                        # Try running asynchronous function
-                        if inspect.iscoroutinefunction(func):
-                            return await func(*args, **kwargs)
-                        
-                        # Function is synchronous
-                        else:
-                            return func(*args, **kwargs) # All functions must return an embed
+                            return Server.getErrorMessage(Server.NSFW_CHANNEL)
                 
                 # Command is locally inactive
                 else:
@@ -281,10 +319,10 @@ def timeout(seconds = 10, error_message = "Function timed out"):
             signal.alarm(seconds)
             try:
                 result = func(*args, **kwargs)
-            except:
+            except Exception as e:
                 result = discord.Embed(
                     title = "Error",
-                    description = error_message,
+                    description = e.args[0],
                     colour = 0xFF0000
                 )
             finally:
