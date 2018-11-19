@@ -1,6 +1,4 @@
-from util.file.omegaPsi import OmegaPsi
-
-import json
+import json, os
 
 class User:
 
@@ -24,8 +22,6 @@ class User:
         # Default values
         defaultValues = {
             "id": discordUser.id,
-            "name": discordUser.name,
-            "discriminator": discordUser.discriminator,
             "connect_four": {
                 "won": 0,
                 "lost": 0
@@ -51,6 +47,10 @@ class User:
         # Try to open file
         try:
 
+            # Check if users folder exists
+            if not os.path.exists("data/users"):
+                os.mkdir("data/users")
+
             # Open file
             with open(User.USER_FILE.format(discordUser.id), "r") as userFile:
                 userDict = json.load(userFile)
@@ -61,10 +61,6 @@ class User:
                 # Check if value is not in user dictionary; Set default value
                 if value not in userDict:
                     userDict[value] = defaultValues[value]
-            
-            # See if User name or discriminator changed
-            userDict["name"] = discordUser.name
-            userDict["discriminator"] = discordUser.discriminator
             
             return userDict
             
