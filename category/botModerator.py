@@ -15,23 +15,13 @@ from supercog import Category, Command
 import discord, os
 
 class BotModerator(Category):
-    """Creates a BotModerator extension.
-
-    This class holds commands that are designated to Bot Moderators only.
-    Every command in this class should have the `bot_moderator_only` tag set to `True`.
-
-    Parameters:
-        client (discord.ClientUser): The Discord Client to use for sending messages.
-    """
-
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    DESCRIPTION = "Very private stuff. Only bot moderators/developers can access these."
-
     EMBED_COLOR = 0xA456B0
+    BOT_MARKDOWN = "botMarkdown.md"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -47,15 +37,16 @@ class BotModerator(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        """Creates a BotModerator extension.
-
-        This class holds commands that are designated to Bot Moderators only.
-        Every command in this class should have the `bot_moderator_only` tag set to `True`.
-
-        Parameters:
-            client (discord.ClientUser): The Discord Client to use for sending messages.
-        """
-        super().__init__(client, "Bot Moderator")
+        super().__init__(
+            client, 
+            "Bot Moderator",
+            description = "Very private stuff. Only bot moderators/developers can access these.",
+            restriction_info = "You must be a Bot Moderator to run these commands.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -182,11 +173,16 @@ class BotModerator(Category):
             "alternatives": ["servers", "botServers"],
             "info": "Allows you to get a list of servers the bot is in.",
             "bot_moderator_only": True,
-            "max_parameters": 0,
+            "parameters": {
+                "markdown": {
+                    "info": "Whether or not to send a markdown version of all the server information.",
+                    "optional": True
+                }
+            },
             "errors": {
                 BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
-                        "In order to get a list of servers the bot is in, you don't need any parameters."
+                        "In order to get a list of servers the bot is in, you only need 1 parameter which is optional."
                     ]
                 }
             },
@@ -212,7 +208,7 @@ class BotModerator(Category):
                             "info": "The streaming activity type."
                         },
                         "listening": {
-                            "alternatives": ["listening", "Listening"],
+                            "alternatives": ["listening", "Listening", "listening to", "Listening to"],
                             "info": "The listening activity type."
                         },
                         "watching": {
@@ -505,7 +501,7 @@ class BotModerator(Category):
         
         return embed
     
-    def getServers(self, parameters):
+    async def getServers(self, author, parameters):
         """Returns a list of servers the bot is in.\n
         """
 
@@ -513,47 +509,112 @@ class BotModerator(Category):
         if len(parameters) > self._servers.getMaxParameters():
             return getErrorMessage(self._servers, BotModerator.TOO_MANY_PARAMETERS)
 
-        # Add results to fields
-        fields = []
-        fieldText = ""
-        for server in self.client.guilds:
-            
-            text = "`{}` | Owner: {}\n".format(
-                server.name, server.owner.mention
-            )
+        # Getting results through embed
+        if len(parameters) == 0:
 
-            if len(fieldText) + len(text) >= OmegaPsi.MESSAGE_THRESHOLD:
+            # Add results to fields
+            fields = []
+            fieldText = ""
+            for server in self.client.guilds:
+                
+                text = "`{}` | Owner: {}\n".format(
+                    server.name, server.owner.mention
+                )
+
+                if len(fieldText) + len(text) >= OmegaPsi.MESSAGE_THRESHOLD:
+                    fields.append(fieldText)
+                    fieldText = ""
+                
+                fieldText += text
+            
+            # Add trailing field text
+            if len(fieldText) > 0:
                 fields.append(fieldText)
-                fieldText = ""
             
-            fieldText += text
-        
-        # Add trailing field text
-        if len(fieldText) > 0:
-            fields.append(fieldText)
-        
-        # Create embed object
-        embed = discord.Embed(
-            title = "Servers",
-            description = "A list of servers that Omega Psi is in.",
-            colour = BotModerator.EMBED_COLOR
-        )
-
-        # Add fields to embed object
-        count = 0
-        for field in fields:
-            count += 1
-            embed.add_field(
-                name = "Servers {}".format(
-                    "({} / {})".format(
-                        count, len(fields)
-                    ) if len(fields) > 1 else ""
-                ),
-                value = field,
-                inline = False
+            # Create embed object
+            embed = discord.Embed(
+                title = "Servers",
+                description = "A list of servers that Omega Psi is in.",
+                colour = BotModerator.EMBED_COLOR
             )
+
+            # Add fields to embed object
+            count = 0
+            for field in fields:
+                count += 1
+                embed.add_field(
+                    name = "Servers {}".format(
+                        "({} / {})".format(
+                            count, len(fields)
+                        ) if len(fields) > 1 else ""
+                    ),
+                    value = field,
+                    inline = False
+                )
+            
+            return embed
         
-        return embed
+        # Getting results through markdown file
+        else:
+
+            # Setup markdown text
+            markdown = "# Omega Psi Server Information\n"
+
+            # Iterate through servers bot is in
+            for guild in self.client.guilds:
+
+                # Load file
+                server = Server.openServer(guild)
+
+                # Add server information (owner, name)
+                try:
+                    markdown += "## {} - {}\n".format(
+                        guild.name,
+                        guild.owner.name + "#" + guild.owner.discriminator
+                    )
+                except:
+                    markdown += "## {} - No Owner\n".format(
+                        guild.name
+                    )
+
+                # Iterate through members in server dictionary
+                for member in server["members"]:
+                    member = server["members"][member]
+                    discordMember = guild.get_member(int(member["id"]))
+                    
+                    markdown += (
+                        "  * {} ({})\n" +
+                        "    * Moderator? {}\n" +
+                        "    * Experience: {}\n" +
+                        "    * Level: {}\n" +
+                        "    * Experience until next level: {}\n"
+                    ).format(
+                        discordMember.name + "#" + discordMember.discriminator,
+                        discordMember.nick,
+                        "Yes" if discordMember.guild_permissions.manage_guild else "No",
+                        member["experience"],
+                        member["level"],
+                        Server.getExpFromLevel(member["level"] + 1) - member["experience"]
+                    )
+            
+            # Save markdown temporarily
+            mdFile = open(BotModerator.BOT_MARKDOWN, "w")
+            mdFile.write(markdown)
+            mdFile.close()
+
+            mdFile = open(BotModerator.BOT_MARKDOWN, "r")
+        
+            # Send file to DMs; Then delete
+            await author.send(
+                file = discord.File(mdFile)
+            )
+            os.remove(BotModerator.BOT_MARKDOWN)
+
+            return discord.Embed(
+                title = "File sent.",
+                description = "The server information has been sent to your DM's",
+                colour = BotModerator.EMBED_COLOR
+            )
     
     async def setStatus(self, parameters):
         """Sets the presence of the bot given the activity type and text.\n
@@ -661,11 +722,21 @@ class BotModerator(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, cmd, cmd.getCommand(), parameters)
-                    )
+
+                    # See if getServers command was called
+                    if command in self._servers.getAlternatives():
+                        await sendMessage(
+                            self.client,
+                            message,
+                            embed = await run(message, cmd, cmd.getCommand(), message.author, parameters)
+                        )
+
+                    else:
+                        await sendMessage(
+                            self.client,
+                            message,
+                            embed = await run(message, cmd, cmd.getCommand(), parameters)
+                        )
 
                     # See if kill command was called
                     if command in self._kill.getAlternatives():
