@@ -20,8 +20,6 @@ class ServerModerator(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    DESCRIPTION = "Moderate your server with this. Owners have the only access to this at first."
-
     EMBED_COLOR = 0xAAAA00
 
     MAX_INVITE_AGE = 60 * 60 * 24 # 24 hours
@@ -50,13 +48,22 @@ class ServerModerator(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        super().__init__(client, "Server Moderator")
+        super().__init__(
+            client, 
+            "Server Moderator",
+            description = "Moderate your server with this. Owners have the only access to this at first.",
+            restriction_info = "In order to use these commands, you must have the Manage Server permissions.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Bot Commands
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-        self._addMember = Command(commandDict = {
+        self._addMember = Command(commandDict = { 
             "alternatives": ["addMember", "addM", "am"],
             "info": "Allows you to add a member, or members, to the server file manually.",
             "run_in_private": False,
@@ -896,11 +903,11 @@ class ServerModerator(Category):
                     if command.getAlternatives()[0] in server["inactive_commands"]:
                         server["inactive_commands"].pop(command.getAlternatives()[0])
                         result += "`{}` was activated.\n".format(
-                            commandObject.getAlternatives()[0]
+                            command.getAlternatives()[0]
                         )
                     else:
                         result += "`{}` is already active.\n".format(
-                            commandObject.getAlternatives()[0]
+                            command.getAlternatives()[0]
                         )
             
             # Activate all inactive commands
