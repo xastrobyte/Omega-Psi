@@ -1,24 +1,19 @@
 from util.code.code import tenToNumber, numberToTen
 from util.file.server import Server
+from util.file.omegaPsi import OmegaPsi
 from util.utils import sendMessage, getErrorMessage, run, timeout
 
 from supercog import Category, Command
-import discord, base64
+import base64, discord
+
+execsessions = []
+execstdin = {}
 
 class Code(Category):
-    """Creates a Code extension.
-
-    This class holds commands that are used often in coding or computer science.
-
-    Parameters:
-        client (discord.ClientUser): The Discord Client to use for sending messages.
-    """
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    DESCRIPTION = "Commands that have to do with coding!"
 
     MAX_BRAINFUCK_LENGTH = 2 ** 15 # 32736
 
@@ -31,6 +26,7 @@ class Code(Category):
     START_BASE_MISMATCH = "START_BASE_MISMATCH"
     END_BASE_MISMATCH = "END_BASE_MISMATCH"
 
+    INVALID_LANGUAGE = "INVALID_LANGUAGE"
     INVALID_START_BASE = "INVALID_START_BASE"
     INVALID_END_BASE = "INVALID_END_BASE"
     INVALID_PARAMETER = "INVALID_PARAMETER"
@@ -40,14 +36,15 @@ class Code(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        """Creates a Code extension.
-
-        This class holds commands that are used often in coding or computer science.
-
-        Parameters:
-            client (discord.ClientUser): The Discord Client to use for sending messages.
-        """
-        super().__init__(client, "Code")
+        super().__init__(
+            client, 
+            "Code",
+            description = "Commands that have to do with coding!",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -77,7 +74,8 @@ class Code(Category):
                         "The brainfuck command only needs the code and the parameters. Make sure you remove spaces from both."
                     ]
                 }
-            }
+            },
+            "command": self.brainfuck
         })
 
         self._convert = Command(commandDict = {
@@ -130,7 +128,8 @@ class Code(Category):
                         "The number you entered does not match the end base."
                     ]
                 }
-            }
+            },
+            "command": self.convert
         })
 
         self._base64 = Command(commandDict = {
@@ -168,7 +167,8 @@ class Code(Category):
                         "That is not a valid conversion type."
                     ]
                 }
-            }
+            },
+            "command": self.base64
         })
 
         self.setCommands([
@@ -420,7 +420,7 @@ class Code(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, cmd, cmd.getCommand(), parameters)
+                        embed = await self.run(message, cmd, cmd.getCommand(), parameters)
                     )
 
 def setup(client):
