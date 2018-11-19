@@ -1,4 +1,5 @@
 from util.file.server import Server
+from util.file.omegaPsi import OmegaPsi
 from util.file.user import User
 
 from util.game.game import getNoGame, getQuitGame
@@ -7,26 +8,22 @@ from util.game import hangman
 from util.game import scramble
 from util.game import ticTacToe
 
+from util.game import blackOps3
+from util.game import blackOps4
+from util.game import fortnite
+
 from util.utils import sendMessage, getErrorMessage, run
 
+from datetime import datetime
 from random import choice as choose
 from supercog import Category, Command
-import discord
+import discord, os, requests
 
 class Game(Category):
-    """Creates a Game extension.
-
-    This class holds commands that involve minigames or any type of game stats.
-
-    Parameters:
-        client (discord.ClientUser): The Discord Client to use for sending messages.
-    """
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    DESCRIPTION = "You can play games with these."
 
     EMBED_COLOR = 0xFF8000
 
@@ -39,7 +36,9 @@ class Game(Category):
     LETTER_TOO_LONG = "LETTER_TOO_LONG"
     TOO_MANY_GAMES = "TOO_MANY_GAMES"
     COLUMN_FULL = "COLUMN_FULL"
+    NO_USER = "NO_USER"
     
+    INVALID_PLATFORM = "INVALID_PLATFORM"
     INVALID_DIFFICULTY = "INVALID_DIFFICULTY"
     INVALID_INPUT = "INVALID_INPUT"
     INVALID_SPOT = "INVALID_SPOT"
@@ -71,19 +70,39 @@ class Game(Category):
     MAX_SCRAMBLE_GUESSES = 10
     MAX_RPS_GAMES = 9
 
+    BLACK_OPS_3_ICON = "https://mbtskoudsalg.com/images/black-ops-3-symbol-png-8.png"
+    BLACK_OPS_3_URL = "https://cod-api.tracker.gg/v1/standard/bo3/profile/{}/{}"
+
+    BLACK_OPS_4_ICON = "https://purepng.com/public/uploads/large/call-of-duty-black-ops-4-logo-idp.png"
+    BLACK_OPS_4_URL = "https://cod-api.tracker.gg/v1/standard/bo4/profile/{}/{}"
+    BLACK_OPS_4_LEVEL = 0
+
+    FORTNITE_URL = "https://api.fortnitetracker.com/v1/profile/{}/{}"
+    FORTNITE_ICON = "https://d1u5p3l4wpay3k.cloudfront.net/fortnite_gamepedia/6/64/Favicon.ico"
+    FORTNITE_ITEM_SHOP_URL = "https://api.fortnitetracker.com/v1/store"
+    FORTNITE_MATCHES_PLAYED = 7
+    FORTNITE_WINS = 8
+    FORTNITE_KILLS = 10
+    FORTNITE_TOP_10 = 3
+    FORTNITE_TOP_25 = 5
+
+    LEAGUE_URL = ""
+    LEAGUE_ICON = ""
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        """Creates a Game extension.
-
-        This class holds commands that involve minigames or any type of game stats.
-
-        Parameters:
-            client (discord.ClientUser): The Discord Client to use for sending messages.
-        """
-        super().__init__(client, "Game")
+        super().__init__(
+            client, 
+            "Game",
+            description = "You can play games with these.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -101,42 +120,6 @@ class Game(Category):
                         "quit": {
                             "alternatives": ["quit", "q", "exit"],
                             "info": "Allows you to quit the Connect 4 game."
-                        }
-                    }
-                },
-                "sizeX": {
-                    "info": "The width of the Connect 4 grid.",
-                    "optional": True,
-                    "accepted_parameters": {
-                        "small": {
-                            "alternatives": ["small", "s"],
-                            "info": "Make the width of the grid 5."
-                        },
-                        "medium": {
-                            "alternatives": ["medium", "m"],
-                            "info": "Make the width of the grid 7."
-                        },
-                        "large": {
-                            "alternatives": ["large", "l"],
-                            "info": "Make the width of the grid 9."
-                        }
-                    }
-                },
-                "sizeY": {
-                    "info": "The height of the Connect 4 grid.",
-                    "optional": True,
-                    "accepted_parameters": {
-                        "small": {
-                            "alternatives": ["small", "s"],
-                            "info": "Make the width of the grid 6."
-                        },
-                        "medium": {
-                            "alternatives": ["medium", "m"],
-                            "info": "Make the width of the grid 8."
-                        },
-                        "large": {
-                            "alternatives": ["large", "l"],
-                            "info": "Make the width of the grid 10."
                         }
                     }
                 }
@@ -377,13 +360,180 @@ class Game(Category):
             }
         })
 
+        self._blackOps3 = Command(commandDict = {
+            "alternatives": ["blackOps3", "blackops3", "bo3"],
+            "info": "Gives you stats on a specific player in Black Ops 3",
+            "parameters": {
+                "platform": {
+                    "info": "The platform to get the stats on.",
+                    "optional": False,
+                    "accepted_parameters": {
+                        "xbox": {
+                            "alternatives": ["xbox", "Xbox"],
+                            "info": "Get Black Ops 3 stats for Xbox."
+                        },
+                        "psn": {
+                            "alternatives": ["playstation", "psn", "PSN"],
+                            "info": "Get Black Ops 3 stats for Playstation Network (PSN)."
+                        }
+                    }
+                },
+                "username": {
+                    "info": "The username to get the stats for.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Game.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to get Black Ops 3 stats, you need the platform and username."
+                    ]
+                },
+                Game.INVALID_PLATFORM: {
+                    "messages": [
+                        "That is not a valid platform."
+                    ]
+                },
+                Game.NO_USER: {
+                    "messages": [
+                        "There was no user found with that username."
+                    ]
+                }
+            }
+        })
+
+        self._blackOps4 = Command(commandDict = {
+            "alternatives": ["blackOps4", "blackops4", "bo4"],
+            "info": "Gives you stats on a specific player in Black Ops 4",
+            "parameters": {
+                "platform": {
+                    "info": "The platform to get the stats on.",
+                    "optional": False,
+                    "accepted_parameters": {
+                        "xbox": {
+                            "alternatives": ["xbox", "Xbox"],
+                            "info": "Get Black Ops 4 stats for Xbox."
+                        },
+                        "psn": {
+                            "alternatives": ["playstation", "psn", "PSN"],
+                            "info": "Get Black Ops 4 stats for Playstation Network (PSN)."
+                        },
+                        "battleNet": {
+                            "alternatives": ["battleNet"],
+                            "info": "Get Black Ops 4 stats for Battle.net."
+                        }
+                    }
+                },
+                "username": {
+                    "info": "The username to get the stats for.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Game.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to get Black Ops 4 stats, you need the platform and username."
+                    ]
+                },
+                Game.INVALID_PLATFORM: {
+                    "messages": [
+                        "That is not a valid platform."
+                    ]
+                },
+                Game.NO_USER: {
+                    "messages": [
+                        "There was no user found with that username."
+                    ]
+                }
+            }
+        })
+
+        self._fortnite = Command(commandDict = {
+            "alternatives": ["fortnite"],
+            "info": "Gives you stats on a specific player in Fortnite.",
+            "parameters": {
+                "platform": {
+                    "info": "The platform to get the stats on.",
+                    "optional": False,
+                    "accepted_parameters": {
+                        "psn": {
+                            "alternatives": ["playstation", "psn", "ps"],
+                            "info": "Get Fortnite stats for Playstation 4."
+                        },
+                        "xbox": {
+                            "alternatives": ["xbox", "Xbox"],
+                            "info": "Get Fortnite stats for Xbox."
+                        },
+                        "pc": {
+                            "alternatives": ["pc", "PC"],
+                            "info": "Get Fortnite stats for PC."
+                        }
+                    }
+                },
+                "username": {
+                    "info": "The username to get the stats for.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Game.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to get fortnite stats, you need at least the platform."
+                    ]
+                },
+                Game.INVALID_PLATFORM: {
+                    "messages": [
+                        "That is not a valid gaming platform that can be tracked."
+                    ]
+                },
+                Game.NO_USER: {
+                    "messages": [
+                        "There was no user found with that username."
+                    ]
+                }
+            }
+        })
+
+        self._fortniteItemShop = Command(commandDict = {
+            "alternatives": ["fortniteItemShop"],
+            "info": "Gives you the current items in the Fortnite Item Shop."
+        })
+
+        self._league = Command(commandDict = {
+            "alternatives": ["league", "leagueOfLegends", "LoL"],
+            "info": "Gives you stats on a specific Summoner in League of Legends.",
+            "parameters": {
+                "username": {
+                    "info": "The username of the Summoner to look up.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Game.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to get the stats for a summoner, you need their username."
+                    ]
+                },
+                Game.NO_USER: {
+                    "messages": [
+                        "There was no Summoner found with that username."
+                    ]
+                }
+            }
+        })
+
         self.setCommands([
             self._connectFour,
             self._hangman,
             self._rps,
             self._scramble,
             self._ticTacToe,
-            self._stats
+            self._stats,
+
+            self._blackOps3,
+            self._blackOps4,
+            self._fortnite,
+            self._fortniteItemShop
         ])
 
         self._connectFourGames = {}
@@ -397,7 +547,7 @@ class Game(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def connectFour(self, discordUser, *, difficulty = None, move = None, width = 7, height = 6):
+    def connectFour(self, discordUser, *, difficulty, move = None):
         """Creates a Connect Four game or continues a Connect Four game.
 
         Parameters:
@@ -437,10 +587,10 @@ class Game(Category):
             
             # Create game instance
             self._connectFourGames[serverId][authorId] = {
-                "board": connectFour.generateBoard(width, height),
+                "board": connectFour.generateBoard(7, 6),
                 "difficulty": "hard",
-                "width": width,
-                "height": height,
+                "width": 7,
+                "height": 6,
                 "challenger_turn": True,
                 "challenger": discordUser,
                 "opponent": None
@@ -1214,6 +1364,264 @@ class Game(Category):
         
         return embed
     
+    def blackOps3(self, parameters):
+        """Gets the Black Ops 3 stats for a user on a platform.
+
+        Parameters:
+            platform (str): The platform to get the stats on.
+            username (str): The user to get the stats for.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._blackOps3.getMinParameters():
+            return getErrorMessage(self._blackOps3, Game.NOT_ENOUGH_PARAMETERS)
+        
+        # There were enough parameters
+        platform = parameters[0]
+        username = " ".join(parameters[1:])
+
+        # Make sure platform is valid
+        if platform in self._blackOps3.getAcceptedParameter("platform", "xbox").getAlternatives():
+            platform = 1
+        elif platform in self._blackOps3.getAcceptedParameter("platform", "psn").getAlternatives():
+            platform = 2
+        
+        # Platform is not valid
+        else:
+            return getErrorMessage(self._blackOps3, Game.INVALID_PLATFORM)
+        
+        # Request data
+        blackOps3Json = requests.get(
+            Game.BLACK_OPS_3_URL.format(platform, username),
+            headers = {
+                "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
+            }
+        ).json()
+
+        # See if an error was given
+        if "errors" in blackOps3Json:
+            return getErrorMessage(self._blackOps3, Game.NO_USER)
+        
+        # There was no error given; Get stats and put inside Embed
+        embed = discord.Embed(
+            title = "Black Ops 3 Stats",
+            description = "{} - {}".format(
+                blackOps3Json["data"]["metadata"]["platformUserHandle"],
+                "Xbox" if blackOps3Json["data"]["metadata"]["platformId"] == 1 else "PSN"
+            ),
+            colour = Game.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_author(
+            name = blackOps3Json["data"]["metadata"]["platformUserHandle"],
+            icon_url = Game.BLACK_OPS_3_ICON
+        ).set_footer(
+            text = "Black Ops 3 Tracker"
+        )
+
+        # Add stats using Black Ops 3 parser
+        embed = blackOps3.getGameStats(embed, blackOps3Json)
+
+        return embed
+    
+    def blackOps4(self, parameters):
+        """Gets the Black Ops 4 stats for a user on a platform.
+
+        Parameters:
+            platform (str): The platform to get the stats on.
+            username (str): The user to get the stats for.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._blackOps4.getMinParameters():
+            return getErrorMessage(self._blackOps4, Game.NOT_ENOUGH_PARAMETERS)
+        
+        # There were enough parameters
+        platform = parameters[0]
+        username = " ".join(parameters[1:])
+
+        # Make sure platform is valid
+        if platform in self._blackOps4.getAcceptedParameter("platform", "xbox").getAlternatives():
+            platform = 1
+        elif platform in self._blackOps4.getAcceptedParameter("platform", "psn").getAlternatives():
+            platform = 2
+        
+        # Platform is not valid
+        else:
+            return getErrorMessage(self._blackOps4, Game.INVALID_PLATFORM)
+        
+        # Request data
+        blackOps4Json = requests.get(
+            Game.BLACK_OPS_4_URL.format(platform, username),
+            headers = {
+                "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
+            }
+        ).json()
+
+        # See if an error was given
+        if "errors" in blackOps4Json:
+            return getErrorMessage(self._blackOps4, Game.NO_USER)
+        
+        # There was no error given; Get stats and put inside Embed; Use Level icon for author icon
+        try:
+            levelIcon = blackOps4Json["data"]["stats"][Game.BLACK_OPS_4_LEVEL]["metadata"]["iconUrl"]
+        except:
+            levelIcon = Game.BLACK_OPS_4_ICON
+
+        embed = discord.Embed(
+            title = "Black Ops 4 Stats",
+            description = "{} - {}".format(
+                blackOps4Json["data"]["metadata"]["platformUserHandle"],
+                "Xbox" if blackOps4Json["data"]["metadata"]["platformId"] == 1 else "PSN"
+            ),
+            colour = Game.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_author(
+            name = blackOps4Json["data"]["metadata"]["platformUserHandle"],
+            icon_url = levelIcon
+        ).set_footer(
+            text = "Black Ops 4 Tracker"
+        )
+
+        # Add stats using Black Ops 4 parser
+        embed = blackOps4.getGameStats(embed, blackOps4Json)
+
+        return embed
+    
+    def fortnite(self, parameters):
+        """Gets the Fortnite stats for a user on a platform.
+
+        Parameters:
+            platform (str): The platform to get the stats on.
+            username (str): The user to get the stats for.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._fortnite.getMinParameters():
+            return getErrorMessage(self._fortnite, Game.NOT_ENOUGH_PARAMETERS)
+        
+        # There were enough parameters
+        platform = parameters[0]
+        username = " ".join(parameters[1:])
+
+        # Make sure platform is valid
+        if platform in self._fortnite.getAcceptedParameter("platform", "pc").getAlternatives():
+            platform = "pc"
+        elif platform in self._fortnite.getAcceptedParameter("platform", "xbox").getAlternatives():
+            platform = "xbox"
+        elif platform in self._fortnite.getAcceptedParameter("platform", "psn").getAlternatives():
+            platform = "psn"
+        
+        # Platform is not valid
+        else:
+            return getErrorMessage(self._fortnite, Game.INVALID_PLATFORM)
+
+        # Request data
+        fortniteJson = requests.get(
+            Game.FORTNITE_URL.format(platform, username),
+            headers = {
+                "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
+            }
+        ).json()
+
+        # See if an error was given.
+        if "error" in fortniteJson:
+            return getErrorMessage(self._fortnite, Game.NO_USER)
+        
+        # There was no error given; Get Solo, Duo, and Squad information
+        # Attempt to get each section of information; If no data for section
+        # Don't use it, set it to None
+        try:
+            solo = fortniteJson["stats"]["p2"]
+        except:
+            solo = None
+        try:
+            duo = fortniteJson["stats"]["p10"]
+        except:
+            duo = None
+        try:
+            squads = fortniteJson["stats"]["p9"]
+        except:
+            squads = None
+
+        try:
+            seasonSolo = fortniteJson["stats"]["curr_p2"]
+        except:
+            seasonSolo = None
+        try:
+            seasonDuo = fortniteJson["stats"]["curr_p10"]
+        except:
+            seasonDuo = None
+        try:
+            seasonSquads = fortniteJson["stats"]["curr_p9"]
+        except:
+            seasonSquads = None
+
+        gameTypeStats = [
+            solo, duo, squads,
+            seasonSolo, seasonDuo, seasonSquads
+        ]
+        gameTypes = [
+            "p2", "p10", "p9",
+            "curr_p2", "curr_p10", "curr_p9"
+        ]
+
+        lifetime = fortniteJson["lifeTimeStats"]
+
+        # Create embed
+        embed = discord.Embed(
+            title = "Fortnite Stats",
+            description = fortniteJson["epicUserHandle"] + " - " + fortniteJson["platformNameLong"],
+            colour = Game.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_author(
+            name = fortniteJson["epicUserHandle"],
+            icon_url = Game.FORTNITE_ICON
+        ).set_footer(
+            text = "Fortnite Tracker"
+        )
+
+        for gameType in range(len(gameTypeStats)):
+            embed = fortnite.addGameType(embed, gameTypeStats[gameType], gameTypes[gameType])
+        
+        # Add lifetime stats
+        embed.add_field(
+            name = "Lifetime Stats",
+            value = "{}\n{}\n{}\n{}\n{}\n".format(
+                "**Matches Played**: " + lifetime[Game.FORTNITE_MATCHES_PLAYED]["value"],
+                "**Wins**: " + lifetime[Game.FORTNITE_WINS]["value"],
+                "**Kills**: " + lifetime[Game.FORTNITE_KILLS]["value"],
+                "**Top 10**: " + lifetime[Game.FORTNITE_TOP_10]["value"],
+                "**Top 25**: " + lifetime[Game.FORTNITE_TOP_25]["value"]
+            ),
+            inline = False
+        )
+
+        return embed
+    
+    def fortniteItemShop(self):
+        """Gets the current Fortnite Item shop.
+        """
+
+        # Request data
+        fortniteItems = requests.get(
+            Game.FORTNITE_ITEM_SHOP_URL,
+            headers = {
+                "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
+            }
+        ).json()
+
+        # Create file
+        return fortnite.getItemShopImage(fortniteItems)
+    
+    def league(self, parameters):
+        """Gets the League of Legends stats for a Summoner.
+
+        Parameters:
+            username (str): The username of the Summoner to get stats for.
+        """
+
+        return None
+    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Helper Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1389,6 +1797,44 @@ class Game(Category):
                         message,
                         embed = getErrorMessage(self._stats, Game.TOO_MANY_PARAMETERS)
                     )
+                
+            # Black Ops 3 Command
+            elif command in self._blackOps3.getAlternatives():
+
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._blackOps3, self.blackOps3, parameters)
+                )
+            
+            # Black Ops 4 Command
+            elif command in self._blackOps4.getAlternatives():
+
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._blackOps4, self.blackOps4, parameters)
+                )
+            
+            # Fortnite Command
+            elif command in self._fortnite.getAlternatives():
+
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._fortnite, self.fortnite, parameters)
+                )
+            
+            # Fortnite Item Shop Command
+            elif command in self._fortniteItemShop.getAlternatives():
+                result = await self.run(message, self._fortniteItemShop, self.fortniteItemShop)
+
+                await sendMessage(
+                    self.client,
+                    message,
+                    filename = result
+                )
+                os.remove(result)
         
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Check Running Games
