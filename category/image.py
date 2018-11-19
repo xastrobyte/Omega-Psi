@@ -1,4 +1,5 @@
 from util.file.server import Server
+from util.file.omegaPsi import OmegaPsi
 
 from util.image import burnLetter
 from util.image import butILikeThis
@@ -30,8 +31,6 @@ class Image(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    DESCRIPTION = "Anything having to do with images is here."
-
     EMBED_COLOR = 0x800080
 
     MEME_SUBREDDITS = [
@@ -41,6 +40,7 @@ class Image(Category):
         "dank_meme"
     ]
     MEME_RANDOM = "https://www.reddit.com/r/{}/.json?sort=top&limit=500"
+
     REDDIT_BASE = "https://www.reddit.com"
 
     NASA_RANDOM = "https://images-api.nasa.gov/search?media_type=image&year_start=1960"
@@ -59,7 +59,15 @@ class Image(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
-        super().__init__(client, "Image")
+        super().__init__(
+            client, 
+            "Image",
+            description = "Anything having to do with images is here.",
+            locally_inactive_error = Server.getInactiveError,
+            globally_inactive_error = OmegaPsi.getInactiveError,
+            locally_active_check = Server.isCommandActive,
+            globally_active_check = OmegaPsi.isCommandActive
+        )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -797,9 +805,20 @@ class Image(Category):
         
         return gifData["embed_url"]
     
-    def meme(self):
+    def meme(self, channel):
         """Returns a random meme from Reddit.\n
+
+        Parameters:
+            channel (discord.Channel): The channel to send to. Helps to determine NSFW memes
         """
+
+        # See if channel has is_nsfw
+        try:
+            isNSFW = channel.is_nsfw()
+        
+        # Channel is private, allow NSFW
+        except:
+            isNSFW = True
 
         # Get data involving Reddit memes
         # Choose random subreddit between meme subreddits (meme, memes, dankmemes, dank_meme)
@@ -818,6 +837,8 @@ class Image(Category):
         
         # Choose random reddit post
         redditPost = choose(redditData["data"]["children"])["data"]
+        while redditPost["is_video"] or (redditPost["over_18"] and not isNSFW):
+            redditPost = choose(redditData["data"]["children"])["data"]
 
         # Return an embed for the reddit post
         return discord.Embed(
@@ -974,7 +995,7 @@ class Image(Category):
             
             # Meme Command
             elif command in self._meme.getAlternatives():
-                result = await run(message, self._meme, self.meme)
+                result = await run(message, self._meme, self.meme, message.channel)
 
                 if type(result) == discord.Embed:
                     await sendMessage(
