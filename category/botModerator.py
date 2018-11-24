@@ -6,10 +6,11 @@ from category.internet import Internet
 from category.math import Math
 from category.rank import Rank
 from category.misc import Misc
+from category.nsfw import NSFW
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage
 
 from supercog import Category, Command
 import discord, os
@@ -40,8 +41,9 @@ class BotModerator(Category):
         super().__init__(
             client, 
             "Bot Moderator",
-            description = "Very private stuff. Only bot moderators/developers can access these.",
+            description = "Very private stuff.",
             restriction_info = "You must be a Bot Moderator to run these commands.",
+            bot_mod_category = True,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -237,6 +239,44 @@ class BotModerator(Category):
             "command": self.setStatus
         })
 
+        self._todo = Command(commandDict = {
+            "alternatives": ["todo"],
+            "info": "Adds, removes, or lists things in the TODO list.",
+            "parameters": {
+                "action": {
+                    "info": "The action to do.",
+                    "optional": True,
+                    "accepted": {
+                        "add": {
+                            "alternatives": ["add", "a"],
+                            "info": "Adds something to the TODO list."
+                        },
+                        "remove": {
+                            "alternatives": ["remove", "r"],
+                            "info": "Removes something from the TODO list."
+                        }
+                    }
+                },
+                "item": {
+                    "info": "The item to add or remove.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                BotModerator.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to add or remove something, you need the item to add or remove."
+                    ]
+                },
+                BotModerator.INVALID_PARAMETER: {
+                    "messages": [
+                        "That is not a valid parameter."
+                    ]
+                }
+            },
+            "command": self.todo
+        })
+
         self._kill = Command(commandDict = {
             "alternatives": ["stop", "quit", "kill"],
             "info": "Kills the bot.",
@@ -275,6 +315,7 @@ class BotModerator(Category):
             self._info,
             self._servers,
             self._status,
+            self._todo,
             self._kill,
             self._debug
         ])
@@ -287,7 +328,8 @@ class BotModerator(Category):
             "Internet": Internet(None),
             "Math": Math(None),
             "Rank": Rank(None),
-            "Misc": Misc(None)
+            "Misc": Misc(None),
+            "NSFW": NSFW(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -672,6 +714,59 @@ class BotModerator(Category):
             colour = BotModerator.EMBED_COLOR
         )
     
+    def todo(self, parameters):
+        """Runs the todo command.
+
+        Parameters:
+            action (str): What action to perform for the todo command.
+            item (str): The item to add/remove to/from the TODO list.
+        """
+
+        # Check for no parameters; list the TODO list
+        if len(parameters) == 0:
+
+            todoList = OmegaPsi.getToDoList()
+            todoText = ""
+            for item in range(len(todoList)):
+                todoText += "{}.) {}\n".format(
+                    item + 1, todoList[item]
+                )
+                
+            return discord.Embed(
+                title = "TODO List",
+                description = todoText if len(todoText) > 0 else "Nothing Yet",
+                colour = BotModerator.EMBED_COLOR
+            )
+        
+        # Check for 2 or more parameters
+        else:
+            if len(parameters) == 1:
+                return getErrorMessage(self._todo, BotModerator.NOT_ENOUGH_PARAMETERS)
+            
+            # Check if action is valid
+            action = parameters[0]
+            if action in self._todo.getAcceptedParameter("action", "add").getAlternatives():
+                success = OmegaPsi.addToDo(" ".join(parameters[1:]))
+
+                return discord.Embed(
+                    title = "Added TODO Item" if success["success"] else "Failed to add TODO Item",
+                    description = success["reason"],
+                    colour = BotModerator.EMBED_COLOR
+                )
+
+            elif action in self._todo.getAcceptedParameter("action", "remove").getAlternatives():
+                success = OmegaPsi.removeToDo(" ".join(parameters[1:]))
+
+                return discord.Embed(
+                    title = "Removed TODO Item" if success["success"] else "Failed to remove TODO Item",
+                    description = success["reason"],
+                    colour = BotModerator.EMBED_COLOR
+                )
+            
+            # Action is invalid
+            else:
+                return getErrorMessage(self._todo, BotModerator.INVALID_PARAMETER)
+    
     async def kill(self, parameters):
         """Kills the bot and logs out.
         """
@@ -728,14 +823,14 @@ class BotModerator(Category):
                         await sendMessage(
                             self.client,
                             message,
-                            embed = await run(message, cmd, cmd.getCommand(), message.author, parameters)
+                            embed = await self.run(message, cmd, cmd.getCommand(), message.author, parameters)
                         )
 
                     else:
                         await sendMessage(
                             self.client,
                             message,
-                            embed = await run(message, cmd, cmd.getCommand(), parameters)
+                            embed = await self.run(message, cmd, cmd.getCommand(), parameters)
                         )
 
                     # See if kill command was called
