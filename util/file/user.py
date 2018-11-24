@@ -1,13 +1,10 @@
-import json, os
+from util.file.database import omegaPsi
 
 class User:
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    # File locations
-    USER_FILE = "data/users/{}.json"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Helper Methods
@@ -21,7 +18,7 @@ class User:
 
         # Default values
         defaultValues = {
-            "id": discordUser.id,
+            "_id": discordUser.id,
             "connect_four": {
                 "won": 0,
                 "lost": 0
@@ -44,32 +41,15 @@ class User:
             }
         }
 
-        # Try to open file
-        try:
-
-            # Check if users folder exists
-            if not os.path.exists("data/users"):
-                os.mkdir("data/users")
-
-            # Open file
-            with open(User.USER_FILE.format(discordUser.id), "r") as userFile:
-                userDict = json.load(userFile)
+        # Get user information
+        userDict = omegaPsi.getUser(str(discordUser.id))
             
-            # See if default values are missing
-            for value in defaultValues:
-
-                # Check if value is not in user dictionary; Set default value
-                if value not in userDict:
-                    userDict[value] = defaultValues[value]
-            
-            return userDict
-            
-        # File did not exist, create it
-        except IOError:
-            userDict = defaultValues 
-            User.closeUser(userDict)
-
-            return User.openUser(discordUser)
+        # See if default values are missing
+        for value in defaultValues:
+            if value not in userDict:
+                userDict[value] = defaultValues[value]
+        
+        return userDict
     
     def closeUser(userDict):
         """Closes the file for the Discord User.\n
@@ -77,9 +57,8 @@ class User:
         userDict - The Discord User to save.\n
         """
 
-        # Open file
-        with open(User.USER_FILE.format(userDict["id"]), "w") as userFile:
-            userFile.write(json.dumps(userDict, sort_keys = True, indent = 4))
+        # Update user information
+        omegaPsi.setUser(userDict["_id"], userDict)
         
     def updateConnectFour(discordUser, *, didWin = False):
         """Updates the connect four score.
