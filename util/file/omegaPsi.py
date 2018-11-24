@@ -1,3 +1,5 @@
+from util.file.database import omegaPsi
+
 from random import choice as choose
 import discord, json, os
 
@@ -8,8 +10,6 @@ class OmegaPsi:
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     PREFIX = "omega "
-
-    BOT_FILE = "data/omegaPsi.json"
 
     NO_ACCESS = "NO_ACCESS"
     INACTIVE = "INACTIVE"
@@ -30,53 +30,44 @@ class OmegaPsi:
 
         # Setup Default Values
         defaultValues = {
-            "owner": int(os.environ["DISCORD_ME"]),
-            "moderators": [int(os.environ["DISCORD_ME"])],
+            "owner": str(os.environ["DISCORD_ME"]),
+            "moderators": [str(os.environ["DISCORD_ME"])],
             "inactive_commands": {},
             "activity_type": discord.ActivityType.playing,
-            "activity_name": OmegaPsi.PREFIX + "help"
+            "activity_name": OmegaPsi.PREFIX + "help",
+            "todo": []
         }
-        
-        # Try to open file
-        try:
 
-            # Open file
-            with open(OmegaPsi.BOT_FILE, "r") as botFile:
-                botDict = json.load(botFile)
-            
-            # See if default values are missing
-            for value in defaultValues:
-                if value not in botDict:
-                    botDict[value] = defaultValues[value]
-            
-            return botDict
-            
-        # File did not exist, create it
-        except IOError:
-            botDict = defaultValues
-            OmegaPsi.closeOmegaPsi(botDict)
-            return botDict
+        # Get Bot Information from database
+        botDict = omegaPsi.getBot()
+        
+        # See if default values are missing
+        for value in defaultValues:
+            if value not in botDict:
+                botDict[value] = defaultValues[value]
+        
+        return botDict
     
     def closeOmegaPsi(botDict):
         """Closes the JSON file that keeps track of Bot Moderators and
         globally inactive commands.
         """
-        
-        # Open file
-        with open(OmegaPsi.BOT_FILE, "w") as botFile:
-            botFile.write(json.dumps(botDict, sort_keys = True, indent = 4))
+
+        # Update bot information
+        omegaPsi.setBot(botDict)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def addModerator(discordUser):
-        """Adds a bot moderator to the bot. Different from a Server moderator.\n
+        """Adds a bot moderator to the bot. Different from a Server moderator.
 
-        discordUser - The Discord User to make a moderator.\n
+        Parameters:
+            discordUser (discord.User): The Discord User to make a moderator.
 
-        Returns True if the User was added as a moderator. \n
-        Returns False if the User was already a moderator.\n
+        Returns:
+            success (bool): Whether or not the addition of the moderator was a success.
         """
         
         # Open the OmegaPsi file
@@ -84,8 +75,8 @@ class OmegaPsi:
 
         # Add the Discord User as a bot moderator if User is not already in
         success = False
-        if discordUser.id not in omegaPsi["moderators"]:
-            omegaPsi["moderators"].append(discordUser.id)
+        if str(discordUser.id) not in omegaPsi["moderators"]:
+            omegaPsi["moderators"].append(str(discordUser.id))
             success = True
 
         # Close the OmegaPsi file
@@ -94,12 +85,13 @@ class OmegaPsi:
         return success
     
     def removeModerator(discordUser):
-        """Removes a bot moderator from the bot. Different from a Server moderator.\n
+        """Removes a bot moderator from the bot. Different from a Server moderator.
 
-        discordUser - The Discord User to remove as a moderator.\n
-
-        Returns True if the User was removed as a moderator.\n
-        Returns False if the User wasn't a moderator.\n
+        Parameters:
+            discordUser (discord.User): The Discord User to make a moderator.
+        
+        Returns:
+            success (bool): Whether or not the removal of the moderator was a success.
         """
         
         # Open the OmegaPsi file
@@ -107,8 +99,8 @@ class OmegaPsi:
 
         # Remove the Discord User as a bot moderator if User is already in
         success = False
-        if discordUser.id in omegaPsi["moderators"] and discordUser.id != omegaPsi["owner"]:
-            omegaPsi["moderators"].remove(discordUser.id)
+        if str(discordUser.id) in omegaPsi["moderators"] and str(discordUser.id) != omegaPsi["owner"]:
+            omegaPsi["moderators"].remove(str(discordUser.id))
             success = True
 
         # Close the OmegaPsi file
@@ -132,12 +124,13 @@ class OmegaPsi:
         return moderators
     
     def activate(commandObject):
-        """Globally activates a command based off the commandObject given. Different from a Server activate.\n
+        """Globally activates a command based off the commandObject given. Different from a Server activate.
 
-        commandObject - The command to activate.\n
+        Parameters:
+            commandObject (supercog.Command): The command to activate.
 
-        Returns True if the command was activated.\n
-        Returns False if the command was already active.\n
+        Returns:
+            success (bool): Whether or not a Command was activated.
         """
         
         # Open the OmegaPsi file
@@ -248,6 +241,85 @@ class OmegaPsi:
 
         return activityName
     
+    def addToDo(todoItem):
+        """Adds an item to the Bot's TODO list.
+        
+        Parameters:
+            todoItem (str): The TODO item to add.
+        """
+
+        # Open OmegaPsi file
+        omegaPsi = OmegaPsi.openOmegaPsi()
+
+        # Add the item
+        value = {"success": False, "reason": "Unknown"}
+
+        if todoItem in omegaPsi["todo"]:
+            value = {"success": False, "reason": "`{}` is already on your TODO list.".format(todoItem)}
+        
+        else:
+            omegaPsi["todo"].append(todoItem)
+            value = {"success": True, "reason": "`{}` was added to your TODO list.".format(todoItem)}
+
+        # Close OmegaPsi file
+        OmegaPsi.closeOmegaPsi(omegaPsi)
+
+        return value
+
+    def removeToDo(todoItem):
+        """Removes an item from the Bot's TODO list.
+
+        Parameters:
+            todoItem (int | str): The TODO item to remove. Can be either the index or the item value.
+        """
+
+        # Open OmegaPsi file
+        omegaPsi = OmegaPsi.openOmegaPsi()
+
+        value = {"success": False, "reason": "Unknown"}
+
+        # See if the item index is in it
+        if str(todoItem).isdigit():
+
+            # Index is out of range
+            if int(todoItem) - 1 >= len(omegaPsi["todo"]):
+                value = {"success": False, "reason": "That is out of range."}
+            
+            else:
+                removed = omegaPsi["todo"].pop(int(todoItem) - 1)
+                value = {"success": True, "reason": "`{}` was removed from the TODO list.".format(removed)}
+        
+        # See if item is in it
+        else:
+
+            # See if item is not in list
+            if todoItem not in omegaPsi["todo"]:
+                value = {"success": False, "reason": "There is no item by that name."}
+
+            else:
+                removed = omegaPsi["todo"].remove(todoItem)
+                value = {"success": True, "reason": "`{}` was removed from the TODO list.".format(removed)}    
+
+        # Close OmegaPsi file
+        OmegaPsi.closeOmegaPsi(omegaPsi)
+
+        return value
+    
+    def getToDoList():
+        """Returns the Bot's TODO list.
+        """
+
+        # Open OmegaPsi file
+        omegaPsi = OmegaPsi.openOmegaPsi()
+
+        # ToDo list
+        todo = omegaPsi["todo"]
+
+        # Close OmegaPsi file
+        OmegaPsi.closeOmegaPsi(omegaPsi)
+
+        return todo
+    
     def isAuthorModerator(discordUser):
         """Returns whether or not the Discord User is a bot moderator.\n
 
@@ -258,7 +330,7 @@ class OmegaPsi:
         omegaPsi = OmegaPsi.openOmegaPsi()
 
         # Check if author is a moderator
-        moderator = discordUser.id in omegaPsi["moderators"]
+        moderator = str(discordUser.id) in omegaPsi["moderators"]
 
         # Close the OmegaPsi file
         OmegaPsi.closeOmegaPsi(omegaPsi)
