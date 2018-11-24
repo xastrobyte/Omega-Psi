@@ -1,8 +1,10 @@
+bs4
 git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]
 Flask
 pillow
 pygame
+pymongo
 requests
 supercog
 sympy
-wikipedia
+wikipedia-api
