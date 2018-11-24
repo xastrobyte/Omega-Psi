@@ -6,10 +6,11 @@ from category.internet import Internet
 from category.math import Math
 from category.rank import Rank
 from category.misc import Misc
+from category.nsfw import NSFW
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage
 
 from supercog import Category, Command
 import discord
@@ -51,8 +52,10 @@ class ServerModerator(Category):
         super().__init__(
             client, 
             "Server Moderator",
-            description = "Moderate your server with this. Owners have the only access to this at first.",
+            description = "Moderate your server with this.",
             restriction_info = "In order to use these commands, you must have the Manage Server permissions.",
+            server_category = True,
+            server_mod_category = True,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -753,7 +756,8 @@ class ServerModerator(Category):
             "Internet": Internet(None),
             "Math": Math(None),
             "Rank": Rank(None),
-            "Misc": Misc(None)
+            "Misc": Misc(None),
+            "NSFW": NSFW(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1583,7 +1587,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addMember, self.addMember, message.author, message.guild, message.mentions)
+                        embed = await self.run(message, self._addMember, self.addMember, message.author, message.guild, message.mentions)
                     )
                 
             # Remove Member Command
@@ -1602,7 +1606,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._removeMember, self.removeMember, message.author, message.guild, message.mentions)
+                        embed = await self.run(message, self._removeMember, self.removeMember, message.author, message.guild, message.mentions)
                     )
                 
             # Add Moderator Command
@@ -1621,7 +1625,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addModerator, self.addModerator, message.author, message.guild, message.mentions)
+                        embed = await self.run(message, self._addModerator, self.addModerator, message.author, message.guild, message.mentions)
                     )
             
             # Remove Moderator Command
@@ -1640,7 +1644,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._removeModerator, self.removeModerator, message.author, message.guild, message.mentions)
+                        embed = await self.run(message, self._removeModerator, self.removeModerator, message.author, message.guild, message.mentions)
                     )
             
             # Activate Command
@@ -1650,7 +1654,7 @@ class ServerModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await run(message, self._activate, self.activate, message.author, message.guild, parameters)
+                    embed = await self.run(message, self._activate, self.activate, message.author, message.guild, parameters)
                 )
             
             # Deactivate Command
@@ -1674,7 +1678,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._deactivate, self.deactivate, message.author, message.guild, parameters[0], reason)
+                        embed = await self.run(message, self._deactivate, self.deactivate, message.author, message.guild, parameters[0], reason)
                     )
                 
                 # 3 or More Parameters Exist
@@ -1692,7 +1696,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._toggleRanking, self.toggleRanking, message.author, message.guild)
+                        embed = await self.run(message, self._toggleRanking, self.toggleRanking, message.author, message.guild)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1711,7 +1715,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._toggleJoinMessage, self.toggleJoinMessage, message.author, message.guild)
+                        embed = await self.run(message, self._toggleJoinMessage, self.toggleJoinMessage, message.author, message.guild)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1738,7 +1742,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._setJoinMessageChannel, self.setJoinMessageChannel, message.author, message.guild, message.channel_mentions[0])
+                        embed = await self.run(message, self._setJoinMessageChannel, self.setJoinMessageChannel, message.author, message.guild, message.channel_mentions[0])
                     )
                 
                 # 2 or More Parameters Exist
@@ -1765,7 +1769,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._setLevel, self.setLevel, message.author, message.guild, parameters[0], message.mentions)
+                        embed = await self.run(message, self._setLevel, self.setLevel, message.author, message.guild, parameters[0], message.mentions)
                     )
             
             # Add Prefix Command
@@ -1784,7 +1788,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addPrefix, self.addPrefix, message.author, message.guild, parameters)
+                        embed = await self.run(message, self._addPrefix, self.addPrefix, message.author, message.guild, parameters)
                     )
                 
             # Remove Prefix Command
@@ -1792,7 +1796,7 @@ class ServerModerator(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = await run(message, self._removePrefix, self.removePrefix, message.author, message.guild, parameters)
+                    embed = await self.run(message, self._removePrefix, self.removePrefix, message.author, message.guild, parameters)
                 )
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1815,7 +1819,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._setServerName, self.setServerName, message.author, message.guild, " ".join(parameters))
+                        embed = await self.run(message, self._setServerName, self.setServerName, message.author, message.guild, " ".join(parameters))
                     )
             
             # Create Invite Command
@@ -1823,7 +1827,7 @@ class ServerModerator(Category):
 
                 # 0 or 1 Parameters Exist
                 if len(parameters) in [0, 1]:
-                    result = await run(message, self._createInvite, self.createInvite, message.author, message.channel, " ".join(parameters))
+                    result = await self.run(message, self._createInvite, self.createInvite, message.author, message.channel, " ".join(parameters))
 
                     if type(result) == discord.Embed:
                         await sendMessage(
@@ -1863,7 +1867,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addRole, self.addRole, message.author, message.guild, parameters[0], parameters[1])
+                        embed = await self.run(message, self._addRole, self.addRole, message.author, message.guild, parameters[0], parameters[1])
                     )
                 
                 # More than 2 Parametes Exist
@@ -1890,7 +1894,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._removeRole, self.removeRole, message.author, message.guild, message.role_mentions[0])
+                        embed = await self.run(message, self._removeRole, self.removeRole, message.author, message.guild, message.role_mentions[0])
                     )
                 
                 # More than 1 role was mentioned
@@ -1917,7 +1921,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._kickMember, self.kickMember, message.author, message.guild, message.mentions)
+                        embed = await self.run(message, self._kickMember, self.kickMember, message.author, message.guild, message.mentions)
                     )
 
             # Ban Member Command
@@ -1936,7 +1940,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._banMember, self.banMember, message.author, message.guild, message.mentions)
+                        embed = await self.run(message, self._banMember, self.banMember, message.author, message.guild, message.mentions)
                     )
         
             # Add Member Role Command
@@ -1963,7 +1967,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._addMemberRole, self.addMemberRole, message.author, message.mentions[0], message.role_mentions)
+                        embed = await self.run(message, self._addMemberRole, self.addMemberRole, message.author, message.mentions[0], message.role_mentions)
                     )
                 
                 # More than 1 member was mentioned
@@ -1998,7 +2002,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._removeMemberRole, self.removeMemberRole, message.author, message.mentions[0], message.role_mentions)
+                        embed = await self.run(message, self._removeMemberRole, self.removeMemberRole, message.author, message.mentions[0], message.role_mentions)
                     )
                 
                 # More than 1 member was mentioned
@@ -2033,7 +2037,7 @@ class ServerModerator(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._setMemberRoles, self.setMemberRoles, message.author, message.mentions[0], message.role_mentions)
+                        embed = await self.run(message, self._setMemberRoles, self.setMemberRoles, message.author, message.mentions[0], message.role_mentions)
                     )
                 
                 # More than 1 member was mentioned
