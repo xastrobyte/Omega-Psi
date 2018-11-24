@@ -8,11 +8,11 @@ from util.game import hangman
 from util.game import scramble
 from util.game import ticTacToe
 
-from util.game import blackOps3
-from util.game import blackOps4
+from util.game import callOfDuty
 from util.game import fortnite
+from util.game import league
 
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage
 
 from datetime import datetime
 from random import choice as choose
@@ -78,7 +78,7 @@ class Game(Category):
     BLACK_OPS_4_LEVEL = 0
 
     FORTNITE_URL = "https://api.fortnitetracker.com/v1/profile/{}/{}"
-    FORTNITE_ICON = "https://d1u5p3l4wpay3k.cloudfront.net/fortnite_gamepedia/6/64/Favicon.ico"
+    FORTNITE_ICON = "https://melbournechapter.net/images/meteor-transparent-fortnite-3.png"
     FORTNITE_ITEM_SHOP_URL = "https://api.fortnitetracker.com/v1/store"
     FORTNITE_MATCHES_PLAYED = 7
     FORTNITE_WINS = 8
@@ -86,8 +86,11 @@ class Game(Category):
     FORTNITE_TOP_10 = 3
     FORTNITE_TOP_25 = 5
 
-    LEAGUE_URL = ""
-    LEAGUE_ICON = ""
+    LEAGUE_SUMMONER_URL = "https://na1.api.riotgames.com/lol/summoner/v3/summoners/by-name/{}"
+    LEAGUE_MATCHES_URL = "https://na1.api.riotgames.com/lol/match/v3/matchlists/by-account/{}"
+    LEAGUE_MATCH_URL = "https://na1.api.riotgames.com/lol/match/v3/matches/{}"
+    LEAGUE_VERSIONS = "https://ddragon.leagueoflegends.com/api/versions.json"
+    LEAGUE_ICON_URL = "http://ddragon.leagueoflegends.com/cdn/{}/img/profileicon/{}.png"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructors
@@ -533,7 +536,8 @@ class Game(Category):
             self._blackOps3,
             self._blackOps4,
             self._fortnite,
-            self._fortniteItemShop
+            self._fortniteItemShop,
+            self._league
         ])
 
         self._connectFourGames = {}
@@ -547,7 +551,7 @@ class Game(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def connectFour(self, discordUser, *, difficulty, move = None):
+    def connectFour(self, discordUser, *, difficulty = None, move = None):
         """Creates a Connect Four game or continues a Connect Four game.
 
         Parameters:
@@ -1419,7 +1423,7 @@ class Game(Category):
         )
 
         # Add stats using Black Ops 3 parser
-        embed = blackOps3.getGameStats(embed, blackOps3Json)
+        embed = callOfDuty.getGameStats(embed, blackOps3Json)
 
         return embed
     
@@ -1444,6 +1448,8 @@ class Game(Category):
             platform = 1
         elif platform in self._blackOps4.getAcceptedParameter("platform", "psn").getAlternatives():
             platform = 2
+        elif platform in self._blackOps4.getAcceptedParameter("platform", "battleNet").getAlternatives():
+            platform = 6
         
         # Platform is not valid
         else:
@@ -1483,7 +1489,7 @@ class Game(Category):
         )
 
         # Add stats using Black Ops 4 parser
-        embed = blackOps4.getGameStats(embed, blackOps4Json)
+        embed = callOfDuty.getGameStats(embed, blackOps4Json)
 
         return embed
     
@@ -1620,7 +1626,70 @@ class Game(Category):
             username (str): The username of the Summoner to get stats for.
         """
 
-        return None
+        # Check for not enough parameters
+        if len(parameters) < self._league.getMinParameters():
+            return getErrorMessage(self._league, Game.NOT_ENOUGH_PARAMETERS)
+        
+        # Get username
+        username = " ".join(parameters)
+
+        # Get most recent version (used for profile icon)
+        versionsJson = requests.get(Game.LEAGUE_VERSIONS).json()
+        version = versionsJson[0]
+        
+        # Request the user data
+        leagueJson = requests.get(
+            Game.LEAGUE_SUMMONER_URL.format(username),
+            headers = {
+                "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+            }
+        ).json()
+
+        # Request the matches data
+        leagueMatchesJson = requests.get(
+            Game.LEAGUE_MATCHES_URL.format(leagueJson["accountId"]),
+            headers = {
+                "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+            }
+        ).json()
+
+        # Request the first 5 matches data
+        matches = []
+        count = 0
+        for match in leagueMatchesJson["matches"]:
+            count += 1
+            
+            # Request the match data
+            leagueMatchJson = requests.get(
+                Game.LEAGUE_MATCH_URL.format(match["gameId"]),
+                headers = {
+                    "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+                }
+            ).json()
+
+            matches.append(leagueMatchJson)
+
+            if count >= 5:
+                break
+
+        # Setup embed
+        embed = discord.Embed(
+            title = "League of Legends Stats",
+            description = "5 Most Recent Games for **{}**".format(leagueJson["name"]),
+            colour = Game.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_author(
+            name = leagueJson["name"],
+            icon_url = Game.LEAGUE_ICON_URL.format(version, leagueJson["profileIconId"])
+        ).set_footer(
+            text = "Riot Games API"
+        )
+
+        # Add each game's data
+        for match in matches:
+            embed = league.getMatchStats(embed, match, leagueJson["accountId"])
+        
+        return embed
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Helper Methods
@@ -1684,7 +1753,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._connectFour, self.connectFour, message.author, difficulty = "".join(parameters))
+                        embed = await self.run(message, self._connectFour, self.connectFour, message.author, difficulty = "".join(parameters))
                     )
                 
                 # 2 or More Parameters Exist
@@ -1703,7 +1772,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._hangman, self.hangman, message.author, difficulty = "".join(parameters))
+                        embed = await self.run(message, self._hangman, self.hangman, message.author, difficulty = "".join(parameters))
                     )
                 
                 # 2 or More Parameters Exist
@@ -1730,7 +1799,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._rps, self.rps, message.author, parameters[0])
+                        embed = await self.run(message, self._rps, self.rps, message.author, parameters[0])
                     )
                 
                 # 2 or More Parameters Exist
@@ -1749,7 +1818,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._scramble, self.scramble, message.author, difficulty = "".join(parameters))
+                        embed = await self.run(message, self._scramble, self.scramble, message.author, difficulty = "".join(parameters))
                     )
                 
                 # 2 or More Parameters Exist
@@ -1768,7 +1837,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._ticTacToe, self.ticTacToe, message.author, difficulty = "".join(parameters))
+                        embed = await self.run(message, self._ticTacToe, self.ticTacToe, message.author, difficulty = "".join(parameters))
                     )
                 
                 # 2 or More Parameters Exist
@@ -1787,7 +1856,7 @@ class Game(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._stats, self.stats, message.author)
+                        embed = await self.run(message, self._stats, self.stats, message.author)
                     )
                 
                 # 1 or More Parameters Exist
@@ -1835,6 +1904,14 @@ class Game(Category):
                     filename = result
                 )
                 os.remove(result)
+            
+            # League Command
+            elif command in self._league.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._league, self.league, " ".join(parameters))
+                )
         
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Check Running Games
