@@ -1,13 +1,10 @@
 from util.code.code import tenToNumber, numberToTen
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
-from util.utils import sendMessage, getErrorMessage, run, timeout
+from util.utils import sendMessage, getErrorMessage, timeout
 
 from supercog import Category, Command
 import base64, discord
-
-execsessions = []
-execstdin = {}
 
 class Code(Category):
     
