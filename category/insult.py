@@ -1,11 +1,11 @@
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage
 
 from random import choice as choose
 
 from supercog import Category, Command
-import discord, os
+import discord
 
 class Insult(Category):
 
@@ -75,7 +75,7 @@ class Insult(Category):
         })
 
         self._add = Command(commandDict = {
-            "alternatives": ["addInsult", "addI", "add"],
+            "alternatives": ["addInsult", "addI"],
             "info": "Allows you to add your own insult.",
             "parameters": {
                 "insultLevel": {
@@ -402,7 +402,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(
+                        embed = await self.run(
                             message, self._insult, self.insult,
                             None if len(parameters) == 0 else parameters[0],
                             isNSFW
@@ -433,7 +433,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(
+                        embed = await self.run(
                             message, self._add, self.addInsult,
                             parameters[0], parameters[1]
                         )
@@ -455,7 +455,7 @@ class Insult(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(
+                        embed = await self.run(
                             message, self._list, self.listInsults,
                             None if len(parameters) == 0 else parameters[0]
                         )
