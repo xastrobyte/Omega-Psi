@@ -1,11 +1,12 @@
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.weather.weather import getCity, getCountry, getSky, getCurrentTemp, getHighTemp, getLowTemp, getLongitude, getLatitude, getWindSpeed, getWindDirection, getLastUpdated, getWeatherIcon
-from util.utils import sendMessage, getErrorMessage, splitText, run
+from util.utils import sendMessage, getErrorMessage, splitText
 
+from bs4 import BeautifulSoup
 from datetime import datetime
 from supercog import Category, Command
-import discord, json, os, urllib.request, wikipedia
+import discord, json, os, requests, wikipediaapi
 
 class Internet(Category):
 
@@ -19,6 +20,7 @@ class Internet(Category):
     URBAN_API_CALL = "https://api.urbandictionary.com/v0/define?term={}"
 
     URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dictionary_--_logo.jpg/revision/latest?cb=20161002212954"
+    WIKIPEDIA_PAGE_IMAGE = "https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles={}"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -38,6 +40,7 @@ class Internet(Category):
             client, 
             "Internet",
             description = "All commands that deal with the internet are here.",
+            nsfw_channel_error = Server.getNSFWChannelError,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -144,11 +147,11 @@ class Internet(Category):
         
         term = " ".join(parameters)
 
-        # Use urllib to get the data in JSON
+        # Use requests to get the data in JSON
         try:
             urlCall = Internet.URBAN_API_CALL.format(term.replace(" ", "+"))
-            with urllib.request.urlopen(urlCall) as url:
-                urbanData = json.load(url)
+            urbanData = requests.get(urlCall).json()
+
         except:
             return getErrorMessage(self._urban, Internet.NO_TERM)
         
@@ -203,40 +206,56 @@ class Internet(Category):
             return getErrorMessage(self._wikipedia, Internet.NOT_ENOUGH_PARAMETERS)
         
         term = " ".join(parameters)
-        
-        searchResults = wikipedia.search(term)
-        entry = None
-        for result in searchResults:
 
-            # Try getting the page
-            try:
-                entry = wikipedia.page(result)
-                break
-            
-            # Page failed
-            except:
-                continue
-        
-        # Page is still None, no page was found
-        if entry == None:
+        # Create Wikipedia API object
+        wikiHTML = wikipediaapi.Wikipedia(
+            language = "en",
+            extract_format = wikipediaapi.ExtractFormat.HTML
+        )
+
+        # Find Wiki entry
+        termHTML = wikiHTML.page(term)
+        termTitle = termHTML.title
+
+        # Check if wiki entry does not exist
+        if not termHTML.exists():
             return getErrorMessage(self._wikipedia, Internet.NO_PAGE)
         
-        content = entry.content
-        if len(content) > (1990 - len("...") - len(entry.url) - len(entry.title)):
-            content = entry.content[:1990 - len("...") - len(entry.url) - len(entry.title)]
-        
-        # The page was found, align the information properly
-        # Add Image, Summary, Title hyperlinked to Page
-        return discord.Embed(
-            title = entry.title,
-            description = "[{}]({})\n{}".format(
-                entry.title, entry.url,
-                content
+        # Wiki entry does exist
+        termBS = BeautifulSoup(termHTML.summary, "html.parser")
+        paragraphsHTML = termBS.findAll("p")
+
+        # Get terms first paragraph
+        paragraph = "No Summary"
+        for p in paragraphsHTML:
+            if p.attrs == {} and len(p.text.replace("\n", "")) > 0:
+                paragraph = " ".join(text.strip() for text in p.find_all(text = True))
+                break
+            
+        # Get page image
+        pageImage = requests.get(Internet.WIKIPEDIA_PAGE_IMAGE.format(termHTML.fullurl.split("/")[-1])).json()
+        try:
+            termImage = pageImage["query"]["pages"][str(termHTML.pageid)]["original"]["source"]
+        except:
+            termImage = None
+
+        embed = discord.Embed(
+            name = termTitle,
+            description = "**[{}]({})**\n{}".format(
+                termTitle.title(),
+                termHTML.fullurl,
+                paragraph
             ),
-            colour = Internet.EMBED_COLOR
-        ).set_thumbnail(
-            url = entry.images[0]
+            colour = Internet.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_footer(
+            text = "Wikipedia-API"
         )
+
+        if termImage != None:
+            embed.set_image(url = termImage)
+            
+        return embed
 
     def weather(self, parameters):
         """Returns the current weather for the specified location.\n
@@ -256,10 +275,9 @@ class Internet(Category):
             location.replace(" ", "+")
         )
 
-        # Use urllib to get the data in JSON
+        # Use requests to get the data in JSON
         try:
-            with urllib.request.urlopen(urlCall) as url:
-                weatherData = json.load(url)
+            weatherData = requests.get(urlCall).json()
         except:
             return getErrorMessage(self._weather, Internet.INVALID_LOCATION)
         
@@ -340,7 +358,7 @@ class Internet(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, cmd, cmd.getCommand(), parameters)
+                        embed = await self.run(message, cmd, cmd.getCommand(), parameters)
                     )
 
 def setup(client):
