@@ -1,10 +1,12 @@
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage, loadImageFromUrl, timestampToDatetime
 
 from datetime import datetime
 from supercog import Category, Command
-import discord
+import discord, os, pygame, random, requests
+
+pygame.init()
 
 class Misc(Category):
 
@@ -21,10 +23,21 @@ class Misc(Category):
         "Moderator": 0xAA0000
     }
 
+    ADVICE_URL = "https://api.adviceslip.com/advice"
+    CHUCK_NORRIS_URL = "https://api.chucknorris.io/jokes/random"
+    NUMBER_FACT_URL = "http://numbersapi.com/random/year?json"
+    TRONALD_DUMP_QUOTE = "https://api.tronalddump.io/random/quote"
+    TRONALD_DUMP_MEME = "https://api.tronalddump.io/random/meme"
+
+    TWITTER_ICON = "http://pngimg.com/uploads/twitter/twitter_PNG29.png"
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    NOT_A_NUMBER = "NOT_A_NUMBER"
+    END_LESS_THAN_START = "END_LESS_THAN_START"
+    NO_ACCESS = "NO_ACCESS"
     TOO_LONG = "TOO_LONG"
 
     INVALID_MEMBER = "INVALID_MEMBER"
@@ -45,6 +58,116 @@ class Misc(Category):
         )
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+        self._advice = Command(commandDict = {
+            "alternatives": ["advice"],
+            "info": "Gives you a random piece of advice.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a random piece of advice, you don't need any parameters."
+                    ]
+                }
+            }
+        })
+
+        self._choice = Command(commandDict = {
+            "alternatives": ["choose", "choice"],
+            "info": "Gives you a random choice from a specified list.",
+            "parameters": {
+                "choice(s)...": {
+                    "info": "A list of choices to choose from.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Misc.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to choose from a list, you need to give a list of at least 2 items."
+                    ]
+                }
+            }
+        })
+
+        self._chuckNorris = Command(commandDict = {
+            "alternatives": ["chuckNorris", "chuck", "norris"],
+            "info": "Gives you a random Chuck Norris joke.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a random Chuck Norris joke, you don't need any parameters."
+                    ]
+                }
+            }
+        })
+
+        self._numberFacts = Command(commandDict = {
+            "alternatives": ["numberFact", "number"],
+            "info": "Gives you a fact about a number.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a fact about a random number, you don't need any parameters."
+                    ]
+                }
+            }
+        })
+
+        self._random = Command(commandDict = {
+            "alternatives": ["random", "rand", "randint"],
+            "info": "Gives you a random number between the specified range.",
+            "parameters": {
+                "start": {
+                    "info": "The number to start at.",
+                    "optional": False
+                },
+                "end": {
+                    "info": "The number to end at.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Misc.NOT_A_NUMBER: {
+                    "messages": [
+                        "The value you entered is not a number."
+                    ]
+                },
+                Misc.END_LESS_THAN_START: {
+                    "messages": [
+                        "The end value is less than the start value."
+                    ]
+                },
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a random number, you only need the start and end numbers."
+                    ]
+                }
+            }
+        })
+
+        self._tronaldDumpQuote = Command(commandDict = {
+            "alternatives": ["tronaldDumpQuote", "tronaldQuote", "trumpQuote"],
+            "info": "Gives you a random quote from Donald Trump.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a Donald Trump quote, you don't need any parameters."
+                    ]
+                }
+            }
+        })
+
+        self._tronaldDumpMeme = Command(commandDict = {
+            "alternatives": ["tronaldDumpMeme", "tronaldMeme", "trumpMeme"],
+            "info": "Gives you a random meme from Donald Trump.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a Donald Trump meme, you don't need any parameters."
+                    ]
+                }
+            }
+        })
 
         self._info = Command(commandDict = {
             "alternatives": ["info", "??"],
@@ -258,16 +381,229 @@ class Misc(Category):
             }
         })
 
+        self._nickname = Command(commandDict = {
+            "alternatives": ["nickname", "nick"],
+            "info": "Changes your nickname.",
+            "parameters": {
+                "nickname": {
+                    "info": "The new nickname to set.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Misc.TOO_LONG: {
+                    "messages": [
+                        "To set your nickname, it must be less than 32 characters."
+                    ]
+                },
+                Misc.NO_ACCESS: {
+                    "messages": [
+                        "I do not seem to have access to do that. You might be a higher role than me."
+                    ]
+                }
+            }
+        })
+
         self.setCommands([
+            self._advice,
+            self._choice,
+            self._chuckNorris,
+            self._numberFacts,
+            self._random,
+            self._tronaldDumpMeme,
+            self._tronaldDumpQuote,
+
             self._info,
             self._invite,
             self._sendBug,
-            self._ping
+            self._ping,
+            self._nickname
         ])
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def advice(self, parameters):
+        """Returns a random piece of advice.
+
+        Parameters:
+            parameters (list): The parameters given to the command.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._advice.getMaxParameters():
+            return getErrorMessage(self._advice, Misc.TOO_MANY_PARAMETERS)
+        
+        # Get the advice
+        adviceJson = requests.get(Misc.ADVICE_URL).json()
+
+        return discord.Embed(
+            title = "Advice Number {}".format(adviceJson["slip"]["slip_id"]),
+            description = adviceJson["slip"]["advice"],
+            colour = Misc.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_footer(
+            text = "Advice Slip API"
+        )
+    
+    def randomChoice(self, parameters):
+        """Returns a random choice from a list of choices.
+
+        Parameters:
+            choices (list): The list of choices to choose from.
+        """
+
+        # There is only 1 choice
+        if len(parameters) < 2:
+            return getErrorMessage(self._choice, Misc.NOT_ENOUGH_PARAMETERS)
+        
+        # Choose random option
+        choice = random.choice(parameters)
+        return discord.Embed(
+            title = "Result",
+            description = choice,
+            colour = Misc.EMBED_COLOR
+        )
+    
+    def chuckNorris(self, parameters):
+        """Returns a random chuck norris fact.
+
+        Parameters:
+            parameters (list): The parameters given to the command.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._chuckNorris.getMaxParameters():
+            return getErrorMessage(self._chuckNorris, Misc.TOO_MANY_PARAMETERS)
+        
+        # Get the joke; and URL
+        chuckNorrisJson = requests.get(Misc.CHUCK_NORRIS_URL).json()
+
+        return discord.Embed(
+            name = "Chuck Norris",
+            description = chuckNorrisJson["value"],
+            colour = Misc.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_author(
+            name = "Chuck Norris Joke",
+            icon_url = chuckNorrisJson["icon_url"]
+        ).set_footer(
+            text = "Chuck Norris API"
+        )
+    
+    def numberFacts(self, parameters):
+        """Returns a fact about a random number.
+
+        Parameters:
+            parameters (list): The list of choices to choose from.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._numberFacts.getMaxParameters():
+            return getErrorMessage(self._numberFacts, Misc.TOO_MANY_PARAMETERS)
+        
+        # Get the number fact
+        numberFactJson = requests.get(Misc.NUMBER_FACT_URL).json()
+
+        return discord.Embed(
+            title = "Fact about the number *{}*".format(numberFactJson["number"]),
+            description = numberFactJson["text"],
+            colour = Misc.EMBED_COLOR,
+            timestamp = datetime.now()
+        ).set_footer(
+            text = "NumbersAPI"
+        )
+
+    def randomNumber(self, parameters):
+        """Returns a random number between the start and end values.
+
+        Parameters:
+            start (int): The number to start at.
+            end (int): The number to end at.
+        """
+
+        # Set default values
+        start = 0
+        end = 100
+        
+        # Check for too many parameters
+        if len(parameters) > 2:
+            return getErrorMessage(self._random, Misc.TOO_MANY_PARAMETERS)
+        
+        # Check for 2 parameters
+        if len(parameters) == 2:
+            start = parameters[0]
+            end = parameters[1]
+        
+        # Check if start or end are not numbers
+        if not str(start).isdigit() or not str(end).isdigit():
+            return getErrorMessage(self._random, Misc.NOT_A_NUMBER)
+        
+        # Start and end were numbers
+        start = int(start)
+        end = int(end)
+        
+        # Check if end is less than start
+        if end < start:
+            return getErrorMessage(self._random, Misc.END_LESS_THAN_START)
+        
+        # Choose random number
+        number = random.randint(start, end)
+        return discord.Embed(
+            title = "Result",
+            description = str(number),
+            colour = Misc.EMBED_COLOR
+        )
+    
+    def tronaldDumpMeme(self, parameters):
+        """Returns a random Tronald Dump meme.
+
+        Parameters:
+            parameters (list): The parameters given to the command.
+        """
+    
+        # Check for too many parameters
+        if len(parameters) > self._tronaldDumpMeme.getMaxParameters():
+            return getErrorMessage(self._tronaldDumpMeme, Misc.TOO_MANY_PARAMETERS)
+        
+        # Get the meme
+        meme = loadImageFromUrl(Misc.TRONALD_DUMP_MEME)
+
+        # Temporarily save the image
+        current = datetime.now()
+        image = "TRONALD_DUMP_MEME_{}_{}_{}.png".format(
+            current.hour, current.minute, current.second
+        )
+        pygame.image.save(meme, image)
+        return image
+    
+    def tronaldDumpQuote(self, parameters):
+        """Returns a random Tronald Dump quote.
+
+        Parameters:
+            parameters (list): The parameters given to the command.
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._tronaldDumpQuote.getMaxParameters():
+            return getErrorMessage(self._tronaldDumpQuote, Misc.TOO_MANY_PARAMETERS)
+        
+        # Get the quote
+        quoteJson = requests.get(Misc.TRONALD_DUMP_QUOTE).json()
+
+        return discord.Embed(
+            title = "Donald Trump Quote",
+            description = quoteJson["value"],
+            colour = Misc.EMBED_COLOR,
+            timestamp = timestampToDatetime(quoteJson["appeared_at"]),
+            url = quoteJson["_embedded"]["source"][0]["url"]
+        ).set_author(
+            name = quoteJson["_embedded"]["author"][0]["name"],
+            icon_url = Misc.TWITTER_ICON
+        ).set_footer(
+            text = "Tronald Dump API"
+        )
     
     def getServerInfo(self, discordServer):
         """Returns information about the server given as saved by Omega Psi.\n
@@ -506,6 +842,50 @@ class Misc(Category):
             colour = color
         )
     
+    async def nickname(self, discordMember, parameters):
+        """Changes the nickname of the specified member.
+
+        Parameters:
+            discordMember (discord.Member): The Discord Member to change the nickname of.
+            nickname (str): The new nickname to set. (No nickname will clear the nickname).
+        """
+
+        # See if there are no parameters
+        if len(parameters) == 0:
+
+            # Try to clear it
+            try:
+                await discordMember.edit(
+                    nick = None
+                )
+                return discord.Embed(
+                    title = "Nickname Cleared",
+                    description = "Your nickname has been cleared.",
+                    colour = Misc.EMBED_COLOR
+                )
+            
+            except discord.Forbidden:
+                return getErrorMessage(self._nickname, Misc.NO_ACCESS)
+        
+        # There are parameters
+        try:
+
+            # See if nickname is too long
+            if len(" ".join(parameters)) > 32:
+                return getErrorMessage(self._nickname, Misc.TOO_LONG)
+
+            await discordMember.edit(
+                nick = " ".join(parameters)
+            )
+            return discord.Embed(
+                title = "Nickname Set",
+                description = "Your nickname has been set to `{}`".format(" ".join(parameters)),
+                colour = Misc.EMBED_COLOR
+            )
+        
+        except discord.Forbidden:
+            return getErrorMessage(self._nickname, Misc.NO_ACCESS)
+    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -524,13 +904,80 @@ class Misc(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+            # Advice Command
+            if command in self._advice.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._advice, self.advice, parameters)
+                )
+            
+            # Chuck Norris
+            elif command in self._chuckNorris.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._chuckNorris, self.chuckNorris, parameters)
+                )
+
+            # Choice Command
+            elif command in self._choice.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._choice, self.randomChoice, parameters)
+                )
+            
+            # Number Facts Command
+            elif command in self._numberFacts.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._numberFacts, self.numberFacts, parameters)
+                )
+
+            # Random Command
+            elif command in self._random.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._random, self.randomNumber, parameters)
+                )
+
+            # Tronald Dump meme Command
+            elif command in self._tronaldDumpMeme.getAlternatives():
+                result = await self.run(message, self._tronaldDumpMeme, self.tronaldDumpMeme, parameters)
+
+                if type(result) == discord.Embed:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = await self.run(message, self._tronaldDumpMeme, self.tronaldDumpMeme, parameters)
+                    )
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        filename = result
+                    )
+
+                    os.remove(result) # Remove temporary image
+            
+            # Tronald Dump quote Command
+            elif command in self._tronaldDumpQuote.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._tronaldDumpQuote, self.tronaldDumpQuote, parameters)
+                )
+
             # Info Command
-            if command in self._info.getAlternatives():
+            elif command in self._info.getAlternatives():
 
                 # 0 Parameters Exist (server info)
                 if len(parameters) == 0:
 
-                    embed = await run(message, self._info, self.getServerInfo, message.guild)
+                    embed = await self.run(message, self._info, self.getServerInfo, message.guild)
 
                     await sendMessage(
                         self.client,
@@ -543,9 +990,9 @@ class Misc(Category):
 
                     # See if member was mentioned or just the text
                     if len(message.mentions) == 0:
-                        embed = await run(message, self._info, self.getMemberInfo, message.guild, username = parameters[0])
+                        embed = await self.run(message, self._info, self.getMemberInfo, message.guild, username = parameters[0])
                     else:
-                        embed = await run(message, self._info, self.getMemberInfo, message.guild, discordMember = message.mentions[0])
+                        embed = await self.run(message, self._info, self.getMemberInfo, message.guild, discordMember = message.mentions[0])
 
                     await sendMessage(
                         self.client,
@@ -567,7 +1014,7 @@ class Misc(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    message = await run(message, self._invite, self.getInviteLink, parameters)
+                    message = await self.run(message, self._invite, self.getInviteLink, parameters)
                 )
             
             # Send Bug
@@ -586,7 +1033,7 @@ class Misc(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = await run(message, self._sendBug, self.sendBug, message.guild, message.author, parameters[0], " ".join(parameters[1:]))
+                        embed = await self.run(message, self._sendBug, self.sendBug, message.guild, message.author, parameters[0], " ".join(parameters[1:]))
                     )
             
             # Ping
@@ -618,6 +1065,14 @@ class Misc(Category):
                         message,
                         embed = getErrorMessage(self._ping, Category.TOO_MANY_PARAMETERS)
                     )
+            
+            # Nickname
+            elif command in self._nickname.getAlternatives():
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = await self.run(message, self._nickname, self.nickname, message.author, parameters)
+                )
 
 def setup(client):
     client.add_cog(Misc(client))
