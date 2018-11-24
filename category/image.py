@@ -9,6 +9,7 @@ from util.image import classroomStares
 from util.image import icarlyStopSign
 from util.image import mastersBlessing
 from util.image import nArmHandshake
+from util.image import pigeon
 from util.image import puppetMeme
 from util.image import runAway
 from util.image import saveOne
@@ -19,11 +20,13 @@ from util.image import surprisedPikachu
 from util.image import trojanHorse
 from util.image import whoKilledHannibal
 
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils import sendMessage, getErrorMessage, loadImageFromUrl
 
-from random import choice as choose
+from random import choice as choose, randint
 from supercog import Category, Command
-import discord, json, os, urllib.request, requests
+import discord, json, os, pygame, requests
+
+pygame.init()
 
 class Image(Category):
 
@@ -32,6 +35,9 @@ class Image(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     EMBED_COLOR = 0x800080
+
+    AVATAR_LIST = "https://api.adorable.io/avatars/list"
+    AVATAR_API  = "https://api.adorable.io/avatars/face/{}/{}/{}/{}"
 
     MEME_SUBREDDITS = [
         "meme",
@@ -94,7 +100,7 @@ class Image(Category):
             "alternatives": ["theOffice", "office", "o"],
             "info": "Sends a random gif related to The Office.",
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "*Why are you the way that you are?* You don't need any parameters."
                     ]
@@ -106,7 +112,7 @@ class Image(Category):
             "alternatives": ["parksAndRec", "parks", "pnr"],
             "info": "Sends a random gif related to Parks and Rec.",
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "No no no. You don't need any parameters to get a gif from Parks and Rec."
                     ]
@@ -118,9 +124,21 @@ class Image(Category):
             "alternatives": ["brooklyn99", "b99", "99"],
             "info": "Sends a random gif related to Brooklyn Nine-Nine.",
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "No doubt no doubt no doubt you need no parameters for this command."
+                    ]
+                }
+            }
+        })
+
+        self._avatar = Command(commandDict = {
+            "alternatives": ["avatar", "avatarMe"],
+            "info": "Sends a random cute avatar.",
+            "errors": {
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get an avatar, you don't need any parameters."
                     ]
                 }
             }
@@ -130,7 +148,7 @@ class Image(Category):
             "alternatives": ["meme"],
             "info": "Sends a random meme from Reddit.",
             "errors": {
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get a meme, you don't need any parameters."
                     ]
@@ -161,12 +179,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
@@ -192,12 +210,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
@@ -227,12 +245,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "To generate this meme, you need to give at least 3 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "You have too many parameters for this. You only need 3 sets of text wrapped in quotes (\")."
                     ]
@@ -262,12 +280,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need to have 3 sets of text each wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 3 sets of text each wrapped in quotes (\")."
                     ]
@@ -289,12 +307,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "You need the bubble text to generate this meme."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "You only need the bubble text to generate this meme."
                     ]
@@ -324,12 +342,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "You need 3 parameters to generate this meme."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "You only need 3 different texts to put on the meme."
                     ]
@@ -359,12 +377,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need to have 3 sets of text each wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 3 sets of text each wrapped in quotes (\")."
                     ]
@@ -402,14 +420,49 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need at least 3 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you can have up to 5 sets of text wrapped in quotes (\")."
+                    ]
+                }
+            }
+        })
+
+        self._pigeon = Command(commandDict = {
+            "alternatives": ["pigeon", "isThisAPigeon"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": pigeon.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "pigeonText": {
+                    "info": "The text that goes over top of the pigeon.",
+                    "optional": False
+                },
+                "personText": {
+                    "info": "The text that goes over top of the person.",
+                    "optional": False
+                },
+                "questionText": {
+                    "info": "The text that asks a question.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Image.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need 3 sets of text wrapped in quotes (\")."
+                    ]
+                },
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 3 sets of text wrapped in quotes (\")."
                     ]
                 }
             }
@@ -433,12 +486,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
@@ -464,12 +517,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
@@ -499,12 +552,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need to have 3 sets of text each wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 3 sets of text each wrapped in quotes (\")."
                     ]
@@ -530,12 +583,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need to have 2 sets of text each wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text each wrapped in quotes (\")."
                     ]
@@ -561,12 +614,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need to have 2 sets of text each wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text each wrapped in quotes (\")."
                     ]
@@ -592,12 +645,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need to have 2 sets of text each wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 2 sets of text each wrapped in quotes (\")."
                     ]
@@ -635,12 +688,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need at least 3 lines to add."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "There is a maximum of 5 lines you can put on this meme."
                     ]
@@ -674,12 +727,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need 4 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 4 sets of text wrapped in quotes (\")."
                     ]
@@ -713,12 +766,12 @@ class Image(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Image.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you need 4 sets of text wrapped in quotes (\")."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Image.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to generate this meme, you only need 4 sets of text wrapped in quotes (\")."
                     ]
@@ -749,6 +802,7 @@ class Image(Category):
             self._theOffice,
             self._parksAndRec,
             self._brooklyn99,
+            self._avatar,
 
             self._meme,
             self._burnLetter,
@@ -759,6 +813,7 @@ class Image(Category):
             self._icarlyStopSign,
             self._mastersBlessing,
             self._nArmHandshake,
+            self._pigeon,
             self._puppetMeme,
             self._runAway,
             self._saveOne,
@@ -776,26 +831,52 @@ class Image(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def gif(self, keywords):
-        """Returns a gif from giphy.\n
+    def avatar(self, parameters):
+        """Returns a random cute avatar that can be used as a placeholder.
 
-         - keywords - The keywords to search by.\n
+        Parameters:
+            parameters (list): The parameters that detect for too many parameters.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._avatar.getMaxParameters():
+            return getErrorMessage(self._avatar, Image.TOO_MANY_PARAMETERS)
+
+        # Get list of face features
+        faceValues = requests.get(Image.AVATAR_LIST).json()["face"]
+
+        # Choose random eyes, nose, mouth, and color
+        eyes  = choose(faceValues["eyes"])
+        nose  = choose(faceValues["nose"])
+        mouth = choose(faceValues["mouth"])
+        color = hex(randint(0, 16777215))[2:].rjust(6, "0")
+
+        # Load image
+        image = loadImageFromUrl(Image.AVATAR_API.format(
+            eyes, nose,
+            mouth, color
+        ))
+
+        # Save image temporarily
+        avatarFile = "{}_{}_{}_{}.png".format(
+            eyes, nose, mouth, color
+        )
+        pygame.image.save(image, avatarFile)
+        return avatarFile
+
+    def gif(self, keywords):
+        """Returns a gif from giphy.
+
+        Parameters:
+            keywords (str) - The keywords to search by.
         """
 
         # Get data involving gifs from Giphy
         if keywords == "random":
-            with urllib.request.urlopen(os.environ["GIPHY_RANDOM_API_URL"]) as url:
-                gifData = url.read()
-            gifData = json.loads(gifData)
+            gifData = requests.get(os.environ["GIPHY_RANDOM_API_URL"]).json()
         
         else:
-            with urllib.request.urlopen(
-                os.environ["GIPHY_SEARCH_API_URL"].format(
-                    keywords.replace(" ", "+")
-                )
-            ) as url:
-                gifsData = url.read()
-            gifsData = json.loads(gifsData)
+            gifsData = requests.get(os.environ["GIPHY_SEARCH_API_URL"].format(keywords.replace(" ", "+"))).json()
 
             # Return random embed url
             if len(gifsData) > 0:
@@ -803,7 +884,7 @@ class Image(Category):
             else:
                 return getErrorMessage(self._gif, Image.NO_GIFS_FOUND)
         
-        return gifData["embed_url"]
+        return gifData["data"]["embed_url"]
     
     def meme(self, channel):
         """Returns a random meme from Reddit.\n
@@ -858,23 +939,18 @@ class Image(Category):
         )
     
     def nasaImage(self, keywords):
-        """Returns an image from NASA.\n
+        """Returns an image from NASA.
 
-         - keywords - The keywords to search by.\n
+        Parameters:
+            keywords (str) - The keywords to search by.
         """
 
         # Get data involving NASA images
         if keywords == "random":
-            with urllib.request.urlopen(Image.NASA_RANDOM) as url:
-                imageData = url.read()
-            imageData = json.loads(imageData)
+            imageData = requests.get(Image.NASA_RANDOM).json()
 
         else:
-            with urllib.request.urlopen(Image.NASA_SEARCH.format(
-                keywords.replace(" ", "+")
-            )) as url:
-                imageData = url.read()
-            imageData = json.loads(imageData)
+            imageData = requests.get(Image.NASA_SEARCH.format(keywords.replace(" ", "+"))).json()
 
         # Check if there are no images
         if len(imageData["collection"]["items"]) == 0:
@@ -920,7 +996,7 @@ class Image(Category):
 
             # Gif Command
             if command in self._gif.getAlternatives():
-                result = await run(message, self._gif, self.gif, " ".join(parameters) if len(parameters) > 0 else "random")
+                result = await self.run(message, self._gif, self.gif, " ".join(parameters) if len(parameters) > 0 else "random")
 
                 if type(result) == discord.Embed:
                     await sendMessage(
@@ -944,7 +1020,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        message = await run(message, self._theOffice, self.gif, "the office")
+                        message = await self.run(message, self._theOffice, self.gif, "the office")
                     )
                 
                 # 1 or More Parameters Exist
@@ -952,7 +1028,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._theOffice, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._theOffice, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Parks and Rec Command
@@ -963,7 +1039,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        message = await run(message, self._parksAndRec, self.gif, "parks and rec")
+                        message = await self.run(message, self._parksAndRec, self.gif, "parks and rec")
                     )
                 
                 # 1 or More Parameters Exist
@@ -971,7 +1047,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._parksAndRec, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._parksAndRec, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Brooklyn 99 Command
@@ -982,7 +1058,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        message = await run(message, self._brooklyn99, self.gif, "brooklyn 99")
+                        message = await self.run(message, self._brooklyn99, self.gif, "brooklyn 99")
                     )
                 
                 # 1 or More Parameters Exist
@@ -990,12 +1066,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._brooklyn99, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._brooklyn99, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Meme Command
             elif command in self._meme.getAlternatives():
-                result = await run(message, self._meme, self.meme, message.channel)
+                result = await self.run(message, self._meme, self.meme, message.channel)
 
                 if type(result) == discord.Embed:
                     await sendMessage(
@@ -1003,6 +1079,25 @@ class Image(Category):
                         message,
                         embed = result
                     )
+            
+            # Avatar Command
+            elif command in self._avatar.getAlternatives():
+                result = await self.run(message, self._avatar, self.avatar, parameters)
+
+                if type(result) == discord.Embed:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = result
+                    )
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        filename = result
+                    )
+
+                    os.remove(result) # Remove temporary image
                 
             # Burn Letter Command
             elif command in self._burnLetter.getAlternatives():
@@ -1012,12 +1107,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._burnLetter, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._burnLetter, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._burnLetter, burnLetter.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._burnLetter, burnLetter.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1032,7 +1127,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._burnLetter, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._burnLetter, Image.TOO_MANY_PARAMETERS)
                     )
             
             # But I Like This Command
@@ -1043,12 +1138,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._butILikeThis, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._butILikeThis, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._butILikeThis, butILikeThis.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._butILikeThis, butILikeThis.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1063,7 +1158,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._butILikeThis, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._butILikeThis, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Car Skidding Command
@@ -1074,12 +1169,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._carSkidding, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._carSkidding, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 Parameters Exist
                 elif len(parameters) == 3:
-                    result = await run(message, self._carSkidding, carSkidding.generateImage, parameters[0], parameters[1], parameters[2])
+                    result = await self.run(message, self._carSkidding, carSkidding.generateImage, parameters[0], parameters[1], parameters[2])
 
                     await sendMessage(
                         self.client,
@@ -1094,7 +1189,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._carSkidding, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._carSkidding, Image.TOO_MANY_PARAMETERS)
                     )
                 
             # Card Slam Command
@@ -1105,12 +1200,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._cardSlam, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._cardSlam, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 Parameters Exist
                 elif len(parameters) == 3:
-                    result = await run(message, self._cardSlam, cardSlam.generateImage, parameters[0], parameters[1], parameters[2])
+                    result = await self.run(message, self._cardSlam, cardSlam.generateImage, parameters[0], parameters[1], parameters[2])
 
                     await sendMessage(
                         self.client,
@@ -1125,7 +1220,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._cardSlam, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._cardSlam, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Classroom Stares Command
@@ -1136,12 +1231,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._classroomStares, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._classroomStares, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 Parameters Exist
                 elif len(parameters) == 3:
-                    result = await run(message, self._classroomStares, classroomStares.generateImage, parameters[0])
+                    result = await self.run(message, self._classroomStares, classroomStares.generateImage, parameters[0])
 
                     await sendMessage(
                         self.client,
@@ -1156,7 +1251,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._classroomStares, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._classroomStares, Image.TOO_MANY_PARAMETERS)
                     )
                 
             # iCarly Stop Sign Command
@@ -1167,7 +1262,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._icarlyStopSign, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._icarlyStopSign, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 Parameters Exist
@@ -1182,7 +1277,7 @@ class Image(Category):
                         stopText = parameters[1]
                         gibbyText = parameters[2]
 
-                    result = await run(message, self._icarlyStopSign, icarlyStopSign.generateImage, spencerText, stopText, gibbyText)
+                    result = await self.run(message, self._icarlyStopSign, icarlyStopSign.generateImage, spencerText, stopText, gibbyText)
 
                     await sendMessage(
                         self.client,
@@ -1197,7 +1292,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._icarlyStopSign, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._icarlyStopSign, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Masters Blessing Command
@@ -1208,12 +1303,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._mastersBlessing, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._mastersBlessing, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 Parameters Exist
                 elif len(parameters) == 3:
-                    result = await run(message, self._mastersBlessing, mastersBlessing.generateImage, parameters[0], parameters[1], parameters[2])
+                    result = await self.run(message, self._mastersBlessing, mastersBlessing.generateImage, parameters[0], parameters[1], parameters[2])
 
                     await sendMessage(
                         self.client,
@@ -1228,7 +1323,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._mastersBlessing, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._mastersBlessing, Image.TOO_MANY_PARAMETERS)
                     )
                 
             # N Arm Handshake Command
@@ -1239,7 +1334,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._nArmHandshake, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._nArmHandshake, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 to 5 Parameters Exist
@@ -1255,7 +1350,7 @@ class Image(Category):
                         thirdArm = None
                         fourthArm = None
 
-                    result = await run(message, self._nArmHandshake, nArmHandshake.generateImage, parameters[0], parameters[1], parameters[2], thirdArm, fourthArm)
+                    result = await self.run(message, self._nArmHandshake, nArmHandshake.generateImage, parameters[0], parameters[1], parameters[2], thirdArm, fourthArm)
 
                     await sendMessage(
                         self.client,
@@ -1270,7 +1365,38 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._nArmHandshake, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._nArmHandshake, Image.TOO_MANY_PARAMETERS)
+                    )
+            
+            # Pigeon Command
+            elif command in self._pigeon.getAlternatives():
+
+                # Less than 3 parameters exist
+                if len(parameters) < 3:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = getErrorMessage(self._pigeon, Image.NOT_ENOUGH_PARAMETERS)
+                    )
+                
+                # 3 Parameters exist
+                elif len(parameters) == 3:
+                    result = await self.run(message, self._pigeon, pigeon.generateImage, parameters[0], parameters[1], parameters[2])
+
+                    await sendMessage(
+                        self.client,
+                        message,
+                        filename = result
+                    )
+
+                    os.remove(result) # Remove temporary image
+                
+                # More than 3 parameters exist
+                else:
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = getErrorMessage(self._pigeon, Image.NOT_ENOUGH_PARAMETERS)
                     )
             
             # Puppet Meme Command
@@ -1281,12 +1407,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._puppetMeme, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._puppetMeme, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._puppetMeme, puppetMeme.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._puppetMeme, puppetMeme.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1301,7 +1427,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._puppetMeme, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._puppetMeme, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Run Away Command
@@ -1312,12 +1438,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._runAway, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._runAway, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._runAway, runAway.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._runAway, runAway.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1332,7 +1458,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._runAway, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._runAway, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Save One Command
@@ -1343,12 +1469,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._saveOne, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._saveOne, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 Parameters Exist
                 elif len(parameters) == 3:
-                    result = await run(message, self._saveOne, saveOne.generateImage, parameters[0], parameters[1], parameters[2])
+                    result = await self.run(message, self._saveOne, saveOne.generateImage, parameters[0], parameters[1], parameters[2])
 
                     await sendMessage(
                         self.client,
@@ -1363,7 +1489,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._saveOne, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._saveOne, Image.TOO_MANY_PARAMETERS)
                     )
                 
             # Say It Again Command
@@ -1374,12 +1500,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._sayItAgain, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._sayItAgain, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._sayItAgain, sayItAgain.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._sayItAgain, sayItAgain.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1394,7 +1520,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._sayItAgain, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._sayItAgain, Image.TOO_MANY_PARAMETERS)
                     )
 
             # Spontaneous Anger Command
@@ -1405,12 +1531,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._spontaneousAnger, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._spontaneousAnger, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._spontaneousAnger, spontaneousAnger.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._spontaneousAnger, spontaneousAnger.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1425,7 +1551,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._spontaneousAnger, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._spontaneousAnger, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Surprised Dwight Command
@@ -1436,12 +1562,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._carSkidding, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._carSkidding, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 2 Parameters Exist
                 elif len(parameters) == 2:
-                    result = await run(message, self._surprisedDwight, surprisedDwight.generateImage, parameters[0], parameters[1])
+                    result = await self.run(message, self._surprisedDwight, surprisedDwight.generateImage, parameters[0], parameters[1])
 
                     await sendMessage(
                         self.client,
@@ -1456,7 +1582,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._surprisedDwight, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._surprisedDwight, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Surprised Pikachu Command
@@ -1467,12 +1593,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._surprisedPikachu, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._surprisedPikachu, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 3 to 5 parameters exist
                 elif len(parameters) in [3, 4, 5]:
-                    result = await run(message, self._surprisedPikachu, surprisedPikachu.generateImage, parameters)
+                    result = await self.run(message, self._surprisedPikachu, surprisedPikachu.generateImage, parameters)
 
                     await sendMessage(
                         self.client,
@@ -1487,7 +1613,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._surprisedPikachu, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._surprisedPikachu, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Trojan Horse Command
@@ -1498,12 +1624,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._trojanHorse, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._trojanHorse, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 4 Parameters Exist
                 elif len(parameters) == 4:
-                    result = await run(message, self._trojanHorse, trojanHorse.generateImage, parameters[0], parameters[1], parameters[2], parameters[3])
+                    result = await self.run(message, self._trojanHorse, trojanHorse.generateImage, parameters[0], parameters[1], parameters[2], parameters[3])
 
                     await sendMessage(
                         self.client,
@@ -1518,7 +1644,7 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._trojanHorse, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._trojanHorse, Image.TOO_MANY_PARAMETERS)
                     )
             
             # Who Killed Hannibal Command
@@ -1529,12 +1655,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._whoKilledHannibal, Category.NOT_ENOUGH_PARAMETERS)
+                        embed = getErrorMessage(self._whoKilledHannibal, Image.NOT_ENOUGH_PARAMETERS)
                     )
                 
                 # 4 Parameters Exist
                 elif len(parameters) == 4:
-                    result = await run(message, self._whoKilledHannibal, whoKilledHannibal.generateImage, parameters[0], parameters[1], parameters[2], parameters[3])
+                    result = await self.run(message, self._whoKilledHannibal, whoKilledHannibal.generateImage, parameters[0], parameters[1], parameters[2], parameters[3])
 
                     await sendMessage(
                         self.client,
@@ -1549,12 +1675,12 @@ class Image(Category):
                     await sendMessage(
                         self.client,
                         message,
-                        embed = getErrorMessage(self._whoKilledHannibal, Category.TOO_MANY_PARAMETERS)
+                        embed = getErrorMessage(self._whoKilledHannibal, Image.TOO_MANY_PARAMETERS)
                     )
 
             # NASA Image Command
             elif command in self._nasaImage.getAlternatives():
-                result = await run(message, self._nasaImage, self.nasaImage, " ".join(parameters) if len(parameters) > 0 else "random")
+                result = await self.run(message, self._nasaImage, self.nasaImage, " ".join(parameters) if len(parameters) > 0 else "random")
 
                 if type(result) == discord.Embed:
                     await sendMessage(
