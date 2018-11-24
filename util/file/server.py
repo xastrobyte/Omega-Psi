@@ -1,9 +1,10 @@
 from util.file.omegaPsi import OmegaPsi
+from util.file.database import omegaPsi
 
 from datetime import datetime
 from random import choice as choose
 
-import discord, json, math, os
+import discord, math
 
 class Server:
     
@@ -12,7 +13,6 @@ class Server:
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     # File Sources
-    SERVER_FILE = "data/servers/{}.json"
     XP_CARD_IMAGE = "util/rank/CARD_{}_{}.png"
     XP_ICON_SOURCE = "https://cdn.discordapp.com/avatars/{}/{}.png?size=1024"
 
@@ -100,7 +100,7 @@ class Server:
         # Setup default values
         defaultValues = {
             "prefixes": [OmegaPsi.PREFIX],
-            "id": discordServer.id,
+            "_id": str(discordServer.id),
             "ranking": False,
             "join_message": {
                 "active": False,
@@ -111,33 +111,15 @@ class Server:
             "members": {}
         }
 
-        # Try to open file
-        try:
+        # Get server information
+        serverDict = omegaPsi.getServer(str(discordServer.id))
 
-            # Check if servers folder exists
-            if not os.path.exists("data/servers"):
-                os.mkdir("data/servers")
-
-            # Open file
-            with open(Server.SERVER_FILE.format(discordServer.id), "r") as serverFile:
-                tempFile = serverFile.read()
-            serverDict = json.loads(tempFile)
-            
-            # See if default values are missing
-            for value in defaultValues:
-
-                # Check if value is not in server dictionary; Set default value
-                if value not in serverDict:
-                    serverDict[value] = defaultValues[value]
-            
-            return serverDict
-            
-        # File did not exist, create it
-        except IOError:
-            serverDict = defaultValues 
-            Server.closeServer(serverDict)
-
-            return Server.openServer(discordServer)
+        # See if default values are missing
+        for value in defaultValues:
+            if value not in serverDict:
+                serverDict[value] = defaultValues[value]
+        
+        return serverDict
     
     def closeServer(serverDict):
         """Closes the file for the Discord Server.\n
@@ -145,9 +127,8 @@ class Server:
         serverDict - The Discord Server to save.\n
         """
 
-        # Open file
-        with open(Server.SERVER_FILE.format(serverDict["id"]), "w") as serverFile:
-            serverFile.write(json.dumps(serverDict, sort_keys = True, indent = 4))
+        # Update the server information
+        omegaPsi.setServer(serverDict["_id"], serverDict)
     
     def getLevelFromExp(experience):
         """Returns the level that the given experience represents.\n
