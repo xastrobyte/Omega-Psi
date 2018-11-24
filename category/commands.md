@@ -16,7 +16,7 @@
 
   * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
-  * `markdown | getMarkdown | md | getMd ` - **`Bot Mod`**Creates and sends the markdown file for the commands.
+  * `markdown | getMarkdown | md | getMd ` - **`Bot Mod`** Creates and sends the markdown file for the commands.
 
 ## Code
   *Commands that have to do with coding!*
@@ -174,7 +174,7 @@
 
   * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+  * `integral | integrate <expression>` - Gets the integral of an expression.
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
@@ -182,11 +182,11 @@
 
   * `expand | exp | e <expression>` - Expands a mathematical expression.
 
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
 
   * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
   * `factor | f <expression>` - Factors a mathematical expression.
 
@@ -194,6 +194,7 @@
   *The ranking system is strong with this category.*
 
   **_This category contains commands that can only be run in a Server._**
+
   * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
     * Accepted Parameters for `interaction`
       * `profanity | profane` - Check how many profane words you need to level up.
@@ -268,84 +269,90 @@
   *An NSFW category for 18+*
 
   **You should be 18+ to run the commands in this channel!**
+
   **_This category is NSFW._**
+
   * `boobs | boob ` - **`NSFW`** Sends a random picture of boobs.
 
   * `booty | ass ` - **`NSFW`** Sends a random picture of some booty.
 
 ## Server Moderator
-  *Moderate your server with this. Owners have the only access to this at first.*
+  *Moderate your server with this.*
 
   **In order to use these commands, you must have the Manage Server permissions.**
+
   **_This category contains commands that can only be run in a Server._**
-  * `addMember | addM | am <member(s)...>` - **`Server Mod`**Allows you to add a member, or members, to the server file manually.
 
-  * `removeMember | removeM | rm <member(s)...>` - **`Server Mod`**Allows you to remove a member, or members, from the server file manually.
+  * `addMember | addM | am <member(s)...>` - **`Server Mod`** Allows you to add a member, or members, to the server file manually.
 
-  * `addModerator | addMod <member(s)...>` - **`Server Mod`**Allows you to add a moderator, or moderators, to the server (only for Omega Psi).
+  * `removeMember | removeM | rm <member(s)...>` - **`Server Mod`** Allows you to remove a member, or members, from the server file manually.
 
-  * `removeModerator | removeMod | remMod <member(s)...>` - **`Server Mod`**Allows you to remove a moderator, or moderators, from the server (only for Omega Psi).
+  * `addModerator | addMod <member(s)...>` - **`Server Mod`** Allows you to add a moderator, or moderators, to the server (only for Omega Psi).
 
-  * `activate | enable <command>` - **`Server Mod`**Allows you to activate a command, or commands, in the server.
+  * `removeModerator | removeMod | remMod <member(s)...>` - **`Server Mod`** Allows you to remove a moderator, or moderators, from the server (only for Omega Psi).
 
-  * `deactivate | disable <command> [reason]` - **`Server Mod`**Allows you to deactivate a command in the server.
+  * `activate | enable <command>` - **`Server Mod`** Allows you to activate a command, or commands, in the server.
 
-  * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel ` - **`Server Mod`**Allows you to toggle the ranking system in the server.
+  * `deactivate | disable <command> [reason]` - **`Server Mod`** Allows you to deactivate a command in the server.
 
-  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg ` - **`Server Mod`**Allows you to toggle the join message in the server.
+  * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel ` - **`Server Mod`** Allows you to toggle the ranking system in the server.
 
-  * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - **`Server Mod`**Allows you to set the channel that the Join Messages are sent in.
+  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg ` - **`Server Mod`** Allows you to toggle the join message in the server.
 
-  * `setLevel | setLvl <level> <member...>` - **`Server Mod`**Allows you to set the level of a member, or members, in the server.
+  * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - **`Server Mod`** Allows you to set the channel that the Join Messages are sent in.
 
-  * `addPrefix | addPre <prefix>` - **`Server Mod`**Allows you to add a prefix for this server.
+  * `setLevel | setLvl <level> <member...>` - **`Server Mod`** Allows you to set the level of a member, or members, in the server.
 
-  * `removePrefix | removePre | remPre <prefix>` - **`Server Mod`**Allows you to remove a prefix from this server.
+  * `addPrefix | addPre <prefix>` - **`Server Mod`** Allows you to add a prefix for this server.
 
-  * `setServerName | setSvrName <name>` - **`Server Mod`**Allows you to set the Server's name.
+  * `removePrefix | removePre | remPre <prefix>` - **`Server Mod`** Allows you to remove a prefix from this server.
 
-  * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - **`Server Mod`**Allows you to create an invite to this server.
+  * `setServerName | setSvrName <name>` - **`Server Mod`** Allows you to set the Server's name.
+
+  * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - **`Server Mod`** Allows you to create an invite to this server.
     * Accepted Parameters for `infinite`
       * `True | true | T | t | Yes | yes | Y | y` - Set the server invite to never expire.
       * `False | false | F | f | No | no | N | n` - Set the server invite to expire.
 
-  * `addRole <name> [colour]` - **`Server Mod`**Adds a role to the server.
+  * `addRole <name> [colour]` - **`Server Mod`** Adds a role to the server.
 
-  * `removeRole <name>` - **`Server Mod`**Removes a role from the server.
+  * `removeRole <name>` - **`Server Mod`** Removes a role from the server.
 
-  * `kickMember | kickMbr <member(s)...>` - **`Server Mod`**Kicks a member, or members, from the server.
+  * `kickMember | kickMbr <member(s)...>` - **`Server Mod`** Kicks a member, or members, from the server.
 
-  * `banMember | banMbr <member(s)...>` - **`Server Mod`**Bans a member, or members, from the server.
+  * `banMember | banMbr <member(s)...>` - **`Server Mod`** Bans a member, or members, from the server.
 
-  * `addMemberRole | addMbrRole | giveRole <member> <role(s)...>` - **`Server Mod`**Gives a member the mentioned role(s).
+  * `addMemberRole | addMbrRole | giveRole <member> <role(s)...>` - **`Server Mod`** Gives a member the mentioned role(s).
 
-  * `removeMemberRole | removeMbrRole | takeRole <member> <role(s)...>` - **`Server Mod`**Removes the mentioned role(s) from a member.
+  * `removeMemberRole | removeMbrRole | takeRole <member> <role(s)...>` - **`Server Mod`** Removes the mentioned role(s) from a member.
 
-  * `setMemberRoles | setMbrRoles | setRoles <member> <role(s)...>` - **`Server Mod`**Sets the roles for a member.
+  * `setMemberRoles | setMbrRoles | setRoles <member> <role(s)...>` - **`Server Mod`** Sets the roles for a member.
 
 ## Bot Moderator
-  *Very private stuff. Only bot moderators/developers can access these.*
+  *Very private stuff.*
 
   **You must be a Bot Moderator to run these commands.**
-  * `addBotModerator | addBotMod | abm <member(s)...>` - **`Bot Mod`**Allows you to add a bot moderator to the bot.
 
-  * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - **`Bot Mod`**Allows you to remove a bot moderator from the bot.
+  * `addBotModerator | addBotMod | abm <member(s)...>` - **`Bot Mod`** Allows you to add a bot moderator to the bot.
 
-  * `activateGlobally | enableGlobally <command(s)>` - **`Bot Mod`**Allows you to activate a command, or commands, globally.
+  * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - **`Bot Mod`** Allows you to remove a bot moderator from the bot.
 
-  * `deactivateGlobally | disableGlobally <command> [reason]` - **`Bot Mod`**Allows you to deactivate a command globally.
+  * `activateGlobally | enableGlobally <command(s)>` - **`Bot Mod`** Allows you to activate a command, or commands, globally.
 
-  * `botInfo | bi ` - **`Bot Mod`**Allows you to get the info about the bot.
+  * `deactivateGlobally | disableGlobally <command> [reason]` - **`Bot Mod`** Allows you to deactivate a command globally.
 
-  * `servers | botServers [markdown]` - **`Bot Mod`**Allows you to get a list of servers the bot is in.
+  * `botInfo | bi ` - **`Bot Mod`** Allows you to get the info about the bot.
 
-  * `setStatus | status <activity> <text>` - **`Bot Mod`**Allows you to change the presence of the bot.
+  * `servers | botServers [markdown]` - **`Bot Mod`** Allows you to get a list of servers the bot is in.
+
+  * `setStatus | status <activity> <text>` - **`Bot Mod`** Allows you to change the presence of the bot.
     * Accepted Parameters for `activity`
       * `playing | Playing` - The playing activity type.
       * `streaming | Streaming` - The streaming activity type.
       * `listening | Listening | listening to | Listening to` - The listening activity type.
       * `watching | Watching` - The watching activity type.
 
-  * `stop | quit | kill ` - **`Bot Mod`**Kills the bot.
+  * `stop | quit | kill ` - **`Bot Mod`** Kills the bot.
 
-  * `debug ` - **`Bot Mod`**Debugs the bot.
+  * `debug ` - **`Bot Mod`** Debugs the bot.
+
