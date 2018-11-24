@@ -1,9 +1,10 @@
-from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
+from datetime import datetime
 from functools import wraps
 from PIL import Image
-import discord, inspect, os, pygame, requests, signal, traceback
+
+import discord, json, os, pygame, requests, signal, traceback
 
 pygame.init()
 
@@ -123,6 +124,25 @@ def splitText(text, size, byWord = True):
     
     return fields
 
+def timestampToDatetime(timestamp):
+    """Turns a string timestamp into a datetime.
+
+    Parameters:
+        timestamp (str): The string version of the timestamp.
+    """
+
+    # Get the date and time
+    date = timestamp.split("T")[0].split("-")
+    time = timestamp.split("T")[1].split(":")
+
+    # Turn it into a datetime
+    dateTime = datetime(
+        int(date[0]), int(date[1]), int(date[2]),
+        int(time[0]), int(time[1]), int(time[2])
+    )
+
+    return dateTime
+
 def getSmallestRect(number):
     """Gets the shortest and thinnest rectangle given a number.
 
@@ -144,6 +164,9 @@ def getSmallestRect(number):
         if abs(factor[0] - factor[1]) <= diff:
             diff = abs(factor[0] - factor[1])
             value = factor
+    
+    if value[0] < value[1]:
+        return value[::-1]
 
     return value
 
@@ -158,10 +181,10 @@ def loadImageFromUrl(url):
     """
 
     # Make Request; Get Image through Pillow
-    request = requests.get(url, stream = True)
-    request.raw.decode_content = True
-    
-    pillowImage = Image.open(request.raw)
+    response = requests.get(url, stream = True)
+    response.raw.decode_content = True
+
+    pillowImage = Image.open(response.raw)
 
     # Turn the Pillow Image into a Pygame Image
     pillowImageMode = pillowImage.mode
@@ -189,119 +212,51 @@ def getErrorMessage(commandObject, errorType):
         colour = 0xFF0000
     )
 
-async def run(discordMessage, commandObject, func, *args, **kwargs):
-    """Runs a command while testing if the Command is globally or locally inactive.
+def discordIdToString(jsonObject):
+    """Turns every Discord ID given by the value \"id\" in
+    a JSON object into a String to save to MongoDB.
 
     Parameters:
-        discordMessage: The Discord Message that determines who ran the command and where it is being sent to.
-        commandObject: The Command that is being run.
-        func: The function that runs the actual code behind a Command.
-        *args: The arguments to put into the function.
-        **kwargs: The keyword arguments to put into the function.
-    
-    Returns:
-        embed (discord.Embed)
+        jsonObject (dict): The dictionary to iterate through.
     """
 
-    # Emulate Typing
-    async with discordMessage.channel.typing():
+    # Iterate through keys in dictionary
+    for key in jsonObject:
+        value = jsonObject[key]
 
-        # Command is globally active
-        if OmegaPsi.isCommandActive(commandObject) or OmegaPsi.isAuthorModerator(discordMessage.author):
-
-            # Command is a Bot Moderator Command
-            if commandObject.isBotModeratorCommand():
-
-                # Author is a Bot Moderator
-                if OmegaPsi.isAuthorModerator(discordMessage.author):
-                    
-                    # Try running asynchronous function
-                    if inspect.iscoroutinefunction(func):
-                        return await func(*args, **kwargs)
-                    
-                    # Function is synchronous
-                    else:
-                        return func(*args, **kwargs) # All functions must return an embed
-                
-                # Author is not a Bot Moderator
-                else:
-                    return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS)
-
-            # Command is being run in a Server
-            elif discordMessage.guild != None:
-                
-                # Command is locally active
-                if Server.isCommandActive(discordMessage.guild, commandObject):
-
-                    # Command is a Server Moderator Command
-                    if commandObject.isServerModeratorCommand():
-
-                        # Author is a Server Moderator
-                        if Server.isAuthorModerator(discordMessage.guild, discordMessage.author) or OmegaPsi.isAuthorModerator(discordMessage.author):
-
-                            # See if command is NSFW and being run in NSFW channel
-                            if not commandObject.isNSFW() or (commandObject.isNSFW() and discordMessage.channel.is_nsfw()):
-
-                                # Try running asynchronous function
-                                if inspect.iscoroutinefunction(func):
-                                    return await func(*args, **kwargs)
-                                
-                                # Function is synchronous
-                                else:
-                                    return func(*args, **kwargs) # All functions must return an embed
-                            
-                            # Command is NSFW being run in SFW channel
-                            else:
-                                return Server.getErrorMessage(Server.NSFW_CHANNEL)
-                        
-                        # Author is not a Server Moderator
-                        else:
-                            return Server.getErrorMessage(Server.NO_ACCESS)
-                    
-                    # Command is not a Server Moderator Command
-                    else:
-
-                        # See if command is NSFW and being run in NSFW channel
-                        if not commandObject.isNSFW() or (commandObject.isNSFW() and discordMessage.channel.is_nsfw()):
-
-                            # Try running asynchronous function
-                            if inspect.iscoroutinefunction(func):
-                                return await func(*args, **kwargs)
-                            
-                            # Function is synchronous
-                            else:
-                                return func(*args, **kwargs) # All functions must return an embed
-                        
-                        # Command is NSFW being run in SFW channel
-                        else:
-                            return Server.getErrorMessage(Server.NSFW_CHANNEL)
-                
-                # Command is locally inactive
-                else:
-                    return Server.getErrorMessage(Server.INACTIVE) # Returns Embed
-            
-            # Command is being run in a Private Message
-            else:
-                
-                # Command can be run in Private
-                if commandObject.canBeRunInPrivate():
-
-                    # Try running asynchronous function
-                    if inspect.iscoroutinefunction(func):
-                        return await func(*args, **kwargs)
-                    
-                    # Function is synchronous
-                    else:
-                        return func(*args, **kwargs) # All functions must return an embed
-                
-                # Command cannot be run in Private
-                else:
-                    # return Category.getErrorMessage(commandObject, Category.CANT_BE_RUN)
-                    pass
+        # Value is another dictionary, make a recursive call
+        if type(value) == dict:
+            discordIdToString(value)
         
-        # Command is globally inactive
-        else:
-            return OmegaPsi.getErrorMessage(OmegaPsi.INACTIVE) # Returns Embed
+        # Value is a number, turn into String if necessary
+        elif type(value) == int and key == "id":
+            if value > 1 * 10 ** 17:
+                jsonObject[key] = str(value)
+
+def migrateToDB(directory, database):
+    """Migrates all the Server and User Files straight to the MongoDB.
+
+    Parameters:
+        directory (str): The directory to migrate to MongoDB.
+        database (pymongo.Collection): The database collection to add it to.
+    """
+
+    # Iterate through files in directory
+    for filename in os.listdir(directory):
+
+        # Load JSON represenation of the file.
+        fileJson = json.load(open(directory + "/" + filename, "r"))
+
+        # Turn every ID to a String
+        discordIdToString(fileJson)
+
+        # Get the ID to add
+        _id = fileJson.pop("id")
+
+        # Add the file (if needed); Update the file
+        if database.find_one({"_id": _id}) == None:
+            database.insert_one({"_id": _id})
+        database.update_one({"_id": _id}, {"$set": fileJson}, upsert = False)
 
 # Timeout Decorator
 class TimeoutError(Exception): pass
