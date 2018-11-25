@@ -1,36 +1,6 @@
-from random import choice as choose
+from util.file.database import omegaPsi
 
-WORDS = {
-    "easy": [
-        "dance", "skip", "alligator", "chicken", "shark",
-        "chair", "robot", "head", "smile", "baseball",
-        "bird", "happy", "scissors", "cheek", "back",
-        "jump", "drink", "car", "airplane", "clap",
-        "circle", "pillow", "pinch", "kick", "dog",
-        "basketball", "sleep", "camera", "kangaroo", "arm"
-    ],
-    "medium": [
-        "lipstick", "penguin", "whisper", "earthquake", "snowball",
-        "roof", "bear", "ping pong", "yo-yo", "road",
-        "slam dunk", "banana peel", "seesaw", "nap", "cheerleader",
-        "alarm clock", "dog leash", "limbo", "newspaper", "violin",
-        "skateboard", "stairs", "trumpet", "mop", "shovel", 
-        "money", "think", "spider man", "saddle", "tree",
-        "soap", "beg", "rain", "blind", "shopping cart"
-    ],
-    "hard": [
-        "awkward", "bagpipes", "banjo", "bungler", "croquet",
-        "crypt", "dwarves", "fervid", "fishhook", "fjord",
-        "gazebo", "gypsy", "haiku", "haphazard", "hyphen",
-        "ivory", "jazzy", "jiffy", "jinx", "jukebox",
-        "kayak", "kiosk", "klutz", "memento", "mystify",
-        "numbskull", "ostracize", "oxygen", "pajama", "phlegm",
-        "pixel", "polka", "quad", "quip", "rhythmic",
-        "rogue", "sphinx", "squawk", "swivel", "toady",
-        "twelfth", "unzip", "waxy", "wildebeest", "yacht",
-        "zealous", "zigzag", "zippy", "zombie", "mortician"
-    ]
-}
+from random import choice as choose
 
 def generateWord(difficulty = "easy"):
     """Generates a random word and returns it in hangman style.\n
@@ -45,7 +15,7 @@ def generateWord(difficulty = "easy"):
 
     # Try getting difficulty
     try:
-        word = choose(WORDS[difficulty])
+        word = choose(omegaPsi.getHangmanWords()[difficulty])
     
     # Difficulty was invalid, return None
     except:
