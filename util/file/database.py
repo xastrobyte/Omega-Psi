@@ -23,13 +23,15 @@ class Database:
         password = os.environ["DATABASE_PASSWORD"]
         self._omegaPsi.authenticate(username, password)
 
-        # Keep track of users and servers
+        # Keep track of different collections
         self._bot = self._omegaPsi.bot
         self._servers = self._omegaPsi.servers
         self._users = self._omegaPsi.users
+
+        self._data = self._omegaPsi.data
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Helper Methods 
+    # Helper Methods - For Bot, Servers, and Users
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __add_bot(self):
@@ -189,7 +191,57 @@ class Database:
         return userData.raw_result
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Methods
+    # Helper Methods - For Data
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def __add_insult(self, level, insult, tags):
+        """A helper method that adds an insult to the data information.
+
+        Parameters:
+            level (str): The level of the insult.
+            insult (str): The insult to add.
+            tags (list): The tags for the insult.
+        """
+        insultData = self.__get_insults()
+        
+        insultData[level].append({
+            "value": insult,
+            "level": level,
+            "tags": tags
+        })
+        return self.__set_insults(insultData)
+
+    def __get_insults(self):
+        """A helper method that gets the insults from the data information.
+        """
+        insultData = self._data.find_one({"_id": "insults"})
+        return insultData
+
+    def __set_insults(self, insults):
+        """A helper method that sets the insults in the data information.
+
+        Parameters:
+            insults (dict): The insults info to set.
+        """
+        insultData = self._data.update_one({"_id": "insults"}, {"$set": insults}, upsert = False)
+        return insultData.raw_result
+    
+
+    def __get_hangman_words(self):
+        """A helper method that gets the hangman words from the data information.
+        """
+        hangmanData = self._data.find_one({"_id": "hangman"})
+        return hangmanData
+
+
+    def __get_scramble_words(self):
+        """A helper method that gets the scramble words from the data information.
+        """
+        scrambleData = self._data.find_one({"_id": "scramble"})
+        return scrambleData
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Methods - For Bot, Servers, and Users
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def addBot(self):
@@ -295,6 +347,38 @@ class Database:
             userInfo (dict): The dictionary to set for the user information.
         """
         return self.__set_user_info(userId, userInfo)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Methods - For Data
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def addInsult(self, level, insult, tags):
+        """Adds an insult to the database.
+
+        Parameters:
+            level (str): The level of the insult.
+            insult (str): The insult to add.
+            tags (list): The tags for the insult.
+        """
+        return self.__add_insult(level, insult, tags)
+
+    def getInsults(self):
+        """Gets the insults from the database.
+        """
+        return self.__get_insults()
+    
+
+    def getHangmanWords(self):
+        """Gets the hangman words from the database.
+        """
+        return self.__get_hangman_words()
+
+
+    def getScrambleWords(self):
+        """Gets the scramble words from the database.
+        """
+        return self.__get_scramble_words()
+    
     
 omegaPsi = Database()
 omegaPsi.init()
