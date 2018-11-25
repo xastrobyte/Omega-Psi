@@ -27,26 +27,6 @@ class Game(Category):
 
     EMBED_COLOR = 0xFF8000
 
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Errors
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    ALREADY_GUESSED = "ALREADY_GUESSED"
-    NOT_A_LETTER = "NOT_A_LETTER"
-    LETTER_TOO_LONG = "LETTER_TOO_LONG"
-    TOO_MANY_GAMES = "TOO_MANY_GAMES"
-    COLUMN_FULL = "COLUMN_FULL"
-    NO_USER = "NO_USER"
-    
-    INVALID_PLATFORM = "INVALID_PLATFORM"
-    INVALID_DIFFICULTY = "INVALID_DIFFICULTY"
-    INVALID_INPUT = "INVALID_INPUT"
-    INVALID_SPOT = "INVALID_SPOT"
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Other Fields
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
     # Connect Four URL
     CONNECT_FOUR_ICON = "https://is2-ssl.mzstatic.com/image/thumb/Purple118/v4/aa/e9/96/aae9966e-a95e-65b2-a504-afbb0c9ac51d/source/512x512bb.jpg"
 
@@ -91,6 +71,22 @@ class Game(Category):
     LEAGUE_MATCH_URL = "https://na1.api.riotgames.com/lol/match/v3/matches/{}"
     LEAGUE_VERSIONS = "https://ddragon.leagueoflegends.com/api/versions.json"
     LEAGUE_ICON_URL = "http://ddragon.leagueoflegends.com/cdn/{}/img/profileicon/{}.png"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Errors
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    ALREADY_GUESSED = "ALREADY_GUESSED"
+    NOT_A_LETTER = "NOT_A_LETTER"
+    LETTER_TOO_LONG = "LETTER_TOO_LONG"
+    TOO_MANY_GAMES = "TOO_MANY_GAMES"
+    COLUMN_FULL = "COLUMN_FULL"
+    NO_USER = "NO_USER"
+    
+    INVALID_PLATFORM = "INVALID_PLATFORM"
+    INVALID_DIFFICULTY = "INVALID_DIFFICULTY"
+    INVALID_INPUT = "INVALID_INPUT"
+    INVALID_SPOT = "INVALID_SPOT"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructors
@@ -789,8 +785,10 @@ class Game(Category):
                 return getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
             
             # Create game instance
+            wordDict = hangman.generateWord(difficulty)
             self._hangmanGames[serverId][authorId] = {
-                "word": hangman.generateWord(difficulty).lower(),
+                "word_dict": wordDict,
+                "word": wordDict["value"].lower(),
                 "guesses": 0,
                 "fails": 0,
                 "guessed": [],
@@ -1026,12 +1024,13 @@ class Game(Category):
                 return getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
 
             # Create game
-            word = scramble.generateWord().lower()
+            wordDict = scramble.generateWord()
             self._scrambleGames[serverId][authorId] = {
-                "word": word,
-                "scrambled": scramble.scrambleWord(word, difficulty),
-                "guesses": 0,
-                "guessed": []
+                "word_dict": wordDict,
+                "word": wordDict["value"].lower(),
+                "scrambled": scramble.scrambleWord(wordDict["value"].lower(), difficulty),
+                "hints": wordDict["hints"],
+                "hints_used": 0
             }
             game = self._scrambleGames[serverId][authorId]
 
@@ -1058,57 +1057,62 @@ class Game(Category):
 
                     # Delete game instance
                     word = game["word"]
-                    guesses = game["guesses"] + 1
+                    hints_used = game["hints_used"]
                     self._scrambleGames[serverId].pop(authorId)
                     User.updateScramble(discordUser, didWin = True)
 
                     return discord.Embed(
-                        title = "Correct!",
-                        description = "You guessed the word in {} guesses!".format(guesses),
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.SUCCESS_ICON
-                    )
-                
-                # Guess was not equal to word
-                else:
-
-                    # See if guess was already guessed
-                    if guess in game["guessed"]:
-                        return getErrorMessage(self._scramble, Game.ALREADY_GUESSED)
-
-                    # See if guess limit was reached
-                    if game["guesses"] + 1 >= Game.MAX_SCRAMBLE_GUESSES:
-
-                        # Delete game instance
-                        word = game["word"]
-                        self._scrambleGames[serverId].pop(authorId)
-                        User.updateScramble(discordUser, didWin = False)
-
-                        return discord.Embed(
-                            title = "Failed",
-                            description = "Unfortunately, you did not guess the word.\nThe word was {}".format(
-                                word
-                            ),
-                            colour = Game.EMBED_COLOR
-                        ).set_thumbnail(
-                            url = Game.FAILED_ICON
-                        )
-                    
-                    # Increase guesses
-                    game["guessed"].append(guess)
-                    game["guesses"] += 1
-
-                    return discord.Embed(
-                        title = "Nope",
-                        description = "That is not the word.\nAttempts Left: {}\n`{}`".format(
-                            Game.MAX_SCRAMBLE_GUESSES - game["guesses"],
-                            game["scrambled"]
+                        title = "Success",
+                        description = "You got the word correctly! `{}`\nYou {}used {} hints.".format(
+                            word,
+                            "only " if hints_used <= 3 else "",
+                            hints_used
                         ),
                         colour = Game.EMBED_COLOR
                     ).set_thumbnail(
                         url = Game.SCRAMBLE_ICON
                     )
+                
+                # Guess was not equal to word
+                else:
+
+                    # Check if player asked for another hint using "hint" keyword
+                    if guess in ["hint", "hint me"]:
+
+                        game["hints_used"] += 1
+
+                        return discord.Embed(
+                            title = "Scrambled",
+                            description = "`{}`\nHint: {}".format(
+                                game["scrambled"],
+                                choose(game["hints"])
+                            ),
+                            colour = Game.EMBED_COLOR
+                        ).set_thumbnail(
+                            url = Game.SCRAMBLE_ICON
+                        )
+                    
+                    # Player did not ask for hint
+                    else:
+
+                        # Delete game instance
+                        word = game["word"]
+                        hints_used = game["hints_used"]
+                        self._scrambleGames[serverId].pop(authorId)
+
+                        # Player made wrong guess
+                        if guess != word:
+                            User.updateScramble(discordUser, didWin = False)
+                        
+                            return discord.Embed(
+                                title = "Failed",
+                                description = "Unfortunately, you did not guess the word.\nThe word was {}".format(
+                                    word
+                                ),
+                                colour = Game.EMBED_COLOR
+                            ).set_thumbnail(
+                                url = Game.FAILED_ICON
+                            )
                 
     def ticTacToe(self, discordUser, *, difficulty = None, move = None):
         """Creates a Tic Tac Toe game or continues a Tic Tac Toe game.
