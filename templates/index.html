@@ -22,7 +22,7 @@
    <meta name="theme-color" content="#202020">
    <meta name="msapplication-config" content="{{ url_for('static', filename="/browserconfig.xml") }}">
 </head>
-<h>Table of Contents</h>
+<h1>Commands</h1>
   <ul>
     <li><a href="#help">Help</a></li>
     <li><a href="#code">Code</a></li>
@@ -316,7 +316,7 @@
     </ul>
   </ul>
 
-  <li><code>addInsult | addI &lt;insultLevel&gt; &lt;insult&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Allows you to add your own insult.</li>
+  <li><code>addInsult | addI &lt;insultLevel&gt; &lt;insult&gt; [tags]</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Allows you to add your own insult.</li>
   <ul>
   <li>Accepted Parameters for <code>insultLevel</code>
 </li>
@@ -324,6 +324,11 @@
       <li><code>touchy | t</code> - Soft insults for a soft person.</li>
       <li><code>remorseful | remorse | r</code> - Harder insults. Might offend you.</li>
       <li><code>noRemorse | noremorse | nr</code> - Hardcore insults. And I mean it.</li>
+    </ul>
+  <li>Accepted Parameters for <code>tags</code>
+</li>
+    <ul>
+      <li><code>NSFW | nsfw | 18+</code> - Make the insult an NSFW insult.</li>
     </ul>
   </ul>
 
@@ -368,11 +373,19 @@
   <p style="color:#FF5555"><strong><em></em></strong></p>
   <p style="color:#FF5555"><strong><em></em></strong></p>
 <ul>
-  <li><code>substitute | subs &lt;expression&gt; &lt;variables&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Substitutes variables in an equation.</li>
+  <li><code>solve | system &lt;equation(s)&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Solves an equation or a system of equations.</li>
+  <ul>
+  </ul>
+
+  <li><code>expand | exp | e &lt;expression&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Expands a mathematical expression.</li>
   <ul>
   </ul>
 
   <li><code>integral | integrate &lt;expression&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Gets the integral of an expression.</li>
+  <ul>
+  </ul>
+
+  <li><code>substitute | subs &lt;expression&gt; &lt;variables&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Substitutes variables in an equation.</li>
   <ul>
   </ul>
 
@@ -393,14 +406,6 @@
   </ul>
 
   <li><code>factorial | ! &lt;number&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Gets the factorial of a number.</li>
-  <ul>
-  </ul>
-
-  <li><code>solve | system &lt;equation(s)&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Solves an equation or a system of equations.</li>
-  <ul>
-  </ul>
-
-  <li><code>expand | exp | e &lt;expression&gt;</code> - <strong><code></code></strong><strong><code></code></strong><strong><code></code></strong>Expands a mathematical expression.</li>
   <ul>
   </ul>
 
