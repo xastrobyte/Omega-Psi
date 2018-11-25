@@ -1,31 +1,11 @@
+from util.file.database import omegaPsi
+
 from random import choice as choose
 
-WORDS = [
-    "unused", "longing", "quaint", "remember", "windy",
-    "correct", "science", "prevent", "chalk", "limit",
-    "question", "dinosaurs", "flagrant", "fearful", "complete",
-    "feigned", "trousers", "sisters", "wealthy", "treatment",
-    "advertisement", "territory", "employ", "steam", "word",
-    "discussion", "aromatic", "disgusted", "stitch", "share",
-    "threatening", "report", "languid", "scrub", "wool",
-    "squealing", "gleaming", "obscene", "useful", "locket",
-    "reflective", "cautious", "shocking", "gaudy", "natural", 
-    "honorable", "ragged", "stage", "prick", "haunt",
-    "flash", "wheel", "spark", "jail", "test", 
-    "scarecrow", "puncture", "needless", "bleach", "bottle",
-    "silver", "apologize", "country", "abrasive", "march",
-    "governor", "aboriginal", "illustrious", "religion", "wrong",
-    "hurried", "elastic", "subsequent", "purring", "closed",
-    "attract", "loving", "upbeat", "bathe", "oranges",
-    "airplane", "faulty", "royal", "wound", "structure",
-    "earsplitting", "materialistic", "knotty", "radiate", "flawless",
-    "laughable", "productive", "achiever", "knotty", "error"
-]
-
 def generateWord():
-    """Returns a random word from the list of words
+    """Returns a random word from the list of words in the database
     """
-    return choose(WORDS)
+    return choose(omegaPsi.getScrambleWords()["words"])
 
 def scrambleWord(word, difficulty):
     """Returns a scrambled word.\n
