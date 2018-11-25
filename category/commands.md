@@ -148,11 +148,13 @@
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
-  * `addInsult | addI | add <insultLevel> <insult>` - Allows you to add your own insult.
+  * `addInsult | addI <insultLevel> <insult> [tags]` - Allows you to add your own insult.
     * Accepted Parameters for `insultLevel`
       * `touchy | t` - Soft insults for a soft person.
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
+    * Accepted Parameters for `tags`
+      * `NSFW | nsfw | 18+` - Make the insult an NSFW insult.
 
   * `listInsults | list | l [insultLevel]` - Lists the insults that can be sent.
     * Accepted Parameters for `insultLevel`
@@ -172,23 +174,23 @@
 ## Math
   *Need help with math? These commands got your back.*
 
-  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
 
   * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
+
+  * `factor | f <expression>` - Factors a mathematical expression.
+
+  * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
+
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
   * `solve | system <equation(s)>` - Solves an equation or a system of equations.
 
   * `expand | exp | e <expression>` - Expands a mathematical expression.
-
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
-
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
-
-  * `factor | f <expression>` - Factors a mathematical expression.
 
 ## Rank
   *The ranking system is strong with this category.*
@@ -351,6 +353,11 @@
       * `streaming | Streaming` - The streaming activity type.
       * `listening | Listening | listening to | Listening to` - The listening activity type.
       * `watching | Watching` - The watching activity type.
+
+  * `todo [action] [item]` - **`Bot Mod`** Adds, removes, or lists things in the TODO list.
+    * Accepted Parameters for `action`
+      * `add | a` - Adds something to the TODO list.
+      * `remove | r` - Removes something from the TODO list.
 
   * `stop | quit | kill ` - **`Bot Mod`** Kills the bot.
 
