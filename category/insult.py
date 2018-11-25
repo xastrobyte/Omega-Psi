@@ -1,3 +1,4 @@
+from util.file.database import omegaPsi
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.utils import sendMessage, getErrorMessage
@@ -13,8 +14,6 @@ class Insult(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    INSULTS_LOCATION = "util/insult/{}.txt"
-
     EMBED_COLOR = 0x800000
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -22,6 +21,12 @@ class Insult(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     INVALID_INSULT_LEVEL = "INVALID_INSULT_LEVEL"
+
+    INVALID_TAG = "INVALID_TAG"
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Constructor
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def __init__(self, client):
         super().__init__(
@@ -79,8 +84,8 @@ class Insult(Category):
             "info": "Allows you to add your own insult.",
             "parameters": {
                 "insultLevel": {
-                    "optional": False,
                     "info": "The level of insult to add.",
+                    "optional": False,
                     "accepted_parameters": {
                         "touchy": {
                             "alternatives": ["touchy", "t"],
@@ -97,24 +102,40 @@ class Insult(Category):
                     }
                 },
                 "insult": {
-                    "optional": False,
-                    "info": "The insult to add."
+                    "info": "The insult to add.",
+                    "optional": False
+                },
+                "tags": {
+                    "info": "Any tags that apply to the insult.",
+                    "optional": True,
+                    "accepted": {
+                        "NSFW": {
+                            "alternatives": ["NSFW", "nsfw", "18+"],
+                            "info": "Make the insult an NSFW insult."
+                        }
+                    }
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Insult.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
-                        "If only you had enough parameters, you could actually add your own insult."
+                        "If only you had enough parameters, you could actually add your own insult.",
+                        "In order to add an insult, you need the insult level, the insult (wrapped in quotes), and any tags that may apply to the insult (also wrapped in quotes)."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Insult.TOO_MANY_PARAMETERS: {
                     "messages": [
-                        "Whoa man. The add insult command doesn't take more than two parameters."
+                        "Whoa man. The add insult command doesn't take more than 3 parameters."
                     ]
                 },
                 Insult.INVALID_INSULT_LEVEL: {
                     "messages": [
-                        "That is not a valid insult level. Try `!help addInsult` to see the insult levels."
+                        "That is not a valid insult level. Try `{}help addInsult` to see the insult levels.".format(OmegaPsi.PREFIX)
+                    ]
+                },
+                Insult.INVALID_TAG: {
+                    "messages": [
+                        "You have an invalid tag in there somewhere."
                     ]
                 }
             }
@@ -196,35 +217,29 @@ class Insult(Category):
         
         # Check if insult level is noRemorse
         elif insultLevel in self._insult.getAcceptedParameter("insultLevel", "noRemorse").getAlternatives():
-            insultLevel = "noRemorse"
+            insultLevel = "noremorse"
         
         # Insult level was invalid
         else:
             return getErrorMessage(self._insult, Insult.INVALID_INSULT_LEVEL)
         
         # Load insults file for insult level
-        temp = open(Insult.INSULTS_LOCATION.format(insultLevel), "r")
-        insults = temp.readlines()
-        temp.close()
+        insults = omegaPsi.getInsults()[insultLevel]
 
         # Choose insult
         target = choose(insults)
 
         # Regenerate as long as isNSFW is False and result is NSFW
-        while not isNSFW and target.find("NSFW") != -1:
+        while not isNSFW and "NSFW" in target["tags"]:
             target = choose(insults)
-        
-        # Remove NSFW tag from end if isNSFW
-        if target.find("NSFW") != -1:
-            target = target[:target.find("NSFW")]
         
         return discord.Embed(
             name = "Result",
-            description = target,
+            description = target["value"],
             colour = Insult.EMBED_COLOR
         )
     
-    def addInsult(self, insultLevel, insult):
+    def addInsult(self, insultLevel, insult, tags = []):
         """Adds the specified insult to the specified insult level.\n
 
         insultLevel - The level of the insult to add to.\n
@@ -241,16 +256,24 @@ class Insult(Category):
         
         # Check if the insult level is noRemorse
         elif insultLevel in self._add.getAcceptedParameter("insultLevel", "noRemorse").getAlternatives():
-            insultLevel = "noRemorse"
+            insultLevel = "noremorse"
         
         # Insult level is invalid
         else:
             return getErrorMessage(self._add, Insult.INVALID_INSULT_LEVEL)
         
-        # Load insults file for insult level
-        temp = open(Insult.INSULTS_LOCATION.format(insultLevel), "a")
-        temp.write(insult + "\n")
-        temp.close()
+        # Check if all the tags are valid
+        tags = tags.split(" ")
+        for tag in range(len(tags)):
+            tagName = tags[tag]
+            acceptedParameters = self._add.getAcceptedParameters("tags")
+            for accepted in acceptedParameters:
+                if tagName not in acceptedParameters[accepted].getAlternatives():
+                    return getErrorMessage(self._add, Insult.INVALID_TAG)
+                else:
+                    tags[tag] = acceptedParameters[accepted].getAlternatives()[0]
+        
+        omegaPsi.addInsult(insultLevel, insult, tags)
 
         return discord.Embed(
             title = "Insult Added",
@@ -258,7 +281,7 @@ class Insult(Category):
             colour = Insult.EMBED_COLOR
         )
     
-    def listInsults(self, insultLevel = None, recursive = False):
+    def listInsults(self, insultLevel = None, *, recursive = False, isNSFW = True):
         """Returns a list of insults that can be sent.\n
 
         Keyword Arguments:\n
@@ -280,7 +303,7 @@ class Insult(Category):
             for level in self._insultLevelNames:
 
                 # Field list comes from recursive definition
-                fields = self.listInsults(level, True)
+                fields = self.listInsults(level, recursive = True, isNSFW = isNSFW)
 
                 # Add each field
                 count = 0
@@ -309,30 +332,46 @@ class Insult(Category):
                 insultLevel = "remorseful"
 
             elif insultLevel in self._list.getAcceptedParameter("insultLevel", "noRemorse").getAlternatives():
-                insultLevel = "noRemorse"
+                insultLevel = "noremorse"
             
             # Open insult file
-            temp = open(Insult.INSULTS_LOCATION.format(insultLevel), "r")
-            insults = temp.readlines()
-            temp.close()
+            insults = omegaPsi.getInsults()[insultLevel]
 
             # Setup insults text
             insultsFields = []
             insultsText = ""
+            bolden = True
 
             # Iterate through insults
             for insult in insults:
+                tagList = insult["tags"]
+                tags = " ".join(["**_`{}`_**".format(tag) for tag in insult["tags"]])
 
-                # Add newline to insult if there is no newline
-                if not insult.endswith("\n"):
-                    insult += "\n"
-                
-                # Check if adding insult will exceed message threshold
-                if len(insultsText) + len(insult) >= OmegaPsi.MESSAGE_THRESHOLD:
-                    insultsFields.append(insultsText)
-                    insultsText = ""
-                
-                insultsText += insult
+                # Only add if tag is NSFW and channel isNSFW
+                addInsult = True
+                if not isNSFW:
+                    if "NSFW" in tagList:
+                        addInsult = False
+                    else:
+                        addInsult = True
+
+                if addInsult:
+                    if bolden:
+                        insult = "{} **{}**".format(tags, insult["value"])
+                    else:
+                        insult = "{} {}".format(tags, insult["value"])
+                    bolden = not bolden
+
+                    # Add newline to insult if there is no newline
+                    if not insult.endswith("\n"):
+                        insult += "\n"
+                    
+                    # Check if adding insult will exceed message threshold
+                    if len(insultsText) + len(insult) >= OmegaPsi.MESSAGE_THRESHOLD:
+                        insultsFields.append(insultsText)
+                        insultsText = ""
+                    
+                    insultsText += insult
             
             if len(insultsText) > 0:
                 insultsFields.append(insultsText)
@@ -428,14 +467,14 @@ class Insult(Category):
                         embed = getErrorMessage(self._add, Category.NOT_ENOUGH_PARAMETERS)
                     )
                 
-                # 2 Parameters Exist (Add Insult)
-                elif len(parameters) == 2:
+                # 3 Parameters Exist (Add Insult)
+                elif len(parameters) == 3:
                     await sendMessage(
                         self.client,
                         message,
                         embed = await self.run(
                             message, self._add, self.addInsult,
-                            parameters[0], parameters[1]
+                            parameters[0], parameters[1], parameters[2]
                         )
                     )
                 
@@ -452,12 +491,17 @@ class Insult(Category):
 
                 # 0 or 1 Parameters Exist (List Insults)
                 if len(parameters) in [0, 1]:
+                    try:
+                        isNSFW = message.channel.is_nsfw()
+                    except:
+                        isNSFW = True
                     await sendMessage(
                         self.client,
                         message,
                         embed = await self.run(
                             message, self._list, self.listInsults,
-                            None if len(parameters) == 0 else parameters[0]
+                            None if len(parameters) == 0 else parameters[0],
+                            isNSFW = isNSFW
                         )
                     )
                 
