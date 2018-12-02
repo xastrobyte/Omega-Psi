@@ -1,69 +1,164 @@
 from random import randint
 
-def getBoard(board):
-    """Returns a representation of the Connect Four board using emojis.
-
-    The list rules are as follows:
-        None: signifies the spot has not been taken yet.
-        False: signifies the spot was taken by the opponent / AI
-        True: signifies the spot was taken by the challenger / Member
+class ConnectFour:
+    """Creates a Connect Four game.
 
     Parameters:
-        board (list): The two-dimensional list for the Connect Four board.
+        challenger (discord.User): The Discord Member that started the game.
+        opponent (discord.User): The Discord Member that is playing against the challenger. (Defaults to None for AI)
     """
 
-    # Keep list of emoji numbers for column numbers
-    emojiNumbers = [
-        ":one:", ":two:", ":three:", 
-        ":four:", ":five:", ":six:",
-        ":seven:", ":eight:", ":nine:",
-        ":keycap_ten:"
-    ]
+    DRAW = "DRAW"
 
-    # Setup board string
-    boardString = ""
-    for columnNumber in range(len(board[0])):
-        boardString += emojiNumbers[columnNumber] + " "
-    boardString += "\n"
+    def __init__(self, challenger, opponent = None):
+        """Creates a Connect Four game.
 
-    # Add board
-    for row in board:
-        for col in row:
-            
-            # None is an empty spot (white box)
-            if col == None:
-                boardString += ":white_large_square: "
-            
-            # False is a Red Circle (opponent / AI)
-            elif col == False:
-                boardString += ":red_circle: "
-            
-            # True is a Blue Circle (challenger / Member)
-            else:
-                boardString += ":large_blue_circle: "
+        Parameters:
+            challenger (discord.User): The Discord Member that started the game.
+            opponent (discord.User): The Discord Member that is playing against the challenger. (Defaults to None for AI)
+        """
+
+        self._challenger = challenger
+        self._opponent = opponent
+
+        self._challenger_move = randint(1, 100) % 2 == 0
+
+        self.generateBoard()
+    
+    # Getters
+
+    def getChallenger(self):
+        """Returns the challenger.
+        """
+        return self._challenger
+    
+    def getOpponent(self):
+        """Returns the opponent.
+        """
+        return self._opponent
+    
+    def isChallengerTurn(self):
+        """Returns whether or not it is the challenger's turn.
+        """
+        return self._challenger_move
+    
+    def swapTurns(self):
+        """Swaps the challenger's turns.
+        """
+        self._challenger_move = not self._challenger_move
+    
+    def getBoard(self):
+        """Returns the board for this Connect Four game.
+        """
+        return self._board
+    
+    def getWidth(self):
+        """Returns the width of the Connect Four board
+        """
+        return 7
+
+    def getHeight(self):
+        """Returns the height of the Connect Four board
+        """
+        return 6
+    
+    # Other Methods
+
+    def generateBoard(self, width = 7, height = 6):
+        """Generates and returns a two-dimensional Connect Four board.
+
+        Parameters:
+            width (int): The width of the Connect Four board.
+            height (int): The height of the Connect Four board.
+        """
+
+        # Setup board
+        self._board = []
+
+        # Add each row
+        for row in range(height):
+            self._board.append([])
+            for col in range(width):
+                self._board[row].append(None)
+
+    def makeMove(self, column):
+        """Allows the challenger or opponent to make a move.
+
+        Parameters:
+            column (int): The column to make the move at.
+        """
+
+        # Check if playing with AI
+        if self.getOpponent() == None:
+            addPiece(self._board, column, True)
+            getAIMove(self._board)
         
+        # Check if playing with real player
+        else:
+            addPiece(self._board, column, self.isChallengerMove())
+            self.swapTurns()
+        
+        # Check for board full or winner
+        boardFull = isBoardFull(self._board)
+        winnerCheck = checkForWinner(self._board)
+
+        # There was a winner
+        if winnerCheck in [True, False]:
+            return winnerCheck
+        
+        # There was no winner but there was no draw
+        elif winnerCheck == None and not boardFull:
+            return None
+        
+        # There was no winner but board was full
+        return ConnectFour.DRAW
+    
+    # AI Methods
+
+    def showBoard(self):
+        """Returns a representation of the Connect Four board using emojis.
+
+        The list rules are as follows:
+            None: signifies the spot has not been taken yet.
+            False: signifies the spot was taken by the opponent / AI
+            True: signifies the spot was taken by the challenger / Member
+
+        Parameters:
+            board (list): The two-dimensional list for the Connect Four board.
+        """
+
+        # Keep list of emoji numbers for column numbers
+        emojiNumbers = [
+            ":one:", ":two:", ":three:", 
+            ":four:", ":five:", ":six:",
+            ":seven:", ":eight:", ":nine:",
+            ":keycap_ten:"
+        ]
+
+        # Setup board string
+        boardString = ""
+        for columnNumber in range(len(self._board[0])):
+            boardString += emojiNumbers[columnNumber] + " "
         boardString += "\n"
-    
-    return boardString
 
-def generateBoard(width, height):
-    """Generates and returns a two-dimensional Connect Four board.
-
-    Parameters:
-        width (int): The width of the Connect Four board.
-        height (int): The height of the Connect Four board.
-    """
-
-    # Setup board
-    board = []
-
-    # Add each row
-    for row in range(height):
-        board.append([])
-        for col in range(width):
-            board[row].append(None)
-    
-    return board
+        # Add board
+        for row in self._board:
+            for col in row:
+                
+                # None is an empty spot (empty circle)
+                if col == None:
+                    boardString += ":black_circle: "
+                # False is a Red Circle (opponent / AI)
+                elif col == False:
+                    boardString += ":red_circle: "
+                
+                # True is a Blue Circle (challenger / Member)
+                else:
+                    boardString += ":large_blue_circle: "
+            
+            boardString += "\n"
+        
+        return boardString
 
 def isColumnFull(board, column):
     """Determines whether or not a specific column in a Connect Four board is full.
@@ -151,42 +246,57 @@ def isBoardFull(board):
     """
     return countPieces(board[0]) == len(board[0])
 
-def getAIMove(board, difficulty):
-    """Retrieves the move the AI is going to make given a specific difficulty.
-
-    The difficulty moves are as follows:
-        \"easy\": The AI will randomly choose a move.
-        \"hard\": The AI will use the Monte Carlo method to choose the best move.
+def getAIMove(board):
+    """Retrieves the move the AI is going to make.
 
     Parameters:
         board (list): The list for the Connect Four board.
-        difficulty (str): The difficulty the AI should use.
     """
 
     # Go through each board[0] columns
     # Get a copy of the board
+    restrictedMoves = []
     aiMove = -1
     for column in range(len(board[0])):
-        playerCopy = copyBoard(board)
         aiCopy = copyBoard(board)
+        playerCopy = copyBoard(board)
 
-        # Place player piece at column
-        addPiece(playerCopy, column, True)
+        # Check if column is full
+        if isColumnFull(board, column):
+            continue   # Move to next column; Column is full
+
+        # Column is not full; Emulate AI and Player moves
         addPiece(aiCopy, column, False)
+        addPiece(playerCopy, column, True)
 
-        # Get possible win checks
-        playerWins = checkForWinner(playerCopy)
-        aiWins = checkForWinner(aiCopy)
+        # Check for AI win or Player win
+        aiWinCheck = checkForWinner(aiCopy)
+        playerWinCheck = checkForWinner(playerCopy)
 
-        # AI would win, go to spot
-        if aiWins == True or playerWins == True:
+        # AI move or Player move would win; Set move and break
+        if aiWinCheck == False or playerWinCheck == True:
             aiMove = column
             break
+        
+        # AI move and Player move would not win; Emulate player next move on same column
+        else:
 
-        # No winner would be declared; Move to next column
-        continue
+            # Check if column is full
+            if isColumnFull(aiCopy, column):
+                continue
+            
+            # Column is not full
+            addPiece(aiCopy, column, True)
 
-    # aiMove was -1; Generate random column
+            # Check for player win
+            playerWinCheck = checkForWinner(aiCopy)
+
+            # Player move would win; continue to next column
+            if playerWinCheck == True:
+                restrictedMoves.append(column)  # Add column to restricted moves; We don't want AI to go there
+                continue
+
+    # aiMove was -1 (no move or full); Generate random column
     if aiMove == -1:
 
         # See if board is full
@@ -194,9 +304,22 @@ def getAIMove(board, difficulty):
             return False
 
         # Board is not full; generate random column
-        aiMove = randint(0, len(board[0]) - 1)
-        while isColumnFull(board, aiMove):
+        aiMove = None
+        while True:
             aiMove = randint(0, len(board[0]) - 1)
+
+            # Check to see if column is full
+            if isColumnFull(board, aiMove):
+                continue
+            
+            # Check to see if this column is the only available column
+            #   OR check to see if the restrictedMoves include the only available columns
+            elif countPieces(board[0]) == 1 or len(restrictedMoves) == countPieces(board[0]):
+                break
+            
+            # Check to see if move is not in restricted moves
+            elif aiMove not in restrictedMoves:
+                break
     
     # Use aiMove for move
     addPiece(board, aiMove, False)
@@ -282,14 +405,3 @@ def copyBoard(board):
             copyOfBoard[row].append(col)
     
     return copyOfBoard
-
-def prettyPrint(board):
-    for row in board:
-        for col in row:
-            if col == None:
-                print("- ", end = "")
-            elif col == True:
-                print("X ", end = "")
-            else:
-                print("O ", end = "")
-        print()
