@@ -13,18 +13,19 @@ from category.botModerator import BotModerator
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
-from util.utils import sendMessage, getErrorMessage, censor
+from util.utils.discordUtils import sendMessage, getErrorMessage
+from util.utils.stringUtils import censor
 
 from supercog import Category, Command
-import discord, os
+import discord
+
+scrollEmbeds = {}
 
 class Help(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    EMBED_COLOR = 0x00FF80
 
     EMOJI = {
         "Help": ":question:",
@@ -42,8 +43,6 @@ class Help(Category):
     }
 
     GITHUB = "https://www.github.com/FellowHashbrown/omega-psi-py/blob/master/category/commands.md"
-
-    MARKDOWN_LOCATION = "commands.md"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -65,6 +64,7 @@ class Help(Category):
             client, 
             "Help",
             description = "Shows you the help menu.",
+            embed_color = 0x00FF80,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -113,22 +113,8 @@ class Help(Category):
             }
         })
 
-        self._markdown = Command(commandDict = {
-            "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
-            "info": "Creates and sends the markdown file for the commands.",
-            "bot_moderator_only": True,
-            "errors": {
-                Help.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the markdown file, you don't need any parameters."
-                    ]
-                }
-            }
-        })
-
         self.setCommands([
-            self._help,
-            self._markdown
+            self._help
         ])
 
         # Categories
@@ -213,7 +199,7 @@ class Help(Category):
             "\n".join(tableOfContents)
         )
 
-    def getHelpMenu(self, message):
+    async def getHelpMenu(self, message):
         """Returns a full help menu on all the commands in Omega Psi.\n
 
         Parameters:
@@ -238,7 +224,7 @@ class Help(Category):
                 Help.GITHUB,
                 "Omega Psi Github Page"
             ),
-            colour = Help.EMBED_COLOR
+            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
         )
         
         # Add each category
@@ -251,7 +237,7 @@ class Help(Category):
             # See if category is a Server Moderator Category and author is a Server Moderator
             if message.guild != None:
                 onServerMod = self._categories[category]["object"].isServerModCategory()
-                isServerMod = Server.isAuthorModerator(message.guild, message.author)
+                isServerMod = Server.isAuthorModerator(message.author)
             else:
                 onServerMod = isServerMod = False
 
@@ -310,7 +296,7 @@ class Help(Category):
         
         return embed
     
-    def isCategoryName(self, categoryName):
+    async def isCategoryName(self, categoryName):
         """Returns whether or not the category is a category name.\n
 
         Parameters:
@@ -324,7 +310,7 @@ class Help(Category):
         
         return False
 
-    def getHelpForCategory(self, message, categoryName, *, isNSFW = False):
+    async def getHelpForCategory(self, message, categoryName, *, isNSFW = False):
         """Returns a help menu for a specific category.
 
         Parameters:
@@ -347,7 +333,7 @@ class Help(Category):
                 # See if category is a Server Moderator Category and author is a Server Moderator
                 if message.guild != None:
                     onServerMod = self._categories[category]["object"].isServerModCategory()
-                    isServerMod = Server.isAuthorModerator(message.guild, message.author)
+                    isServerMod = Server.isAuthorModerator(message.author)
                 else:
                     onServerMod = isServerMod = False
 
@@ -391,6 +377,7 @@ class Help(Category):
                 if showCategory:
                     categoryHelp = self.getCategoryHelp(self._categories[category]["object"], isNSFW = isNSFW)
 
+                    # Create the embed
                     embed = discord.Embed(
                         title = categoryHelp["title"],
                         description = "Help for the [{} Commands]({} \"{}\")\n{}\n".format(
@@ -401,23 +388,59 @@ class Help(Category):
                                 self._categories[category]["object"].getRestrictionInfo()
                             ) if self._categories[category]["object"].getRestrictionInfo() != None else ""
                         ),
-                        colour = Help.EMBED_COLOR
+                        colour = self._categories[category]["object"].getEmbedColor() if message.guild == None else message.author.top_role.color
                     )
+
+                    # Send embed message in order to get the id to store
+                    # Also add reactions based off of length of fields
+                    msg = await message.channel.send(
+                        embed = embed
+                    )
+
+                    # Add left and right if there are 2 fields
+                    if len(categoryHelp["fields"]) == 2:
+                        await msg.add_reaction("arrow_left")
+                        await msg.add_reaction("arrow_right")
+                    
+                    # Add all reactions if there are more than 2 fields
+                    elif len(categoryHelp["fields"]) > 2:
+                        await msg.add_reaction("rewind")
+                        await msg.add_reaction("arrow_left")
+                        await msg.add_reaction("arrow_right")
+                        await msg.add_reaction("fast_forward")
+
+                    scrollEmbeds[str(msg.id)] = {
+                        "author": str(message.author.id),
+                        "fields": [],
+                        "value": 0,
+                        "min": 0,
+                        "max": len(categoryHelp["fields"])
+                    }
 
                     count = 0
                     for field in categoryHelp["fields"]:
                         count += 1
-                        embed.add_field(
-                            name = "Commands {}".format(
-                                "({} / {})".format(
-                                    count, len(categoryHelp["fields"])
-                                ) if len(categoryHelp["fields"]) > 1 else ""
-                            ),
-                            value = field,
-                            inline = False
-                        )
-                    
-                    return embed
+
+                        scrollEmbeds[str(msg.id)]["fields"].append({
+                            "name": "Commands {}".format(
+                                count, len(categoryHelp["fields"])
+                            ) if len(categoryHelp["fields"]) > 1 else "",
+                            "value": field,
+                            "inline": False
+                        })
+
+                        if count == 1:
+                            embed.add_field(
+                                name = scrollEmbeds[str(msg.id)]["fields"][0]["name"],
+                                value = scrollEmbeds[str(msg.id)]["fields"][0]["value"],
+                                inline = scrollEmbeds[str(msg.id)]["fields"][0]["inline"]
+                            )
+
+                    return embed.set_field_at(0,
+                        name = scrollEmbeds[str(msg.id)]["fields"][0]["name"],
+                        value = scrollEmbeds[str(msg.id)]["fields"][0]["value"],
+                        inline = scrollEmbeds[str(msg.id)]["fields"][0]["inline"]
+                    )
                 
                 elif not onBotMod and not isBotMod:
                     return OmegaPsi.getErrorMessage(OmegaPsi.NO_ACCESS)
@@ -428,7 +451,7 @@ class Help(Category):
         # Category did not match, send error message
         return getErrorMessage(self._help, Help.INVALID_CATEGORY)
     
-    def getHelpForCommand(self, discordMember, command, *, isNSFW = False):
+    async def getHelpForCommand(self, discordMember, command, *, isNSFW = False):
         """Returns help for a specific command.\n
 
         Parameters:
@@ -446,11 +469,11 @@ class Help(Category):
             try:
                 guild = discordMember.guild
             except:
-                return getErrorMessage(self._help, Help.NO_ACCESS)
+                guild = None
             
             if guild != None:
                 onServerMod = category == "Server Moderator"
-                isServerMod = Server.isAuthorModerator(guild, discordMember) or OmegaPsi.isAuthorModerator(discordMember)
+                isServerMod = Server.isAuthorModerator(discordMember)
             else:
                 onServerMod = isServerMod = False
 
@@ -466,7 +489,7 @@ class Help(Category):
                         helpForCommand["restriction"],
                         helpForCommand["title"]
                     ),
-                    colour = Help.EMBED_COLOR
+                    colour = self._categories[category]["object"].getEmbedColor() if guild == None else discordMember.top_role.color
                 )
 
                 # Iterate through accepted parameters
@@ -492,51 +515,47 @@ class Help(Category):
         # Command did not match, send error message
         return getErrorMessage(self._help, Help.INVALID_COMMAND)
     
-    async def markdown(self, author):
-        """Returns the markdown file for the commands.\n"
-
-        Parameters:
-            author (discord.User): The sender of the `markdown` command.
+    async def help(self, message, parameters):
+        """Runs the help command for the bot.
         """
 
-        # Create markdown text
-        markdown = "# Commands\n"
-
-        # Add category's hyperlinks
-        for category in self._categories:
-            markdown += "  * [{}](#{})\n".format(
-                category,
-                category.replace(" ", "-")
-            )
-
-        # Go through categories
-        for category in self._categories:
-            markdown += self._categories[category]["object"].getMarkdown()
+        # Check for too many parameters
+        if len(parameters) > self._help.getMaxParameters():
+            embed = getErrorMessage(self._help, Help.TOO_MANY_PARAMETERS)
         
-        # Open file
-        mdFile = open(Help.MARKDOWN_LOCATION, "w")
-        mdFile.write(markdown)
-        mdFile.close()
+        # There were the right amount of parameters
+        else:
 
-        mdFile = open(Help.MARKDOWN_LOCATION, "r")
+            # Check for no parameters
+            if len(parameters) == 0:
+                embed = await self.run(message, self._help, self.getHelpMenu, message)
+            
+            # Check for 1 parameter (command or category)
+            elif len(parameters) == 1:
 
-        # Send file to author
-        await author.send(
-            file = discord.File(mdFile)
-        )
+                # Determine if channel has nsfw filter on it
+                if message.guild != None:
+                    isNSFW = message.channel.is_nsfw()
+                else:
+                    isNSFW = True
 
-        os.remove(Help.MARKDOWN_LOCATION)
+                # See if parameter is a category
+                if await self.isCategoryName(parameters[0]):
+                    embed = await self.run(message, self._help, self.getHelpForCategory, message, parameters[0], isNSFW = isNSFW)
+                else:
+                    embed = await self.run(message, self._help, self.getHelpForCommand, message.author, parameters[0], isNSFW = isNSFW)
 
-        try:
-            guild = author.guild
-
-            return discord.Embed(
-                title = "File Sent",
-                description = "The markdown file was sent to your DM's",
-                colour = Help.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
             )
-        except:
-            pass
+        )            
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -559,65 +578,123 @@ class Help(Category):
 
             # Help Command
             if command in self._help.getAlternatives():
+                await self.help(message, parameters)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Scrollable Embeds
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-                # 0 Parameter Exist (full help menu)
-                if len(parameters) == 0:
+    async def on_reaction_add(self, reaction, member):
+        """Determines which reaction was added to a message. Only reactions right now are
 
-                    embed = await self.run(message, self._help, self.getHelpMenu, message)
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
 
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = embed
-                    )
+        # Check for message ID in scrollable embeds
+        messageId = str(reaction.message.id)
+        if messageId in scrollEmbeds:
+            initial = scrollEmbeds[messageId]["value"]
+
+            # Check if the member ID is the same as the stored ID
+            if str(member.id) == scrollEmbeds[messageId]:
+
+                # Rewind reaction was added; Move to first field
+                if reaction == "rewind":
+                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
                 
-                # 1 Parameter Exists (command)
-                elif len(parameters) == 1:
-
-                    # Determine if channel has nsfw filter on it
-                    if message.guild != None:
-                        isNSFW = message.channel.is_nsfw()
-                    else:
-                        isNSFW = True
-
-                    # See if parameter is a category
-                    if self.isCategoryName(parameters[0]):
-                        embed = await self.run(message, self._help, self.getHelpForCategory, message, parameters[0], isNSFW = isNSFW)
-                    else:
-                        embed = await self.run(message, self._help, self.getHelpForCommand, message.author, parameters[0], isNSFW = isNSFW)
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = embed
-                    )
+                # Fast Forward reaction was added; Move to last field
+                elif reaction == "fast_forward":
+                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
                 
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._help, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Markdown
-            elif command in self._markdown.getAlternatives():
-
-                # No Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._markdown, self.markdown, message.author)
-                    )
+                # Arrow Left reaction was added; Move field left
+                elif reaction == "arrow_left":
+                    scrollEmbeds[messageId]["value"] -= 1
+                    if scrollEmbeds[message]["value"] < scrollEmbeds[messageId]["min"]:
+                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
                 
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._markdown, Category.TOO_MANY_PARAMETERS)
-                    )
+                # Arrow Right reaction was added; Move field right
+                elif reaction == "arrow_right":
+                    scrollEmbeds[messageId]["value"] += 1
+                    if scrollEmbeds[message]["value"] > scrollEmbeds[messageId]["max"]:
+                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
+                
+            # Update the scroll embed
+            if scrollEmbeds[messageId]["value"] != initial:
+                value = scrollEmbeds[messageId]["value"]
+                
+                # Get the embed that is stored; There will only be 1 always
+                embed = reaction.message.embeds[0]
+
+                # Set the field at 0
+                embed.set_field_at(0,
+                    name = scrollEmbeds[messageId]["fields"][value]["name"],
+                    value = scrollEmbeds[messageId]["fields"][value]["value"],
+                    inline = scrollEmbeds[messageId]["fields"][value]["inline"]
+                )
+
+                # Update the embed
+                await reaction.message.edit(
+                    embed = embed
+                )
+    
+    async def on_reaction_remove(self, reaction, member):
+        """Determines which reaction was removed from a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+
+        # Check for message ID in scrollable embeds
+        messageId = str(reaction.message.id)
+        if messageId in scrollEmbeds:
+            initial = scrollEmbeds[messageId]["value"]
+
+            # Check if the member ID is the same as the stored ID
+            if str(member.id) == scrollEmbeds[messageId]["author"]:
+
+                # Rewind reaction was added; Move to first field
+                if reaction == "rewind":
+                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
+                
+                # Fast Forward reaction was added; Move to last field
+                elif reaction == "fast_forward":
+                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
+                
+                # Arrow Left reaction was added; Move field left
+                elif reaction == "arrow_left":
+                    scrollEmbeds[messageId]["value"] -= 1
+                    if scrollEmbeds[message]["value"] < scrollEmbeds[messageId]["min"]:
+                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
+                
+                # Arrow Right reaction was added; Move field right
+                elif reaction == "arrow_right":
+                    scrollEmbeds[messageId]["value"] += 1
+                    if scrollEmbeds[message]["value"] > scrollEmbeds[messageId]["max"]:
+                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
+                
+            # Update the scroll embed
+            if scrollEmbeds[messageId]["value"] != initial:
+                value = scrollEmbeds[messageId]["value"]
+                
+                # Get the embed that is stored; There will only be 1 always
+                embed = reaction.message.embeds[0]
+
+                # Set the field at 0
+                embed.set_field_at(0,
+                    name = scrollEmbeds[messageId]["fields"][value]["name"],
+                    value = scrollEmbeds[messageId]["fields"][value]["value"],
+                    inline = scrollEmbeds[messageId]["fields"][value]["inline"]
+                )
+
+                # Update the embed
+                await reaction.message.edit(
+                    embed = embed
+                )
 
 def setup(client):
     client.add_cog(Help(client))

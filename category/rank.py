@@ -1,19 +1,20 @@
+from util.file.database import loop
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
 from util.rank.image import createRankImage
 
-from util.utils import sendMessage, getErrorMessage, run
+from util.utils.discordUtils import sendMessage, getErrorMessage
 
 from supercog import Category, Command
 import discord, math, os
+
+scrollEmbeds = {}
 
 class Rank(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    EMBED_COLOR = 0x008080
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -30,6 +31,8 @@ class Rank(Category):
             client, 
             "Rank",
             description = "The ranking system is strong with this category.",
+            embed_color = 0x008080,
+            server_category = True,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -49,7 +52,8 @@ class Rank(Category):
                         "When you are getting your ranking card, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.rank
         })
 
         self._levelUp = Command(commandDict = {
@@ -87,7 +91,8 @@ class Rank(Category):
                         " When you are getting your level up info, you don't need more than just the inquiry."
                     ]
                 }
-            }
+            },
+            "command": self.levelUp
         })
 
         self.setCommands({
@@ -99,16 +104,50 @@ class Rank(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def rank(self, discordMember):
+    async def rank(self, message, parameters):
         """Returns an image displaying the rank of the member in this server.\n
 
         discordMember - The member to get the rank of.\n
         """
 
-        # Get and return the rank image file for the member
-        return createRankImage(discordMember)
+        # Check for too many parameters
+        if len(parameters) > self._rank.getMaxParameters():
+            result = getErrorMessage(self._rank, Rank.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            result = await loop.run_in_executor(None,
+                createRankImage,
+                message.author
+            )
+
+        # Check for an error
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        else:
+
+            # Send rank image and remove
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
     
-    def levelUp(self, discordMember, interactionType = None):
+    async def levelUp(self, message, parameters):
         """Returns the amount of different interactions a Discord Member needs to level up.
 
         Parameters:
@@ -116,58 +155,80 @@ class Rank(Category):
             interactionType (str): The type of interaction to get.
         """
 
-        # Get member info from server
-        member = Server.getMember(discordMember.guild, discordMember)
+        # Check for too many parameters
+        if len(parameters) > self._levelUp.getMaxParameters():
+            embed = getErrorMessage(self._levelUp, Rank.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
 
-        # Get member's current and next experience
-        currentExp = member["experience"]
-        nextExp = Server.getExpFromLevel(member["level"] + 1)
+            interactionType = None if len(parameters) == 0 else parameters[0]
 
-        # Get each interaction type before checking the interaction type
-        profanity = math.ceil(
-            (nextExp - currentExp) / (Server.PROFANE_XP + Server.NORMAL_XP)
-        )
-        reactions = math.ceil(
-            (nextExp - currentExp) / Server.REACTION_XP
-        )
-        normal = math.ceil(
-            (nextExp - currentExp) / Server.NORMAL_XP
-        )
+            # Get member info from server
+            member = Server.getMember(message.guild, message.author)
 
-        # Check if interaction type is None; Get all stats
-        if interactionType == None:
-            return discord.Embed(
-                title = "In order to level up, you need either",
-                description = "{} Profane Messages\nor\n{} Reactions\nor\n{} Regular Messages".format(
-                    profanity, reactions, normal
+            # Get member's current and next experience
+            currentExp = member["experience"]
+            nextExp = Server.getExpFromLevel(member["level"] + 1)
+
+            # Get each interaction type before checking the interaction type
+            profanity = math.ceil(
+                (nextExp - currentExp) / (Server.PROFANE_XP + Server.NORMAL_XP)
+            )
+            reactions = math.ceil(
+                (nextExp - currentExp) / Server.REACTION_XP
+            )
+            normal = math.ceil(
+                (nextExp - currentExp) / Server.NORMAL_XP
+            )
+
+            # Check if interaction type is None; Get all stats
+            if interactionType == None:
+                embed = discord.Embed(
+                    title = "In order to level up, you need either",
+                    description = "{} Profane Messages\nor\n{} Reactions\nor\n{} Regular Messages".format(
+                        profanity, reactions, normal
+                    ),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            # Check if interaction type is valid
+            if interactionType in self._levelUp.getAcceptedParameter("interaction", "profanity").getAlternatives():
+                embed = discord.Embed(
+                    title = "In order to level up, you need",
+                    description = "{} Profane Messages".format(profanity),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            elif interactionType in self._levelUp.getAcceptedParameter("interaction", "reactions").getAlternatives():
+                embed = discord.Embed(
+                    title = "In order to level up, you need",
+                    description = "{} Reactions".format(profanity),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            elif interactionType in self._levelUp.getAcceptedParameter("interaction", "normal").getAlternatives():
+                embed = discord.Embed(
+                    title = "In order to level up, you need",
+                    description = "{} Regular Messages".format(profanity),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            # Interaction type is invalid; error
+            else:
+                embed = getErrorMessage(self._levelUp, Rank.INVALID_INTERACTION)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
                 ),
-                colour = Rank.EMBED_COLOR
+                icon_url = message.author.avatar_url
             )
-        
-        # Check if interaction type is valid
-        if interactionType in self._levelUp.getAcceptedParameter("interaction", "profanity").getAlternatives():
-            return discord.Embed(
-                title = "In order to level up, you need",
-                description = "{} Profane Messages".format(profanity),
-                colour = Rank.EMBED_COLOR
-            )
-        
-        elif interactionType in self._levelUp.getAcceptedParameter("interaction", "reactions").getAlternatives():
-            return discord.Embed(
-                title = "In order to level up, you need",
-                description = "{} Reactions".format(profanity),
-                colour = Rank.EMBED_COLOR
-            )
-        
-        elif interactionType in self._levelUp.getAcceptedParameter("interaction", "normal").getAlternatives():
-            return discord.Embed(
-                title = "In order to level up, you need",
-                description = "{} Regular Messages".format(profanity),
-                colour = Rank.EMBED_COLOR
-            )
-        
-        # Interaction type is invalid; error
-        return getErrorMessage(self._levelUp, Rank.INVALID_INTERACTION)
+        )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -187,56 +248,13 @@ class Rank(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Rank Command
-            if command in self._rank.getAlternatives():
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
 
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-
-                    imageSource = await run(message, self._rank, self.rank, message.author)
-                    
-                    if type(imageSource) == str:
-                        await sendMessage(
-                            self.client,
-                            message,
-                            filename = imageSource
-                        )
-                        os.remove(imageSource) # Remove the image, we don't want to keep it in the file system
-                    
-                    else:
-                        await sendMessage(
-                            self.client,
-                            message,
-                            embed = imageSource
-                        )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._rank, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Level Up Command
-            elif command in self._levelUp.getAlternatives():
-
-                # 0 or 1 Parameter Exists
-                if len(parameters) in [0, 1]:
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._levelUp, self.levelUp, message.author, None if len(parameters) == 0 else parameters[0])
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._levelUp, Category.TOO_MANY_PARAMETERS)
-                    )
+                    # Run the command but don't try running others
+                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                    break
 
 def setup(client):
     client.add_cog(Rank(client))

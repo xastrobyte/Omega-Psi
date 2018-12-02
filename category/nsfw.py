@@ -1,18 +1,19 @@
 from util.file.server import Server
-from util.utils import sendMessage, loadImageFromUrl, getErrorMessage
+from util.utils.discordUtils import sendMessage, getErrorMessage
+from util.utils.miscUtils import loadImageFromUrl
 
 from supercog import Category, Command
-import discord, os, pygame, random
+import discord, pygame, random
 
 pygame.init()
+
+scrollEmbeds = {}
 
 class NSFW(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    EMBED_COLOR = 0xFFAAAA
 
     BOOBS_URL = "http://media.oboobs.ru/boobs_preview/{}.jpg"
 
@@ -31,7 +32,8 @@ class NSFW(Category):
             client,
             "NSFW",
             description = "An NSFW category for 18+",
-            restriction_info = "You should be 18+ to run the commands in this channel!",
+            embed_color = 0xFFAAAA,
+            restriction_info = "You should be 18+ to run the commands in this category!",
             nsfw_category = True,
             nsfw_channel_error = Server.getNSFWChannelError
         )
@@ -49,7 +51,8 @@ class NSFW(Category):
                         "In order to get some boobs, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.boobs
         })
 
         self._booty = Command(commandDict = {
@@ -61,7 +64,8 @@ class NSFW(Category):
                         "In order to get some booty, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.booty
         })
 
         self.setCommands([
@@ -73,35 +77,54 @@ class NSFW(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def boobs(self, parameters):
+    async def boobs(self, message, parameters):
         """Sends a random picture of some boobs.
         """
         
         # Check for too many parameters
         if len(parameters) > self._boobs.getMaxParameters():
-            return getErrorMessage(self._boobs, NSFW.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._boobs, NSFW.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
 
-        # Load image from URL, temporarily save it, send image
-        while True:
+            # Load image from URL, temporarily save it, send image
+            while True:
 
-            # Generate random number for an image; Add 0's to beginning until pad is reached (5)
-            boobNumber = str(random.randint(1, 12500))
-            boobNumber = boobNumber.rjust(5, "0")
+                # Generate random number for an image; Add 0's to beginning until pad is reached (5)
+                boobNumber = str(random.randint(1, 12500))
+                boobNumber = boobNumber.rjust(5, "0")
 
-            # Try loading the Image
-            try:
-                boobsImage = loadImageFromUrl(NSFW.BOOBS_URL.format(boobNumber))
-                break
+                # Try loading the Image
+                try:
+                    boobsImage = loadImageFromUrl(NSFW.BOOBS_URL.format(boobNumber))
+                    break
+                
+                # Image load failed; Retry using new number.
+                except:
+                    pass
             
-            # Image load failed; Retry using new number.
-            except:
-                pass
-            
-        image = "BOOBS_{}.png".format(boobNumber)
-        pygame.image.save(boobsImage, image)
-        return image
+            embed = discord.Embed(
+                title = "Boobs Number {}".format(boobNumber),
+                description = " ",
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            ).set_image(
+                url = NSFW.BOOBS_URL.format(boobNumber)
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
     
-    def booty(self, parameters):
+    async def booty(self, message, parameters):
         """Sends a random picture of some booty.
         """
         
@@ -109,24 +132,44 @@ class NSFW(Category):
         if len(parameters) > self._booty.getMaxParameters():
             return getErrorMessage(self._booty, NSFW.TOO_MANY_PARAMETERS)
 
-        # Load image from URL, temporarily save it, send image
-        while True:
+        # There were the proper amount of parameters
+        else:
 
-            # Generate random number for an image; Add 0's to beginning until pad is reached (5)
-            bootyNumber = str(random.randint(1, 5400))
-            bootyNumber = bootyNumber.rjust(5, "0")
+            # Load image from URL, temporarily save it, send image
+            while True:
 
-            # Try loading the image
-            try:
-                bootyImage = loadImageFromUrl(NSFW.BOOTY_URL.format(bootyNumber))
+                # Generate random number for an image; Add 0's to beginning until pad is reached (5)
+                bootyNumber = str(random.randint(1, 5400))
+                bootyNumber = bootyNumber.rjust(5, "0")
+
+                # Try loading the image
+                try:
+                    bootyImage = loadImageFromUrl(NSFW.BOOTY_URL.format(bootyNumber))
+                    break
+                
+                # Image load failed; Retry using new number.
+                except:
+                    pass
             
-            # Image load failed; Retry using new number.
-            except:
-                pass
+            embed = discord.Embed(
+                title = "Booty Number {}".format(bootyNumber),
+                description = " ",
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            ).set_image(
+                url = NSFW.BOOTY_URL.format(bootyNumber)
+            )
 
-        image = "BOOTY_{}.png".format(bootyNumber)
-        pygame.image.save(bootyImage, image)
-        return image
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -146,43 +189,13 @@ class NSFW(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Boobs Command
-            if command in self._boobs.getAlternatives():
-                result = await self.run(message, self._boobs, self.boobs, parameters)
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
 
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = result
-                    )
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result)
-            
-            # Booty Command
-            elif command in self._booty.getAlternatives():
-                result = await self.run(message, self._booty, self.booty, parameters)
-
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = result
-                    )
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-                    
-                    os.remove(result)
+                    # Run the command but don't try running others
+                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                    break
 
 def setup(client):
     client.add_cog(NSFW(client))

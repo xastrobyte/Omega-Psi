@@ -1,6 +1,7 @@
+from util.file.database import loop
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage, run, timeout
+from util.utils.discordUtils import sendMessage, getErrorMessage
 
 from sympy.abc import x
 from sympy.parsing.sympy_parser import parse_expr
@@ -10,13 +11,13 @@ from sympy.parsing.sympy_parser import implicit_multiplication_application
 from supercog import Category, Command
 import discord, sympy
 
+scrollEmbeds = {}
+
 class Math(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    EMBED_COLOR = 0xFF8000
 
     APPENDAGES = {
         "0": "th",
@@ -48,6 +49,7 @@ class Math(Category):
             client, 
             "Math",
             description = "Need help with math? These commands got your back.",
+            embed_color = 0xFF8000,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -72,7 +74,8 @@ class Math(Category):
                         "To simplify an expression, you need an expression."
                     ]
                 }
-            }
+            },
+            "command": self.simplify
         })
 
         self._expand = Command(commandDict = {
@@ -95,7 +98,8 @@ class Math(Category):
                         "To expand an expression, you need only 1 expression."
                     ]
                 }
-            }
+            },
+            "command": self.expand
         })
 
         self._factor = Command(commandDict = {
@@ -118,7 +122,8 @@ class Math(Category):
                         "To factor an expression, you need only 1 expression."
                     ]
                 }
-            }
+            },
+            "command": self.factor
         })
 
         self._factorial = Command(commandDict = {
@@ -146,7 +151,103 @@ class Math(Category):
                         "To get the factorial of a number, you need 1 number."
                     ]
                 }
-            }
+            },
+            "command": self.factorial
+        })
+
+        self._solve = Command(commandDict = {
+            "alternatives": ["solve", "system"],
+            "info": "Solves an equation or a system of equations.",
+            "parameters": {
+                "equation(s)": {
+                    "info": "The equation(s) to solve.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "To solve an equation, or system of equations, you need the equation(s)."
+                    ]
+                }
+            },
+            "command": self.solve
+        })
+
+        self._substitute = Command(commandDict = {
+            "alternatives": ["substitute", "subs"],
+            "info": "Substitutes variables in an equation.",
+            "parameters": {
+                "expression": {
+                    "info": "The expression to substitute variables for.",
+                    "optional": False
+                },
+                "variables": {
+                    "info": "The variables to substitute in the expression.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to substitute variables in an expression, you need the expression and the variables."
+                    ]
+                },
+                Math.NO_VARIABLES: {
+                    "messages": [
+                        "There are no variables to substitute."
+                    ]
+                }
+            },
+            "command": self.substitute
+        })
+
+        self._derivative = Command(commandDict = {
+            "alternatives": ["derivative", "derivate", "dv"],
+            "info": "Gets the derivative of an expression.",
+            "parameters": {
+                "expression": {
+                    "info": "The expression to get the derivative of.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "To get the derivative of an expression, you need an expression."
+                    ]
+                },
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "To get the derivative of an expression, you need 1 expression."
+                    ]
+                }
+            },
+            "command": self.derivative
+        })
+
+        self._integral = Command(commandDict = {
+            "alternatives": ["integral", "integrate"],
+            "info": "Gets the integral of an expression.",
+            "parameters": {
+                "expression": {
+                    "info": "The expression to get the integral of.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "To get the integral of an expression, you need an expression."
+                    ]
+                },
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "To get the integral of an expression, you need 1 expression."
+                    ]
+                }
+            },
+            "command": self.integral
         })
 
         self._fibonacci = Command(commandDict = {
@@ -174,111 +275,21 @@ class Math(Category):
                         "To get the fibonacci number of a number, you need 1 number."
                     ]
                 }
-            }
-        })
-
-        self._solve = Command(commandDict = {
-            "alternatives": ["solve", "system"],
-            "info": "Solves an equation or a system of equations.",
-            "parameters": {
-                "equation(s)": {
-                    "info": "The equation(s) to solve.",
-                    "optional": False
-                }
             },
-            "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "To solve an equation, or system of equations, you need the equation(s)."
-                    ]
-                }
-            }
+            "command": self.fibonacci
         })
 
-        self._substitute = Command(commandDict = {
-            "alternatives": ["substitute", "subs"],
-            "info": "Substitutes variables in an equation.",
-            "parameters": {
-                "expression": {
-                    "info": "The expression to substitute variables for.",
-                    "optional": False
-                },
-                "variables": {
-                    "info": "The variables to substitute in the expression.",
-                    "optional": False
-                }
-            },
-            "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "In order to substitute variables in an expression, you need the expression and the variables."
-                    ]
-                },
-                Math.NO_VARIABLES: {
-                    "messages": [
-                        "There are no variables to substitute."
-                    ]
-                }
-            }
-        })
-
-        self._derivative = Command(commandDict = {
-            "alternatives": ["derivative", "derivate", "dv"],
-            "info": "Gets the derivative of an expression.",
-            "parameters": {
-                "expression": {
-                    "info": "The expression to get the derivative of.",
-                    "optional": False
-                }
-            },
-            "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "To get the derivative of an expression, you need an expression."
-                    ]
-                },
-                Category.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "To get the derivative of an expression, you need 1 expression."
-                    ]
-                }
-            }
-        })
-
-        self._integral = Command(commandDict = {
-            "alternatives": ["integral", "integrate"],
-            "info": "Gets the integral of an expression.",
-            "parameters": {
-                "expression": {
-                    "info": "The expression to get the integral of.",
-                    "optional": False
-                }
-            },
-            "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "To get the integral of an expression, you need an expression."
-                    ]
-                },
-                Category.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "To get the integral of an expression, you need 1 expression."
-                    ]
-                }
-            }
-        })
-
-        self.setCommands({
+        self.setCommands([
             self._simplify,
             self._expand,
             self._factor,
             self._factorial,
             self._solve,
             self._substitute,
-            self._fibonacci,
             self._derivative,
-            self._integral
-        })
+            self._integral,
+            self._fibonacci
+        ])
 
         self._transformations = (standard_transformations + (implicit_multiplication_application,))
         self._FIBONACCI = {}
@@ -287,203 +298,387 @@ class Math(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    @timeout(5, "The simplify function timed out.")
-    def simplify(self, expression):
+    async def simplify(self, message, parameters):
         """Simplifies an expression using sympy.\n
 
         expression - The expression to simplify.\n
         """
-        
-        # Standardize expression
-        originalExpression = expression
-        expression = expression.replace(" ", "")
-        try:
-            expression = self._standardize(expression)
-            result = str(sympy.simplify(expression)).replace("**", "^").replace("*", "")
-        except:
-            result = str(eval(expression))
 
-        # Return the result in an embed
-        return discord.Embed(
-            title = "Evaluation of `{}`".format(originalExpression),
-            description = result,
-            colour = Math.EMBED_COLOR
+        # Check for not enough parameters
+        if len(parameters) < self._simplify.getMinParameters():
+            embed = getErrorMessage(self._simplify, Math.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            expression = " ".join(parameters)
+        
+            # Standardize expression
+            originalExpression = expression
+            expression = expression.replace(" ", "")
+            try:
+                expression = self._standardize(expression)
+
+                result = await loop.run_in_executor(None,
+                    sympy.simplify,
+                    expression
+                )
+                result = str(result).replace("**", "^").replace("*", "")
+                
+            except:
+                result = str(eval(expression))
+
+            embed = discord.Embed(
+                title = "Evaluation of `{}`".format(originalExpression),
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    @timeout(5, "The expand function timed out.")
-    def expand(self, expression):
+    async def expand(self, message, parameters):
         """Expands an expression using sympy.\n
 
         expression - The expression to expand.\n
         """
 
-        # Standardize expression
-        originalExpression = expression
-        expression = self._standardize(expression)
+        # Check for not enough parameters
+        if len(parameters) < self._expand.getMinParameters():
+            embed = getErrorMessage(self._expand, Math.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            expression = " ".join(parameters)
 
-        # Return the result in an embed
-        return discord.Embed(
-            title = "Expansion of `{}`".format(originalExpression),
-            description = str(sympy.simplify(expression)).replace("**", "^").replace("*", ""),
-            colour = Math.EMBED_COLOR
+            # Standardize expression
+            originalExpression = expression
+            expression = self._standardize(expression)
+
+            result = await loop.run_in_executor(None,
+                sympy.simplify,
+                expression
+            )
+            result = str(result).replace("**", "^").replace("*", "")
+
+            # Return the result in an embed
+            embed = discord.Embed(
+                title = "Expansion of `{}`".format(originalExpression),
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    @timeout(5, "The factor function timed out.")
-    def factor(self, expression):
+    async def factor(self, message, parameters):
         """Factors an expression using sympy.\n
 
         expression - The expression to factor.\n
         """
-        
-        # Standardize expression
-        originalExpression = expression
-        expression = self._standardize(expression)
 
-        # Return the result in an embed
-        return discord.Embed(
-            title = "Factoring of `{}`".format(originalExpression),
-            description = str(sympy.factor(expression)).replace("**", "^").replace("*", ""),
-            colour = Math.EMBED_COLOR
+        # Check for not enough parameters
+        if len(parameters) < self._factor.getMinParameters():
+            embed = getErrorMessage(self._factor, Math.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            expression = " ".join(parameters)
+        
+            # Standardize expression
+            originalExpression = expression
+            expression = self._standardize(expression)
+
+            result = await loop.run_in_executor(None,
+                sympy.factor,
+                expression
+            )
+            result = str(result).replace("**", "^").replace("*", "")
+
+            # Return the result in an embed
+            embed = discord.Embed(
+                title = "Factoring of `{}`".format(originalExpression),
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    @timeout(5, "The factorial function timed out.")
-    def factorial(self, number):
+    async def factorial(self, message, parameters):
         """Gets the factorial of a number.\n
 
         number - The number to get the factorial of.\n
         """
+
+        # Check for not enough parameters
+        if len(parameters) < self._factorial.getMinParameters():
+            embed = getErrorMessage(self._factorial, Math.NOT_ENOUGH_PARAMETERS)
         
-        # Loop through number
-        originalNumber = number
-        try:
-            number = int(number)
-        except:
-            return getErrorMessage(self._factorial, Math.INVALID_INPUT)
+        # Check for too many parameters
+        elif len(parameters) > self._factorial.getMaxParameters():
+            embed = getErrorMessage(self._factorial, Math.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            number = parameters[0]
+        
+            # Loop through number
+            originalNumber = number
+            try:
+                number = int(number)
 
-        for n in range(number - 1, 0, -1):
-            number *= n
+                for n in range(number - 1, 0, -1):
+                    number *= n
 
-        # Setup embed
-        embed = discord.Embed(
-            title = "Factorial of `{}`".format(originalNumber),
-            description = " ",
-            colour = Math.EMBED_COLOR
-        )
+                # Setup embed
+                embed = discord.Embed(
+                    title = "Factorial of `{}`".format(originalNumber),
+                    description = " ",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
 
-        # Turn number into string and split into fields
-        number = str(number)
-        fieldText = ""
-        fields = []
-
-        # Add characters to field text and add embed to field if necessary
-        for char in number:
-            if len(fieldText) + 1 >= OmegaPsi.MESSAGE_THRESHOLD:
-                fields.append(fieldText)
+                # Turn number into string and split into fields
+                number = str(number)
                 fieldText = ""
-            
-            fieldText += char
-        
-        if len(fieldText) > 0:
-            fields.append(fieldText)
-        
-        fieldCount = 0
-        for field in fields:
-            fieldCount += 1
-            embed.add_field(
-                name = "Result {}".format(
-                    "({} / {})".format(
-                        fieldCount, len(fields)
-                    ) if len(fields) > 1 else ""
-                ),
-                value = field,
-                inline = False
-            )
+                fields = []
 
-        # Return the result in an embed
-        return embed
+                # Add characters to field text and add embed to field if necessary
+                for char in number:
+                    if len(fieldText) + 1 >= OmegaPsi.MESSAGE_THRESHOLD:
+                        fields.append(fieldText)
+                        fieldText = ""
+                    
+                    fieldText += char
+                
+                if len(fieldText) > 0:
+                    fields.append(fieldText)
+                
+                fieldCount = 0
+                for field in fields:
+                    fieldCount += 1
+                    embed.add_field(
+                        name = "Result {}".format(
+                            "({} / {})".format(
+                                fieldCount, len(fields)
+                            ) if len(fields) > 1 else ""
+                        ),
+                        value = field,
+                        inline = False
+                    )
+            except:
+                embed = getErrorMessage(self._factorial, Math.INVALID_INPUT)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
     
-    @timeout(5, "The solve function timed out.")
-    def solve(self, expressions):
+    async def solve(self, message, parameters):
         """Solves an expression, or expressions, using sympy.\n
 
         expressions - The expressions to solve.\n
         """
+
+        # Check for not enough parameters
+        if len(parameters) < self._solve.getMinParameters():
+            embed = getErrorMessage(self._solve, Math.NOT_ENOUGH_PARAMETERS)
         
-        # Standardize each expression
-        originalExpression = "\n".join(expressions)
-        for exp in range(len(expressions)):
+        # There were the proper amount of parameters
+        else:
+            expressions = parameters
+        
+            # Standardize each expression
+            originalExpression = "\n".join(expressions)
+            for exp in range(len(expressions)):
 
-            # Check if expression has "="
-            eqIndex = expressions[exp].find("=")
-            if eqIndex != -1:
+                # Check if expression has "="
+                eqIndex = expressions[exp].find("=")
+                if eqIndex != -1:
 
-                # Get left and right sides
-                left = expressions[exp][:eqIndex]
-                right = expressions[exp][eqIndex + 1:]
-                expressions[exp] = left + "- ({})".format(right)
+                    # Get left and right sides
+                    left = expressions[exp][:eqIndex]
+                    right = expressions[exp][eqIndex + 1:]
+                    expressions[exp] = left + "- ({})".format(right)
+                
+                expressions[exp] = self._standardize(expressions[exp])
             
-            expressions[exp] = self._standardize(expressions[exp])
-        
-        # Get variables and values; Add to String
-        varDict = sympy.solve(expressions)
-        result = ""
-        for variable in varDict:
-            result += "{} = {}\n".format(
-                variable, varDict[variable]
+            # Get variables and values; Add to String
+            varDict = await loop.run_in_executor(None,
+                sympy.solve,
+                expressions
+            )
+            varResult = {}
+            result = ""
+
+            # See if varDict is a list (multiple solutions)
+            if type(varDict) == list:
+                for solution in varDict:
+                    for variable in solution:
+                        if variable not in varResult:
+                            varResult[variable] = []
+                        varResult[variable].append(solution[variable])
+
+            # See if varDict is a dict (single solutions)
+            else:
+                varResult = varDict
+
+            for variable in varResult:
+                result += "{} = {}\n".format(
+                    variable, varResult[variable]
+                )
+            
+            embed = discord.Embed(
+                title = "Solution",
+                description = "`{}`\n".format(originalExpression) + result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
-        return discord.Embed(
-            title = "Solution",
-            description = "`{}`\n".format(originalExpression) + result,
-            colour = Math.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    @timeout(5, "The substitute function timed out.")
-    def substitute(self, expression, variables):
+    async def substitute(self, message, parameters):
         """Substitutes an expression with variables using sympy.\n
 
         expression - The expression to substitute.\n
         variables - The variables to substitute in the expression.\n
         """
-        
-        # Turn variables into a variable dictionary
-        originalExpression = expression
-        varDict = {}
-        for variable in variables:
 
-            # Find "=", variable, and value
-            equals = variable.find("=")
-            var = variable[:equals]
-            value = variable[equals + 1:]
-            varDict[var] = value
+        # Check for not enough parameters
+        if len(parameters) < self._substitute.getMinParameters():
+            embed = getErrorMessage(self._substitute, Math.NOT_ENOUGH_PARAMETERS)
         
-        variables = varDict
-        if len(variables) == 0:
-            return getErrorMessage(self._substitute, Math.NO_VARIABLES)
+        # There were the proper amount of parameters
+        else:
+            expression = parameters[0]
+            variables = parameters[1:]
         
-        # Standardize expression
-        expression = self._standardize(expression)
+            # Turn variables into a variable dictionary
+            originalExpression = expression
+            varDict = {}
+            for variable in variables:
 
-        return discord.Embed(
-            title = "Subsitution of `{}`".format(originalExpression),
-            description = str(eval(str(expression.subs(variables)))),
-            colour = Math.EMBED_COLOR
+                # Find "=", variable, and value
+                equals = variable.find("=")
+                var = variable[:equals]
+                value = variable[equals + 1:]
+                varDict[var] = value
+            
+            variables = varDict
+
+            # There were no variables to go through
+            if len(variables) == 0:
+                embed = getErrorMessage(self._substitute, Math.NO_VARIABLES)
+            
+            # There are variables to go through
+            else:
+
+                # Standardize expression
+                expression = self._standardize(expression)
+
+                result = await loop.run_in_executor(None,
+                    expression.subs,
+                    variables
+                )
+                result = str(eval(str(result)))
+
+                embed = discord.Embed(
+                    title = "Subsitution of `{}`".format(originalExpression),
+                    description = result,
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    @timeout(5, "The fibonacci function timed out.")
-    def fibonacci(self, number):
+    async def fibonacci(self, message, parameters):
         """Gets the fibonacci of a number.\n
 
         number - The number to get the fibonacci of.\n
         """
 
-        return discord.Embed(
-            title = "`{}{}` Fibonacci number".format(
-                number,
-                Math.APPENDAGES[str(number)[-1]]
-            ),
-            description = str(self._fibonacciHelper(number)),
-            colour = Math.EMBED_COLOR
+        # Check for not enough parameters
+        if len(parameters) < self._fibonacci.getMinParameters():
+            embed = getErrorMessage(self._fibonacci, Math.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._fibonacci.getMaxParameters():
+            embed = getErrorMessage(self._fibonacci, Math.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            number = parameters[0]
+
+            embed = discord.Embed(
+                title = "`{}{}` Fibonacci number".format(
+                    number,
+                    Math.APPENDAGES[str(number)[-1]]
+                ),
+                description = str(self._fibonacciHelper(number)),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
     def _fibonacciHelper(self, number):
@@ -510,38 +705,88 @@ class Math(Category):
             self._FIBONACCI[str(number)] = self._fibonacciHelper(number - 2) + self._fibonacciHelper(number - 1)
             return self._FIBONACCI[str(number)]
     
-    @timeout(5, "The derivative function timed out.")
-    def derivative(self, expression):
+    async def derivative(self, message, parameters):
         """Gets the derivative of an expression using sympy.\n
 
         expression - The expression to get the derivative of.\n
         """
-        
-        # Standardize expression
-        originalExpression = expression
-        expression = self._standardize(expression)
 
-        return discord.Embed(
-            title = "Derivative of `{}`".format(originalExpression),
-            description = str(sympy.diff(expression)).replace("**", "^").replace("*", ""),
-            colour = Math.EMBED_COLOR
+        # Check for not enough parameters
+        if len(parameters) < self._derivative.getMinParameters():
+            embed = getErrorMessage(self._derivative, Math.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            expression = " ".join(parameters)
+        
+            # Standardize expression
+            originalExpression = expression
+            expression = self._standardize(expression)
+
+            result = await loop.run_in_executor(None,
+                sympy.diff,
+                expression
+            )
+            result = str(result).replace("**", "^").replace("*", "")
+
+            embed = discord.Embed(
+                title = "Derivative of `{}`".format(originalExpression),
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    @timeout(5, "The integral function timed out.")
-    def integral(self, expression):
+    async def integral(self, message, parameters):
         """Gets the integral of an expression using sympy.\n
 
         expression - The expression to get the integral of.\n
         """
-        
-        # Standardize expression
-        originalExpression = expression
-        expression = self._standardize(expression)
 
-        return discord.Embed(
-            title = "Integral of `{}`".format(originalExpression),
-            description = str(sympy.integrate(expression, x)).replace("**", "^").replace("*", ""),
-            colour = Math.EMBED_COLOR
+        # Check for not enough parameters
+        if len(parameters) < self._integral.getMinParameters():
+            embed = getErrorMessage(self._integral, Math.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            expression = " ".join(parameters)
+        
+            # Standardize expression
+            originalExpression = expression
+            expression = self._standardize(expression)
+
+            result = await loop.run_in_executor(None,
+                sympy.integrate,
+                expression, x
+            )
+            result = str(result).replace("**", "^").replace("*", "")
+
+            embed = discord.Embed(
+                title = "Integral of `{}`".format(originalExpression),
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
 
     def _standardize(self, expression):
@@ -552,15 +797,15 @@ class Math(Category):
 
         # Standardize expressions using parse_expr
         return parse_expr(expression.replace("^", "**"), transformations = self._transformations)
-    
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     async def on_message(self, message):
-        """Parses a message and runs an Math Category command if it can.\n
+        """Parses a message and runs an Math Category command if it can.
 
-        message - The Discord Message to parse.\n
+        message - The Discord Message to parse.
         """
 
         # Make sure message starts with the prefix
@@ -571,224 +816,13 @@ class Math(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Simplify Command
-            if command in self._simplify.getAlternatives():
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
 
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._simplify, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 or More Parameter Exists (simplify)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._simplify, self.simplify, " ".join(parameters))
-                    )
-            
-            # Expand Command
-            elif command in self._expand.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._expand, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 Parameter Exists (expand)
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._expand, self.expand, parameters[0])
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._expand, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Factor Command
-            elif command in self._factor.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._factor, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 Parameter Exists (factor)
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._factor, self.factor, parameters[0])
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._factor, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Factorial Command
-            elif command in self._factorial.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._factorial, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 Parameter Exists (factorial)
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._factorial, self.factorial, parameters[0])
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._factorial, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Solve Command
-            elif command in self._solve.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._solve, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 or More Parameter Exists (solve)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._solve, self.solve, parameters)
-                    )
-            
-            # Substitute Command
-            elif command in self._substitute.getAlternatives():
-
-                # Less than 2 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._substitute, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 2 or More Parameter Exists (substitute)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._substitute, self.substitute, parameters[0], parameters[1:])
-                    )
-            
-            # Fibonacci Command
-            elif command in self._fibonacci.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._fibonacci, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 Parameter Exists (fibonacci)
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._fibonacci, self.fibonacci, parameters[0])
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._fibonacci, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Derivative Command
-            elif command in self._simplify.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._derivative, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 Parameter Exists (derivative)
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._derivative, self.derivative, parameters[0])
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._derivative, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Integral Command
-            elif command in self._integral.getAlternatives():
-
-                # 0 Parameters Exist (NOT_ENOUGH_PARAMETERS)
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._integral, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-
-                # 1 Parameter Exists (integral)
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await run(message, self._integral, self.integral, parameters[0])
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._integral, Category.TOO_MANY_PARAMETERS)
-                    )
+                    # Run the command but don't try running others
+                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                    break
 
 def setup(client):
     client.add_cog(Math(client))

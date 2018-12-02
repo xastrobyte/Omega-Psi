@@ -1,3 +1,4 @@
+from util.file.database import loop
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
 from util.file.user import User
@@ -12,7 +13,7 @@ from util.game import callOfDuty
 from util.game import fortnite
 from util.game import league
 
-from util.utils import sendMessage, getErrorMessage
+from util.utils.discordUtils import sendMessage, getErrorMessage
 
 from datetime import datetime
 from random import choice as choose
@@ -24,8 +25,6 @@ class Game(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    EMBED_COLOR = 0xFF8000
 
     # Connect Four URL
     CONNECT_FOUR_ICON = "https://is2-ssl.mzstatic.com/image/thumb/Purple118/v4/aa/e9/96/aae9966e-a95e-65b2-a504-afbb0c9ac51d/source/512x512bb.jpg"
@@ -97,6 +96,7 @@ class Game(Category):
             client, 
             "Game",
             description = "You can play games with these.",
+            embed_color = 0xFF8000,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -149,7 +149,8 @@ class Game(Category):
                         "There are too many parameters. If you want to quit a game, use the `quit` parameter."
                     ]
                 }
-            }
+            },
+            "command": self.connectFour
         })
 
         self._hangman = Command(commandDict = {
@@ -201,7 +202,8 @@ class Game(Category):
                         "In order to play a game of hangman, you only need the difficulty."
                     ]
                 }
-            }
+            },
+            "command": self.hangman
         })
 
         self._rps = Command(commandDict = {
@@ -244,7 +246,8 @@ class Game(Category):
                         "The input was invalid."
                     ]
                 }
-            }
+            },
+            "command": self.rps
         })
 
         self._scramble = Command(commandDict = {
@@ -292,7 +295,8 @@ class Game(Category):
                         "The input was invalid."
                     ]
                 }
-            }
+            },
+            "command": self.scramble
         })
 
         self._ticTacToe = Command(commandDict = {
@@ -344,7 +348,8 @@ class Game(Category):
                         "That move was already taken."
                     ]
                 }
-            }
+            },
+            "command": self.ticTacToe
         })
 
         self._stats = Command(commandDict = {
@@ -356,7 +361,8 @@ class Game(Category):
                         "In order to check your game stats, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.stats
         })
 
         self._blackOps3 = Command(commandDict = {
@@ -398,7 +404,8 @@ class Game(Category):
                         "There was no user found with that username."
                     ]
                 }
-            }
+            },
+            "command": self.blackOps3
         })
 
         self._blackOps4 = Command(commandDict = {
@@ -444,7 +451,8 @@ class Game(Category):
                         "There was no user found with that username."
                     ]
                 }
-            }
+            },
+            "command": self.blackOps4
         })
 
         self._fortnite = Command(commandDict = {
@@ -490,12 +498,14 @@ class Game(Category):
                         "There was no user found with that username."
                     ]
                 }
-            }
+            },
+            "command": self.fortnite
         })
 
         self._fortniteItemShop = Command(commandDict = {
             "alternatives": ["fortniteItemShop"],
-            "info": "Gives you the current items in the Fortnite Item Shop."
+            "info": "Gives you the current items in the Fortnite Item Shop.",
+            "command": self.fortniteItemShop
         })
 
         self._league = Command(commandDict = {
@@ -518,7 +528,8 @@ class Game(Category):
                         "There was no Summoner found with that username."
                     ]
                 }
-            }
+            },
+            "command": self.league
         })
 
         self.setCommands([
@@ -547,7 +558,7 @@ class Game(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def connectFour(self, discordUser, *, difficulty = None, move = None):
+    async def connectFour(self, message, parameters, *, move = None):
         """Creates a Connect Four game or continues a Connect Four game.
 
         Parameters:
@@ -558,56 +569,62 @@ class Game(Category):
         
         # Check if game was started in server
         try:
-            serverId = str(discordUser.guild.id)
+            serverId = str(message.author.guild.id)
         
         # Game was started in private message
         except:
             serverId = "private"
 
-        authorId = str(discordUser.id)
+        authorId = str(message.author.id)
 
         # Create server connect four instances
         if serverId not in self._connectFourGames:
             self._connectFourGames[serverId] = {}
         
-        # Check if new game is being created
-        if difficulty != None:
+        # Check if move is None; Game is being created or quit
+        embed = None
+        if move == None:
 
-            # Check if user wants to quit
-            if difficulty in self._connectFour.getAcceptedParameter("difficulty", "quit").getAlternatives():
-
-                # Check if user is playing a game
-                if authorId in self._connectFourGames[serverId]:
-                    self._connectFourGames[serverId].pop(authorId)
-                    return getQuitGame("Connect Four", Game.EMBED_COLOR, Game.SUCCESS_ICON)
-                
-                # User was not playing a game
-                else:
-                    return getNoGame("Connect Four", Game.EMBED_COLOR, Game.FAILED_ICON)
+            # Check for too many parameters
+            if len(parameters) > self._connectFour.getMaxParameters():
+                embed = getErrorMessage(self._connectFour, Game.TOO_MANY_PARAMETERS)
             
-            # Create game instance
-            self._connectFourGames[serverId][authorId] = {
-                "board": connectFour.generateBoard(7, 6),
-                "difficulty": "hard",
-                "width": 7,
-                "height": 6,
-                "challenger_turn": True,
-                "challenger": discordUser,
-                "opponent": None
-            }
-            game = self._connectFourGames[serverId][authorId]
+            # There were the proper amount of parameters
+            else:
+                difficulty = "easy" if len(parameters) == 0 else parameters[0]
 
-            return discord.Embed(
-                title = "Connect Four",
-                description = "{}\n{}\n{}".format(
-                    connectFour.getBoard(game["board"]),
-                    ":large_blue_circle: " + discordUser.mention,
-                    ":red_circle: AI"
-                ),
-                colour = Game.EMBED_COLOR
-            ).set_thumbnail(
-                url = Game.CONNECT_FOUR_ICON
-            )
+                # Check if user wants to quit
+                if difficulty in self._connectFour.getAcceptedParameter("difficulty", "quit").getAlternatives():
+
+                    # Check if user is playing a game
+                    if authorId in self._connectFourGames[serverId]:
+                        self._connectFourGames[serverId].pop(authorId)
+                        embed = getQuitGame("Connect Four", self.getEmbedColor(), Game.SUCCESS_ICON)
+                    
+                    # User was not playing a game
+                    else:
+                        embed = getNoGame("Connect Four", self.getEmbedColor(), Game.FAILED_ICON)
+                
+                # User does not want to quit
+                else:
+
+                    # Create game instance
+                    self._connectFourGames[serverId][authorId] = connectFour.ConnectFour(
+                        message.author
+                    )
+                    game = self._connectFourGames[serverId][authorId]
+
+                    embed = discord.Embed(
+                        title = "Connect Four",
+                        description = "{}\n{}\n{}".format(
+                            game.showBoard(),
+                            ":large_blue_circle: " + game.getChallenger().mention,
+                            ":red_circle: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
+                        ),
+                        colour = self.getEmbedColor()
+                    ).set_thumbnail(
+                        url = Game.CONNECT_FOUR_ICON
+                    )
         
         # Check if move is being made
         elif move != None:
@@ -616,124 +633,68 @@ class Game(Category):
             # Check if move is not number
             try:
                 move = int(move)
-            except:
-                return getErrorMessage(self._connectFour, Game.INVALID_INPUT)
-            
-            # Check if move is not between 1 and width
-            if move < 1 or move > game["width"]:
-                return getErrorMessage(self._connectFour, Game.INVALID_SPOT)
-            
-            # Check if column is full
-            if connectFour.isColumnFull(game["board"], move - 1):
-                return getErrorMessage(self._connectFour, Game.COLUMN_FULL)
-            
-            # Move was valid; Set user's move
-            winnerCheck = None
-            if game["opponent"] == None:
-                connectFour.addPiece(game["board"], move - 1, game["challenger_turn"])
 
-                # Check for winner
-                winnerCheck = connectFour.checkForWinner(game["board"])
-
-                # Check for draw
-                drawCheck = connectFour.isBoardFull(game["board"])
-                if drawCheck:
-
-                    # Delete game instance
-                    board = game["board"]
-                    challenger = game["challenger"]
-                    opponent = game["opponent"]
-                    self._connectFourGames[serverId].pop(authorId)
-
-                    return discord.Embed(
-                        title = "Draw",
-                        description = "The game was a draw.\n{}\n{}\n{}".format(
-                            connectFour.getBoard(board),
-                            ":large_blue_circle: " + challenger.mention,
-                            ":red_circle: " + "AI" if opponent == None else opponent.mention
-                        ),
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.CONNECT_FOUR_ICON
-                    )
-
-                # Get AI's move if winner is None
-                if winnerCheck == None:
-                    aiMove = connectFour.getAIMove(game["board"], game["difficulty"])
-
-                    # Check if AI's move made a draw
-                    if not aiMove:
-
-                        # Delete game instance
-                        board = game["board"]
-                        challenger = game["challenger"]
-                        opponent = game["opponent"]
-                        self._connectFourGames[serverId].pop(authorId)
-
-                        return discord.Embed(
-                            title = "Draw",
-                            description = "The game was a draw.\n{}\n{}\n{}".format(
-                                connectFour.getBoard(board),
-                                ":large_blue_circle: " + challenger.mention,
-                                ":red_circle: " + "AI" if opponent == None else opponent.mention
+                # Check if move is not between 1 and width
+                if move < 1 or move > game.getWidth():
+                    embed = getErrorMessage(self._connectFour, Game.INVALID_SPOT)
+                
+                # Check if column is full
+                elif connectFour.isColumnFull(game.getBoard(), move - 1):
+                    embed = getErrorMessage(self._connectFour, Game.COLUMN_FULL)
+                
+                # Move is valid; Make and process it
+                else:
+                    # Move is valid; Make it and process it
+                    move = game.makeMove(move - 1)
+                
+                    # Check for no winner
+                    if move == None:
+                    
+                        embed = discord.Embed(
+                            title = "Connect Four",
+                            description = "{}\n{}\n{}".format(
+                                game.showBoard(),
+                                ":large_blue_circle: " + game.getChallenger().mention,
+                                ":red_circle: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                            colour = Game.EMBED_COLOR
+                            colour = self.getEmbedColor()
                         ).set_thumbnail(
                             url = Game.CONNECT_FOUR_ICON
                         )
+                    
+                    # Check for challenger / opponent winner
+                    else:
 
-                    winnerCheck = connectFour.checkForWinner(game["board"])
-            else:
-                connectFour.addPiece(game["board"], move - 1, game["challenger_turn"])
+                        embed = discord.Embed(
+                            title = "{} Won!".format(
+                                "Challenger" if move else "Opponent"
+                            ),
+                            description = "{}\n{}\n{}".format(
+                                game.showBoard(),
+                                ":large_blue_circle: " + game.getChallenger().mention,
+                                ":red_circle: " + "AI" if game.getOpponent() == None else game.opponent().mention
+                            ),
+                            colour = self.getEmbedColor()
+                        ).set_thumbnail(
+                            url = Game.SUCCESS_ICON if move else Game.FAILED_ICON
+                        )
 
-                # Check for winner
-                winnerCheck = connectFour.checkForWinner(game["board"])
+                        User.updateConnectFour(game.getChallenger(), didWin = move)
+                        if game.getOpponent() != None:
+                            User.updateConnectFour(game.getOpponent(), didWin = not move)
 
-                # Invert challenger turn for next player's turn
-                game["challenger_turn"] = not game["challenger_turn"]
-            
-            # Check if there was a winner
-            if winnerCheck == None:
+                        self._connectFourGames[serverId].pop(authorId)
 
-                return discord.Embed(
-                    title = "Connect Four",
-                    description = "{}\n{}\n{}".format(
-                        connectFour.getBoard(game["board"]),
-                        ":large_blue_circle: " + discordUser.mention,
-                        ":red_circle: AI"
-                    ),
-                    colour = Game.EMBED_COLOR
-                ).set_thumbnail(
-                    url = Game.CONNECT_FOUR_ICON
-                )
-            
-            # Winner was challenger
-            else:
+            except:
+                embed = getErrorMessage(self._connectFour, Game.INVALID_INPUT)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
+        )
 
-                # Delete game instance
-                board = game["board"]
-                challenger = game["challenger"]
-                opponent = game["opponent"]
-                self._connectFourGames[serverId].pop(authorId)
-
-                # Only update opponent if opponent is not None
-                User.updateConnectFour(challenger, didWin = winnerCheck)
-                if opponent != None:
-                    User.updateConnectFour(opponent, didWin = not winnerCheck)
-
-                return discord.Embed(
-                    title = "{} Won!".format("Challenger" if winnerCheck else "Opponent"),
-                    description = "{}\n{}\n{}".format(
-                        connectFour.getBoard(board),
-                        ":large_blue_circle: " + challenger.mention,
-                        ":red_circle: " + "AI" if opponent == None else opponent.mention
-                    ),
-                    colour = Game.EMBED_COLOR
-                ).set_thumbnail(
-                    url = Game.SUCCESS_ICON if winnerCheck else Game.FAILED_ICON
-                )
-
-    def hangman(self, discordUser, *, difficulty = None, guess = None):
+    async def hangman(self, message, parameters, *, guess = None):
         """Creates a hangman game or continues a hangman game.\n
 
         Parameters:
@@ -744,181 +705,175 @@ class Game(Category):
 
         # Check if game was started in server
         try:
-            serverId = str(discordUser.guild.id)
+            serverId = str(message.author.guild.id)
         
         # Game was started in private message
         except:
             serverId = "private"
 
-        authorId = str(discordUser.id)
+        authorId = str(message.author.id)
 
         # Create server hangman instances
         if serverId not in self._hangmanGames:
             self._hangmanGames[serverId] = {}
 
-        # Check if new game is being created
-        if difficulty != None:
+        # Check if guess is None; Game is being created or quit
+        embed = None
+        if guess == None:
 
-            # Check if user wants to quit
-            if difficulty in self._hangman.getAcceptedParameter("difficulty", "quit").getAlternatives():
-
-                # Check if user is playing a game
-                if authorId in self._hangmanGames[serverId]:
-                    self._hangmanGames[serverId].pop(authorId)
-                    return getQuitGame("Hangman", Game.EMBED_COLOR, Game.SUCCESS_ICON)
-                
-                # User was not playing a game
-                else:
-                    return getNoGame("Hangman", Game.EMBED_COLOR, Game.FAILED_ICON)
+            # Check for too many parameters
+            if len(parameters) > self._hangman.getMaxParameters():
+                embed = getErrorMessage(self._hangman, Game.TOO_MANY_PARAMETERS)
             
-            # Make sure difficulty is valid
-            difficulty = difficulty if difficulty not in [None, ""] else "easy"
-            if difficulty in self._hangman.getAcceptedParameter("difficulty", "easy").getAlternatives():
-                difficulty = "easy"
-            elif difficulty in self._hangman.getAcceptedParameter("difficulty", "medium").getAlternatives():
-                difficulty = "medium"
-            elif difficulty in self._hangman.getAcceptedParameter("difficulty", "hard").getAlternatives():
-                difficulty = "hard"
-            
-            # Difficulty is invalid
+            # There were the proper amount of parameters
             else:
-                return getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
-            
-            # Create game instance
-            wordDict = hangman.generateWord(difficulty)
-            self._hangmanGames[serverId][authorId] = {
-                "word_dict": wordDict,
-                "word": wordDict["value"].lower(),
-                "guesses": 0,
-                "fails": 0,
-                "guessed": [],
-                "found": []
-            }
-            game = self._hangmanGames[serverId][authorId]
+                difficulty = "easy" if len(parameters) == 0 else parameters[0]
 
-            return discord.Embed(
-                title = "Hangman",
-                description = hangman.getWord(game["word"], game["found"]),
-                colour = Game.EMBED_COLOR
-            ).set_thumbnail(
-                url = Game.HANGMAN_ICON
-            ).add_field(
-                name = "Guesses: {}".format(
-                    ", ".join(game["guessed"]) if len(game["guessed"]) > 0 else "None"
-                ),
-                value = hangman.getHangman(game["fails"])
-            )
+                # Check if user wants to quit
+                if difficulty in self._hangman.getAcceptedParameter("difficulty", "quit").getAlternatives():
+
+                    # Check if user is playing a game
+                    if authorId in self._hangmanGames[serverId]:
+                        self._hangmanGames[serverId].pop(authorId)
+                        embed = getQuitGame("Hangman", self.getEmbedColor(), Game.SUCCESS_ICON)
+                    
+                    # User was not playing a game
+                    else:
+                        embed = getNoGame("Hangman", self.getEmbedColor(), Game.FAILED_ICON)
+                
+                # User does not want to quit
+                else:
+
+                    # Make sure difficulty is valid
+                    validDifficulty = True
+                    difficulty = difficulty if difficulty not in [None, ""] else "easy"
+                    if difficulty in self._hangman.getAcceptedParameter("difficulty", "easy").getAlternatives():
+                        difficulty = "easy"
+                    elif difficulty in self._hangman.getAcceptedParameter("difficulty", "medium").getAlternatives():
+                        difficulty = "medium"
+                    elif difficulty in self._hangman.getAcceptedParameter("difficulty", "hard").getAlternatives():
+                        difficulty = "hard"
+                    
+                    # Difficulty is invalid
+                    else:
+                        embed = getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
+                        validDifficulty = False
+
+                    if validDifficulty:
+                    
+                        # Create game instance
+                        self._hangmanGames[serverId][authorId] = hangman.Hangman(
+                            message.author,
+                            difficulty
+                        )
+                        game = self._hangmanGames[serverId][authorId]
+
+                        embed = discord.Embed(
+                            title = "Hangman",
+                            description = "{}\nGuesses: {}".format(
+                                game.getHangmanWord(),
+                                ", ".join(game.getGuessed()) if len(game.getGuessed()) > 0 else "No Guesses"
+                            ),
+                            colour = self.getEmbedColor()
+                        ).set_thumbnail(
+                            url = Game.HANGMAN_ICON
+                        ).set_image(
+                            url = game.getHangman()
+                        )
         
         # Check if guess is being made
         elif guess != None:
             game = self._hangmanGames[serverId][authorId]
             guess = guess.lower()
 
-            # Check if guess is the word
-            if guess == game["word"]:
+            guess = game.makeGuess(guess)
 
-                # Save word and amount of guesses
-                word = game["word"]
-                guesses = game["guesses"] + 1
+            # Guess was the word
+            if guess == hangman.Hangman.WORD:
 
-                # Delete game instance; Update stats
-                self._hangmanGames[serverId].pop(authorId)
-                User.updateHangman(discordUser, didWin = True)
-
-                return discord.Embed(
+                embed = discord.Embed(
                     title = "Guessed",
-                    description = "You guessed correctly! The word was {}\nIt took you {} guesses!".format(
-                        word,
-                        guesses
+                    description = "You guessed correctly! The word was {}\nIt took you {} guesse{}!".format(
+                        game.getWord(),
+                        game.getGuesses(),
+                        "s" if game.getGuesses() != 1 else ""
                     ),
-                    colour = Game.EMBED_COLOR
+                    colour = self.getEmbedColor()
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
                 )
-            
-            # Make sure guess is one letter long
-            # This also allows people to continue messaging someone
-            # Without getting error messages from the bot
-            if len(guess) > 1:
-                return None
 
-            # Make sure guess is a letter; Not number
-            if guess.isnumeric():
-                return getErrorMessage(self._hangman, Game.INVALID_INPUT)
-            
-            # Make sure guess was not already guessed
-            if guess in game["guessed"]:
-                return getErrorMessage(self._hangman, Game.ALREADY_GUESSED)
-            
-            # Guess was not already guessed; See if it was in word and add to found
-            if guess in game["word"]:
-                game["found"].append(guess)
-            
-            # Guess was not in word
-            else:
-                game["fails"] += 1
+                User.updateHangman(game.getPlayer(), didWin = True)
 
-            # Add guess to guessed
-            game["guessed"].append(guess)
-            game["guesses"] += 1
-
-            # See if guess limit was reached
-            if game["fails"] >= Game.MAX_HANGMAN_GUESSES:
-
-                # Delete game instance
-                word = game["word"]
-                fails = game["fails"]
                 self._hangmanGames[serverId].pop(authorId)
-                User.updateHangman(discordUser, didWin = False)
-
-                return discord.Embed(
-                    title = "Game Ended - Word: `{}`".format(word),
-                    description = "You did not guess the word quick enough.\n{}".format(
-                        hangman.getHangman(fails)
-                    ),
-                    colour = Game.EMBED_COLOR
+            
+            # Guess was a number
+            elif guess == hangman.Hangman.NOT_ALPHA:
+                embed = getErrorMessage(self._hangman, Game.INVALID_INPUT)
+            
+            # Guess was already guessed
+            elif guess == hangman.Hangman.GUESSED:
+                embed = getErrorMessage(self._hangman, Game.ALREADY_GUESSED)
+            
+            # Guess was a fail
+            elif guess == hangman.Hangman.FAILED:
+                
+                embed = discord.Embed(
+                    title = "Game Ended - Word: `{}`".format(game.getWord()),
+                    description = "You did not guess the word quick enough.",
+                    colour = self.getEmbedColor()
                 ).set_thumbnail(
                     url = Game.FAILED_ICON
+                ).set_image(
+                    url = game.getHangman()
                 )
-            
-            # See if word was guessed finished by letter guessing
-            # The following line gets all the letters in the word
-            # Then it joins them together to create a string in order
-            # To compare it to the actual word
-            if "".join([letter for letter in game["word"] if letter in game["found"]]) == game["word"]:
 
-                # Delete game instance
-                word = game["word"]
-                guesses = game["guesses"]
+                User.updateHangman(game.getPlayer(), didWin = False)
+
                 self._hangmanGames[serverId].pop(authorId)
-                User.updateHangman(discordUser, didWin = True)
+            
+            # Guess was a win
+            elif guess == hangman.Hangman.WON:
 
-                return discord.Embed(
+                embed = discord.Embed(
                     title = "Success!",
                     description = "The word was `{}`\nYou guessed in {} guess{}.".format(
-                        game["word"], 
-                        guesses,
-                        "es" if guesses > 1 else ""
+                        game.getWord(), 
+                        game.getGuesses(),
+                        "es" if game.getGuesses() > 1 else ""
                     ),
-                    colour = Game.EMBED_COLOR
+                    colour = self.getEmbedColor()
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
                 )
 
-            return discord.Embed(
-                title = "Hangman",
-                description = hangman.getWord(game["word"], game["found"]),
-                colour = Game.EMBED_COLOR
-            ).set_thumbnail(
-                url = Game.HANGMAN_ICON
-            ).add_field(
-                name = "Guesses: {}".format(
-                    ", ".join(game["guessed"]) if len(game["guessed"]) > 0 else "None"
-                ),
-                value = hangman.getHangman(game["fails"])
-            )
+                User.updateHangman(game.getPlayer(), didWin = True)
+
+                self._hangmanGames[serverId].pop(authorId)
+            
+            # Guess was a correct/incorrect letter
+            elif guess in [True, False]:
+
+                return discord.Embed(
+                    title = "Hangman",
+                    description = "{}\nGuesses: {}".format(
+                        game.getHangmanWord(),
+                        ", ".join(game.getGuessed()) if len(game.getGuessed()) > 0 else "No Guesses"
+                    ),
+                    colour = self.getEmbedColor()
+                ).set_thumbnail(
+                    url = Game.HANGMAN_ICON
+                ).set_image(
+                    url = game.getHangman()
+                )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
+        )
     
-    def rps(self, discordUser, action):
+    async def rps(self, message, parameters):
         """Starts or continues a Rock Paper Scissors game.\n
 
         Parameters:
@@ -926,57 +881,79 @@ class Game(Category):
             action: The action the Discord User did.\n
         """
 
-        # Get a random rps action
-        botRps = choose(self._rpsActions)
-
-        # Get user's rps action
-        if action in self._rps.getAcceptedParameter("action", "rock").getAlternatives():
-            userRps = "rock"
-        elif action in self._rps.getAcceptedParameter("action", "paper").getAlternatives():
-            userRps = "paper"
-        elif action in self._rps.getAcceptedParameter("action", "scissors").getAlternatives():
-            userRps = "scissors"
+        # Check for not enough parameters
+        if len(parameters) < self._rps.getMinParameters():
+            embed = getErrorMessage(self._rps, Game.NOT_ENOUGH_PARAMETERS)
         
-        # Action was invalid
+        # Check for too many parameters
+        elif len(parameters) > self._rps.getMaxParameters():
+            embed = getErrorMessage(self._rps, Game.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
         else:
-            return getErrorMessage(self._rps, Game.INVALID_INPUT)
+            action = parameters[0]
 
-        # Check if values are the same
-        message = "You had {} and I had {}".format(
-            userRps, botRps
-        )
-        icon = Game.RPS_ICON
-        if botRps == userRps:
-            title = "Tied!"
-            message = "You and I both tied."
+            # Get a random rps action
+            botRps = choose(self._rpsActions)
+
+            # Get user's rps action
+            validInput = True
+            if action in self._rps.getAcceptedParameter("action", "rock").getAlternatives():
+                userRps = "rock"
+            elif action in self._rps.getAcceptedParameter("action", "paper").getAlternatives():
+                userRps = "paper"
+            elif action in self._rps.getAcceptedParameter("action", "scissors").getAlternatives():
+                userRps = "scissors"
+            
+            # Action was invalid
+            else:
+                embed = getErrorMessage(self._rps, Game.INVALID_INPUT)
+                validInput = False
+            
+            if validInput:
+
+                # Check if values are the same
+                message = "You had {} and I had {}".format(
+                    userRps, botRps
+                )
+                icon = Game.RPS_ICON
+                if botRps == userRps:
+                    title = "Tied!"
+                    message = "You and I both tied."
+                
+                elif (
+                    (botRps == "rock" and userRps == "paper") or
+                    (botRps == "paper" and userRps == "scissors") or
+                    (botRps == "scissors" and userRps == "rock")
+                ):
+                    title = "You Won!"
+                    icon = Game.SUCCESS_ICON
+                    User.updateRPS(message.author, didWin = True)
+
+                elif (
+                    (botRps == "rock" and userRps == "scissors") or
+                    (botRps == "paper" and userRps == "rock") or
+                    (botRps == "scissors" and userRps == "paper")
+                ):
+                    title = "You Lost!"
+                    icon = Game.FAILED_ICON
+                    User.updateRPS(message.author, didWin = False)
+                
+                embed = discord.Embed(
+                    title = title,
+                    description = message,
+                    colour = self.getEmbedColor()
+                ).set_thumbnail(
+                    url = icon
+                )
         
-        elif (
-            (botRps == "rock" and userRps == "paper") or
-            (botRps == "paper" and userRps == "scissors") or
-            (botRps == "scissors" and userRps == "rock")
-        ):
-            title = "You Won!"
-            icon = Game.SUCCESS_ICON
-            User.updateRPS(discordUser, didWin = True)
-
-        elif (
-            (botRps == "rock" and userRps == "scissors") or
-            (botRps == "paper" and userRps == "rock") or
-            (botRps == "scissors" and userRps == "paper")
-        ):
-            title = "You Lost!"
-            icon = Game.FAILED_ICON
-            User.updateRPS(discordUser, didWin = False)
-        
-        return discord.Embed(
-            title = title,
-            description = message,
-            colour = Game.EMBED_COLOR
-        ).set_thumbnail(
-            url = icon
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
         )
 
-    def scramble(self, discordUser, *, difficulty = None, guess = None):
+    async def scramble(self, message, parameters, *, guess = None):
         """Starts or continues a scrambled word game.\n
 
         Parameters:
@@ -985,65 +962,77 @@ class Game(Category):
 
         # Check if game was started in server
         try:
-            serverId = str(discordUser.guild.id)
+            serverId = str(message.author.guild.id)
         
         # Game was started in private message
         except:
             serverId = "private"
 
-        authorId = str(discordUser.id)
+        authorId = str(message.author.id)
 
         # Add serverId to scramble games if it does not exist
         if serverId not in self._scrambleGames:
             self._scrambleGames[serverId] = {}
         
-        # There was no guess, start or reset game
-        if difficulty != None:
+        # Check if guess is None; Game being created or quit
+        embed = None
+        if guess == None:
 
-            # Check if user wants to quit
-            if difficulty in self._scramble.getAcceptedParameter("difficulty", "quit").getAlternatives():
-
-                # Check if user is playing a game
-                if authorId in self._scrambleGames[serverId]:
-                    self._scrambleGames[serverId].pop(authorId)
-                    return getQuitGame("Scramble", Game.EMBED_COLOR, Game.SUCCESS_ICON)
-
-                # User was not playing a game
-                else:
-                    return getNoGame("Scramble", Game.EMBED_COLOR, Game.FAILED_ICON)
+            # Check for too many parameters
+            if len(parameters) > self._scramble.getMaxParameters():
+                embed = getErrorMessage(self._scramble, Game.TOO_MANY_PARAMETERS)
             
-            # Make sure difficulty is valid
-            difficulty = difficulty if difficulty not in [None, ""] else "normal"
-            if difficulty in self._scramble.getAcceptedParameter("difficulty", "normal").getAlternatives():
-                difficulty = "normal"
-            elif difficulty in self._scramble.getAcceptedParameter("difficulty", "expert").getAlternatives():
-                difficulty = "expert"
-            
-            # Difficult is invalid
+            # There were the proper amount of parameters
             else:
-                return getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
+                difficulty = "normal" if len(parameters) == 0 else parameters[0]
 
-            # Create game
-            wordDict = scramble.generateWord()
-            self._scrambleGames[serverId][authorId] = {
-                "word_dict": wordDict,
-                "word": wordDict["value"].lower(),
-                "scrambled": scramble.scrambleWord(wordDict["value"].lower(), difficulty),
-                "hints": wordDict["hints"],
-                "hints_used": 0
-            }
-            game = self._scrambleGames[serverId][authorId]
+                # Check if user wants to quit
+                if difficulty in self._scramble.getAcceptedParameter("difficulty", "quit").getAlternatives():
 
-            # Return embed
-            return discord.Embed(
-                title = "Scrambled",
-                description = "Unscramble this word/phrase. Good luck.\n`{}`".format(
-                    game["scrambled"]
-                ),
-                colour = Game.EMBED_COLOR
-            ).set_thumbnail(
-                url = Game.SCRAMBLE_ICON
-            )
+                    # Check if user is playing a game
+                    if authorId in self._scrambleGames[serverId]:
+                        self._scrambleGames[serverId].pop(authorId)
+                        embed = getQuitGame("Scramble", self.getEmbedColor(), Game.SUCCESS_ICON)
+
+                    # User was not playing a game
+                    else:
+                        embed = getNoGame("Scramble", self.getEmbedColor(), Game.FAILED_ICON)
+                
+                # User does not want to quit
+                else:
+                
+                    # Make sure difficulty is valid
+                    validDifficulty = True
+                    difficulty = difficulty if difficulty not in [None, ""] else "normal"
+                    if difficulty in self._scramble.getAcceptedParameter("difficulty", "normal").getAlternatives():
+                        difficulty = "normal"
+                    elif difficulty in self._scramble.getAcceptedParameter("difficulty", "expert").getAlternatives():
+                        difficulty = "expert"
+                    
+                    # Difficult is invalid
+                    else:
+                        embed = getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
+                        validDifficulty = False
+                    
+                    if validDifficulty:
+
+                        # Create game
+                        self._scrambleGames[serverId][authorId] = scramble.Scramble(
+                            message.author,
+                            difficulty
+                        )
+                        game = self._scrambleGames[serverId][authorId]
+
+                        # Return embed
+                        embed = discord.Embed(
+                            title = "Scrambled",
+                            description = "Unscramble this word/phrase. Good luck.\n`{}`".format(
+                                game.getScrambledWord()
+                            ),
+                            colour = self.getEmbedColor()
+                        ).set_thumbnail(
+                            url = Game.SCRAMBLE_ICON
+                        )
         
         # There was a guess; Check if it was longer than a character
         elif guess != None:
@@ -1052,69 +1041,65 @@ class Game(Category):
 
             if len(guess) > 1:
 
-                # See if guess was equal to the word
-                if guess == game["word"]:
+                guess = game.makeGuess(guess)
 
-                    # Delete game instance
-                    word = game["word"]
-                    hints_used = game["hints_used"]
-                    self._scrambleGames[serverId].pop(authorId)
-                    User.updateScramble(discordUser, didWin = True)
+                # Guess was the answer
+                if guess == True:
 
-                    return discord.Embed(
+                    embed = discord.Embed(
                         title = "Success",
                         description = "You got the word correctly! `{}`\nYou {}used {} hints.".format(
-                            word,
-                            "only " if hints_used <= 3 else "",
-                            hints_used
+                            game.getWord(),
+                            "only " if game.getHintsUsed() <= 3 else "",
+                            game.getHintsUsed()
                         ),
-                        colour = Game.EMBED_COLOR
+                        colour = self.getEmbedColor()
+                    ).set_thumbnail(
+                        url = Game.SUCCESS_ICON
+                    )
+
+                    User.updateScramble(game.getPlayer(), didWin = True)
+
+                    self._scrambleGames[serverId].pop(authorId)
+                
+                # Guess was not the answer
+                elif guess == False:
+
+                    embed = discord.Embed(
+                        title = "Failed",
+                        description = "Unfortunately, you did not guess the word.\nThe word was {}".format(
+                            game.getWord()
+                        ),
+                        colour = self.getEmbedColor()
+                    ).set_thumbnail(
+                        url = Game.FAILED_ICON
+                    )
+
+                    User.updateScramble(game.getPlayer(), didWin = False)
+
+                    self._scrambleGames[serverId].pop(authorId)
+                
+                # Guess asked for a hint
+                else:
+
+                    embed = discord.Embed(
+                        title = "Scrambled",
+                        description = "`{}`\nHint: {}".format(
+                            game.getScrambledWord(),
+                            guess
+                        ),
+                        colour = self.getEmbedColor()
                     ).set_thumbnail(
                         url = Game.SCRAMBLE_ICON
                     )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
+        )
                 
-                # Guess was not equal to word
-                else:
-
-                    # Check if player asked for another hint using "hint" keyword
-                    if guess in ["hint", "hint me"]:
-
-                        game["hints_used"] += 1
-
-                        return discord.Embed(
-                            title = "Scrambled",
-                            description = "`{}`\nHint: {}".format(
-                                game["scrambled"],
-                                choose(game["hints"])
-                            ),
-                            colour = Game.EMBED_COLOR
-                        ).set_thumbnail(
-                            url = Game.SCRAMBLE_ICON
-                        )
-                    
-                    # Player did not ask for hint
-                    else:
-
-                        # Delete game instance
-                        word = game["word"]
-                        hints_used = game["hints_used"]
-                        self._scrambleGames[serverId].pop(authorId)
-
-                        # Player made wrong guess
-                        if guess != word:
-                            User.updateScramble(discordUser, didWin = False)
-                        
-                            return discord.Embed(
-                                title = "Failed",
-                                description = "Unfortunately, you did not guess the word.\nThe word was {}".format(
-                                    word
-                                ),
-                                colour = Game.EMBED_COLOR
-                            ).set_thumbnail(
-                                url = Game.FAILED_ICON
-                            )
-                
-    def ticTacToe(self, discordUser, *, difficulty = None, move = None):
+    async def ticTacToe(self, message, parameters, *, move = None):
         """Creates a Tic Tac Toe game or continues a Tic Tac Toe game.
 
         Parameters:
@@ -1125,54 +1110,64 @@ class Game(Category):
         
         # Check if game was started in server
         try:
-            serverId = str(discordUser.guild.id)
+            serverId = str(message.author.guild.id)
         
         # Game was started in private message
         except:
             serverId = "private"
 
-        authorId = str(discordUser.id)
+        authorId = str(message.author.id)
 
         # Add serverId to Tic Tac Toe games if it does not exist
         if serverId not in self._ticTacToeGames:
             self._ticTacToeGames[serverId] = {}
         
-        # There was no move made, start a game
-        if difficulty != None:
+        # Check if move is None; Game is being created or quit
+        embed = None
+        if move == None:
 
-            # Check if user wants to quit
-            if difficulty in self._ticTacToe.getAcceptedParameter("difficulty", "quit").getAlternatives():
-
-                # Check if user is playing game
-                if authorId in self._ticTacToeGames[serverId]:
-                    self._ticTacToeGames[serverId].pop(authorId)
-                    return getQuitGame("Tic Tac Toe", Game.EMBED_COLOR, Game.SUCCESS_ICON)
-                
-                # User was not playing a game
-                else:
-                    return getNoGame("Tic Tac Toe", Game.EMBED_COLOR, Game.FAILED_ICON)
+            # Check for too many parameters
+            if len(parameters) > self._ticTacToe.getMaxParameters():
+                embed = getErrorMessage(self._ticTacToe, Game.TOO_MANY_PARAMETERS)
             
-            # Create game
-            self._ticTacToeGames[serverId][authorId] = {
-                "board": [None] * 9,
-                "difficulty": difficulty if difficulty not in [None, ""] else "easy",
-                "challenger_turn": True,
-                "challenger": discordUser,
-                "opponent": None
-            }
-            game = self._ticTacToeGames[serverId][authorId]
+            # There were the proper amount of parameters
+            else:
+                difficulty = "easy" if len(parameters) == 0 else parameters[0]
 
-            return discord.Embed(
-                title = "Tic Tac Toe",
-                description = "{}\n{}\n{}".format(
-                        ticTacToe.getBoard(game["board"]),
-                        ":x: " + game["challenger"].mention,
-                        ":o: " + "AI" if game["opponent"] == None else game["opponent"].mention
-                    ),
-                colour = Game.EMBED_COLOR
-            ).set_thumbnail(
-                url = Game.TIC_TAC_TOE_ICON
-            )
+                # Check if user wants to quit
+                if difficulty in self._ticTacToe.getAcceptedParameter("difficulty", "quit").getAlternatives():
+
+                    # Check if user is playing game
+                    if authorId in self._ticTacToeGames[serverId]:
+                        self._ticTacToeGames[serverId].pop(authorId)
+                        embed = getQuitGame("Tic Tac Toe", self.getEmbedColor(), Game.SUCCESS_ICON)
+                    
+                    # User was not playing a game
+                    else:
+                        embed = getNoGame("Tic Tac Toe", self.getEmbedColor(), Game.FAILED_ICON)
+                
+                # User does not want to quit
+                else:
+
+                    # Create game
+                    self._ticTacToeGames[serverId][authorId] = ticTacToe.TicTacToe(
+                        difficulty if difficulty not in [None, ""] else "easy",
+                        message.author
+                    )
+
+                    game = self._ticTacToeGames[serverId][authorId]
+
+                    embed = discord.Embed(
+                        title = "Tic Tac Toe",
+                        description = "{}\n{}\n{}".format(
+                                game.showBoard(),
+                                ":x: " + game.getChallenger().mention,
+                                ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
+                            ),
+                        colour = self.getEmbedColor()
+                    ).set_thumbnail(
+                        url = Game.TIC_TAC_TOE_ICON
+                    )
         
         # There was a move; See what move it was
         elif move != None:
@@ -1181,198 +1176,154 @@ class Game(Category):
             # Check if move is not number
             try:
                 move = int(move)
-            except:
-                return getErrorMessage(self._ticTacToe, Game.INVALID_INPUT)
-            
-            # Check if move is not between 1 and 9
-            if move < 1 or move > 9:
-                return getErrorMessage(self._ticTacToe, Game.INVALID_SPOT)
-            
-            # Check if move is already been done
-            if game["board"][move - 1] != None:
-                return getErrorMessage(self._ticTacToe, Game.ALREADY_GUESSED)
-            
-            # Move is valid; Set user's move
-            winnerCheck = None
-            if game["opponent"] == None:
-                game["board"][move - 1] = True
 
-                # Check for winner
-                winnerCheck = ticTacToe.checkForWinner(game["board"])
+                 # Check if move is not between 1 and 9
+                if move < 1 or move > 9:
+                    embed = getErrorMessage(self._ticTacToe, Game.INVALID_INPUT)
+                
+                # Check if move is already been done
+                elif game.getBoard()[move - 1] != None:
+                    embed = getErrorMessage(self._ticTacToe, Game.ALREADY_GUESSED)
+                
+                # Move is valid
+                else:
+                    moveCheck = game.makeMove(move -1)
 
-                # Check if the board is full; There is no winner
-                if game["board"].count(None) == 0 and winnerCheck == None:
+                    # The game was a draw
+                    if moveCheck == ticTacToe.TicTacToe.DRAW:
 
-                    # Delete game instance
-                    board = game["board"]
-                    challenger = game["challenger"]
-                    opponent = game["opponent"]
-                    self._ticTacToeGames[serverId].pop(authorId)
-
-                    return discord.Embed(
-                        title = "Draw",
-                        description = "The game was a draw.\n{}\n{}\n{}".format(
-                            ticTacToe.getBoard(board),
-                            ":x: " + challenger.mention,
-                            ":o: " + "AI" if opponent == None else opponent.mention
-                        ),
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.TIC_TAC_TOE_ICON
-                    )
-
-                # Get AI's move if winner is None
-                if winnerCheck == None:
-                    ticTacToe.getAIMove(game["board"], game["difficulty"])
-
-                    # Check if the board is full; There is no winner
-                    if game["board"].count(None) == 0:
-
-                        # Delete game instance
-                        board = game["board"]
-                        challenger = game["challenger"]
-                        opponent = game["opponent"]
-                        self._ticTacToeGames[serverId].pop(authorId)
-
-                        return discord.Embed(
+                        embed = discord.Embed(
                             title = "Draw",
                             description = "The game was a draw.\n{}\n{}\n{}".format(
-                                ticTacToe.getBoard(board),
-                                ":x: " + challenger.mention,
-                                ":o: " + "AI" if opponent == None else opponent.mention
+                                game.showBoard(),
+                                ":x: " + game.getChallenger().mention,
+                                ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                            colour = Game.EMBED_COLOR
+                            colour = self.getEmbedColor()
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
 
-                    # Check for winner
-                    winnerCheck = ticTacToe.checkForWinner(game["board"])
-            else:
-                game["board"][move - 1] = game["challenger_turn"]
+                        self._ticTacToeGames[serverId].pop(authorId)
+                    
+                    # There is no winner yet
+                    elif moveCheck == None:
 
-                # Check for winner
-                winnerCheck = ticTacToe.checkForWinner(game["board"])
+                        embed = discord.Embed(
+                            title = "Tic Tac Toe",
+                            description = "{}\n{}\n{}".format(
+                                game.showBoard(),
+                                ":x: " + game.getChallenger().mention,
+                                ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
+                            ),
+                            colour = self.getEmbedColor()
+                        ).set_thumbnail(
+                            url = Game.TIC_TAC_TOE_ICON
+                        )
 
-                # Check if the board is full; There is no winner
-                if game["board"].count(None) == 0 and winnerCheck == None:
+                    # The challenger or opponent won
+                    else:
 
-                    # Delete game instance
-                    board = game["board"]
-                    challenger = game["challenger"]
-                    opponent = game["opponent"]
-                    self._ticTacToeGames[serverId].pop(authorId)
+                        # Setup embed
+                        embed = discord.Embed(
+                            title = "{} Won".format(
+                                "Challenger" if moveCheck else "Opponent"
+                            ),
+                            description = "{} wins the game.\n{}\n{}\n{}".format(
+                                (
+                                    game.getChallenger().mention
+                                ) if moveCheck else (
+                                    "AI" if game.getOpponent() == None else game.getOpponent().mention
+                                ),
+                                game.showBoard(),
+                                ":x: " + game.getChallenger().mention,
+                                ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
+                            ),
+                            colour = self.getEmbedColor()
+                        ).set_thumbnail(
+                            url = Game.TIC_TAC_TOE_ICON
+                        )
 
-                    return discord.Embed(
-                        title = "Draw",
-                        description = "The game was a draw.\n{}\n{}\n{}".format(
-                            ticTacToe.getBoard(board),
-                            ":x: " + challenger.mention,
-                            ":o: " + "AI" if opponent == None else opponent.mention
-                        ),
-                        colour = Game.EMBED_COLOR
-                    ).set_thumbnail(
-                        url = Game.TIC_TAC_TOE_ICON
-                    )
+                        # Update scores
+                        User.updateTicTacToe(game.getChallenger(), didWin = moveCheck)
+                        if game.getOpponent() != None:
+                            User.updateTicTacToe(game.getOpponent(), didWin = not moveCheck)
 
-                # Invert challenger turn for next player's turn
-                game["challenger_turn"] = not game["challenger_turn"]
+                        # Remove game instance
+                        self._ticTacToeGames[serverId].pop(authorId)
 
-            # Check if there was a winner
-            if winnerCheck == None:
-
-                # Show result
-                return discord.Embed(
-                    title = "Tic Tac Toe",
-                    description = "{}\n{}\n{}".format(
-                        ticTacToe.getBoard(game["board"]),
-                        ":x: " + game["challenger"].mention,
-                        ":o: " + "AI" if game["opponent"] == None else game["opponent"].mention
-                    ),
-                    colour = Game.EMBED_COLOR
-                ).set_thumbnail(
-                    url = Game.TIC_TAC_TOE_ICON
-                )
-            
-            # Winner was challenger
-            else:
-                
-                # Delete game instance
-                board = game["board"]
-                challenger = game["challenger"]
-                opponent = game["opponent"]
-                self._ticTacToeGames[serverId].pop(authorId)
-
-                # Only update opponent if opponent is not None
-                User.updateTicTacToe(challenger, didWin = winnerCheck)
-                if opponent != None:
-                    User.updateTicTacToe(opponent, didWin = not winnerCheck)
-                
-                # Show results
-                return discord.Embed(
-                    title = "{} Won!".format("Challenger" if winnerCheck else "Opponent"),
-                    description = "{}\n{}\n{}".format(
-                        ticTacToe.getBoard(board),
-                        ":x: " + challenger.mention,
-                        ":o: " + "AI" if opponent == None else opponent.mention
-                    ),
-                    colour = Game.EMBED_COLOR
-                ).set_thumbnail(
-                    url = Game.SUCCESS_ICON if winnerCheck else Game.FAILED_ICON
-                )
+            except:
+                embed = getErrorMessage(self._ticTacToe, Game.INVALID_INPUT)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
+        )
     
-    def stats(self, discordUser):
+    async def stats(self, message, parameters):
         """Shows the stats for the specified Discord User.\n
 
         Parameters:
             discordUser: The Discord User to get the stats of.\n
         """
 
-        # Open user file
-        user = User.openUser(discordUser)
-
-        # Get game stats
-        games = {
-            ":red_circle: Connect Four": user["connect_four"].copy(),
-            ":skull_crossbones: Hangman": user["hangman"].copy(),
-            ":scissors: Rock Paper Scissors": user["rps"].copy(),
-            ":cyclone: Scramble": user["scramble"].copy(),
-            ":x: Tic Tac Toe": user["tic_tac_toe"].copy()
-        }
-
-        # Close user file
-        User.closeUser(user)
-
-        embed = discord.Embed(
-            title = "Stats",
-            description = "Game Stats for {}".format(discordUser.mention),
-            colour = Game.EMBED_COLOR
-        )
-
-        # Add each game
-        for game in games:
-
-            # Get won / lost ratio
-            if games[game]["won"] == 0 and games[game]["lost"] == 0:
-                winLostRatio = 0
-            elif games[game]["lost"] == 0:
-                winLostRatio = round(games[game]["won"], 2)
-            else:
-                winLostRatio = round(games[game]["won"] / games[game]["lost"], 2)
-
-            embed.add_field(
-                name = game + " ({})".format(
-                    winLostRatio
-                ),
-                value = "Won: {}\nLost: {}\n".format(
-                    games[game]["won"],
-                    games[game]["lost"]
-                )
-            )
+        # Check for too many parameters
+        if len(parameters) > self._stats.getMaxParameters():
+            embed = getErrorMessage(self._stats, Game.TOO_MANY_PARAMETERS)
         
-        return embed
+        # There were the proper amount of parameters
+        else:
+
+            # Open user file
+            user = User.openUser(message.author)
+
+            # Get game stats
+            games = {
+                ":red_circle: Connect Four": user["connect_four"].copy(),
+                ":skull_crossbones: Hangman": user["hangman"].copy(),
+                ":scissors: Rock Paper Scissors": user["rps"].copy(),
+                ":cyclone: Scramble": user["scramble"].copy(),
+                ":x: Tic Tac Toe": user["tic_tac_toe"].copy()
+            }
+
+            # Close user file
+            User.closeUser(user)
+
+            embed = discord.Embed(
+                title = "Stats",
+                description = "Game Stats for {}".format(message.author.mention),
+                colour = self.getEmbedColor()
+            )
+
+            # Add each game
+            for game in games:
+
+                # Get won / lost ratio
+                if games[game]["won"] == 0 and games[game]["lost"] == 0:
+                    winLostRatio = 0
+                elif games[game]["lost"] == 0:
+                    winLostRatio = round(games[game]["won"], 2)
+                else:
+                    winLostRatio = round(games[game]["won"] / games[game]["lost"], 2)
+
+                embed.add_field(
+                    name = game + " ({})".format(
+                        winLostRatio
+                    ),
+                    value = "Won: {}\nLost: {}\n".format(
+                        games[game]["won"],
+                        games[game]["lost"]
+                    )
+                )
+            
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
+        )
     
-    def blackOps3(self, parameters):
+    async def blackOps3(self, message, parameters):
         """Gets the Black Ops 3 stats for a user on a platform.
 
         Parameters:
@@ -1382,56 +1333,70 @@ class Game(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._blackOps3.getMinParameters():
-            return getErrorMessage(self._blackOps3, Game.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._blackOps3, Game.NOT_ENOUGH_PARAMETERS)
         
         # There were enough parameters
-        platform = parameters[0]
-        username = " ".join(parameters[1:])
-
-        # Make sure platform is valid
-        if platform in self._blackOps3.getAcceptedParameter("platform", "xbox").getAlternatives():
-            platform = 1
-        elif platform in self._blackOps3.getAcceptedParameter("platform", "psn").getAlternatives():
-            platform = 2
-        
-        # Platform is not valid
         else:
-            return getErrorMessage(self._blackOps3, Game.INVALID_PLATFORM)
-        
-        # Request data
-        blackOps3Json = requests.get(
-            Game.BLACK_OPS_3_URL.format(platform, username),
-            headers = {
-                "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
-            }
-        ).json()
+            platform = parameters[0]
+            username = " ".join(parameters[1:])
 
-        # See if an error was given
-        if "errors" in blackOps3Json:
-            return getErrorMessage(self._blackOps3, Game.NO_USER)
+            # Make sure platform is valid
+            validPlatform = True
+            if platform in self._blackOps3.getAcceptedParameter("platform", "xbox").getAlternatives():
+                platform = 1
+            elif platform in self._blackOps3.getAcceptedParameter("platform", "psn").getAlternatives():
+                platform = 2
+            
+            # Platform is not valid
+            else:
+                embed = getErrorMessage(self._blackOps3, Game.INVALID_PLATFORM)
+                validPlatform = False
+            
+            if validPlatform:
+
+                # Request data
+                blackOps3Json = await loop.run_in_executor(None,
+                    requests.get,
+                    Game.BLACK_OPS_3_URL.format(platform, username),
+                    headers = {
+                        "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
+                    }
+                )
+                blackOps3Json = blackOps3Json.json()
+
+                # See if an error was given
+                if "errors" in blackOps3Json:
+                    embed = getErrorMessage(self._blackOps3, Game.NO_USER)
+                
+                # There was no error given
+                else:
+                
+                    # Get stats and put inside Embed
+                    embed = discord.Embed(
+                        title = "Black Ops 3 Stats",
+                        description = "{} - {}".format(
+                            blackOps3Json["data"]["metadata"]["platformUserHandle"],
+                            "Xbox" if blackOps3Json["data"]["metadata"]["platformId"] == 1 else "PSN"
+                        ),
+                        colour = self.getEmbedColor(),
+                        timestamp = datetime.now()
+                    ).set_author(
+                        name = blackOps3Json["data"]["metadata"]["platformUserHandle"],
+                        icon_url = Game.BLACK_OPS_3_ICON
+                    ).set_footer(
+                        text = "Black Ops 3 Tracker"
+                    )
+
+                    # Add stats using Black Ops 3 parser
+                    embed = callOfDuty.getGameStats(embed, blackOps3Json)
         
-        # There was no error given; Get stats and put inside Embed
-        embed = discord.Embed(
-            title = "Black Ops 3 Stats",
-            description = "{} - {}".format(
-                blackOps3Json["data"]["metadata"]["platformUserHandle"],
-                "Xbox" if blackOps3Json["data"]["metadata"]["platformId"] == 1 else "PSN"
-            ),
-            colour = Game.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_author(
-            name = blackOps3Json["data"]["metadata"]["platformUserHandle"],
-            icon_url = Game.BLACK_OPS_3_ICON
-        ).set_footer(
-            text = "Black Ops 3 Tracker"
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
         )
-
-        # Add stats using Black Ops 3 parser
-        embed = callOfDuty.getGameStats(embed, blackOps3Json)
-
-        return embed
-    
-    def blackOps4(self, parameters):
+        
+    async def blackOps4(self, message, parameters):
         """Gets the Black Ops 4 stats for a user on a platform.
 
         Parameters:
@@ -1441,63 +1406,77 @@ class Game(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._blackOps4.getMinParameters():
-            return getErrorMessage(self._blackOps4, Game.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._blackOps4, Game.NOT_ENOUGH_PARAMETERS)
         
-        # There were enough parameters
-        platform = parameters[0]
-        username = " ".join(parameters[1:])
-
-        # Make sure platform is valid
-        if platform in self._blackOps4.getAcceptedParameter("platform", "xbox").getAlternatives():
-            platform = 1
-        elif platform in self._blackOps4.getAcceptedParameter("platform", "psn").getAlternatives():
-            platform = 2
-        elif platform in self._blackOps4.getAcceptedParameter("platform", "battleNet").getAlternatives():
-            platform = 6
-        
-        # Platform is not valid
+        # There were the proper amount of parameters
         else:
-            return getErrorMessage(self._blackOps4, Game.INVALID_PLATFORM)
-        
-        # Request data
-        blackOps4Json = requests.get(
-            Game.BLACK_OPS_4_URL.format(platform, username),
-            headers = {
-                "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
-            }
-        ).json()
+            platform = parameters[0]
+            username = " ".join(parameters[1:])
 
-        # See if an error was given
-        if "errors" in blackOps4Json:
-            return getErrorMessage(self._blackOps4, Game.NO_USER)
-        
-        # There was no error given; Get stats and put inside Embed; Use Level icon for author icon
-        try:
-            levelIcon = blackOps4Json["data"]["stats"][Game.BLACK_OPS_4_LEVEL]["metadata"]["iconUrl"]
-        except:
-            levelIcon = Game.BLACK_OPS_4_ICON
+            # Make sure platform is valid
+            validPlatform = True
+            if platform in self._blackOps4.getAcceptedParameter("platform", "xbox").getAlternatives():
+                platform = 1
+            elif platform in self._blackOps4.getAcceptedParameter("platform", "psn").getAlternatives():
+                platform = 2
+            elif platform in self._blackOps4.getAcceptedParameter("platform", "battleNet").getAlternatives():
+                platform = 6
+            
+            # Platform is not valid
+            else:
+                embed = getErrorMessage(self._blackOps4, Game.INVALID_PLATFORM)
+                validPlatform = False
+            
+            if validPlatform:
+            
+                # Request data
+                blackOps4Json = await loop.run_in_executor(None,
+                    requests.get,
+                    Game.BLACK_OPS_4_URL.format(platform, username),
+                    headers = {
+                        "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
+                    }
+                )
+                blackOps4Json = blackOps4Json.json()
 
-        embed = discord.Embed(
-            title = "Black Ops 4 Stats",
-            description = "{} - {}".format(
-                blackOps4Json["data"]["metadata"]["platformUserHandle"],
-                "Xbox" if blackOps4Json["data"]["metadata"]["platformId"] == 1 else "PSN"
-            ),
-            colour = Game.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_author(
-            name = blackOps4Json["data"]["metadata"]["platformUserHandle"],
-            icon_url = levelIcon
-        ).set_footer(
-            text = "Black Ops 4 Tracker"
+                # See if an error was given
+                if "errors" in blackOps4Json:
+                    embed = getErrorMessage(self._blackOps4, Game.NO_USER)
+                
+                # There was no error given
+                else:
+                
+                    # Get stats and put inside Embed; Use Level icon for author icon
+                    try:
+                        levelIcon = blackOps4Json["data"]["stats"][Game.BLACK_OPS_4_LEVEL]["metadata"]["iconUrl"]
+                    except:
+                        levelIcon = Game.BLACK_OPS_4_ICON
+
+                    embed = discord.Embed(
+                        title = "Black Ops 4 Stats",
+                        description = "{} - {}".format(
+                            blackOps4Json["data"]["metadata"]["platformUserHandle"],
+                            "Xbox" if blackOps4Json["data"]["metadata"]["platformId"] == 1 else "PSN"
+                        ),
+                        colour = self.getEmbedColor(),
+                        timestamp = datetime.now()
+                    ).set_author(
+                        name = blackOps4Json["data"]["metadata"]["platformUserHandle"],
+                        icon_url = levelIcon
+                    ).set_footer(
+                        text = "Black Ops 4 Tracker"
+                    )
+
+                    # Add stats using Black Ops 4 parser
+                    embed = callOfDuty.getGameStats(embed, blackOps4Json)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
         )
-
-        # Add stats using Black Ops 4 parser
-        embed = callOfDuty.getGameStats(embed, blackOps4Json)
-
-        return embed
-    
-    def fortnite(self, parameters):
+        
+    async def fortnite(self, message, parameters):
         """Gets the Fortnite stats for a user on a platform.
 
         Parameters:
@@ -1507,123 +1486,168 @@ class Game(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._fortnite.getMinParameters():
-            return getErrorMessage(self._fortnite, Game.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._fortnite, Game.NOT_ENOUGH_PARAMETERS)
         
-        # There were enough parameters
-        platform = parameters[0]
-        username = " ".join(parameters[1:])
-
-        # Make sure platform is valid
-        if platform in self._fortnite.getAcceptedParameter("platform", "pc").getAlternatives():
-            platform = "pc"
-        elif platform in self._fortnite.getAcceptedParameter("platform", "xbox").getAlternatives():
-            platform = "xbox"
-        elif platform in self._fortnite.getAcceptedParameter("platform", "psn").getAlternatives():
-            platform = "psn"
-        
-        # Platform is not valid
+        # There were the proper amount of parameters
         else:
-            return getErrorMessage(self._fortnite, Game.INVALID_PLATFORM)
+            platform = parameters[0]
+            username = " ".join(parameters[1:])
 
-        # Request data
-        fortniteJson = requests.get(
-            Game.FORTNITE_URL.format(platform, username),
-            headers = {
-                "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
-            }
-        ).json()
+            # Make sure platform is valid
+            validPlatform = True
+            if platform in self._fortnite.getAcceptedParameter("platform", "pc").getAlternatives():
+                platform = "pc"
+            elif platform in self._fortnite.getAcceptedParameter("platform", "xbox").getAlternatives():
+                platform = "xbox"
+            elif platform in self._fortnite.getAcceptedParameter("platform", "psn").getAlternatives():
+                platform = "psn"
+            
+            # Platform is not valid
+            else:
+                embed = getErrorMessage(self._fortnite, Game.INVALID_PLATFORM)
+                validPlatform = False
+            
+            if validPlatform:
 
-        # See if an error was given.
-        if "error" in fortniteJson:
-            return getErrorMessage(self._fortnite, Game.NO_USER)
+                # Request data
+                fortniteJson = await loop.run_in_executor(None,
+                    requests.get,
+                    Game.FORTNITE_URL.format(platform, username),
+                    headers = {
+                        "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
+                    }
+                )
+                fortniteJson = fortniteJson.json()
+
+                # See if an error was given.
+                if "error" in fortniteJson:
+                    embed = getErrorMessage(self._fortnite, Game.NO_USER)
+                
+                else:
+                
+                    # There was no error given; Get Solo, Duo, and Squad information
+                    # Attempt to get each section of information; If no data for section
+                    # Don't use it, set it to None
+                    try:
+                        solo = fortniteJson["stats"]["p2"]
+                    except:
+                        solo = None
+                    try:
+                        duo = fortniteJson["stats"]["p10"]
+                    except:
+                        duo = None
+                    try:
+                        squads = fortniteJson["stats"]["p9"]
+                    except:
+                        squads = None
+
+                    try:
+                        seasonSolo = fortniteJson["stats"]["curr_p2"]
+                    except:
+                        seasonSolo = None
+                    try:
+                        seasonDuo = fortniteJson["stats"]["curr_p10"]
+                    except:
+                        seasonDuo = None
+                    try:
+                        seasonSquads = fortniteJson["stats"]["curr_p9"]
+                    except:
+                        seasonSquads = None
+
+                    gameTypeStats = [
+                        solo, duo, squads,
+                        seasonSolo, seasonDuo, seasonSquads
+                    ]
+                    gameTypes = [
+                        "p2", "p10", "p9",
+                        "curr_p2", "curr_p10", "curr_p9"
+                    ]
+
+                    lifetime = fortniteJson["lifeTimeStats"]
+
+                    # Create embed
+                    embed = discord.Embed(
+                        title = "Fortnite Stats",
+                        description = fortniteJson["epicUserHandle"] + " - " + fortniteJson["platformNameLong"],
+                        colour = self.getEmbedColor(),
+                        timestamp = datetime.now()
+                    ).set_author(
+                        name = fortniteJson["epicUserHandle"],
+                        icon_url = Game.FORTNITE_ICON
+                    ).set_footer(
+                        text = "Fortnite Tracker"
+                    )
+
+                    for gameType in range(len(gameTypeStats)):
+                        embed = fortnite.addGameType(embed, gameTypeStats[gameType], gameTypes[gameType])
+                    
+                    # Add lifetime stats
+                    embed.add_field(
+                        name = "Lifetime Stats",
+                        value = "{}\n{}\n{}\n{}\n{}\n".format(
+                            "**Matches Played**: " + lifetime[Game.FORTNITE_MATCHES_PLAYED]["value"],
+                            "**Wins**: " + lifetime[Game.FORTNITE_WINS]["value"],
+                            "**Kills**: " + lifetime[Game.FORTNITE_KILLS]["value"],
+                            "**Top 10**: " + lifetime[Game.FORTNITE_TOP_10]["value"],
+                            "**Top 25**: " + lifetime[Game.FORTNITE_TOP_25]["value"]
+                        ),
+                        inline = False
+                    )
         
-        # There was no error given; Get Solo, Duo, and Squad information
-        # Attempt to get each section of information; If no data for section
-        # Don't use it, set it to None
-        try:
-            solo = fortniteJson["stats"]["p2"]
-        except:
-            solo = None
-        try:
-            duo = fortniteJson["stats"]["p10"]
-        except:
-            duo = None
-        try:
-            squads = fortniteJson["stats"]["p9"]
-        except:
-            squads = None
-
-        try:
-            seasonSolo = fortniteJson["stats"]["curr_p2"]
-        except:
-            seasonSolo = None
-        try:
-            seasonDuo = fortniteJson["stats"]["curr_p10"]
-        except:
-            seasonDuo = None
-        try:
-            seasonSquads = fortniteJson["stats"]["curr_p9"]
-        except:
-            seasonSquads = None
-
-        gameTypeStats = [
-            solo, duo, squads,
-            seasonSolo, seasonDuo, seasonSquads
-        ]
-        gameTypes = [
-            "p2", "p10", "p9",
-            "curr_p2", "curr_p10", "curr_p9"
-        ]
-
-        lifetime = fortniteJson["lifeTimeStats"]
-
-        # Create embed
-        embed = discord.Embed(
-            title = "Fortnite Stats",
-            description = fortniteJson["epicUserHandle"] + " - " + fortniteJson["platformNameLong"],
-            colour = Game.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_author(
-            name = fortniteJson["epicUserHandle"],
-            icon_url = Game.FORTNITE_ICON
-        ).set_footer(
-            text = "Fortnite Tracker"
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
         )
-
-        for gameType in range(len(gameTypeStats)):
-            embed = fortnite.addGameType(embed, gameTypeStats[gameType], gameTypes[gameType])
-        
-        # Add lifetime stats
-        embed.add_field(
-            name = "Lifetime Stats",
-            value = "{}\n{}\n{}\n{}\n{}\n".format(
-                "**Matches Played**: " + lifetime[Game.FORTNITE_MATCHES_PLAYED]["value"],
-                "**Wins**: " + lifetime[Game.FORTNITE_WINS]["value"],
-                "**Kills**: " + lifetime[Game.FORTNITE_KILLS]["value"],
-                "**Top 10**: " + lifetime[Game.FORTNITE_TOP_10]["value"],
-                "**Top 25**: " + lifetime[Game.FORTNITE_TOP_25]["value"]
-            ),
-            inline = False
-        )
-
-        return embed
     
-    def fortniteItemShop(self):
+    async def fortniteItemShop(self, message, parameters):
         """Gets the current Fortnite Item shop.
         """
 
-        # Request data
-        fortniteItems = requests.get(
-            Game.FORTNITE_ITEM_SHOP_URL,
-            headers = {
-                "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
-            }
-        ).json()
+        # Check for too many parameters
+        if len(parameters) > self._fortniteItemShop.getMaxParameters():
+            embed = getErrorMessage(self._fortniteItemShop, Game.TOO_MANY_PARAMETERS)
+        
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
 
-        # Create file
-        return fortnite.getItemShopImage(fortniteItems)
+        else:
+
+            # Request data
+            fortniteItems = await loop.run_in_executor(None,
+                requests.get,
+                Game.FORTNITE_ITEM_SHOP_URL,
+                headers = {
+                    "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
+                }
+            )
+            fortniteItems = fortniteItems.json()
+
+            # Create file
+            result = await loop.run_in_executor(None,
+                fortnite.getItemShopImage,
+                fortniteItems
+            )
+
+            # Send file then delete
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
     
-    def league(self, parameters):
+    async def league(self, message, parameters):
         """Gets the League of Legends stats for a Summoner.
 
         Parameters:
@@ -1632,68 +1656,84 @@ class Game(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._league.getMinParameters():
-            return getErrorMessage(self._league, Game.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._league, Game.NOT_ENOUGH_PARAMETERS)
         
-        # Get username
-        username = " ".join(parameters)
+        # There were the proper amount of parameters
+        else:
 
-        # Get most recent version (used for profile icon)
-        versionsJson = requests.get(Game.LEAGUE_VERSIONS).json()
-        version = versionsJson[0]
-        
-        # Request the user data
-        leagueJson = requests.get(
-            Game.LEAGUE_SUMMONER_URL.format(username),
-            headers = {
-                "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
-            }
-        ).json()
+            # Get username
+            username = " ".join(parameters)
 
-        # Request the matches data
-        leagueMatchesJson = requests.get(
-            Game.LEAGUE_MATCHES_URL.format(leagueJson["accountId"]),
-            headers = {
-                "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
-            }
-        ).json()
-
-        # Request the first 5 matches data
-        matches = []
-        count = 0
-        for match in leagueMatchesJson["matches"]:
-            count += 1
+            # Get most recent version (used for profile icon)
+            versionsJson = await loop.run_in_executor(None,
+                requests.get,
+                Game.LEAGUE_VERSIONS
+            )
+            version = versionsJson.json()[0]
             
-            # Request the match data
-            leagueMatchJson = requests.get(
-                Game.LEAGUE_MATCH_URL.format(match["gameId"]),
+            # Request the user data
+            leagueJson = await loop.run_in_executor(None,
+                requests.get,
+                Game.LEAGUE_SUMMONER_URL.format(username),
                 headers = {
                     "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
                 }
-            ).json()
+            )
+            leagueJson = leagueJson.json()
 
-            matches.append(leagueMatchJson)
+            # Request the matches data
+            leagueMatchesJson = await loop.run_in_executor(None,
+                requests.get,
+                Game.LEAGUE_MATCHES_URL.format(leagueJson["accountId"]),
+                headers = {
+                    "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+                }
+            )
+            leagueMatchesJson = leagueMatchesJson.json()
 
-            if count >= 5:
-                break
+            # Request the first 5 matches data
+            matches = []
+            count = 0
+            for match in leagueMatchesJson["matches"]:
+                count += 1
+                
+                # Request the match data
+                leagueMatchJson = await loop.run_in_executor(None,
+                    requests.get,
+                    Game.LEAGUE_MATCH_URL.format(match["gameId"]),
+                    headers = {
+                        "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+                    }
+                )
+                leagueMatchJson = leagueMatchJson.json()
 
-        # Setup embed
-        embed = discord.Embed(
-            title = "League of Legends Stats",
-            description = "5 Most Recent Games for **{}**".format(leagueJson["name"]),
-            colour = Game.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_author(
-            name = leagueJson["name"],
-            icon_url = Game.LEAGUE_ICON_URL.format(version, leagueJson["profileIconId"])
-        ).set_footer(
-            text = "Riot Games API"
+                matches.append(leagueMatchJson)
+
+                if count >= 5:
+                    break
+
+            # Setup embed
+            embed = discord.Embed(
+                title = "League of Legends Stats",
+                description = "5 Most Recent Games for **{}**".format(leagueJson["name"]),
+                colour = self.getEmbedColor(),
+                timestamp = datetime.now()
+            ).set_author(
+                name = leagueJson["name"],
+                icon_url = Game.LEAGUE_ICON_URL.format(version, leagueJson["profileIconId"])
+            ).set_footer(
+                text = "Riot Games API"
+            )
+
+            # Add each game's data
+            for match in matches:
+                embed = league.getMatchStats(embed, match, leagueJson["accountId"])
+            
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed
         )
-
-        # Add each game's data
-        for match in matches:
-            embed = league.getMatchStats(embed, match, leagueJson["accountId"])
-        
-        return embed
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Helper Methods
@@ -1749,173 +1789,13 @@ class Game(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Connect Four Command
-            if command in self._connectFour.getAlternatives():
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
 
-                # 0 or 1 Parameter Exists
-                if len(parameters) in [0, 1]:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._connectFour, self.connectFour, message.author, difficulty = "".join(parameters))
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._connectFour, Category.TOO_MANY_PARAMETERS)
-                    )
-
-            # Hangman Command
-            elif command in self._hangman.getAlternatives():
-
-                # 0 or 1 Parameter Exists
-                if len(parameters) in [0, 1]:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._hangman, self.hangman, message.author, difficulty = "".join(parameters))
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._hangman, Game.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Rock Paper Scissors Command
-            elif command in self._rps.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._rps, Game.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 1 Parameter Exists
-                elif len(parameters) == 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._rps, self.rps, message.author, parameters[0])
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._hangman, Game.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Scramble Command
-            elif command in self._scramble.getAlternatives():
-
-                # 0 or 1 Parameter Exists
-                if len(parameters) in [0, 1]:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._scramble, self.scramble, message.author, difficulty = "".join(parameters))
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._scramble, Game.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Tic Tac Toe Command
-            elif command in self._ticTacToe.getAlternatives():
-
-                # 0 or 1 Parameter Exists
-                if len(parameters) in [0, 1]:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._ticTacToe, self.ticTacToe, message.author, difficulty = "".join(parameters))
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._ticTacToe, Game.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Stats Command
-            elif command in self._stats.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._stats, self.stats, message.author)
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._stats, Game.TOO_MANY_PARAMETERS)
-                    )
-                
-            # Black Ops 3 Command
-            elif command in self._blackOps3.getAlternatives():
-
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._blackOps3, self.blackOps3, parameters)
-                )
-            
-            # Black Ops 4 Command
-            elif command in self._blackOps4.getAlternatives():
-
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._blackOps4, self.blackOps4, parameters)
-                )
-            
-            # Fortnite Command
-            elif command in self._fortnite.getAlternatives():
-
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._fortnite, self.fortnite, parameters)
-                )
-            
-            # Fortnite Item Shop Command
-            elif command in self._fortniteItemShop.getAlternatives():
-                result = await self.run(message, self._fortniteItemShop, self.fortniteItemShop)
-
-                await sendMessage(
-                    self.client,
-                    message,
-                    filename = result
-                )
-                os.remove(result)
-            
-            # League Command
-            elif command in self._league.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._league, self.league, " ".join(parameters))
-                )
+                    # Run the command but don't try running others
+                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                    break
         
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Check Running Games
@@ -1929,7 +1809,7 @@ class Game(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = self.connectFour(message.author, move = message.content)
+                    embed = await self.connectFour(message, [], move = message.content)
                 )
 
             # Hangman
@@ -1937,7 +1817,7 @@ class Game(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = self.hangman(message.author, guess = message.content)
+                    embed = await self.hangman(message, [], guess = message.content)
                 )
             
             # Scramble
@@ -1945,7 +1825,7 @@ class Game(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = self.scramble(message.author, guess = message.content)
+                    embed = await self.scramble(message, [], guess = message.content)
                 )
             
             # Tic Tac Toe
@@ -1953,7 +1833,7 @@ class Game(Category):
                 await sendMessage(
                     self.client,
                     message,
-                    embed = self.ticTacToe(message.author, move = message.content)
+                    embed = await self.ticTacToe(message, [], move = message.content)
                 )
 
 def setup(client):

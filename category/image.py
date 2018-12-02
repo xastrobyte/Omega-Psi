@@ -1,15 +1,20 @@
+from util.file.database import loop
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
 
+from util.image import areYouAwake
+from util.image import expandingBrain
 from util.image import burnLetter
 from util.image import butILikeThis
 from util.image import carSkidding
 from util.image import cardSlam
 from util.image import classroomStares
+from util.image import didYouMean
 from util.image import icarlyStopSign
 from util.image import mastersBlessing
 from util.image import nArmHandshake
 from util.image import pigeon
+from util.image import playstation
 from util.image import puppetMeme
 from util.image import runAway
 from util.image import saveOne
@@ -20,13 +25,17 @@ from util.image import surprisedPikachu
 from util.image import trojanHorse
 from util.image import whoKilledHannibal
 
-from util.utils import sendMessage, getErrorMessage, loadImageFromUrl
+from util.utils.discordUtils import sendMessage, getErrorMessage
+from util.utils.miscUtils import loadImageFromUrl
+from util.utils.stringUtils import generateRandomString, capitalizeSentences
 
 from random import choice as choose, randint
 from supercog import Category, Command
-import discord, json, os, pygame, requests
+import discord, os, pygame, requests
 
 pygame.init()
+
+scrollEmbeds = {}
 
 class Image(Category):
 
@@ -34,10 +43,12 @@ class Image(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    EMBED_COLOR = 0x800080
-
     AVATAR_LIST = "https://api.adorable.io/avatars/list"
     AVATAR_API  = "https://api.adorable.io/avatars/face/{}/{}/{}/{}"
+
+    ROBOHASH_API = "https://robohash.org/{}"
+
+    TIMCHEN_API = "https://timchen.tk/api"
 
     MEME_SUBREDDITS = [
         "meme",
@@ -69,6 +80,7 @@ class Image(Category):
             client, 
             "Image",
             description = "Anything having to do with images is here.",
+            embed_color = 0x800080,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -93,43 +105,8 @@ class Image(Category):
                         "Hmmm. No gifs were found with those keywords. Perhaps broaden your search?"
                     ]
                 }
-            }
-        })
-
-        self._theOffice = Command(commandDict = {
-            "alternatives": ["theOffice", "office", "o"],
-            "info": "Sends a random gif related to The Office.",
-            "errors": {
-                Image.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "*Why are you the way that you are?* You don't need any parameters."
-                    ]
-                }
-            }
-        })
-
-        self._parksAndRec = Command(commandDict = {
-            "alternatives": ["parksAndRec", "parks", "pnr"],
-            "info": "Sends a random gif related to Parks and Rec.",
-            "errors": {
-                Image.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "No no no. You don't need any parameters to get a gif from Parks and Rec."
-                    ]
-                }
-            }
-        })
-
-        self._brooklyn99 = Command(commandDict = {
-            "alternatives": ["brooklyn99", "b99", "99"],
-            "info": "Sends a random gif related to Brooklyn Nine-Nine.",
-            "errors": {
-                Image.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "No doubt no doubt no doubt you need no parameters for this command."
-                    ]
-                }
-            }
+            },
+            "command": self.gif
         })
 
         self._avatar = Command(commandDict = {
@@ -141,7 +118,62 @@ class Image(Category):
                         "In order to get an avatar, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.avatar
+        })
+
+        self._robohash = Command(commandDict = {
+            "alternatives": ["robohash", "robo"],
+            "info": "Sends a robohash avatar based off the text you enter.",
+            "parameters":{
+                "content": {
+                    "info": "The text to use to generate the robohash avatar.",
+                    "optional": True,
+                    "accepted": {
+                        "random": {
+                            "alternatives": ["random", "surprise", "surpriseMe"],
+                            "info": "Allows you to have a completely random robohash to be sent."
+                        }
+                    }
+                }
+            },
+            "command": self.robohash
+        })
+
+        self._timchen = Command(commandDict = {
+            "alternatives": ["timchen", "tim", "chen", "t"],
+            "info": {
+                "text": "Sends a random picture of Timchen (a Repl.it moderator) using an API made by {}",
+                "hyperlink": "https://repl.it/@mat1",
+                "hyperlink_text": "mat#6207"
+            },
+            "errors": {
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a picture of Timchen, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.timchen
+        })
+
+        self._nasaImage = Command(commandDict = {
+            "alternatives": ["nasa", "NASA", "nasaImage", "NASAImage", "nasaImg", "NASAImg"],
+            "info": "Gives you a random NASA image given a search term or no search term.",
+            "parameters": {
+                "term": {
+                    "info": "The term to search for a NASA image.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Image.NO_IMAGE: {
+                    "messages": [
+                        "There were no images matching that search. Try again or broaden your search term."
+                    ]
+                }
+            },
+            "command": self.nasaImage
         })
 
         self._meme = Command(commandDict = {
@@ -158,7 +190,104 @@ class Image(Category):
                         "Somehow there were no memes found??? Idk try again."
                     ]
                 }
-            }
+            },
+            "command": self.meme
+        })
+
+        self._areYouAwake = Command(commandDict = {
+            "alternatives": ["areYouAwake"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": areYouAwake.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "text": {
+                    "info": "The text that goes inside the speech bubble for the brain.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Image.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need a single set of text wrapped in quotes (\")."
+                    ]
+                },
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need a single set of text wrapped in quotes (\")."
+                    ]
+                }
+            },
+            "command": self.areYouAwake
+        })
+
+        self._expandingBrain = Command(commandDict = {
+            "alternatives": ["expandingBrain", "expBrain"],
+            "info": {
+                "text": "Sends a generated meme based off {} image.",
+                "hyperlink": expandingBrain.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "firstText": {
+                    "info": "The text to put in the first box.",
+                    "optional": False
+                },
+                "secondText": {
+                    "info": "The text to put in the second box.",
+                    "optional": True
+                },
+                "thirdText": {
+                    "info": "The text to put in the third box.",
+                    "optional": True
+                },
+                "fourthText": {
+                    "info": "The text to put in the fourth box.",
+                    "optional": True
+                },
+                "fifthText": {
+                    "info": "The text to put in the fifth box.",
+                    "optional": True
+                },
+                "sixthText": {
+                    "info": "The text to put in the sixth box.",
+                    "optional": True
+                },
+                "seventhText": {
+                    "info": "The text to put in the seventh box.",
+                    "optional": True
+                },
+                "eighthText": {
+                    "info": "The text to put in the eighth box.",
+                    "optional": True
+                },
+                "ninthText": {
+                    "info": "The text to put in the ninth box.",
+                    "optional": True
+                },
+                "tenthText": {
+                    "info": "The text to put in the tenth box.",
+                    "optional": True
+                },
+                "eleventhText": {
+                    "info": "The text to put in the eleventh box.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Image.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least a single set of text wrapped in quotes (\")."
+                    ]
+                },
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you can have a maximum of 11 sets of text wrapped in quotes (\")."
+                    ]
+                }
+            },
+            "command": self.expandingBrain
         })
 
         self._burnLetter = Command(commandDict = {
@@ -189,7 +318,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.burnLetter
         })
 
         self._butILikeThis = Command(commandDict = {
@@ -220,7 +350,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.butILikeThis
         })
 
         self._carSkidding = Command(commandDict = {
@@ -255,7 +386,8 @@ class Image(Category):
                         "You have too many parameters for this. You only need 3 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.carSkidding
         })
 
         self._cardSlam = Command(commandDict = {
@@ -290,7 +422,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 3 sets of text each wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.cardSlam
         })
 
         self._classroomStares = Command(commandDict = {
@@ -317,7 +450,40 @@ class Image(Category):
                         "You only need the bubble text to generate this meme."
                     ]
                 }
-            }
+            },
+            "command": self.classroomStares
+        })
+
+        self._didYouMean = Command(commandDict = {
+            "alternatives": ["didYouMean"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": didYouMean.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "searchText": {
+                    "info": "The text that goes in the search bar.",
+                    "optional": True
+                },
+                "didYouMeanText": {
+                    "info": "The text that goes where it says *Did You Mean*",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Image.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need at least 1 parameter to generate this meme."
+                    ]
+                },
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You only need 2 parameters to generate this meme."
+                    ]
+                }
+            },
+            "command": self.didYouMean
         })
 
         self._icarlyStopSign = Command(commandDict = {
@@ -349,10 +515,11 @@ class Image(Category):
                 },
                 Image.TOO_MANY_PARAMETERS: {
                     "messages": [
-                        "You only need 3 different texts to put on the meme."
+                        "You only need 3 different sets of text to put on the meme."
                     ]
                 }
-            }
+            },
+            "command": self.icarlyStopSign
         })
 
         self._mastersBlessing = Command(commandDict = {
@@ -387,7 +554,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 3 sets of text each wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.mastersBlessing
         })
 
         self._nArmHandshake = Command(commandDict = {
@@ -430,7 +598,8 @@ class Image(Category):
                         "In order to generate this meme, you can have up to 5 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "commands": self.nArmHandshake
         })
 
         self._pigeon = Command(commandDict = {
@@ -465,7 +634,48 @@ class Image(Category):
                         "In order to generate this meme, you only need 3 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.pigeon
+        })
+
+        self._playstation = Command(commandDict = {
+            "alternatives": ["playstation"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": playstation.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "triangleText": {
+                    "info": "The text that goes next to the triangle button.",
+                    "optional": True
+                },
+                "squareText": {
+                    "info": "The text that goes next to the square button.",
+                    "optional": True
+                },
+                "xText": {
+                    "info": "The text that goes next to the X button.",
+                    "optional": False
+                },
+                "circleText": {
+                    "info": "The text that goes next to the circle button.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Image.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 2 sets of text wrapped in quotes (\")."
+                    ]
+                },
+                Image.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you can have a maximum of 4 sets of text wrapped in quotes (\")."
+                    ]
+                }
+            },
+            "command": self.playstation
         })
 
         self._puppetMeme = Command(commandDict = {
@@ -496,7 +706,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.puppetMeme
         })
 
         self._runAway = Command(commandDict = {
@@ -527,7 +738,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.runAway
         })
 
         self._saveOne = Command(commandDict = {
@@ -562,7 +774,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 3 sets of text each wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.saveOne
         })
 
         self._sayItAgain = Command(commandDict = {
@@ -593,7 +806,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text each wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.sayItAgain
         })
 
         self._spontaneousAnger = Command(commandDict = {
@@ -624,7 +838,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text each wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.spontaneousAnger
         })
 
         self._surprisedDwight = Command(commandDict = {
@@ -655,7 +870,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 2 sets of text each wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.surprisedDwight
         })
 
         self._surprisedPikachu = Command(commandDict = {
@@ -698,7 +914,8 @@ class Image(Category):
                         "There is a maximum of 5 lines you can put on this meme."
                     ]
                 }
-            }
+            },
+            "command": self.surprisedPikachu
         })
 
         self._trojanHorse = Command(commandDict = {
@@ -737,7 +954,8 @@ class Image(Category):
                         "In order to generate this meme, you only need 4 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
+            },
+            "command": self.trojanHorse
         })
 
         self._whoKilledHannibal = Command(commandDict = {
@@ -776,44 +994,31 @@ class Image(Category):
                         "In order to generate this meme, you only need 4 sets of text wrapped in quotes (\")."
                     ]
                 }
-            }
-        })
-
-        self._nasaImage = Command(commandDict = {
-            "alternatives": ["nasa", "NASA", "nasaImage", "NASAImage", "nasaImg", "NASAImg"],
-            "info": "Gives you a random NASA image given a search term or no search term.",
-            "parameters": {
-                "term": {
-                    "info": "The term to search for a NASA image.",
-                    "optional": True
-                }
             },
-            "errors": {
-                Image.NO_IMAGE: {
-                    "messages": [
-                        "There were no images matching that search. Try again or broaden your search term."
-                    ]
-                }
-            }
+            "command": self.whoKilledHannibal
         })
 
         self.setCommands([
             self._gif,
-            self._theOffice,
-            self._parksAndRec,
-            self._brooklyn99,
             self._avatar,
+            self._robohash,
+            self._timchen,
+            self._nasaImage,
 
             self._meme,
+            self._areYouAwake,
+            self._expandingBrain,
             self._burnLetter,
             self._butILikeThis,
             self._carSkidding,
             self._cardSlam,
             self._classroomStares,
+            self._didYouMean,
             self._icarlyStopSign,
             self._mastersBlessing,
             self._nArmHandshake,
             self._pigeon,
+            self._playstation,
             self._puppetMeme,
             self._runAway,
             self._saveOne,
@@ -822,16 +1027,66 @@ class Image(Category):
             self._surprisedDwight,
             self._surprisedPikachu,
             self._trojanHorse,
-            self._whoKilledHannibal,
-
-            self._nasaImage
+            self._whoKilledHannibal
         ])
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def avatar(self, parameters):
+    async def gif(self, message, parameters):
+        """Returns a gif from giphy.
+        """
+
+        keywords = " ".join(parameters)
+
+        # Get data involving gifs from Giphy
+        if keywords == "random":
+            gifData = await loop.run_in_executor(None,
+                requests.get,
+                os.environ["GIPHY_RANDOM_API_URL"]
+            )
+            gifData = gifData.json()
+
+            result = gifData["data"]["embed_url"]
+        
+        else:
+            gifsData = await loop.run_in_executor(None,
+                requests.get,
+                os.environ["GIPHY_SEARCH_API_URL"].format(
+                    keywords.replace(" ", "+")
+                )
+            )
+            gifsData = gifsData.json()
+
+            # Return random embed url
+            if len(gifsData) > 0:
+                gifData = choose(gifsData["data"])
+                result = gifData["embed_url"]
+            else:
+                result = getErrorMessage(self._gif, Image.NO_GIFS_FOUND)
+        
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = result
+            )
+
+    async def avatar(self, message, parameters):
         """Returns a random cute avatar that can be used as a placeholder.
 
         Parameters:
@@ -840,53 +1095,198 @@ class Image(Category):
 
         # Check for too many parameters
         if len(parameters) > self._avatar.getMaxParameters():
-            return getErrorMessage(self._avatar, Image.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._avatar, Image.TOO_MANY_PARAMETERS)
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        # There were the proper amount of parameters
+        else:
 
-        # Get list of face features
-        faceValues = requests.get(Image.AVATAR_LIST).json()["face"]
+            # Get list of face features
+            faceValues = await loop.run_in_executor(None,
+                requests.get,
+                Image.AVATAR_LIST
+            )
+            faceValues = faceValues.json()["face"]
 
-        # Choose random eyes, nose, mouth, and color
-        eyes  = choose(faceValues["eyes"])
-        nose  = choose(faceValues["nose"])
-        mouth = choose(faceValues["mouth"])
-        color = hex(randint(0, 16777215))[2:].rjust(6, "0")
+            # Choose random eyes, nose, mouth, and color
+            eyes  = choose(faceValues["eyes"])
+            nose  = choose(faceValues["nose"])
+            mouth = choose(faceValues["mouth"])
+            color = hex(randint(0, 16777215))[2:].rjust(6, "0")
 
-        # Load image
-        image = loadImageFromUrl(Image.AVATAR_API.format(
-            eyes, nose,
-            mouth, color
-        ))
+            # Load image
+            image = await loop.run_in_executor(None,
+                loadImageFromUrl,
+                Image.AVATAR_API.format(
+                    eyes, nose,
+                    mouth, color
+                )
+            )
 
-        # Save image temporarily
-        avatarFile = "{}_{}_{}_{}.png".format(
-            eyes, nose, mouth, color
-        )
-        pygame.image.save(image, avatarFile)
-        return avatarFile
+            # Save image temporarily
+            avatarFile = "{}_{}_{}_{}.png".format(
+                eyes, nose, mouth, color
+            )
+            pygame.image.save(image, avatarFile)
 
-    def gif(self, keywords):
-        """Returns a gif from giphy.
+            # Send file then delete image
+            await sendMessage(
+                self.client,
+                message,
+                filename = avatarFile
+            )
 
-        Parameters:
-            keywords (str) - The keywords to search by.
+            os.remove(avatarFile)
+    
+    async def robohash(self, message, parameters):
+        """Sends a random robohash avatar or a generated one based off of the content.
         """
 
-        # Get data involving gifs from Giphy
-        if keywords == "random":
-            gifData = requests.get(os.environ["GIPHY_RANDOM_API_URL"]).json()
-        
-        else:
-            gifsData = requests.get(os.environ["GIPHY_SEARCH_API_URL"].format(keywords.replace(" ", "+"))).json()
+        # Generate personal robohash if content is empty
+        content = " ".join(parameters)
 
-            # Return random embed url
-            if len(gifsData) > 0:
-                gifData = choose(gifsData["data"])
-            else:
-                return getErrorMessage(self._gif, Image.NO_GIFS_FOUND)
+        if len(content) == 0:
+            content = "{}-{}".format(
+                message.author.name,
+                message.author.discriminator
+            )
         
-        return gifData["data"]["embed_url"]
+        # Generate totally random robohash if content is random
+        elif content in self._robohash.getAcceptedParameters("content", "random").getAlternatives():
+            content = generateRandomString()
+        
+        # Load image
+        image = await loop.run_in_executor(None,
+            loadImageFromUrl,
+            Image.ROBOHASH_API.format(content)
+        )
+
+        # Save image temporarily
+        avatarFile = "{}.png".format(
+            content
+        )
+        pygame.image.save(image, avatarFile)
+        
+        # Send the file and then delete it
+        await sendMessage(
+            self.client,
+            message,
+            filename = avatarFile
+        )
+
+        os.remove(avatarFile)
     
-    def meme(self, channel):
+    async def timchen(self, message, parameters):
+        """Returns a random picture of Timchen with the caption.
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._timchen.getMaxParameters():
+            embed = getErrorMessage(self._timchen, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Get a random image
+            timchen = await loop.run_in_executor(None,
+                requests.get,
+                Image.TIMCHEN_API
+            )
+            timchen = timchen.json()
+
+            embed = discord.Embed(
+                title = "Timchen!",
+                description = capitalizeSentences(timchen["desc"]),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            ).set_image(
+                url = timchen["url"]
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def nasaImage(self, message, parameters):
+        """Returns an image from NASA.
+        """
+
+        keywords = " ".join(parameters)
+
+        # Get data involving NASA images
+        if keywords == "random":
+            imageData = await loop.run_in_executor(None,
+                requests.get,
+                Image.NASA_RANDOM
+            )
+
+        else:
+            imageData = await loop.run_in_executor(None,
+                requests.get,
+                Image.NASA_SEARCH.format(
+                    keywords.replace(" ", "+")
+                )
+            )
+        
+        imageData = imageData.json()
+
+        # Check if there are no images
+        if len(imageData["collection"]["items"]) == 0:
+            embed = getErrorMessage(self._nasaImage, Image.NO_IMAGE)
+        
+        # There are images
+        else:
+
+            # Choose random item from collection
+            item = choose(imageData["collection"]["items"])
+
+            # Get href from item
+            imageLink = item["links"][0]["href"]
+
+            # Make sure description is less than 2000 characters
+            if len(item["data"][0]["description"]) < Image.DESCRIPTION_THRESHOLD:
+                description = item["data"][0]["description"]
+            else:
+                description = item["data"][0]["description"][:Image.DESCRIPTION_THRESHOLD] + "[...]"
+
+            embed = discord.Embed(
+                title = item["data"][0]["title"],
+                description = description,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            ).set_image(
+                url = imageLink
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def meme(self, message, parameters):
         """Returns a random meme from Reddit.\n
 
         Parameters:
@@ -895,7 +1295,7 @@ class Image(Category):
 
         # See if channel has is_nsfw
         try:
-            isNSFW = channel.is_nsfw()
+            isNSFW = message.channel.is_nsfw()
         
         # Channel is private, allow NSFW
         except:
@@ -905,76 +1305,1004 @@ class Image(Category):
         # Choose random subreddit between meme subreddits (meme, memes, dankmemes, dank_meme)
         subreddit = choose(Image.MEME_SUBREDDITS)
 
-        redditData = requests.get(
+        redditData = await loop.run_in_executor(None,
+            requests.get,
             Image.MEME_RANDOM.format(subreddit),
             headers = {
                 "User-agent": "Omega Psi"
             }
-        ).json()
+        )
+        redditData = redditData.json()
 
         # Make sure there are reddit posts
         if len(redditData["data"]["children"]) == 0:
-            return getErrorMessage(self._meme, Image.NO_IMAGE)
+            embed = getErrorMessage(self._meme, Image.NO_IMAGE)
         
-        # Choose random reddit post
-        redditPost = choose(redditData["data"]["children"])["data"]
-        while redditPost["is_video"] or (redditPost["over_18"] and not isNSFW):
-            redditPost = choose(redditData["data"]["children"])["data"]
+        # There were reddit posts
+        else:
 
-        # Return an embed for the reddit post
-        return discord.Embed(
-            name = "Meme Result",
-            description = "[{}]({})".format(
-                redditPost["title"],
-                Image.REDDIT_BASE + redditPost["permalink"]
-            ),
-            colour = Image.EMBED_COLOR
-        ).set_image(
-            url = redditPost["url"]
-        ).set_footer(
-            text = "👍 {} 💬 {}".format(
-                redditPost["score"],
-                redditPost["num_comments"]
+            # Choose random reddit post
+            redditPost = choose(redditData["data"]["children"])["data"]
+            while redditPost["is_video"] or (redditPost["over_18"] and not isNSFW):
+                redditPost = choose(redditData["data"]["children"])["data"]
+
+            # Return an embed for the reddit post
+            embed = discord.Embed(
+                name = "Meme Result",
+                description = "[{}]({})".format(
+                    redditPost["title"],
+                    Image.REDDIT_BASE + redditPost["permalink"]
+                ),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            ).set_image(
+                url = redditPost["url"]
+            ).set_footer(
+                text = "👍 {} 💬 {}".format(
+                    redditPost["score"],
+                    redditPost["num_comments"]
+                )
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
             )
         )
     
-    def nasaImage(self, keywords):
-        """Returns an image from NASA.
-
-        Parameters:
-            keywords (str) - The keywords to search by.
+    async def areYouAwake(self, message, parameters):
+        """Generates and sends the Are You Awake meme.
         """
 
-        # Get data involving NASA images
-        if keywords == "random":
-            imageData = requests.get(Image.NASA_RANDOM).json()
-
-        else:
-            imageData = requests.get(Image.NASA_SEARCH.format(keywords.replace(" ", "+"))).json()
-
-        # Check if there are no images
-        if len(imageData["collection"]["items"]) == 0:
-            return getErrorMessage(self._nasaImage, Image.NO_IMAGE)
+        # Check for not enough parameters
+        if len(parameters) < self._areYouAwake.getMinParameters():
+            result = getErrorMessage(self._areYouAwake, Image.NOT_ENOUGH_PARAMETERS)
         
-        # Choose random item from collection
-        item = choose(imageData["collection"]["items"])
-
-        # Get href from item
-        imageLink = item["links"][0]["href"]
-
-        # Make sure description is less than 2000 characters
-        if len(item["data"][0]["description"]) < Image.DESCRIPTION_THRESHOLD:
-            description = item["data"][0]["description"]
+        # Check for too many parameters
+        elif len(parameters) > self._areYouAwake.getMaxParameters():
+            result = getErrorMessage(self._areYouAwake, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
         else:
-            description = item["data"][0]["description"][:Image.DESCRIPTION_THRESHOLD] + "[...]"
+            result = await loop.run_in_executor(None,
+                areYouAwake.generateImage,
+                parameters[0]
+            )
 
-        return discord.Embed(
-            title = item["data"][0]["title"],
-            description = description,
-            colour = Image.EMBED_COLOR
-        ).set_image(
-            url = imageLink
-        )
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+        
+    async def expandingBrain(self, message, parameters):
+        """Generates and sends the brain size meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._expandingBrain.getMinParameters():
+            result = getErrorMessage(self._expandingBrain, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._expandingBrain.getMaxParameters():
+            result = getErrorMessage(self._expandingBrain, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                expandingBrain.generateImage,
+                parameters
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def burnLetter(self, message, parameters):
+        """Generates and sends the Burn Letter meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._burnLetter.getMinParameters():
+            result = getErrorMessage(self._burnLetter, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._burnLetter.getMaxParameters():
+            result = getErrorMessage(self._burnLetter, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                burnLetter.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def butILikeThis(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._butILikeThis.getMinParameters():
+            result = getErrorMessage(self._butILikeThis, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._butILikeThis.getMaxParameters():
+            result = getErrorMessage(self._butILikeThis, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                butILikeThis.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def carSkidding(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._carSkidding.getMinParameters():
+            result = getErrorMessage(self._carSkidding, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._carSkidding.getMaxParameters():
+            result = getErrorMessage(self._carSkidding, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                carSkidding.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def cardSlam(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._cardSlam.getMinParameters():
+            result = getErrorMessage(self._cardSlam, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._cardSlam.getMaxParameters():
+            result = getErrorMessage(self._cardSlam, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                cardSlam.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def classroomStares(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._classroomStares.getMinParameters():
+            result = getErrorMessage(self._classroomStares, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._classroomStares.getMaxParameters():
+            result = getErrorMessage(self._classroomStares, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                classroomStares.generateImage,
+                parameters[0]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def didYouMean(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._didYouMean.getMinParameters():
+            result = getErrorMessage(self._didYouMean, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._didYouMean.getMaxParameters():
+            result = getErrorMessage(self._didYouMean, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Check if only 1 parameter (only generate Did You Mean part)
+            if len(parameters) == 1:
+                result = await loop.run_in_executor(None,
+                    didYouMean.generateImage,
+                    "",
+                    parameters[0]
+                )
+            
+            else:
+                result = await loop.run_in_executor(None,
+                    didYouMean.generateImage,
+                    parameters[0],
+                    parameters[1]
+                )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def icarlyStopSign(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._icarlyStopSign.getMinParameters():
+            result = getErrorMessage(self._icarlyStopSign, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._icarlyStopSign.getMaxParameters():
+            result = getErrorMessage(self._icarlyStopSign, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            
+            # Check if there are only 2 parameters
+            if len(parameters) == 2:
+                result = await loop.run_in_executor(None,
+                    icarlyStopSign.generateImage,
+                    parameters[0],
+                    "",
+                    parameters[1]
+                )
+            else:
+                result = await loop.run_in_executor(None,
+                    icarlyStopSign.generateImage,
+                    parameters[0],
+                    parameters[1],
+                    parameters[2]
+                )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def mastersBlessing(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._mastersBlessing.getMinParameters():
+            result = getErrorMessage(self._mastersBlessing, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._mastersBlessing.getMaxParameters():
+            result = getErrorMessage(self._mastersBlessing, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                mastersBlessing.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def nArmHandshake(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._nArmHandshake.getMinParameters():
+            result = getErrorMessage(self._nArmHandshake, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._nArmHandshake.getMaxParameters():
+            result = getErrorMessage(self._nArmHandshake, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            
+            # Check if there are only 3 parameters
+            if len(parameters) == 3:
+                result = await loop.run_in_executor(None,
+                    nArmHandshake.generateImage,
+                    parameters[0],
+                    parameters[1],
+                    parameters[2]
+                )
+            
+            # Check if there are 4 parameters
+            elif len(parameters) == 4:
+                result = await loop.run_in_executor(None,
+                    nArmHandshake.generateImage,
+                    parameters[0],
+                    parameters[1],
+                    parameters[2],
+                    parameters[3]
+                )
+            
+            # Check if there are 5 parameters
+            else:
+                result = await loop.run_in_executor(None,
+                    nArmHandshake.generateImage,
+                    parameters[0],
+                    parameters[1],
+                    parameters[2],
+                    parameters[3],
+                    parameters[4]
+                )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def pigeon(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._pigeon.getMinParameters():
+            result = getErrorMessage(self._pigeon, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._pigeon.getMaxParameters():
+            result = getErrorMessage(self._pigeon, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                pigeon.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def playstation(self, message, parameters):
+        """Generates and sends the brain size meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._playstation.getMinParameters():
+            result = getErrorMessage(self._playstation, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._playstation.getMaxParameters():
+            result = getErrorMessage(self._playstation, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            triangleText = ""
+            squareText = ""
+
+            # There were 2 parameters
+            if len(parameters) == 2:
+                xText, circleText = parameters
+            
+            # There were 3 parameters
+            elif len(parameters) == 3:
+                squareText, xText, circleText = parameters
+            
+            # There were 4 parameters
+            else:
+                triangleText, squareText, xText, circleText = parameters
+
+            result = await loop.run_in_executor(None,
+                playstation.generateImage,
+                triangleText,
+                squareText,
+                xText,
+                circleText
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def puppetMeme(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._puppetMeme.getMinParameters():
+            result = getErrorMessage(self._puppetMeme, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._puppetMeme.getMaxParameters():
+            result = getErrorMessage(self._puppetMeme, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                puppetMeme.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def runAway(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._runAway.getMinParameters():
+            result = getErrorMessage(self._runAway, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._runAway.getMaxParameters():
+            result = getErrorMessage(self._runAway, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None, 
+                runAway.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def saveOne(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._saveOne.getMinParameters():
+            result = getErrorMessage(self._saveOne, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._saveOne.getMaxParameters():
+            result = getErrorMessage(self._saveOne, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                saveOne.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def sayItAgain(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._sayItAgain.getMinParameters():
+            result = getErrorMessage(self._sayItAgain, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._sayItAgain.getMaxParameters():
+            result = getErrorMessage(self._sayItAgain, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                sayItAgain.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def spontaneousAnger(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._spontaneousAnger.getMinParameters():
+            result = getErrorMessage(self._spontaneousAnger, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._spontaneousAnger.getMaxParameters():
+            result = getErrorMessage(self._spontaneousAnger, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(
+                spontaneousAnger.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def surprisedDwight(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._surprisedDwight.getMinParameters():
+            result = getErrorMessage(self._surprisedDwight, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._surprisedDwight.getMaxParameters():
+            result = getErrorMessage(self._surprisedDwight, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+           result = await loop.run_in_executor(None, 
+                surprisedDwight.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def surprisedPikachu(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._surprisedPikachu.getMinParameters():
+            result = getErrorMessage(self._surprisedPikachu, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._surprisedPikachu.getMaxParameters():
+            result = getErrorMessage(self._surprisedPikachu, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                surprisedPikachu.generateImage,
+                parameters
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def trojanHorse(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._trojanHorse.getMinParameters():
+            result = getErrorMessage(self._trojanHorse, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._trojanHorse.getMaxParameters():
+            result = getErrorMessage(self._trojanHorse, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None, 
+                trojanHorse.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2],
+                parameters[3]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def whoKilledHannibal(self, message, parameters):
+        """
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._whoKilledHannibal.getMinParameters():
+            result = getErrorMessage(self._whoKilledHannibal, Image.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._whoKilledHannibal.getMaxParameters():
+            result = getErrorMessage(self._whoKilledHannibal, Image.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                whoKilledHannibal.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2],
+                parameters[3]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -994,707 +2322,13 @@ class Image(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Gif Command
-            if command in self._gif.getAlternatives():
-                result = await self.run(message, self._gif, self.gif, " ".join(parameters) if len(parameters) > 0 else "random")
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
 
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = result
-                    )
-                
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        message = result
-                    )
-            
-            # The Office Command
-            elif command in self._theOffice.getAlternatives():
-                
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        message = await self.run(message, self._theOffice, self.gif, "the office")
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._theOffice, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Parks and Rec Command
-            elif command in self._parksAndRec.getAlternatives():
-                
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        message = await self.run(message, self._parksAndRec, self.gif, "parks and rec")
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._parksAndRec, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Brooklyn 99 Command
-            elif command in self._brooklyn99.getAlternatives():
-                
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        message = await self.run(message, self._brooklyn99, self.gif, "brooklyn 99")
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._brooklyn99, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Meme Command
-            elif command in self._meme.getAlternatives():
-                result = await self.run(message, self._meme, self.meme, message.channel)
-
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = result
-                    )
-            
-            # Avatar Command
-            elif command in self._avatar.getAlternatives():
-                result = await self.run(message, self._avatar, self.avatar, parameters)
-
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = result
-                    )
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-            # Burn Letter Command
-            elif command in self._burnLetter.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._burnLetter, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._burnLetter, burnLetter.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 2 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._burnLetter, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # But I Like This Command
-            elif command in self._butILikeThis.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._butILikeThis, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._butILikeThis, butILikeThis.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 2 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._butILikeThis, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Car Skidding Command
-            elif command in self._carSkidding.getAlternatives():
-
-                # Less than 3 Parameters Exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._carSkidding, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters Exist
-                elif len(parameters) == 3:
-                    result = await self.run(message, self._carSkidding, carSkidding.generateImage, parameters[0], parameters[1], parameters[2])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._carSkidding, Image.TOO_MANY_PARAMETERS)
-                    )
-                
-            # Card Slam Command
-            elif command in self._cardSlam.getAlternatives():
-                
-                # Less than 3 Parameters Exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._cardSlam, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters Exist
-                elif len(parameters) == 3:
-                    result = await self.run(message, self._cardSlam, cardSlam.generateImage, parameters[0], parameters[1], parameters[2])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-                    
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._cardSlam, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Classroom Stares Command
-            elif command in self._classroomStares.getAlternatives():
-
-                # Less than 1 Parameter Exist
-                if len(parameters) < 1:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._classroomStares, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters Exist
-                elif len(parameters) == 3:
-                    result = await self.run(message, self._classroomStares, classroomStares.generateImage, parameters[0])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 1 Parameter Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._classroomStares, Image.TOO_MANY_PARAMETERS)
-                    )
-                
-            # iCarly Stop Sign Command
-            elif command in self._icarlyStopSign.getAlternatives():
-
-                # Less than 2 Parameters exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._icarlyStopSign, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters Exist
-                elif len(parameters) in [2, 3]:
-
-                    if len(parameters) == 2:
-                        spencerText = parameters[0]
-                        stopText = ""
-                        gibbyText = parameters[1]
-                    else:
-                        spencerText = parameters[0]
-                        stopText = parameters[1]
-                        gibbyText = parameters[2]
-
-                    result = await self.run(message, self._icarlyStopSign, icarlyStopSign.generateImage, spencerText, stopText, gibbyText)
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-                    
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._icarlyStopSign, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Masters Blessing Command
-            elif command in self._mastersBlessing.getAlternatives():
-                
-                # Less than 3 Parameters Exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._mastersBlessing, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters Exist
-                elif len(parameters) == 3:
-                    result = await self.run(message, self._mastersBlessing, mastersBlessing.generateImage, parameters[0], parameters[1], parameters[2])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-                    
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._mastersBlessing, Image.TOO_MANY_PARAMETERS)
-                    )
-                
-            # N Arm Handshake Command
-            elif command in self._nArmHandshake.getAlternatives():
-
-                # Less than 3 Parameters Exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._nArmHandshake, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 to 5 Parameters Exist
-                elif len(parameters) in [3, 4, 5]:
-                    
-                    if len(parameters) == 4:
-                        thirdArm = parameters[3]
-                        fourthArm = None
-                    elif len(parameters) == 5:
-                        thirdArm = parameters[3]
-                        fourthArm = parameters[4]
-                    else:
-                        thirdArm = None
-                        fourthArm = None
-
-                    result = await self.run(message, self._nArmHandshake, nArmHandshake.generateImage, parameters[0], parameters[1], parameters[2], thirdArm, fourthArm)
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 5 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._nArmHandshake, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Pigeon Command
-            elif command in self._pigeon.getAlternatives():
-
-                # Less than 3 parameters exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._pigeon, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters exist
-                elif len(parameters) == 3:
-                    result = await self.run(message, self._pigeon, pigeon.generateImage, parameters[0], parameters[1], parameters[2])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 parameters exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._pigeon, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-            
-            # Puppet Meme Command
-            elif command in self._puppetMeme.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._puppetMeme, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._puppetMeme, puppetMeme.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 2 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._puppetMeme, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Run Away Command
-            elif command in self._runAway.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._runAway, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._runAway, runAway.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 2 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._runAway, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Save One Command
-            elif command in self._saveOne.getAlternatives():
-
-                # Less than 3 Parameters Exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._saveOne, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 Parameters Exist
-                elif len(parameters) == 3:
-                    result = await self.run(message, self._saveOne, saveOne.generateImage, parameters[0], parameters[1], parameters[2])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._saveOne, Image.TOO_MANY_PARAMETERS)
-                    )
-                
-            # Say It Again Command
-            elif command in self._sayItAgain.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._sayItAgain, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._sayItAgain, sayItAgain.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 2 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._sayItAgain, Image.TOO_MANY_PARAMETERS)
-                    )
-
-            # Spontaneous Anger Command
-            elif command in self._spontaneousAnger.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._spontaneousAnger, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._spontaneousAnger, spontaneousAnger.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 2 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._spontaneousAnger, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Surprised Dwight Command
-            elif command in self._surprisedDwight.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._carSkidding, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 Parameters Exist
-                elif len(parameters) == 2:
-                    result = await self.run(message, self._surprisedDwight, surprisedDwight.generateImage, parameters[0], parameters[1])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 3 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._surprisedDwight, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Surprised Pikachu Command
-            elif command in self._surprisedPikachu.getAlternatives():
-
-                # Less than 3 parameters exist
-                if len(parameters) < 3:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._surprisedPikachu, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 3 to 5 parameters exist
-                elif len(parameters) in [3, 4, 5]:
-                    result = await self.run(message, self._surprisedPikachu, surprisedPikachu.generateImage, parameters)
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 5 parameters exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._surprisedPikachu, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Trojan Horse Command
-            elif command in self._trojanHorse.getAlternatives():
-
-                # Less than 4 Parameters Exist
-                if len(parameters) < 4:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._trojanHorse, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 4 Parameters Exist
-                elif len(parameters) == 4:
-                    result = await self.run(message, self._trojanHorse, trojanHorse.generateImage, parameters[0], parameters[1], parameters[2], parameters[3])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 4 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._trojanHorse, Image.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Who Killed Hannibal Command
-            elif command in self._whoKilledHannibal.getAlternatives():
-
-                # Less than 4 Parameters Exist
-                if len(parameters) < 4:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._whoKilledHannibal, Image.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 4 Parameters Exist
-                elif len(parameters) == 4:
-                    result = await self.run(message, self._whoKilledHannibal, whoKilledHannibal.generateImage, parameters[0], parameters[1], parameters[2], parameters[3])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-                
-                # More than 4 Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._whoKilledHannibal, Image.TOO_MANY_PARAMETERS)
-                    )
-
-            # NASA Image Command
-            elif command in self._nasaImage.getAlternatives():
-                result = await self.run(message, self._nasaImage, self.nasaImage, " ".join(parameters) if len(parameters) > 0 else "random")
-
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = result
-                    )
-                
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        message = result
-                    )
+                    # Run the command but don't try running others
+                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                    break
 
 def setup(client):
     client.add_cog(Image(client))

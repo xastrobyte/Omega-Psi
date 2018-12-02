@@ -1,7 +1,8 @@
-from util.code.code import tenToNumber, numberToTen
+from util.code.code import convert
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
-from util.utils import sendMessage, getErrorMessage, timeout
+from util.utils.discordUtils import sendMessage, getErrorMessage
+from util.utils.miscUtils import timeout
 
 from supercog import Category, Command
 import base64, discord
@@ -14,18 +15,15 @@ class Code(Category):
 
     MAX_BRAINFUCK_LENGTH = 2 ** 15 # 32736
 
-    EMBED_COLOR = 0xFFFF00
-
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    START_BASE_MISMATCH = "START_BASE_MISMATCH"
-    END_BASE_MISMATCH = "END_BASE_MISMATCH"
+    BASE_MISMATCH = "BASE_MISMATCH"
+    BASE_OUT_OF_RANGE = "BASE_OUT_OF_RANGE"
 
     INVALID_LANGUAGE = "INVALID_LANGUAGE"
-    INVALID_START_BASE = "INVALID_START_BASE"
-    INVALID_END_BASE = "INVALID_END_BASE"
+    INVALID_BASE = "INVALID_BASE"
     INVALID_PARAMETER = "INVALID_PARAMETER"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -37,6 +35,7 @@ class Code(Category):
             client, 
             "Code",
             description = "Commands that have to do with coding!",
+            embed_color = 0xFFFF00,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -105,24 +104,14 @@ class Code(Category):
                         "You only need the start base, the end base, and the number."
                     ]
                 },
-                Code.INVALID_START_BASE: {
+                Code.INVALID_BASE: {
                     "messages": [
-                        "The start base you entered is not a valid base."
+                        "A base you entered is not a valid base."
                     ]
                 },
-                Code.INVALID_END_BASE: {
-                    "messages": [
-                        "The end base you entered is not a valid base."
-                    ]
-                },
-                Code.START_BASE_MISMATCH: {
+                Code.BASE_MISMATCH: {
                     "messages": [
                         "The number you entered does not match the start base."
-                    ]
-                },
-                Code.END_BASE_MISMATCH: {
-                    "messages": [
-                        "The number you entered does not match the end base."
                     ]
                 }
             },
@@ -179,7 +168,7 @@ class Code(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     @timeout()
-    def brainfuck(self, parameters):
+    async def brainfuck(self, message, parameters):
         """Runs brainfuck code and returns the result.\n
 
         Parameters:
@@ -189,100 +178,115 @@ class Code(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._brainfuck.getMinParameters():
-            return getErrorMessage(self._brainfuck, Code.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._brainfuck, Code.NOT_ENOUGH_PARAMETERS)
         
         # Check for too many parameters
-        if len(parameters) > self._brainfuck.getMaxParameters():
-            return getErrorMessage(self._brainfuck, Code.TOO_MANY_PARAMETERS)
+        elif len(parameters) > self._brainfuck.getMaxParameters():
+            embed = getErrorMessage(self._brainfuck, Code.TOO_MANY_PARAMETERS)
         
-        code = parameters[0]
-        if len(parameters) == 2:
-            parameters = []
+        # There were a proper amount of parameters
+        else:
 
-        # Remove all invalid symbols
-        validSymbols = "<>+-.,[]"
-        newCode = ""
-        for char in code:
-            if char in validSymbols:
-                newCode += char
-        code = newCode
+            code = parameters[0]
+            if len(parameters) == 2:
+                parameters = []
 
-        # Keep track of pointers and data
-        data = [0] * Code.MAX_BRAINFUCK_LENGTH
-        dataPointer = 0
-        paramPointer = 0
-        output = ""
-        loop = 0
+            # Remove all invalid symbols
+            validSymbols = "<>+-.,[]"
+            newCode = ""
+            for char in code:
+                if char in validSymbols:
+                    newCode += char
+            code = newCode
 
-        # Iterate through code
-        char = 0
-        while char < len(code):
+            # Keep track of pointers and data
+            data = [0] * Code.MAX_BRAINFUCK_LENGTH
+            dataPointer = 0
+            paramPointer = 0
+            output = ""
+            loop = 0
 
-            # char is > (move pointer right)
-            if code[char] == ">":
-                dataPointer = 0 if dataPointer == Code.MAX_BRAINFUCK_LENGTH - 1 else dataPointer + 1
-            
-            # char is < (move pointer left)
-            elif code[char] == "<":
-                dataPointer = Code.MAX_BRAINFUCK_LENGTH - 1 if dataPointer == 0 else dataPointer - 1
-            
-            # char is + (increase value at pointer)
-            elif code[char] == "+":
-                data[dataPointer] += 1
-                if data[dataPointer] > 255:
-                    data[dataPointer] -= 256
-            
-            # char is - (decrease value at pointer)
-            elif code[char] == "-":
-                data[dataPointer] -= 1
-                if data[dataPointer] < 0:
-                    data[dataPointer] += 256
-            
-            # char is . (add data to output)
-            elif code[char] == ".":
-                output += str(chr(data[dataPointer]))
-            
-            # char is , (add data to input)
-            elif code[char] == ",":
-                if paramPointer >= len(parameters):
-                    data[dataPointer] = 0
-                else:
-                    data[dataPointer] = ord(parameters[paramPointer])
-                paramPointer += 1
-            
-            # char is [ (open loop)
-            elif code[char] == "[":
-                if data[dataPointer] == 0:
-                    char += 1
-                    while loop > 0 or code[char] != "]":
-                        if code[char] == "[":
-                            loop += 1
-                        if code[char] == "]":
-                            loop -= 1
+            # Iterate through code
+            char = 0
+            while char < len(code):
+
+                # char is > (move pointer right)
+                if code[char] == ">":
+                    dataPointer = 0 if dataPointer == Code.MAX_BRAINFUCK_LENGTH - 1 else dataPointer + 1
+                
+                # char is < (move pointer left)
+                elif code[char] == "<":
+                    dataPointer = Code.MAX_BRAINFUCK_LENGTH - 1 if dataPointer == 0 else dataPointer - 1
+                
+                # char is + (increase value at pointer)
+                elif code[char] == "+":
+                    data[dataPointer] += 1
+                    if data[dataPointer] > 255:
+                        data[dataPointer] -= 256
+                
+                # char is - (decrease value at pointer)
+                elif code[char] == "-":
+                    data[dataPointer] -= 1
+                    if data[dataPointer] < 0:
+                        data[dataPointer] += 256
+                
+                # char is . (add data to output)
+                elif code[char] == ".":
+                    output += str(chr(data[dataPointer]))
+                
+                # char is , (add data to input)
+                elif code[char] == ",":
+                    if paramPointer >= len(parameters):
+                        data[dataPointer] = 0
+                    else:
+                        data[dataPointer] = ord(parameters[paramPointer])
+                    paramPointer += 1
+                
+                # char is [ (open loop)
+                elif code[char] == "[":
+                    if data[dataPointer] == 0:
                         char += 1
+                        while loop > 0 or code[char] != "]":
+                            if code[char] == "[":
+                                loop += 1
+                            if code[char] == "]":
+                                loop -= 1
+                            char += 1
+                
+                # char is ] (close loop)
+                elif code[char] == "]":
+                    if data[dataPointer] != 0:
+                        char -= 1
+                        while loop > 0 or code[char] != "[":
+                            if code[char] == "]":
+                                loop += 1
+                            if code[char] == "[":
+                                loop -= 1
+                            char -=1
+                        char -= 1
+                
+                char += 1
             
-            # char is ] (close loop)
-            elif code[char] == "]":
-                if data[dataPointer] != 0:
-                    char -= 1
-                    while loop > 0 or code[char] != "[":
-                        if code[char] == "]":
-                            loop += 1
-                        if code[char] == "[":
-                            loop -= 1
-                        char -=1
-                    char -= 1
-            
-            char += 1
+            # Create and return embed for result
+            embed = discord.Embed(
+                title = "Result",
+                description = output,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
         
-        # Create and return embed for result
-        return discord.Embed(
-            title = "Result",
-            description = output,
-            colour = Code.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def convert(self, parameters):
+    async def convert(self, message, parameters):
         """Converts a number from the start base to the end base.\n
 
         Parameters:
@@ -293,66 +297,86 @@ class Code(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._convert.getMinParameters():
-            return getErrorMessage(self._convert, Code.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._convert, Code.NOT_ENOUGH_PARAMETERS)
         
         # Check for too many parameters
-        if len(parameters) > self._convert.getMaxParameters():
-            return getErrorMessage(self._convert, Code.TOO_MANY_PARAMETERS)
+        elif len(parameters) > self._convert.getMaxParameters():
+            embed = getErrorMessage(self._convert, Code.TOO_MANY_PARAMETERS)
 
-        startBase = 10
-        endBase = parameters[0]
-        number = parameters[1]
+        # There were the proper amount of parameters
+        else:
 
-        if len(parameters) == 3:
-            startBase = parameters[0]
-            endBase = parameters[1]
-            number = parameters[2]
+            startBase = "10"
+            endBase = parameters[0]
+            number = parameters[1]
 
-        # Try converting startBase and endBase to numbers
-        try:
-            startBase = int(startBase)
-            if startBase > 64 or startBase < 2:
-                raise Exception()
-        except:
-            return getErrorMessage(self._convert, Category.INVALID_START_BASE)
-
-        try:
-            endBase = int(endBase)
-            if endBase > 64 or endBase < 2:
-                raise Exception()
-        except:
-            return getErrorMessage(self._convert, Category.INVALID_END_BASE)
-
-        # Try converting number from startBase to base-10
-        # Test to see if number is not zero
-        start = number
-        title = "Base-{} to Base-{}".format(startBase, endBase)
-        description = "`{} --> {}`".format(start, number)
-
-        if number not in ["0", 0]:
-            number = numberToTen(number, startBase)
-
-            # Check if number is None; Invalid number for base
-            if number == None:
-                return getErrorMessage(self._convert, Category.START_BASE_MISMATCH)
+            if len(parameters) == 3:
+                startBase = parameters[0]
+                endBase = parameters[1]
+                number = parameters[2]
             
-            # Try converting base-10 to endBase
-            number = tenToNumber(number, endBase)
+            # Only run if start base and end base are valid
+            if startBase.isdigit() and endBase.isdigit():
+                startBase = int(startBase)
+                endBase = int(endBase)
 
-            # Check if number is None; Invalid base
-            if number == None:
-                return getErrorMessage(self._convert, Category.END_BASE_MISMATCH)
+                if startBase >= 2 and startBase <= 64 and endBase >=2 and endBase <=64:
+                    # Try converting number from startBase to base-10
+                    # Test to see if number is not zero
+                    start = number
+                    title = "Base-{} to Base-{}".format(startBase, endBase)
+                    description = "`{} --> {}`".format(start, number)
+
+                    # Check if number is not zero; Convert it
+                    if number not in ["0", 0]:
+                        number = convert(number, startBase, endBase)
+
+                        # Check if number is None; Invalid number for a base
+                        if number == None:
+                            embed = getErrorMessage(self._convert, Code.BASE_MISMATCH)
+                        
+                        # Number is not None; Valid base
+                        else:
+
+                            # Return number
+                            description = "`{} --> {}`".format(start, number)
+                    
+                            embed = discord.Embed(
+                                title = title,
+                                description = description,
+                                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                            )
+                    
+                    # Number is zero; Just send that
+                    else:
+
+                        embed = discord.Embed(
+                            title = title,
+                            description = description,
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                        )
+                
+                # Bases were not within range
+                else:
+                    embed = getErrorMessage(self._convert, Code.BASE_OUT_OF_RANGE)
             
-            # Return number
-            description = "`{} --> {}`".format(start, number)
+            # Bases were not numbers
+            else:
+                embed = getErrorMessage(self._convert, Code.INVALID_BASE)
         
-        return discord.Embed(
-            title = title,
-            description = description,
-            colour = Code.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def base64(self, parameters):
+    async def base64(self, message, parameters):
         """Encodes or decodes text to or from base64.\n
 
         Parameters:
@@ -362,34 +386,57 @@ class Code(Category):
 
         # Check for not enough parameters
         if len(parameters) < self._base64.getMinParameters():
-            return getErrorMessage(self._base64, Code.NOT_ENOUGH_PARAMETERS)
-        
-        # Conversion type is first parameter; Text is all parameters after
-        conversionType = parameters[0]
-        text = " ".join(parameters[1:])
+            embed = getErrorMessage(self._base64, Code.NOT_ENOUGH_PARAMETERS)
 
-        # Conversion is Encode
-        if conversionType in self._base64.getAcceptedParameter("conversion", "encode").getAlternatives():
-            converted = base64.b64encode(text.encode()).decode()
-            encoded = True
-        
-        # Conversion is Decode
-        elif conversionType in self._base64.getAcceptedParameter("conversion", "decode").getAlternatives():
-            converted = base64.b64decode(text.encode()).decode()
-            encoded = False
-        
-        # Conversion is Invalid
+        # There were enough parameters
         else:
-            return getErrorMessage(self._base64, Category.INVALID_PARAMETER)
         
-        # Return conversion
-        return discord.Embed(
-            title = "`{}` {} Base64".format(
-                text if len(text) < 180 else "[text is greater than 200 characters]",
-                "encoded to" if encoded else "decoded from"
-            ),
-            description = converted,
-            colour = Code.EMBED_COLOR
+            # Conversion type is first parameter; Text is all parameters after
+            conversionType = parameters[0]
+            text = " ".join(parameters[1:])
+
+            # Conversion is Encode
+            if conversionType in self._base64.getAcceptedParameter("conversion", "encode").getAlternatives():
+                converted = base64.b64encode(text.encode()).decode()
+                encoded = True
+
+                embed = discord.Embed(
+                    title = "`{}` {} Base64".format(
+                        text if len(text) < 180 else "[text is greater than 200 characters]",
+                        "encoded to" if encoded else "decoded from"
+                    ),
+                    description = converted,
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            # Conversion is Decode
+            elif conversionType in self._base64.getAcceptedParameter("conversion", "decode").getAlternatives():
+                converted = base64.b64decode(text.encode()).decode()
+                encoded = False
+
+                embed = discord.Embed(
+                    title = "`{}` {} Base64".format(
+                        text if len(text) < 180 else "[text is greater than 200 characters]",
+                        "encoded to" if encoded else "decoded from"
+                    ),
+                    description = converted,
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            # Conversion is Invalid
+            else:
+                embed = getErrorMessage(self._base64, Category.INVALID_PARAMETER)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -414,11 +461,10 @@ class Code(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, cmd, cmd.getCommand(), parameters)
-                    )
+                    
+                    # Run command; Don't try running other commands
+                    await cmd.getCommand()(message, parameters)
+                    break
 
 def setup(client):
     client.add_cog(Code(client))

@@ -10,7 +10,7 @@ from category.nsfw import NSFW
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage
+from util.utils.discordUtils import sendMessage, getErrorMessage
 
 from supercog import Category, Command
 import discord, os
@@ -21,8 +21,8 @@ class BotModerator(Category):
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    EMBED_COLOR = 0xA456B0
     BOT_MARKDOWN = "botMarkdown.md"
+    MARKDOWN_LOCATION = "commands.md"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -42,8 +42,10 @@ class BotModerator(Category):
             client, 
             "Bot Moderator",
             description = "Very private stuff.",
+            embed_color = 0xA456B0,
             restriction_info = "You must be a Bot Moderator to run these commands.",
             bot_mod_category = True,
+            bot_mod_error = OmegaPsi.getNoAccessError,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -53,6 +55,7 @@ class BotModerator(Category):
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Commands
+        
         self._addModerator = Command(commandDict = {
             "alternatives": ["addBotModerator", "addBotMod", "abm"],
             "info": "Allows you to add a bot moderator to the bot.",
@@ -277,15 +280,35 @@ class BotModerator(Category):
             "command": self.todo
         })
 
+        self._markdown = Command(commandDict = {
+            "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
+            "info": "Creates and sends the markdown file for the commands.",
+            "bot_moderator_only": True,
+            "errors": {
+                BotModerator.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the markdown file, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.markdown
+        })
+
         self._kill = Command(commandDict = {
             "alternatives": ["stop", "quit", "kill"],
             "info": "Kills the bot.",
             "bot_moderator_only": True,
-            "max_parameters": 0,
+            "max_parameters": 1,
+            "parameters": {
+                "process": {
+                    "info": "The process number to kill.",
+                    "optional": True
+                }
+            },
             "errors": {
                 BotModerator.TOO_MANY_PARAMETERS: {
                     "messages": [
-                        "In order to kill the bot, you don't need any parameters."
+                        "In order to kill the bot, you don't need anything other than the process."
                     ]
                 }
             },
@@ -316,6 +339,7 @@ class BotModerator(Category):
             self._servers,
             self._status,
             self._todo,
+            self._markdown,
             self._kill,
             self._debug
         ])
@@ -336,126 +360,171 @@ class BotModerator(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def addModerator(self, members):
+    async def addModerator(self, message, parameters):
         """Adds bot moderators to the bot.\n
 
         Parameters:
-            members: The Discord Users to add as a bot moderator.\n
+            parameters: The Discord Users to add as a bot moderator.\n
         """
 
-        # Check if members list has no mentions
-        if len(members) < self._addModerator.getMinParameters():
+        # Check if message has no mentions
+        if len(message.mentions) < self._addModerator.getMinParameters():
             return getErrorMessage(self._addModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
         
-        # Iterate through each member
-        result = ""
-        for member in members:
-            result += "{} {}".format(
-                member.mention,
-                " was successfully added as a bot moderator." if OmegaPsi.addModerator(member) else (
-                    " is already a bot moderator."
+        # There was at least one mention
+        else:
+        
+            # Iterate through each member
+            result = ""
+            for member in message.mentions:
+                result += "{} {}".format(
+                    member.mention,
+                    " was successfully added as a bot moderator." if OmegaPsi.addModerator(member) else (
+                        " is already a bot moderator."
+                    )
                 )
+            
+            embed = discord.Embed(
+                name = "Added bot Moderators",
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
-        return discord.Embed(
-            name = "Added bot Moderators",
-            description = result,
-            colour = BotModerator.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def removeModerator(self, members):
+    async def removeModerator(self, message, parameters):
         """Removes a bot moderator from the bot.\n
 
         Parameters:
-            members: The Discord Users to remove as a bot moderator.\n
+            parameters: The Discord Users to remove as a bot moderator.\n
         """
 
-        # Check if members list has no mentions
-        if len(members) < self._removeModerator.getMinParameters():
-            return getErrorMessage(self._removeModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
+        # Check if message has no mentions
+        if len(message.mentions) < self._removeModerator.getMinParameters():
+            embed = getErrorMessage(self._removeModerator, BotModerator.NOT_ENOUGH_PARAMETERS)
         
-        # Iterate through each member
-        result = ""
-        for member in members:
-            result += "{} {} a bot moderator.".format(
-                member.mention,
-                "was successfully removed as" if OmegaPsi.removeModerator(member) else (
-                    "is not"
+        # There was at least one mention
+        else:
+        
+            # Iterate through each member
+            result = ""
+            for member in message.mentions:
+                result += "{} {} a bot moderator.".format(
+                    member.mention,
+                    "was successfully removed as" if OmegaPsi.removeModerator(member) else (
+                        "is not"
+                    )
                 )
+        
+            embed = discord.Embed(
+                name = "Removed Moderators",
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
-        return discord.Embed(
-            name = "Removed Moderators",
-            description = result,
-            colour = BotModerator.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def activate(self, parameters):
+    async def activate(self, message, parameters):
         """Activates commands globally in the bot.
 
         Parameters:
             parameters: The parameters to process.
         """
 
-        # Check if there are no parameters
+        # Check if there are not enough parameters
         if len(parameters) < self._activate.getMinParameters():
-            return getErrorMessage(self._activate, BotModerator.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._activate, BotModerator.NOT_ENOUGH_PARAMETERS)
         
-        # Commands held in each parameter
-        commands = parameters
-        
-        # Open bot file
-        bot = OmegaPsi.openOmegaPsi()
-
-        # Iterate through commands
-        if len(commands) > 0:
-            result = ""
-            acCommands = []
-            for command in commands:
-
-                # Iterate through categories
-                added = False
-                for category in self._categories:
-
-                    # Check if command was part of category
-                    commandObject = self._categories[category].getCommand(command)
-                    if commandObject != None:
-                        acCommands.append(commandObject)
-                        added = True
-                    
-                if not added:
-                    result += "`{}` is not a valid command.\n".format(
-                        command
-                    )
-            
-            # Activate commands
-            for command in acCommands:
-                if command.getAlternatives()[0] in bot["inactive_commands"]:
-                    bot["inactive_commands"].pop(command.getAlternatives()[0])
-                    result += "`{}` was activated globally.\n".format(
-                        command.getAlternatives()[0]
-                    )
-                else:
-                    result += "`{}` is already globally active.\n".format(
-                        command.getAlternatives()[0]
-                    )
-        
+        # Parameters had the minimum amount of parameters
         else:
-            result = ""
-            for command in bot["inactive_commands"]:
-                result += "`{}` was activated globally.\n".format(command)
-            bot["inactive_commands"] = {}
         
-        # Close bot file
-        OmegaPsi.closeOmegaPsi(bot)
+            # Commands held in each parameter
+            commands = parameters
+            
+            # Open bot file
+            bot = OmegaPsi.openOmegaPsi()
+
+            # Iterate through commands
+            if len(commands) > 0:
+                result = ""
+                acCommands = []
+                for command in commands:
+
+                    # Iterate through categories
+                    added = False
+                    for category in self._categories:
+
+                        # Check if command was part of category
+                        commandObject = self._categories[category].getCommand(command)
+                        if commandObject != None:
+                            acCommands.append(commandObject)
+                            added = True
+                        
+                    if not added:
+                        result += "`{}` is not a valid command.\n".format(
+                            command
+                        )
+                
+                # Activate commands
+                for command in acCommands:
+                    if command.getAlternatives()[0] in bot["inactive_commands"]:
+                        bot["inactive_commands"].pop(command.getAlternatives()[0])
+                        result += "`{}` was activated globally.\n".format(
+                            command.getAlternatives()[0]
+                        )
+                    else:
+                        result += "`{}` is already globally active.\n".format(
+                            command.getAlternatives()[0]
+                        )
+            
+            else:
+                result = ""
+                for command in bot["inactive_commands"]:
+                    result += "`{}` was activated globally.\n".format(command)
+                bot["inactive_commands"] = {}
+            
+            # Close bot file
+            OmegaPsi.closeOmegaPsi(bot)
+            
+            embed = discord.Embed(
+                name = "Activated",
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
         
-        return discord.Embed(
-            name = "Activated",
-            description = result,
-            colour = BotModerator.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def deactivate(self, parameters):
+    async def deactivate(self, message, parameters):
         """Deactivates a command globally in the bot.\n
 
         Parameters:
@@ -465,200 +534,244 @@ class BotModerator(Category):
 
         # Check for minimum amount of parameters
         if len(parameters) < self._deactivate.getMinParameters():
-            return getErrorMessage(self._deactivate, BotModerator.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._deactivate, BotModerator.NOT_ENOUGH_PARAMETERS)
         
-        # Command to be deactivated is first parameter; Reason is every parameter after
-        command = parameters[0]
-        reason = "No Reason"
-        if len(parameters) > 1:
-            reason = " ".join(parameters[1:])
-        
-        # Open bot file
-        bot = OmegaPsi.openOmegaPsi()
-
-        # Check if command is valid
-        commandObject = None
-        for category in self._categories:
-            commandObject = self._categories[category].getCommand(command)
-            if commandObject != None:
-                break
-        if commandObject == None:
-            result = "`{}` is not a valid command.".format(
-                command
-            )
+        # Parameters had the minimum amount of parameters
         else:
-            bot["inactive_commands"][commandObject.getAlternatives()[0]] = reason
-            result = "`{}` was globally deactivated.\nReason: {}".format(
-                commandObject.getAlternatives()[0],
-                reason
+
+            # Command to be deactivated is first parameter; Reason is every parameter after
+            command = parameters[0]
+            reason = "No Reason"
+            if len(parameters) > 1:
+                reason = " ".join(parameters[1:])
+            
+            # Open bot file
+            bot = OmegaPsi.openOmegaPsi()
+
+            # Check if command is valid
+            commandObject = None
+            for category in self._categories:
+                commandObject = self._categories[category].getCommand(command)
+                if commandObject != None:
+                    break
+            if commandObject == None:
+                result = "`{}` is not a valid command.".format(
+                    command
+                )
+            else:
+                bot["inactive_commands"][commandObject.getAlternatives()[0]] = reason
+                result = "`{}` was globally deactivated.\nReason: {}".format(
+                    commandObject.getAlternatives()[0],
+                    reason
+                )
+            
+            # Close bot file
+            OmegaPsi.closeOmegaPsi(bot)
+
+            embed = discord.Embed(
+                name = "Deactivated",
+                description = result,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
-        # Close bot file
-        OmegaPsi.closeOmegaPsi(bot)
-
-        return discord.Embed(
-            name = "Deactivated",
-            description = result,
-            colour = BotModerator.EMBED_COLOR
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def getInfo(self, parameters):
+    async def getInfo(self, message, parameters):
         """Returns the info on the bot.\n
         """
 
         # Check if parameters exceeds maximum parameter
         if len(parameters) > self._info.getMaxParameters():
-            return getErrorMessage(self._info, BotModerator.TOO_MANY_PARAMETERS)
-
-        # Open the bot info
-        omegaPsi = OmegaPsi.openOmegaPsi()
-
-        botModerators = ""
-        for moderator in omegaPsi["moderators"]:
-            botModerators += "<@{}>\n".format(moderator)
+            embed = getErrorMessage(self._info, BotModerator.TOO_MANY_PARAMETERS)
         
-        inactiveCommands = ""
-        for command in omegaPsi["inactive_commands"]:
-            inactiveCommands += "{}\nReason: {}\n".format(
-                command, omegaPsi["inactive_commands"][command]
+        # Parameters do not exceed maximum parameters
+        else:
+
+            # Open the bot info
+            omegaPsi = OmegaPsi.openOmegaPsi()
+
+            # Add a list of bot moderators and inactive commands
+            botModerators = ""
+            for moderator in omegaPsi["moderators"]:
+                botModerators += "<@{}>\n".format(moderator)
+        
+            inactiveCommands = ""
+            for command in omegaPsi["inactive_commands"]:
+                inactiveCommands += "{}\nReason: {}\n".format(
+                    command, omegaPsi["inactive_commands"][command]
+                )
+
+            # Set these up in a dictionary to add to an embed
+            tags = {
+                "Bot Moderators": botModerators,
+                "Inactive Commands": inactiveCommands
+            }
+
+            # Create the embed and add the tags as fields
+            embed = discord.Embed(
+                title = "Omega Psi",
+                description = "Owner: <@{}>".format(omegaPsi["owner"]),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
 
-        tags = {
-            "Bot Moderators": botModerators,
-            "Inactive Commands": inactiveCommands
-        }
-
-        embed = discord.Embed(
-            title = "Omega Psi",
-            description = "Owner: <@{}>".format(omegaPsi["owner"]),
-            colour = BotModerator.EMBED_COLOR
+            for tag in tags:
+                embed.add_field(
+                    name = tag,
+                    value = tags[tag] if len(tags[tag]) > 0 else "None",
+                    inline = False
+                )
+            
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
-
-        for tag in tags:
-            embed.add_field(
-                name = tag,
-                value = tags[tag] if len(tags[tag]) > 0 else "None",
-                inline = False
-            )
-        
-        return embed
     
-    async def getServers(self, author, parameters):
+    async def getServers(self, message, parameters):
         """Returns a list of servers the bot is in.\n
         """
 
         # Check if parameters exceeds maximum parameters
         if len(parameters) > self._servers.getMaxParameters():
-            return getErrorMessage(self._servers, BotModerator.TOO_MANY_PARAMETERS)
-
-        # Getting results through embed
-        if len(parameters) == 0:
-
-            # Add results to fields
-            fields = []
-            fieldText = ""
-            for server in self.client.guilds:
-                
-                text = "`{}` | Owner: {}\n".format(
-                    server.name, server.owner.mention
-                )
-
-                if len(fieldText) + len(text) >= OmegaPsi.MESSAGE_THRESHOLD:
-                    fields.append(fieldText)
-                    fieldText = ""
-                
-                fieldText += text
-            
-            # Add trailing field text
-            if len(fieldText) > 0:
-                fields.append(fieldText)
-            
-            # Create embed object
-            embed = discord.Embed(
-                title = "Servers",
-                description = "A list of servers that Omega Psi is in.",
-                colour = BotModerator.EMBED_COLOR
-            )
-
-            # Add fields to embed object
-            count = 0
-            for field in fields:
-                count += 1
-                embed.add_field(
-                    name = "Servers {}".format(
-                        "({} / {})".format(
-                            count, len(fields)
-                        ) if len(fields) > 1 else ""
-                    ),
-                    value = field,
-                    inline = False
-                )
-            
-            return embed
+            embed = getErrorMessage(self._servers, BotModerator.TOO_MANY_PARAMETERS)
         
-        # Getting results through markdown file
+        # Parameters do not exceed maximum parameters
         else:
 
-            # Setup markdown text
-            markdown = "# Omega Psi Server Information\n"
+            # Getting results through embed
+            if len(parameters) == 0:
 
-            # Iterate through servers bot is in
-            for guild in self.client.guilds:
-
-                # Load file
-                server = Server.openServer(guild)
-
-                # Add server information (owner, name)
-                try:
-                    markdown += "## {} - {}\n".format(
-                        guild.name,
-                        guild.owner.name + "#" + guild.owner.discriminator
-                    )
-                except:
-                    markdown += "## {} - No Owner\n".format(
-                        guild.name
-                    )
-
-                # Iterate through members in server dictionary
-                for member in server["members"]:
-                    member = server["members"][member]
-                    discordMember = guild.get_member(int(member["id"]))
+                # Add results to fields
+                fields = []
+                fieldText = ""
+                for server in self.client.guilds:
                     
-                    markdown += (
-                        "  * {} ({})\n" +
-                        "    * Moderator? {}\n" +
-                        "    * Experience: {}\n" +
-                        "    * Level: {}\n" +
-                        "    * Experience until next level: {}\n"
-                    ).format(
-                        discordMember.name + "#" + discordMember.discriminator,
-                        discordMember.nick,
-                        "Yes" if discordMember.guild_permissions.manage_guild else "No",
-                        member["experience"],
-                        member["level"],
-                        Server.getExpFromLevel(member["level"] + 1) - member["experience"]
+                    text = "`{}` | Owner: {}\n".format(
+                        server.name, server.owner.mention
+                    )
+
+                    if len(fieldText) + len(text) >= OmegaPsi.MESSAGE_THRESHOLD:
+                        fields.append(fieldText)
+                        fieldText = ""
+                    
+                    fieldText += text
+                
+                # Add trailing field text
+                if len(fieldText) > 0:
+                    fields.append(fieldText)
+                
+                # Create embed object
+                embed = discord.Embed(
+                    title = "Servers",
+                    description = "A list of servers that Omega Psi is in.",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+
+                # Add fields to embed object
+                count = 0
+                for field in fields:
+                    count += 1
+                    embed.add_field(
+                        name = "Servers {}".format(
+                            "({} / {})".format(
+                                count, len(fields)
+                            ) if len(fields) > 1 else ""
+                        ),
+                        value = field,
+                        inline = False
                     )
             
-            # Save markdown temporarily
-            mdFile = open(BotModerator.BOT_MARKDOWN, "w")
-            mdFile.write(markdown)
-            mdFile.close()
+            # Getting results through markdown file
+            else:
 
-            mdFile = open(BotModerator.BOT_MARKDOWN, "r")
+                # Setup markdown text
+                markdown = "# Omega Psi Server Information\n"
+
+                # Iterate through servers bot is in
+                for guild in self.client.guilds:
+
+                    # Load file
+                    server = Server.openServer(guild)
+
+                    # Add server information (owner, name)
+                    try:
+                        markdown += "## {} - {}\n".format(
+                            guild.name,
+                            guild.owner.name + "#" + guild.owner.discriminator
+                        )
+                    except:
+                        markdown += "## {} - No Owner\n".format(
+                            guild.name
+                        )
+
+                    # Iterate through members in server dictionary
+                    for member in server["members"]:
+                        member = server["members"][member]
+                        discordMember = guild.get_member(int(member["id"]))
+                        
+                        markdown += (
+                            "  * {} ({})\n" +
+                            "    * Moderator? {}\n" +
+                            "    * Experience: {}\n" +
+                            "    * Level: {}\n" +
+                            "    * Experience until next level: {}\n"
+                        ).format(
+                            discordMember.name + "#" + discordMember.discriminator,
+                            discordMember.nick,
+                            "Yes" if discordMember.guild_permissions.manage_guild else "No",
+                            member["experience"],
+                            member["level"],
+                            Server.getExpFromLevel(member["level"] + 1) - member["experience"]
+                        )
+                
+                # Save markdown temporarily
+                mdFile = open(BotModerator.BOT_MARKDOWN, "w")
+                mdFile.write(markdown)
+                mdFile.close()
+
+                mdFile = open(BotModerator.BOT_MARKDOWN, "r")
+            
+                # Send file to DMs; Then delete
+                await message.author.send(
+                    file = discord.File(mdFile)
+                )
+                os.remove(BotModerator.BOT_MARKDOWN)
+
+                embed = discord.Embed(
+                    title = "File sent.",
+                    description = "The server information has been sent to your DM's",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
         
-            # Send file to DMs; Then delete
-            await author.send(
-                file = discord.File(mdFile)
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
             )
-            os.remove(BotModerator.BOT_MARKDOWN)
-
-            return discord.Embed(
-                title = "File sent.",
-                description = "The server information has been sent to your DM's",
-                colour = BotModerator.EMBED_COLOR
-            )
+        )
     
-    async def setStatus(self, parameters):
+    async def setStatus(self, message, parameters):
         """Sets the presence of the bot given the activity type and text.\n
 
         Parameters:
@@ -668,53 +781,68 @@ class BotModerator(Category):
 
         # Check if parameters is less than minimum parameters
         if len(parameters) < self._status.getMinParameters():
-            return getErrorMessage(self._status, BotModerator.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._status, BotModerator.NOT_ENOUGH_PARAMETERS)
         
-        # Activity type is first parameter; Text is every parameter after
-        activityType = parameters[0]
-        text = " ".join(parameters[1:])
+        # Parameters has minumum parameters
+        else:
 
-        # Get the specific activity type
-        activityText = activityType
-        if activityType in self._status.getAcceptedParameter("activity", "playing").getAlternatives():
-            activityType = discord.ActivityType.playing
-            activityText = "Playing"
+            # Activity type is first parameter; Text is every parameter after
+            activityType = parameters[0]
+            text = " ".join(parameters[1:])
 
-        elif activityType in self._status.getAcceptedParameter("activity", "streaming").getAlternatives():
-            activityType = discord.ActivityType.streaming
-            activityText = "Streaming"
+            # Get the specific activity type
+            activityText = activityType
+            if activityType in self._status.getAcceptedParameter("activity", "playing").getAlternatives():
+                activityType = discord.ActivityType.playing
+                activityText = "Playing"
 
-        elif activityType in self._status.getAcceptedParameter("activity", "listening").getAlternatives():
-            activityType = discord.ActivityType.listening
-            activityText = "Listening"
+            elif activityType in self._status.getAcceptedParameter("activity", "streaming").getAlternatives():
+                activityType = discord.ActivityType.streaming
+                activityText = "Streaming"
 
-        elif activityType in self._status.getAcceptedParameter("activity", "watching").getAlternatives():
-            activityType = discord.ActivityType.watching
-            activityText = "Watching"
-        
-        # Update the bot's activity setting
-        OmegaPsi.setActivityType(activityType)
-        OmegaPsi.setActivityName(text)
+            elif activityType in self._status.getAcceptedParameter("activity", "listening").getAlternatives():
+                activityType = discord.ActivityType.listening
+                activityText = "Listening"
 
-        # Change the presence of the bot
-        await self.client.change_presence(
-            status = discord.Status.online,
-            activity = discord.Activity(
-                name = text,
-                type = activityType,
-                url = "https://www.twitch.tv/FellowHashbrown"
+            elif activityType in self._status.getAcceptedParameter("activity", "watching").getAlternatives():
+                activityType = discord.ActivityType.watching
+                activityText = "Watching"
+            
+            # Update the bot's activity setting
+            OmegaPsi.setActivityType(activityType)
+            OmegaPsi.setActivityName(text)
+
+            # Change the presence of the bot
+            await self.client.change_presence(
+                status = discord.Status.online,
+                activity = discord.Activity(
+                    name = text,
+                    type = activityType,
+                    url = "https://www.twitch.tv/FellowHashbrown"
+                )
+            )
+
+            embed = discord.Embed(
+                title = "Presence Set",
+                description = "Activity: {}\nText: {}\n".format(
+                    activityText, text
+                ),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+    
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
             )
         )
-
-        return discord.Embed(
-            title = "Presence Set",
-            description = "Activity: {}\nText: {}\n".format(
-                activityText, text
-            ),
-            colour = BotModerator.EMBED_COLOR
-        )
     
-    def todo(self, parameters):
+    async def todo(self, message, parameters):
         """Runs the todo command.
 
         Parameters:
@@ -732,67 +860,192 @@ class BotModerator(Category):
                     item + 1, todoList[item]
                 )
                 
-            return discord.Embed(
+            embed = discord.Embed(
                 title = "TODO List",
                 description = todoText if len(todoText) > 0 else "Nothing Yet",
-                colour = BotModerator.EMBED_COLOR
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
         # Check for 2 or more parameters
         else:
+
+            action = parameters[0]
+
+            # There is nothing to add
             if len(parameters) == 1:
-                return getErrorMessage(self._todo, BotModerator.NOT_ENOUGH_PARAMETERS)
+                embed = getErrorMessage(self._todo, BotModerator.NOT_ENOUGH_PARAMETERS)
             
             # Check if action is valid
-            action = parameters[0]
-            if action in self._todo.getAcceptedParameter("action", "add").getAlternatives():
-                success = OmegaPsi.addToDo(" ".join(parameters[1:]))
+            elif action in self._todo.getAcceptedParameter("action", "add").getAlternatives():
 
-                return discord.Embed(
+                # Check if index is given
+                if parameters[1].isdigit():
+                    index = int(parameters[1])
+                    item = " ".join(parameters[2:])
+                else:
+                    index = 0
+                    item = " ".join(parameters[1:])
+
+                success = OmegaPsi.addToDo(item, index)
+
+                embed = discord.Embed(
                     title = "Added TODO Item" if success["success"] else "Failed to add TODO Item",
                     description = success["reason"],
-                    colour = BotModerator.EMBED_COLOR
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 )
 
             elif action in self._todo.getAcceptedParameter("action", "remove").getAlternatives():
                 success = OmegaPsi.removeToDo(" ".join(parameters[1:]))
 
-                return discord.Embed(
+                embed = discord.Embed(
                     title = "Removed TODO Item" if success["success"] else "Failed to remove TODO Item",
                     description = success["reason"],
-                    colour = BotModerator.EMBED_COLOR
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 )
             
             # Action is invalid
             else:
-                return getErrorMessage(self._todo, BotModerator.INVALID_PARAMETER)
+                embed = getErrorMessage(self._todo, BotModerator.INVALID_PARAMETER)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
     
-    async def kill(self, parameters):
+    async def markdown(self, message, parameters):
+        """Returns the markdown file for the commands.\n"
+
+        Parameters:
+            author (discord.User): The sender of the `markdown` command.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._markdown.getMaxParameters():
+            embed = getErrorMessage(self._markdown, BotModerator.TOO_MANY_PARAMETERS)
+        
+        # Parameters do not exceed maximum parameters
+        else:
+
+            # Create markdown text
+            markdown = "# Commands\n"
+
+            # Add category's hyperlinks
+            for category in self._categories:
+                markdown += "  * [{}](#{})\n".format(
+                    category,
+                    category.replace(" ", "-")
+                )
+
+            # Go through categories
+            for category in self._categories:
+                markdown += self._categories[category]["object"].getMarkdown()
+            
+            # Open file
+            mdFile = open(BotModerator.MARKDOWN_LOCATION, "w")
+            mdFile.write(markdown)
+            mdFile.close()
+
+            mdFile = open(BotModerator.MARKDOWN_LOCATION, "r")
+
+            # Send file to author
+            await message.author.send(
+                file = discord.File(mdFile)
+            )
+
+            # Only send a message if the command was sent in a server
+            if message.guild != None:
+                embed = discord.Embed(
+                    title = "File Sent",
+                    description = "The markdown file was sent to your DM's",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            else:
+                embed = None
+
+            os.remove(BotModerator.MARKDOWN_LOCATION)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def kill(self, message, parameters):
         """Kills the bot and logs out.
         """
 
+        processId = OmegaPsi.PROCESS_ID
+
         # Check if parameters exceeds maximum parameters
         if len(parameters) > self._kill.getMaxParameters():
-            return getErrorMessage(self._kill, BotModerator.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._kill, BotModerator.TOO_MANY_PARAMETERS)
+        
+        # Parameters do not exceed maximum parameters
+        else:
+            processId = OmegaPsi.PROCESS_ID if len(parameters) == 0 else parameters[0]
 
-        return discord.Embed(
-            title = "Bot Killed",
-            description = "Omega Psi was killed (Process {})".format(os.getpid()),
-            colour = BotModerator.EMBED_COLOR
-        )
+            embed = discord.Embed(
+                title = "Bot Killed",
+                description = "Omega Psi was killed (Process {})".format(OmegaPsi.PROCESS_ID),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        # Only kill if processId is OmegaPsi.PROCESS_ID
+        if processId == OmegaPsi.PROCESS_ID:
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+
+            await self.client.logout()
     
-    def debug(self, parameters):
+    async def debug(self, message, parameters):
         """Debugs the bot.
         """
 
         # Check if parameters exceeds maximum parameters
         if len(parameters) > self._debug.getMaxParameters():
-            return getErrorMessage(self._debug, BotModerator.TOO_MANY_PARAMETERS)
-
-        return discord.Embed(
+            embed = getErrorMessage(self._debug, BotModerator.TOO_MANY_PARAMETERS)
+        
+        # Parameters do not exceed maximum parameters
+        else:
+            embed = discord.Embed(
             title = "Omega Psi Debugging",
-            description = "Process ID: {}".format(os.getpid()),
-            colour = BotModerator.EMBED_COLOR
+            description = "Process ID: {}".format(OmegaPsi.PROCESS_ID),
+            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+        )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -818,26 +1071,8 @@ class BotModerator(Category):
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
 
-                    # See if getServers command was called
-                    if command in self._servers.getAlternatives():
-                        await sendMessage(
-                            self.client,
-                            message,
-                            embed = await self.run(message, cmd, cmd.getCommand(), message.author, parameters)
-                        )
-
-                    else:
-                        await sendMessage(
-                            self.client,
-                            message,
-                            embed = await self.run(message, cmd, cmd.getCommand(), parameters)
-                        )
-
-                    # See if kill command was called
-                    if command in self._kill.getAlternatives():
-                        await self.client.logout()
-                    
-                    # Don't try running other commands
+                    # Run the command but don't try running others
+                    await cmd.getCommand()(message, parameters)
                     break
 
 def setup(client):

@@ -1,6 +1,11 @@
+from util.file.database import loop
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
-from util.utils import sendMessage, getErrorMessage, loadImageFromUrl, timestampToDatetime
+
+from util.misc.color import processColor
+
+from util.utils.discordUtils import sendMessage, getErrorMessage
+from util.utils.miscUtils import loadImageFromUrl, timestampToDatetime, datetimeToString
 
 from datetime import datetime
 from supercog import Category, Command
@@ -8,13 +13,13 @@ import discord, os, pygame, random, requests
 
 pygame.init()
 
+scrollEmbeds = {}
+
 class Misc(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    EMBED_COLOR = 0x00FF80
 
     BUG_EMBED_COLORS = {
         "Bug": 0xFF0000,
@@ -25,15 +30,34 @@ class Misc(Category):
 
     ADVICE_URL = "https://api.adviceslip.com/advice"
     CHUCK_NORRIS_URL = "https://api.chucknorris.io/jokes/random"
+    COLOR_HEX_URL = "http://thecolorapi.com/id?hex={}&format=json"
+    COLOR_RGB_URL = "http://thecolorapi.com/id?rgb={},{},{}&format=json"
+    COLOR_HSL_URL = "http://thecolorapi.com/id?hsl={},{}%,{}%&format=json"
+    COLOR_CMYK_URL = "http://thecolorapi.com/id?cmyk={},{},{},{}&format=json"
     NUMBER_FACT_URL = "http://numbersapi.com/random/year?json"
     TRONALD_DUMP_QUOTE = "https://api.tronalddump.io/random/quote"
     TRONALD_DUMP_MEME = "https://api.tronalddump.io/random/meme"
 
     TWITTER_ICON = "http://pngimg.com/uploads/twitter/twitter_PNG29.png"
 
+    GITHUB_COMMANDS = "https://www.github.com/FellowHashbrown/omega-psi-py/blob/master/category/commands.md"
+    GITHUB_LINK = "https://www.github.com/FellowHashbrown/omega-psi-py"
+
+    REPL_IT_LINK = "https://repl.it/@FellowHashbrown/Omega-Psi-Discord"
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    NOT_ENOUGH_HEX_PARAMETERS = "NOT_ENOUGH_HEX_PARAMETERS"
+    NOT_ENOUGH_RGB_PARAMETERS = "NOT_ENOUGH_RGB_PARAMETERS"
+    NOT_ENOUGH_HSL_PARAMETERS = "NOT_ENOUGH_HSL_PARAMETERS"
+    NOT_ENOUGH_CMYK_PARAMETERS = "NOT_ENOUGH_CMYK_PARAMETERS"
+
+    TOO_MANY_HEX_PARAMETERS = "TOO_MANY_HEX_PARAMETERS"
+    TOO_MANY_RGB_PARAMETERS = "TOO_MANY_RGB_PARAMETERS"
+    TOO_MANY_HSL_PARAMETERS = "TOO_MANY_HSL_PARAMETERS"
+    TOO_MANY_CMYK_PARAMETERS = "TOO_MANY_CMYK_PARAMETERS"
 
     NOT_A_NUMBER = "NOT_A_NUMBER"
     END_LESS_THAN_START = "END_LESS_THAN_START"
@@ -41,6 +65,7 @@ class Misc(Category):
     TOO_LONG = "TOO_LONG"
 
     INVALID_MEMBER = "INVALID_MEMBER"
+    INVALID_COLOR_TYPE = "INVALID_COLOR_TYPE"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructor
@@ -51,6 +76,7 @@ class Misc(Category):
             client, 
             "Miscellaneous",
             description = "Other commands that don't really fit into a category yet.",
+            embed_color = 0x00FF80,
             locally_inactive_error = Server.getInactiveError,
             globally_inactive_error = OmegaPsi.getInactiveError,
             locally_active_check = Server.isCommandActive,
@@ -68,7 +94,8 @@ class Misc(Category):
                         "In order to get a random piece of advice, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.advice
         })
 
         self._choice = Command(commandDict = {
@@ -86,7 +113,8 @@ class Misc(Category):
                         "In order to choose from a list, you need to give a list of at least 2 items."
                     ]
                 }
-            }
+            },
+            "command": self.randomChoice
         })
 
         self._chuckNorris = Command(commandDict = {
@@ -98,10 +126,97 @@ class Misc(Category):
                         "In order to get a random Chuck Norris joke, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.chuckNorris
         })
 
-        self._numberFacts = Command(commandDict = {
+        self._color = Command(commandDict = {
+            "alternatives": ["color"],
+            "info": "Gives you the information about a color given either the Hex, RGB, HSL, or CMYK.",
+            "parameters": {
+                "colorType": {
+                    "info": "The type of color to look up.",
+                    "optional": True,
+                    "accepted": {
+                        "hex": {
+                            "alternatives": ["hex", "HEX"],
+                            "info": "Get color information using a hex code."
+                        },
+                        "rgb": {
+                            "alternatives": ["rgb", "RGB"],
+                            "info": "Get color information using an RGB tuple."
+                        },
+                        "hsl": {
+                            "alternatives": ["hsl", "HSL"],
+                            "info": "Get color information using HSL."
+                        },
+                        "cmyk": {
+                            "alternatives": ["cmyk", "CMYK"],
+                            "info": "Get color information using CMYK."
+                        }
+                    }
+                },
+                "color": {
+                    "info": "The color information either in Hex, RGB, HSL, HSV, or CMYK.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Misc.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to get color information, you need at least the type and the value."
+                    ]
+                },
+                Misc.NOT_ENOUGH_HEX_PARAMETERS: {
+                    "messages": [
+                        "You need at least the hex code for this color type."
+                    ]
+                },
+                Misc.NOT_ENOUGH_RGB_PARAMETERS: {
+                    "messages": [
+                        "You need at least the red, green, and blue values for this color type."
+                    ]
+                },
+                Misc.NOT_ENOUGH_HSL_PARAMETERS: {
+                    "messages": [
+                        "You need the hue, saturation, and lightness for this color type."
+                    ]
+                },
+                Misc.NOT_ENOUGH_CMYK_PARAMETERS: {
+                    "messages": [
+                        "You need the cyan, magenta, yellow, and black values for this color type."
+                    ]
+                },
+                Misc.TOO_MANY_HEX_PARAMETERS: {
+                    "messages": [
+                        "You only need the hex code for this color type.."
+                    ]
+                },
+                Misc.TOO_MANY_RGB_PARAMETERS: {
+                    "messages": [
+                        "You only need the red, green, and blue values for this color type."
+                    ]
+                },
+                Misc.TOO_MANY_HSL_PARAMETERS: {
+                    "messages": [
+                        "You only need the hue, saturation, and lightness for this color type."
+                    ]
+                },
+                Misc.TOO_MANY_CMYK_PARAMETERS: {
+                    "messages": [
+                        "You only need the cyan, magenta, yellow, and black values for this color type."
+                    ]
+                },
+                Misc.INVALID_COLOR_TYPE: {
+                    "messages": [
+                        "The color type you entered is invalid."
+                    ]
+                }
+            },
+            "command": self.color
+        })
+
+        self._numberFact = Command(commandDict = {
             "alternatives": ["numberFact", "number"],
             "info": "Gives you a fact about a number.",
             "errors": {
@@ -110,7 +225,8 @@ class Misc(Category):
                         "In order to get a fact about a random number, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.numberFact
         })
 
         self._random = Command(commandDict = {
@@ -142,7 +258,8 @@ class Misc(Category):
                         "In order to get a random number, you only need the start and end numbers."
                     ]
                 }
-            }
+            },
+            "command": self.randomNumber
         })
 
         self._tronaldDumpQuote = Command(commandDict = {
@@ -154,7 +271,8 @@ class Misc(Category):
                         "In order to get a Donald Trump quote, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.tronaldDumpQuote
         })
 
         self._tronaldDumpMeme = Command(commandDict = {
@@ -166,7 +284,45 @@ class Misc(Category):
                         "In order to get a Donald Trump meme, you don't need any parameters."
                     ]
                 }
-            }
+            },
+            "command": self.tronaldDumpMeme
+        })
+
+        self._ping = Command(commandDict = {
+            "alternatives": ["ping"],
+            "info": "Pings the bot.",
+            "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You don't need any parameters to ping the bot."
+                    ]
+                }
+            },
+            "command": self.ping
+        })
+
+        self._nickname = Command(commandDict = {
+            "alternatives": ["nickname", "nick"],
+            "info": "Changes your nickname.",
+            "parameters": {
+                "nickname": {
+                    "info": "The new nickname to set.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Misc.TOO_LONG: {
+                    "messages": [
+                        "To set your nickname, it must be less than 32 characters."
+                    ]
+                },
+                Misc.NO_ACCESS: {
+                    "messages": [
+                        "I do not seem to have access to do that. You might be a higher role than me."
+                    ]
+                }
+            },
+            "command": self.nickname
         })
 
         self._info = Command(commandDict = {
@@ -186,7 +342,8 @@ class Misc(Category):
                         "That member is not in the server."
                     ]
                 }
-            }
+            },
+            "command": self.info
         })
 
         self._invite = Command(commandDict = {
@@ -321,7 +478,34 @@ class Misc(Category):
                         }
                     }
                 }
-            }
+            },
+            "command": self.invite
+        })
+
+        self._github = Command(commandDict = {
+            "alternatives": ["github"],
+            "info": "Sends you the Github link for the source code.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the Github link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.github
+        })
+
+        self._replit = Command(commandDict = {
+            "alternatives": ["replit", "repl.it", "repl"],
+            "info": "Sends you the Repl.it link for the bot.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the Repl.it link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.replit
         })
 
         self._sendBug = Command(commandDict = {
@@ -366,65 +550,34 @@ class Misc(Category):
                         "That was an invalid message type."
                     ]
                 }
-            }
-        })
-
-        self._ping = Command(commandDict = {
-            "alternatives": ["ping"],
-            "info": "Pings the bot.",
-            "errors": {
-                Category.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "You don't need any parameters to ping the bot."
-                    ]
-                }
-            }
-        })
-
-        self._nickname = Command(commandDict = {
-            "alternatives": ["nickname", "nick"],
-            "info": "Changes your nickname.",
-            "parameters": {
-                "nickname": {
-                    "info": "The new nickname to set.",
-                    "optional": True
-                }
             },
-            "errors": {
-                Misc.TOO_LONG: {
-                    "messages": [
-                        "To set your nickname, it must be less than 32 characters."
-                    ]
-                },
-                Misc.NO_ACCESS: {
-                    "messages": [
-                        "I do not seem to have access to do that. You might be a higher role than me."
-                    ]
-                }
-            }
+            "command": self.sendBug
         })
 
         self.setCommands([
             self._advice,
             self._choice,
             self._chuckNorris,
-            self._numberFacts,
+            self._color,
+            self._numberFact,
             self._random,
             self._tronaldDumpMeme,
             self._tronaldDumpQuote,
 
+            self._ping,
+            self._nickname,
             self._info,
             self._invite,
-            self._sendBug,
-            self._ping,
-            self._nickname
+            self._github,
+            self._replit,
+            self._sendBug
         ])
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def advice(self, parameters):
+    async def advice(self, message, parameters):
         """Returns a random piece of advice.
 
         Parameters:
@@ -433,21 +586,40 @@ class Misc(Category):
 
         # Check for too many parameters
         if len(parameters) > self._advice.getMaxParameters():
-            return getErrorMessage(self._advice, Misc.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._advice, Misc.TOO_MANY_PARAMETERS)
         
-        # Get the advice
-        adviceJson = requests.get(Misc.ADVICE_URL).json()
+        # There were the proper amount of parameters
+        else:
 
-        return discord.Embed(
-            title = "Advice Number {}".format(adviceJson["slip"]["slip_id"]),
-            description = adviceJson["slip"]["advice"],
-            colour = Misc.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_footer(
-            text = "Advice Slip API"
+            # Get the advice
+            adviceJson = await loop.run_in_executor(None,
+                requests.get,
+                Misc.ADVICE_URL
+            )
+            adviceJson = adviceJson.json()
+
+            embed = discord.Embed(
+                title = "Advice Number {}".format(adviceJson["slip"]["slip_id"]),
+                description = adviceJson["slip"]["advice"],
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                timestamp = datetime.now()
+            ).set_footer(
+                text = "Advice Slip API"
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def randomChoice(self, parameters):
+    async def randomChoice(self, message, parameters):
         """Returns a random choice from a list of choices.
 
         Parameters:
@@ -456,17 +628,32 @@ class Misc(Category):
 
         # There is only 1 choice
         if len(parameters) < 2:
-            return getErrorMessage(self._choice, Misc.NOT_ENOUGH_PARAMETERS)
+            embed = getErrorMessage(self._choice, Misc.NOT_ENOUGH_PARAMETERS)
         
-        # Choose random option
-        choice = random.choice(parameters)
-        return discord.Embed(
-            title = "Result",
-            description = choice,
-            colour = Misc.EMBED_COLOR
+        # There were at least 2 choices
+        else:
+
+            # Choose random option
+            choice = random.choice(parameters)
+            embed = discord.Embed(
+                title = "Result",
+                description = choice,
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def chuckNorris(self, parameters):
+    async def chuckNorris(self, message, parameters):
         """Returns a random chuck norris fact.
 
         Parameters:
@@ -475,24 +662,153 @@ class Misc(Category):
 
         # Check for too many parameters
         if len(parameters) > self._chuckNorris.getMaxParameters():
-            return getErrorMessage(self._chuckNorris, Misc.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._chuckNorris, Misc.TOO_MANY_PARAMETERS)
         
-        # Get the joke; and URL
-        chuckNorrisJson = requests.get(Misc.CHUCK_NORRIS_URL).json()
+        # There were the proper amount of parameters
+        else:
 
-        return discord.Embed(
-            name = "Chuck Norris",
-            description = chuckNorrisJson["value"],
-            colour = Misc.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_author(
-            name = "Chuck Norris Joke",
-            icon_url = chuckNorrisJson["icon_url"]
-        ).set_footer(
-            text = "Chuck Norris API"
+            # Get the joke; and URL
+            chuckNorrisJson = await loop.run_in_executor(None,
+                requests.get,
+                Misc.CHUCK_NORRIS_URL
+            )
+            chuckNorrisJson = chuckNorrisJson.json()
+
+            embed = discord.Embed(
+                name = "Chuck Norris",
+                description = chuckNorrisJson["value"],
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                timestamp = datetime.now()
+            ).set_author(
+                name = "Chuck Norris Joke",
+                icon_url = chuckNorrisJson["icon_url"]
+            ).set_footer(
+                text = "Chuck Norris API"
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def numberFacts(self, parameters):
+    async def color(self, message, parameters):
+        """Returns information about a color.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._color.getMinParameters():
+            embed = getErrorMessage(self._color, Misc.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+        
+            # Get the type of color to look up and validate it
+            colorType = parameters[0]
+
+            # HEX Color Type
+            if colorType in self._color.getAcceptedParameter("colorType", "hex").getAlternatives():
+
+                # HEX has only 1 parameter
+                if len(parameters[1:]) > 1:
+                    embed = getErrorMessage(self._color, Misc.TOO_MANY_HEX_PARAMETERS)
+                elif len(parameters[1:]) < 1:
+                    embed = getErrorMessage(self._color, Misc.NOT_ENOUGH_HEX_PARAMETERS)
+
+                else:
+                    response = await loop.run_in_executor(None,
+                        requests.get,
+                        Misc.COLOR_HEX_URL.format(
+                            parameters[1]
+                        )
+                    )
+                    response = response.json()
+
+                    embed = processColor(response)
+
+            # RGB Color Type
+            elif colorType in self._color.getAcceptedParameter("colorType", "rgb").getAlternatives():
+
+                # RGB has only 3 parameters
+                if len(parameters[1:]) > 3:
+                    return getErrorMessage(self._color, Misc.TOO_MANY_RGB_PARAMETERS)
+                elif len(parameters[1:]) < 3:
+                    return getErrorMessage(self._color, Misc.NOT_ENOUGH_RGB_PARAMETERS)
+
+                else:
+                    response = await loop.run_in_executor(None,
+                        requests.get,
+                        Misc.COLOR_RGB_URL.format(
+                            parameters[1], parameters[2], parameters[3]
+                        )
+                    )
+                    response = response.json()
+
+                    embed = processColor(response)
+            
+            # HSL Color Type
+            elif colorType in self._color.getAcceptedParameter("colorType", "hsl").getAlternatives():
+
+                # HSL has only 3 parameters
+                if len(parameters[1:]) > 3:
+                    return getErrorMessage(self._color, Misc.TOO_MANY_HSL_PARAMETERS)
+                elif len(parameters[1:]) < 3:
+                    return getErrorMessage(self._color, Misc.NOT_ENOUGH_HSL_PARAMETERS)
+
+                else:
+                    response = await loop.run_in_executor(None,
+                        requests.get,
+                        Misc.COLOR_HSL_URL.format(
+                            parameters[1], parameters[2], parameters[3]
+                        )
+                    )
+                    response = response.json()
+
+                    embed = processColor(response)
+            
+            # CMYK Color Type
+            elif colorType in self._color.getAcceptedParameter("colorType", "cmyk").getAlternatives():
+
+                # CMYK has only 4 parameters
+                if len(parameters[1:]) > 4:
+                    return getErrorMessage(self._color, Misc.TOO_MANY_CMYK_PARAMETERS)
+                elif len(parameters[1:]) < 4:
+                    return getErrorMessage(self._color, Misc.NOT_ENOUGH_CMYK_PARAMETERS)
+                
+                else:
+                    response = await loop.run_in_executor(None,
+                        requests.get,
+                        Misc.COLOR_CMYK_URL.format(
+                            parameters[1], parameters[2], parameters[3], parameters[4]
+                        )
+                    )
+                    response = response.json()
+
+                    embed = processColor(response)
+            
+            # Invalid Color Type
+            else:
+                embed = getErrorMessage(self._color, Misc.INVALID_COLOR_TYPE)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def numberFact(self, message, parameters):
         """Returns a fact about a random number.
 
         Parameters:
@@ -500,22 +816,41 @@ class Misc(Category):
         """
 
         # Check for too many parameters
-        if len(parameters) > self._numberFacts.getMaxParameters():
-            return getErrorMessage(self._numberFacts, Misc.TOO_MANY_PARAMETERS)
+        if len(parameters) > self._numberFact.getMaxParameters():
+            embed = getErrorMessage(self._numberFact, Misc.TOO_MANY_PARAMETERS)
         
-        # Get the number fact
-        numberFactJson = requests.get(Misc.NUMBER_FACT_URL).json()
+        # There were the proper amount of parameters
+        else:
 
-        return discord.Embed(
-            title = "Fact about the number *{}*".format(numberFactJson["number"]),
-            description = numberFactJson["text"],
-            colour = Misc.EMBED_COLOR,
-            timestamp = datetime.now()
-        ).set_footer(
-            text = "NumbersAPI"
+            # Get the number fact
+            numberFactJson = await loop.run_in_executor(None,
+                requests.get,
+                Misc.NUMBER_FACT_URL
+            )
+            numberFactJson = numberFactJson.json()
+
+            embed = discord.Embed(
+                title = "Fact about the number *{}*".format(numberFactJson["number"]),
+                description = numberFactJson["text"],
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                timestamp = datetime.now()
+            ).set_footer(
+                text = "NumbersAPI"
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
 
-    def randomNumber(self, parameters):
+    async def randomNumber(self, message, parameters):
         """Returns a random number between the start and end values.
 
         Parameters:
@@ -529,34 +864,54 @@ class Misc(Category):
         
         # Check for too many parameters
         if len(parameters) > 2:
-            return getErrorMessage(self._random, Misc.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._random, Misc.TOO_MANY_PARAMETERS)
         
-        # Check for 2 parameters
-        if len(parameters) == 2:
-            start = parameters[0]
-            end = parameters[1]
-        
-        # Check if start or end are not numbers
-        if not str(start).isdigit() or not str(end).isdigit():
-            return getErrorMessage(self._random, Misc.NOT_A_NUMBER)
-        
-        # Start and end were numbers
-        start = int(start)
-        end = int(end)
-        
-        # Check if end is less than start
-        if end < start:
-            return getErrorMessage(self._random, Misc.END_LESS_THAN_START)
-        
-        # Choose random number
-        number = random.randint(start, end)
-        return discord.Embed(
-            title = "Result",
-            description = str(number),
-            colour = Misc.EMBED_COLOR
+        # There were the proper amount of parameters
+        else:
+
+            # Check for 2 parameters
+            if len(parameters) == 2:
+                start = parameters[0]
+                end = parameters[1]
+            
+            # Check if start or end are not numbers
+            if not str(start).isdigit() or not str(end).isdigit():
+                embed = getErrorMessage(self._random, Misc.NOT_A_NUMBER)
+            
+            # Start and end were numbers
+            else:
+
+                start = int(start)
+                end = int(end)
+                
+                # Check if end is less than start
+                if end < start:
+                    embed = getErrorMessage(self._random, Misc.END_LESS_THAN_START)
+                
+                # Start was less than end
+                else:
+
+                    # Choose random number
+                    number = random.randint(start, end)
+                    embed = discord.Embed(
+                        title = "Result",
+                        description = str(number),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def tronaldDumpMeme(self, parameters):
+    async def tronaldDumpMeme(self, message, parameters):
         """Returns a random Tronald Dump meme.
 
         Parameters:
@@ -565,20 +920,45 @@ class Misc(Category):
     
         # Check for too many parameters
         if len(parameters) > self._tronaldDumpMeme.getMaxParameters():
-            return getErrorMessage(self._tronaldDumpMeme, Misc.TOO_MANY_PARAMETERS)
-        
-        # Get the meme
-        meme = loadImageFromUrl(Misc.TRONALD_DUMP_MEME)
+            embed = getErrorMessage(self._tronaldDumpMeme, Misc.TOO_MANY_PARAMETERS)
 
-        # Temporarily save the image
-        current = datetime.now()
-        image = "TRONALD_DUMP_MEME_{}_{}_{}.png".format(
-            current.hour, current.minute, current.second
-        )
-        pygame.image.save(meme, image)
-        return image
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Get the meme
+            meme = await loop.run_in_executor(None,
+                loadImageFromUrl,
+                Misc.TRONALD_DUMP_MEME
+            )
+
+            # Temporarily save the image
+            current = datetime.now()
+            image = "TRONALD_DUMP_MEME_{}_{}_{}.png".format(
+                current.hour, current.minute, current.second
+            )
+            pygame.image.save(meme, image)
+
+            # Send file then remove
+            await sendMessage(
+                self.client,
+                message,
+                filename = image
+            )
+            os.remove(image)
     
-    def tronaldDumpQuote(self, parameters):
+    async def tronaldDumpQuote(self, message, parameters):
         """Returns a random Tronald Dump quote.
 
         Parameters:
@@ -587,25 +967,172 @@ class Misc(Category):
         
         # Check for too many parameters
         if len(parameters) > self._tronaldDumpQuote.getMaxParameters():
-            return getErrorMessage(self._tronaldDumpQuote, Misc.TOO_MANY_PARAMETERS)
+            embed = getErrorMessage(self._tronaldDumpQuote, Misc.TOO_MANY_PARAMETERS)
         
-        # Get the quote
-        quoteJson = requests.get(Misc.TRONALD_DUMP_QUOTE).json()
+        # There were the proper amount of parameters
+        else:
 
-        return discord.Embed(
-            title = "Donald Trump Quote",
-            description = quoteJson["value"],
-            colour = Misc.EMBED_COLOR,
-            timestamp = timestampToDatetime(quoteJson["appeared_at"]),
-            url = quoteJson["_embedded"]["source"][0]["url"]
-        ).set_author(
-            name = quoteJson["_embedded"]["author"][0]["name"],
-            icon_url = Misc.TWITTER_ICON
-        ).set_footer(
-            text = "Tronald Dump API"
+            # Get the quote
+            quoteJson = await loop.run_in_executor(None,
+                requests.get,
+                Misc.TRONALD_DUMP_QUOTE
+            )
+            quoteJson = quoteJson.json()
+
+            embed = discord.Embed(
+                title = "Donald Trump Quote",
+                description = quoteJson["value"],
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                timestamp = timestampToDatetime(quoteJson["appeared_at"]),
+                url = quoteJson["_embedded"]["source"][0]["url"]
+            ).set_author(
+                name = quoteJson["_embedded"]["author"][0]["name"],
+                icon_url = Misc.TWITTER_ICON
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
-    def getServerInfo(self, discordServer):
+    async def ping(self, message, parameters):
+        """Pings the bot
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._ping.getMaxParameters():
+            embed = getErrorMessage(self._ping, Misc.TOO_MANY_PARAMETERS)
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        # There were the proper amount of parameters
+        else:
+            start = datetime.now()
+
+            pingMessage = await message.channel.send(
+                "Ping :slight_smile:"
+            )
+
+            end = datetime.now()
+
+            diff = int((end - start).total_seconds() * 1000)
+
+            await pingMessage.edit(
+                content = "Ping :slight_smile: `{} ms`".format(
+                    diff
+                )
+            )
+    
+    async def nickname(self, message, parameters):
+        """Changes the nickname of the specified member.
+
+        Parameters:
+            discordMember (discord.Member): The Discord Member to change the nickname of.
+            nickname (str): The new nickname to set. (No nickname will clear the nickname).
+        """
+
+        # See if there are no parameters
+        if len(parameters) == 0:
+
+            # Try to clear it
+            try:
+                await message.author.edit(
+                    nick = None
+                )
+                embed = discord.Embed(
+                    title = "Nickname Cleared",
+                    description = "Your nickname has been cleared.",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            except discord.Forbidden:
+                embed = getErrorMessage(self._nickname, Misc.NO_ACCESS)
+        
+        # There are parameters
+        else:
+
+            try:
+
+                # See if nickname is too long
+                if len(" ".join(parameters)) > 32:
+                    embed = getErrorMessage(self._nickname, Misc.TOO_LONG)
+
+                # Nickname is not too long
+                else:
+                    await message.author.edit(
+                        nick = " ".join(parameters)
+                    )
+
+                    embed = discord.Embed(
+                        title = "Nickname Set",
+                        description = "Your nickname has been set to `{}`".format(" ".join(parameters)),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+            
+            except discord.Forbidden:
+                embed = getErrorMessage(self._nickname, Misc.NO_ACCESS)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def info(self, message, parameters):
+        """Returns information about the server or a member mentioned
+        """
+
+        # Check for too many mentions
+        if len(message.mentions) > 1:
+            embed = getErrorMessage(self._info, Misc.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of mentions
+        else:
+
+            # See if there are no mentions
+            if len(message.mentions) == 0:
+                embed = await self.getServerInfo(message.guild)
+
+            # There is one mention
+            else:
+                embed = await self.getMemberInfo(message.guild, message.mentions[0])
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def getServerInfo(self, discordServer):
         """Returns information about the server given as saved by Omega Psi.\n
 
         discordServer - The Discord Server to get information about as saved by Omega Psi.\n
@@ -619,6 +1146,7 @@ class Misc(Category):
         serverPrefixes = server["prefixes"]
         serverName = discordServer.name
         serverOwner = discordServer.owner
+        serverCreate = datetimeToString(discordServer.created_at)
         serverRanking = server["ranking"]
         serverJoinMessage = server["join_message"]["active"]
         serverJoinMessageChannel = server["join_message"]["channel"]
@@ -633,7 +1161,7 @@ class Misc(Category):
                 serverOwner.mention,
                 serverOwner.name + "#" + serverOwner.discriminator
             ),
-            colour = Misc.EMBED_COLOR
+            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
         )
 
         # Add fields
@@ -650,6 +1178,7 @@ class Misc(Category):
             )
 
         tags = {
+            "Created At": serverCreate,
             "Prefixes": ", ".join(serverPrefixes),
             "Ranking": "Yes" if serverRanking else "No",
             "Join Message": "{}\n{}".format(
@@ -676,7 +1205,7 @@ class Misc(Category):
 
         return embed
     
-    def getMemberInfo(self, discordServer, discordMember):
+    async def getMemberInfo(self, discordServer, discordMember):
         """Returns information about the member given as saved by Omega Psi.\n
 
         discordServer - The Discord Server to load the Discord Member information from.\n
@@ -690,9 +1219,11 @@ class Misc(Category):
         member = Server.getMember(discordServer, discordMember)
         memberName = discordMember.name
         memberDiscriminator = discordMember.discriminator
+        memberCreate = datetimeToString(discordMember.created_at)
+        memberJoin = datetimeToString(discordMember.joined_at)
         memberId = discordMember.id
         memberNickname = discordMember.nick
-        memberModerator = Server.isAuthorModerator(discordServer, discordMember)
+        memberModerator = Server.isAuthorModerator(discordMember)
         memberExperience = member["experience"]
         memberLevel = member["level"]
 
@@ -702,17 +1233,21 @@ class Misc(Category):
             description = "<@{}>".format(
                 memberId
             ),
-            colour = Misc.EMBED_COLOR
+            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
         )
 
         # Add fields
         tags = {
+            "Created At": memberCreate,
+            "Joined At": memberJoin,
             "Nickname": memberNickname,
             "Moderator": "Yes" if memberModerator else "No"
         }
+
         if server["ranking"]:
             tags["Experience"] = memberExperience
             tags["Level"] = memberLevel
+
         for tag in tags:
             embed.add_field(
                 name = tag,
@@ -725,11 +1260,13 @@ class Misc(Category):
 
         return embed
     
-    def getInviteLink(self, permissions = []):
+    async def invite(self, message, parameters):
         """Returns the link so someone can invite the bot to their own server.\n
 
         permissions - The permissions that you want the bot to have.\n
         """
+
+        permissions = parameters
 
         # Set default permissions
         permissionsInteger = 0
@@ -761,9 +1298,67 @@ class Misc(Category):
         if adminFound:
             permissionsInteger = Server.PERMISSIONS["administrator"]
 
-        return Server.BOT_INVITE.format(permissionsInteger)
+        await sendMessage(
+            self.client,
+            message,
+            message = Server.BOT_INVITE.format(permissionsInteger)
+        )
     
-    async def sendBug(self, discordServer, discordMember, messageType, message):
+    async def github(self, message, parameters):
+        """Returns the Github link for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._github.getMaxParameters():
+            embed = getErrorMessage(self._github, Misc.TOO_MANY_PARAMETERS)
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Misc.GITHUB_LINK
+            )
+    
+    async def replit(self, message, parameters):
+        """Returns the Repl.it link for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._replit.getMaxParameters():
+            embed = getErrorMessage(self._replit, Misc.TOO_MANY_PARAMETERS)
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Misc.REPL_IT_LINK
+            )
+    
+    async def sendBug(self, message, parameters):
         """Sends all bot moderators a message from the bot.\n
 
         discordServer - The Discord Server that the message originated from.\n
@@ -772,119 +1367,101 @@ class Misc(Category):
         message - The message to send.\n
         """
 
-        # Get color and message type for Embed Title
-        messageTypeParameters = self._sendBug.getAcceptedParameters("messageType")
-        matched = False
-
-        # Iterate through accepted parameters
-        for accepted in messageTypeParameters:
-
-            # Message type was an alternative of the accepted parameter
-            if messageType in messageTypeParameters[accepted].getAlternatives():
-
-                # Capitalize message type; Get the embed color; Parameter matched message type
-                messageType = accepted.capitalize()
-                color = Misc.BUG_EMBED_COLORS[messageType]
-                matched = True
-                
-                # We don't need to continute looping
-                break
-
-        # Invalid message type
-        if not matched:
-            return getErrorMessage(self._sendBug, Misc.INVALID_PARAMETER)
-
-        # Setup embed
-        embed = discord.Embed(
-            title = messageType,
-            description = "Author: {}\n{}\n".format(
-                discordMember.mention,
-                message
-            ),
-            colour = color
-        )
-
-        # Server is not None
-        if discordServer != None:
-            embed.add_field(
-                name = "Server Information",
-                value = "Name: {}\nID: {}\n".format(
-                    discordServer.name,
-                    discordServer.id
-                ),
-                inline = False
-            )
+        # Check for not enough parameters
+        if len(parameters) < self._sendBug.getMinParameters():
+            embed = getErrorMessage(self._sendBug, Misc.NOT_ENOUGH_PARAMETERS)
         
+        # There were the proper amount of parameters
         else:
-            embed.add_field(
-                name = "Did Not Originate From Server.",
-                value = "Originated From User",
-                inline = False
-            )
-        
-        # Iterate through Omega Psi moderators
-        for moderator in OmegaPsi.getModerators():
 
-            # Get the user
-            user = self.client.get_user(moderator)
+            messageType = parameters[0]
+            msg = " ".join(parameters[1:])
 
-            # Only send message to user if user is not None
-            if user != None:
-                await user.send(
-                    embed = embed
+            # Get color and message type for Embed Title
+            messageTypeParameters = self._sendBug.getAcceptedParameters("messageType")
+            matched = False
+
+            # Iterate through accepted parameters
+            for accepted in messageTypeParameters:
+
+                # Message type was an alternative of the accepted parameter
+                if messageType in messageTypeParameters[accepted].getAlternatives():
+
+                    # Capitalize message type; Get the embed color; Parameter matched message type
+                    messageType = accepted.capitalize()
+                    color = Misc.BUG_EMBED_COLORS[messageType]
+                    matched = True
+                    
+                    # We don't need to continue looping
+                    break
+
+            # Invalid message type
+            if not matched:
+                embed = getErrorMessage(self._sendBug, Misc.INVALID_PARAMETER)
+
+            # Valid message type
+            else:
+
+                # Setup embed
+                embed = discord.Embed(
+                    title = messageType,
+                    description = "Author: {}#{}\n{}\n".format(
+                        message.author.name,
+                        message.author.discriminator,
+                        msg
+                    ),
+                    colour = color
                 )
-        
-        return discord.Embed(
-            title = "Message Sent",
-            description = "Your `{}` report was sent.\nMessage: {}\n".format(
-                messageType, message
-            ),
-            colour = color
+
+                # Server is not None
+                if message.guild != None:
+                    embed.add_field(
+                        name = "Server Information",
+                        value = "Name: {}\nID: {}\n".format(
+                            message.guild.name,
+                            message.guild.id
+                        ),
+                        inline = False
+                    )
+                
+                else:
+                    embed.add_field(
+                        name = "Did Not Originate From Server.",
+                        value = "Originated From User",
+                        inline = False
+                    )
+                
+                # Iterate through Omega Psi moderators
+                for moderator in OmegaPsi.getModerators():
+
+                    # Get the user
+                    user = self.client.get_user(moderator)
+
+                    # Only send message to user if user is not None
+                    if user != None:
+                        await user.send(
+                            embed = embed
+                        )
+                
+                embed = discord.Embed(
+                    title = "Message Sent",
+                    description = "Your `{}` report was sent.\nMessage: {}\n".format(
+                        messageType, message
+                    ),
+                    colour = color
+                )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
-    
-    async def nickname(self, discordMember, parameters):
-        """Changes the nickname of the specified member.
-
-        Parameters:
-            discordMember (discord.Member): The Discord Member to change the nickname of.
-            nickname (str): The new nickname to set. (No nickname will clear the nickname).
-        """
-
-        # See if there are no parameters
-        if len(parameters) == 0:
-
-            # Try to clear it
-            try:
-                await discordMember.edit(
-                    nick = None
-                )
-                return discord.Embed(
-                    title = "Nickname Cleared",
-                    description = "Your nickname has been cleared.",
-                    colour = Misc.EMBED_COLOR
-                )
-            
-            except discord.Forbidden:
-                return getErrorMessage(self._nickname, Misc.NO_ACCESS)
-        
-        # There are parameters
-        try:
-
-            # See if nickname is too long
-            if len(" ".join(parameters)) > 32:
-                return getErrorMessage(self._nickname, Misc.TOO_LONG)
-
-            await discordMember.edit(
-                nick = " ".join(parameters)
-            )
-            return discord.Embed(
-                title = "Nickname Set",
-                description = "Your nickname has been set to `{}`".format(" ".join(parameters)),
-                colour = Misc.EMBED_COLOR
-            )
-        
-        except discord.Forbidden:
-            return getErrorMessage(self._nickname, Misc.NO_ACCESS)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -904,175 +1481,13 @@ class Misc(Category):
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-            # Advice Command
-            if command in self._advice.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._advice, self.advice, parameters)
-                )
-            
-            # Chuck Norris
-            elif command in self._chuckNorris.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._chuckNorris, self.chuckNorris, parameters)
-                )
+            # Iterate through commands
+            for cmd in self.getCommands():
+                if command in cmd.getAlternatives():
 
-            # Choice Command
-            elif command in self._choice.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._choice, self.randomChoice, parameters)
-                )
-            
-            # Number Facts Command
-            elif command in self._numberFacts.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._numberFacts, self.numberFacts, parameters)
-                )
-
-            # Random Command
-            elif command in self._random.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._random, self.randomNumber, parameters)
-                )
-
-            # Tronald Dump meme Command
-            elif command in self._tronaldDumpMeme.getAlternatives():
-                result = await self.run(message, self._tronaldDumpMeme, self.tronaldDumpMeme, parameters)
-
-                if type(result) == discord.Embed:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._tronaldDumpMeme, self.tronaldDumpMeme, parameters)
-                    )
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        filename = result
-                    )
-
-                    os.remove(result) # Remove temporary image
-            
-            # Tronald Dump quote Command
-            elif command in self._tronaldDumpQuote.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._tronaldDumpQuote, self.tronaldDumpQuote, parameters)
-                )
-
-            # Info Command
-            elif command in self._info.getAlternatives():
-
-                # 0 Parameters Exist (server info)
-                if len(parameters) == 0:
-
-                    embed = await self.run(message, self._info, self.getServerInfo, message.guild)
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = embed
-                    )
-                
-                # 1 Parameter Exists (member info)
-                elif len(parameters) == 1:
-
-                    # See if member was mentioned or just the text
-                    if len(message.mentions) == 0:
-                        embed = await self.run(message, self._info, self.getMemberInfo, message.guild, username = parameters[0])
-                    else:
-                        embed = await self.run(message, self._info, self.getMemberInfo, message.guild, discordMember = message.mentions[0])
-
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = embed
-                    )
-
-                # 2 or More Parameters Exist (TOO_MANY_PARAMETERS)
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._info, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Invite Link
-            elif command in self._invite.getAlternatives():
-
-                await sendMessage(
-                    self.client,
-                    message,
-                    message = await self.run(message, self._invite, self.getInviteLink, parameters)
-                )
-            
-            # Send Bug
-            elif command in self._sendBug.getAlternatives():
-
-                # Less than 2 Parameters Exist
-                if len(parameters) < 2:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._sendBug, Category.NOT_ENOUGH_PARAMETERS)
-                    )
-                
-                # 2 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = await self.run(message, self._sendBug, self.sendBug, message.guild, message.author, parameters[0], " ".join(parameters[1:]))
-                    )
-            
-            # Ping
-            elif command in self._ping.getAlternatives():
-
-                # 0 Parameters Exist
-                if len(parameters) == 0:
-
-                    # Get start time
-                    start = datetime.now()
-
-                    # Send message
-                    tempMessage = await message.channel.send("Pong :)")
-
-                    # Get end time
-                    end = datetime.now()
-
-                    # Edit message
-                    await tempMessage.edit(
-                        content = "Pong :) `{} ms`".format(
-                            int((end - start).total_seconds() * 1000)
-                        )
-                    )
-                
-                # 1 or More Parameters Exist
-                else:
-                    await sendMessage(
-                        self.client,
-                        message,
-                        embed = getErrorMessage(self._ping, Category.TOO_MANY_PARAMETERS)
-                    )
-            
-            # Nickname
-            elif command in self._nickname.getAlternatives():
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.run(message, self._nickname, self.nickname, message.author, parameters)
-                )
+                    # Run the command but don't try running others
+                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                    break
 
 def setup(client):
     client.add_cog(Misc(client))
