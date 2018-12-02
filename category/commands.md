@@ -1,5 +1,4 @@
 # Commands
-  * [Help](#Help)
   * [Code](#Code)
   * [Game](#Game)
   * [Image](#Image)
@@ -9,15 +8,6 @@
   * [Rank](#Rank)
   * [Misc](#Misc)
   * [NSFW](#NSFW)
-  * [Moderator](#Moderator)
-  * [Bot](#Bot)
-## Help
-  *Shows you the help menu.*
-
-  * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
-
-  * `markdown | getMarkdown | md | getMd ` - **`Bot Mod`** Creates and sends the markdown file for the commands.
-
 ## Code
   *Commands that have to do with coding!*
 
@@ -91,15 +81,21 @@
 
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
-  * `theOffice | office | o ` - Sends a random gif related to The Office.
-
-  * `parksAndRec | parks | pnr ` - Sends a random gif related to Parks and Rec.
-
-  * `brooklyn99 | b99 | 99 ` - Sends a random gif related to Brooklyn Nine-Nine.
-
   * `avatar | avatarMe ` - Sends a random cute avatar.
 
+  * `robohash | robo [content]` - Sends a robohash avatar based off the text you enter.
+    * Accepted Parameters for `content`
+      * `random | surprise | surpriseMe` - Allows you to have a completely random robohash to be sent.
+
+  * `timchen | tim | chen | t ` - Sends a random picture of Timchen (a Repl.it moderator) using an API made by [mat#6207](https://repl.it/@mat1)
+
+  * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
+
   * `meme ` - Sends a random meme from Reddit.
+
+  * `areYouAwake <text>` - Sends a generated meme based off of [this](https://i.imgflip.com/2gqv88.jpg) image.
+
+  * `expandingBrain | expBrain <firstText> [secondText] [thirdText] [fourthText] [fifthText] [sixthText] [seventhText] [eighthText] [ninthText] [tenthText] [eleventhText]` - Sends a generated meme based off [this](https://i.imgur.com/JPdmXOY.png) image.
 
   * `burnLetter <letterText> <spongebobText>` - Sends a generated meme based off of [this](https://tinyurl.com/burnLetter) image.
 
@@ -111,6 +107,8 @@
 
   * `classroomStares <bubbleText>` - Sends a generated meme based off of [this](https://i.imgur.com/3QVQ2V5.jpg) image.
 
+  * `didYouMean [searchText] <didYouMeanText>` - Sends a generated meme based off of [this](https://i.imgur.com/8GpQQun.png) image.
+
   * `icarlyStopSign | icarlyStop <spencerText> [stopText] <gibbyText>` - Sends a generated meme based off of [this](https://i.imgur.com/MSaTVD2.jpg) image.
 
   * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://tinyurl.com/mastersBlessing) image.
@@ -118,6 +116,8 @@
   * `armHandshake <handsText> <firstArm> <secondArm> [thirdArm] [fourthArm]` - Sends a generated meme based off of [this](https://tinyurl.com/twoArmHandshake) image.
 
   * `pigeon | isThisAPigeon <pigeonText> <personText> <questionText>` - Sends a generated meme based off of [this](https://i.kym-cdn.com/photos/images/original/001/374/087/be2.png) image.
+
+  * `playstation [triangleText] [squareText] <xText> <circleText>` - Sends a generated meme based off of [this](https://i.imgur.com/ic6R1lS.png) image.
 
   * `puppetMeme <handText> <puppetText>` - Sends a generated meme based off of [this](https://tinyurl.com/puppetMeme) image.
 
@@ -136,8 +136,6 @@
   * `trojanHorse <hidersText> <horseText> <castleText> <welcomersText>` - Sends a generated meme based off of [this](https://i.imgur.com/pNR2At1.jpg) image.
 
   * `whoKilledHannibal <ericAndreText> <gunText> <hannibalText> <questionText>` - Sends a generated meme based off of [this](https://i.imgflip.com/28s2gu.jpg) image.
-
-  * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
 
 ## Insult
   *If you feel in the mood to be insulted, here ya are.*
@@ -162,35 +160,51 @@
       * `remorseful | remorse | r` - Harder insults. Might offend you.
       * `noRemorse | noremorse | nr` - Hardcore insults. And I mean it.
 
+  * `approveInsult | approve <value>` - **`Bot Mod`** Approves an insult in the list of pending insults.
+
+  * `denyInsult | deny <value> <reason>` - **`Bot Mod`** Denies an insult in the list of pending insults.
+
+  * `addInsultTag | addTag <value> <tag>` - **`Bot Mod`** Adds a tag to an insult if it is not already there.
+    * Accepted Parameters for `tag`
+      * `NSFW | nsfw` - An NSFW tag for an insult.
+
+  * `listPendingInsults | pendingInsults ` - **`Bot Mod`** Lists the pending insults.
+
 ## Internet
   *All commands that deal with the internet are here.*
 
+  * `movie | mv <query>` - Gives you information about a Movie on IMDb.
+
+  * `tvShow | tv | show <query>` - Gives you information about a TV Show on IMDb.
+
+  * `translate <to> [from] <text>` - Gives you the translation of given text to and from a language.
+
   * `urban | urbanDictionary | urbanDict <term>` - **`NSFW`** Gives you the top 5 urban dictionary entries for a term.
 
-  * `wikipedia | wiki <term>` - Gets a wikipedia entry you type in.
-
   * `weather | forecast | getWeather <location>` - Gets the weather for a specified location.
+
+  * `wikipedia | wiki <term>` - Gets a wikipedia entry you type in.
 
 ## Math
   *Need help with math? These commands got your back.*
 
-  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
-
-  * `integral | integrate <expression>` - Gets the integral of an expression.
-
-  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
-
-  * `factor | f <expression>` - Factors a mathematical expression.
-
   * `simplify | simp | evaluate | eval <expression>` - Simplifies a mathematical expression.
 
-  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+  * `expand | exp | e <expression>` - Expands a mathematical expression.
+
+  * `factor | f <expression>` - Factors a mathematical expression.
 
   * `factorial | ! <number>` - Gets the factorial of a number.
 
   * `solve | system <equation(s)>` - Solves an equation or a system of equations.
 
-  * `expand | exp | e <expression>` - Expands a mathematical expression.
+  * `substitute | subs <expression> <variables>` - Substitutes variables in an equation.
+
+  * `derivative | derivate | dv <expression>` - Gets the derivative of an expression.
+
+  * `integral | integrate <expression>` - Gets the integral of an expression.
+
+  * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
 ## Rank
   *The ranking system is strong with this category.*
@@ -214,6 +228,13 @@
 
   * `chuckNorris | chuck | norris ` - Gives you a random Chuck Norris joke.
 
+  * `color [colorType] <color>` - Gives you the information about a color given either the Hex, RGB, HSL, or CMYK.
+    * Accepted Parameters for `colorType`
+      * `hex | HEX` - Get color information using a hex code.
+      * `rgb | RGB` - Get color information using an RGB tuple.
+      * `hsl | HSL` - Get color information using HSL.
+      * `cmyk | CMYK` - Get color information using CMYK.
+
   * `numberFact | number ` - Gives you a fact about a number.
 
   * `random | rand | randint <start> <end>` - Gives you a random number between the specified range.
@@ -221,6 +242,10 @@
   * `tronaldDumpMeme | tronaldMeme | trumpMeme ` - Gives you a random meme from Donald Trump.
 
   * `tronaldDumpQuote | tronaldQuote | trumpQuote ` - Gives you a random quote from Donald Trump.
+
+  * `ping ` - Pings the bot.
+
+  * `nickname | nick [nickname]` - Changes your nickname.
 
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
 
@@ -256,6 +281,10 @@
       * `useVoiceActivity | useVoice | voice` - Gives the bot permission to use voice activity in a voice channel.
       * `prioritySpeaker` - Gives the bot permission to the priority speaker.
 
+  * `github ` - Sends you the Github link for the source code.
+
+  * `replit | repl.it | repl ` - Sends you the Repl.it link for the bot.
+
   * `sendBug | bug | error | feedback <messageType> <message>` - Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.
     * Accepted Parameters for `messageType`
       * `bug` - The type of message is a bug in Omega Psi.
@@ -263,103 +292,14 @@
       * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
       * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
 
-  * `ping ` - Pings the bot.
-
-  * `nickname | nick [nickname]` - Changes your nickname.
-
 ## NSFW
   *An NSFW category for 18+*
 
-  **You should be 18+ to run the commands in this channel!**
+  **You should be 18+ to run the commands in this category!**
 
   **_This category is NSFW._**
 
   * `boobs | boob ` - **`NSFW`** Sends a random picture of boobs.
 
   * `booty | ass ` - **`NSFW`** Sends a random picture of some booty.
-
-## Server Moderator
-  *Moderate your server with this.*
-
-  **In order to use these commands, you must have the Manage Server permissions.**
-
-  **_This category contains commands that can only be run in a Server._**
-
-  * `addMember | addM | am <member(s)...>` - **`Server Mod`** Allows you to add a member, or members, to the server file manually.
-
-  * `removeMember | removeM | rm <member(s)...>` - **`Server Mod`** Allows you to remove a member, or members, from the server file manually.
-
-  * `addModerator | addMod <member(s)...>` - **`Server Mod`** Allows you to add a moderator, or moderators, to the server (only for Omega Psi).
-
-  * `removeModerator | removeMod | remMod <member(s)...>` - **`Server Mod`** Allows you to remove a moderator, or moderators, from the server (only for Omega Psi).
-
-  * `activate | enable <command>` - **`Server Mod`** Allows you to activate a command, or commands, in the server.
-
-  * `deactivate | disable <command> [reason]` - **`Server Mod`** Allows you to deactivate a command in the server.
-
-  * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel ` - **`Server Mod`** Allows you to toggle the ranking system in the server.
-
-  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg ` - **`Server Mod`** Allows you to toggle the join message in the server.
-
-  * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - **`Server Mod`** Allows you to set the channel that the Join Messages are sent in.
-
-  * `setLevel | setLvl <level> <member...>` - **`Server Mod`** Allows you to set the level of a member, or members, in the server.
-
-  * `addPrefix | addPre <prefix>` - **`Server Mod`** Allows you to add a prefix for this server.
-
-  * `removePrefix | removePre | remPre <prefix>` - **`Server Mod`** Allows you to remove a prefix from this server.
-
-  * `setServerName | setSvrName <name>` - **`Server Mod`** Allows you to set the Server's name.
-
-  * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - **`Server Mod`** Allows you to create an invite to this server.
-    * Accepted Parameters for `infinite`
-      * `True | true | T | t | Yes | yes | Y | y` - Set the server invite to never expire.
-      * `False | false | F | f | No | no | N | n` - Set the server invite to expire.
-
-  * `addRole <name> [colour]` - **`Server Mod`** Adds a role to the server.
-
-  * `removeRole <name>` - **`Server Mod`** Removes a role from the server.
-
-  * `kickMember | kickMbr <member(s)...>` - **`Server Mod`** Kicks a member, or members, from the server.
-
-  * `banMember | banMbr <member(s)...>` - **`Server Mod`** Bans a member, or members, from the server.
-
-  * `addMemberRole | addMbrRole | giveRole <member> <role(s)...>` - **`Server Mod`** Gives a member the mentioned role(s).
-
-  * `removeMemberRole | removeMbrRole | takeRole <member> <role(s)...>` - **`Server Mod`** Removes the mentioned role(s) from a member.
-
-  * `setMemberRoles | setMbrRoles | setRoles <member> <role(s)...>` - **`Server Mod`** Sets the roles for a member.
-
-## Bot Moderator
-  *Very private stuff.*
-
-  **You must be a Bot Moderator to run these commands.**
-
-  * `addBotModerator | addBotMod | abm <member(s)...>` - **`Bot Mod`** Allows you to add a bot moderator to the bot.
-
-  * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - **`Bot Mod`** Allows you to remove a bot moderator from the bot.
-
-  * `activateGlobally | enableGlobally <command(s)>` - **`Bot Mod`** Allows you to activate a command, or commands, globally.
-
-  * `deactivateGlobally | disableGlobally <command> [reason]` - **`Bot Mod`** Allows you to deactivate a command globally.
-
-  * `botInfo | bi ` - **`Bot Mod`** Allows you to get the info about the bot.
-
-  * `servers | botServers [markdown]` - **`Bot Mod`** Allows you to get a list of servers the bot is in.
-
-  * `setStatus | status <activity> <text>` - **`Bot Mod`** Allows you to change the presence of the bot.
-    * Accepted Parameters for `activity`
-      * `playing | Playing` - The playing activity type.
-      * `streaming | Streaming` - The streaming activity type.
-      * `listening | Listening | listening to | Listening to` - The listening activity type.
-      * `watching | Watching` - The watching activity type.
-
-  * `todo [action] [item]` - **`Bot Mod`** Adds, removes, or lists things in the TODO list.
-    * Accepted Parameters for `action`
-      * `add | a` - Adds something to the TODO list.
-      * `remove | r` - Removes something from the TODO list.
-
-  * `stop | quit | kill ` - **`Bot Mod`** Kills the bot.
-
-  * `debug ` - **`Bot Mod`** Debugs the bot.
 
