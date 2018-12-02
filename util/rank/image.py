@@ -1,6 +1,6 @@
 from util.file.server import Server
 
-from util.utils import loadImageFromUrl
+from util.utils.miscUtils import loadImageFromUrl
 
 import pygame
 
@@ -50,17 +50,18 @@ class Rect:
     def getColor(self):
         """Returns the color of the Rect object.\n
         """
-        return self._color
+        return pygame.Color(self._color[0], self._color[1], self._color[2], 255)
 
     def getFont(self):
         """Returns the font of the Rect object.\n
         """
         return self._font
 
-def createRankImage(member):
-    """Creates an XP card image for the member.\n
+def createRankImage(discordMember):
+    """Creates an XP card image for the member.
 
-    member - The dictionary of the member to get ranking stats for.\n
+    Parameters:
+        discordMember (discord.Member): The Discord Member to get the ranking stats for.
     """
 
     # Keep a Rect object for each image and text objects
@@ -72,19 +73,19 @@ def createRankImage(member):
     nameRect = Rect(
         200, 30, 325, 40,
         [255, 255, 255],
-        pygame.font.SysFont("arial", 45)
+        pygame.font.Font("util/image/Light.ttf", 45)
     )
 
     levelRect = Rect(
         200, 80, 200, 40,
         [200, 200, 200],
-        pygame.font.SysFont("arial", 40)
+        pygame.font.Font("util/image/Light.ttf", 40)
     )
 
     expRect = Rect(
         200, 125, 200, 40,
         [128, 255, 128],
-        pygame.font.SysFont("arial", 40)
+        pygame.font.Font("util/image/Light.ttf", 40)
     )
 
     progressRect = Rect(
@@ -93,11 +94,13 @@ def createRankImage(member):
     )
 
     # Get necessary values for rank image
-    ID = member["id"]
-    name = member["name"]
-    nickname = member["nickname"]
-    discriminator = member["discriminator"]
-    avatar = member["avatar"]
+    member = Server.getMember(discordMember.guild, discordMember)
+
+    ID = discordMember.id
+    name = discordMember.name
+    nickname = discordMember.nick
+    discriminator = discordMember.discriminator
+    avatar = discordMember.avatar
     level = member["level"]
     currentExp = member["experience"]
     nextExp = Server.getExpFromLevel(level + 1)
