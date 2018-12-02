@@ -1,42 +1,65 @@
 # Omega Psi
-A Discord Bot with all kinds of commands split up into modular categories. Open to command requests and feature requests.
+A Discord Bot, constantly being developed, that includes all sorts of commands from minigames to server moderation.
+
+Prefix: `omega `
+  * You can add multiple prefixes to your server. The default one cannot be removed.
 
 ![Omega Psi In Action](omegaPsiTest.gif)
 
-## What does it include?
+## Highlights
+There are all sorts of things being added almost everyday.
+Each category is labeled properly and includes commands tailored to that category.
+  * Code
+    * Base Conversion
+    * [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck) interpreter
+  * Game
+    * Connect Four
+    * Hangman
+    * Online Game Stats for Black Ops 3/4, Fortnite, and League of Legends
+  * Image
+    * Meme Generators! At least two new meme generators come out per week. (Sidenote: You can also supply an image URL and an image will be placed instead of text)
+    * Gifs
+    * NASA Images
+    * Avatars
+  * Math
+    * Basic commands as of right now including simplification, derivatives, and even the fibonacci sequence
+  * Internet
+    * Anything you can find on the internet, you can find here
+    * IMDb
+    * Urban Dictionary (__can only be run in an NSFW channel__)
+    * Translations between 95 different languages
+  * Miscellaneous
+    * Things that just don't quite fit into anything
+    * Change your nickname (Sidenote: If you are a higher role than the bot in a server, your nickname cannot be changed)
+    * Chuck Norris jokes
+    * Find out what a color is from either HEX, HSL, RGB, or CMYK
+  * NSFW
+    * Naughty commands (18+)
+    * Can only be run in an NSFW channel (It just makes sense)
 
-### Prefix: `omega`
-  The prefixes can be customized. For this bot, you can add multiple prefixes. You **cannot** remove the default prefix.
-### Fun Commands:
- * Gifs
- * Insults
-    * Note: Any NSFW insults will only be sent in an NSFW channel. There is no way around this.
- * Math Functions
- * Leveling
-### Server Moderation Commands:
- * Add/Remove Roles
- * Give/Take Member's Roles
- * Set the name of the Server
- * Create an Instant Invite
- 
- Note: Omega Psi *must* have the respective permissions to run some of the server moderation commands.
-### Other Commands:
-  There are more commands that pertain to the bot's moderation in a server:
-   * Setting someone's leveling for the leveling system
-   * Adding a Server Moderator
-   * Activating/Deactivating Commands
-   * Toggling Leveling
-   * Toggling a Welcome message
-### Full Command List
-For a full command list, go [here](category/commands.md "Commands List")
+## Some Examples of Commands
 
-**By default, the leveling system and the welcome messages are disabled.**
+**Base Conversion**
+![Base Conversion]()
 
-## Bugs, Error, and Feedback
-If you find any bugs in the bot, there's a command you can use to send a report straight to any bot moderator.
- * `omega sendBug <messageType> <message>`
- * For more information about the message types, use `omega help sendBug` in the bot.
+**Hangman**
+![Hangman]()
 
-## Bot Moderation
-If you fork this bot and want to become a bot moderator, let me know and I will get back to you.
-Bot moderation will *not* be granted to just anyone.
+**Meme Generator**
+![Meme Generator]()
+
+**Derivative and Integral**
+![Derivative and Integral]()
+
+**Translation**
+![Translation]()
+
+**Chuck Norris**
+![Chuck Norris]()
+
+**IMDb**
+![IMDb]()
+
+## Add to Server
+If you don't already have Omega Psi in your server, [here]() is a basic link (no permissions) you can use.
+If you want a custom permission integer, you can use the `omega invite` command to do that. You can customize all aspects of the bot's control. (Just try it out)
