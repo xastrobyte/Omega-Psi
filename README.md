@@ -61,5 +61,5 @@ Each category is labeled properly and includes commands tailored to that categor
 ![IMDb]()
 
 ## Add to Server
-If you don't already have Omega Psi in your server, [here]() is a basic link (no permissions) you can use.
+If you don't already have Omega Psi in your server, [here](https://discordapp.com/oauth2/authorize?scope=bot&client_id=503804826187071501&permissions=0) is a basic link (no permissions) you can use.
 If you want a custom permission integer, you can use the `omega invite` command to do that. You can customize all aspects of the bot's control. (Just try it out)
