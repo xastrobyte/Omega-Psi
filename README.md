@@ -38,24 +38,31 @@ Each category is labeled properly and includes commands tailored to that categor
 ## Some Examples of Commands
 
 **Base Conversion**
+
 ![Base Conversion](omegaPsiCode.gif)
 
 **Hangman**
+
 ![Hangman](omegaPsiHangman.gif)
 
 **Meme Generator**
+
 ![Meme Generator](omegaPsiMemeGenerator.gif)
 
 **Derivative and Integral**
+
 ![Derivative and Integral](omegaPsiDerivativeIntegral.gif)
 
 **Translation**
+
 ![Translation](omegaPsiTranslate.gif)
 
 **Chuck Norris**
+
 ![Chuck Norris](omegaPsiChuckNorris.gif)
 
 **IMDb**
+
 ![IMDb](omegaPsiIMDB.gif)
 
 ## Add to Server
