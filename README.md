@@ -4,8 +4,6 @@ A Discord Bot, constantly being developed, that includes all sorts of commands f
 Prefix: `omega `
   * You can add multiple prefixes to your server. The default one cannot be removed.
 
-![Omega Psi In Action](omegaPsiTest.gif)
-
 ## Highlights
 There are all sorts of things being added almost everyday.
 Each category is labeled properly and includes commands tailored to that category.
@@ -40,25 +38,25 @@ Each category is labeled properly and includes commands tailored to that categor
 ## Some Examples of Commands
 
 **Base Conversion**
-![Base Conversion]()
+![Base Conversion](omegaPsiCode.gif)
 
 **Hangman**
-![Hangman]()
+![Hangman](omegaPsiHangman.gif)
 
 **Meme Generator**
-![Meme Generator]()
+![Meme Generator](omegaPsiMemeGenerator.gif)
 
 **Derivative and Integral**
-![Derivative and Integral]()
+![Derivative and Integral](omegaPsiDerivativeIntegral.gif)
 
 **Translation**
-![Translation]()
+![Translation](omegaPsiTranslate.gif)
 
 **Chuck Norris**
-![Chuck Norris]()
+![Chuck Norris](omegaPsiChuckNorris.gif)
 
 **IMDb**
-![IMDb]()
+![IMDb](omegaPsiIMDB.gif)
 
 ## Add to Server
 If you don't already have Omega Psi in your server, [here](https://discordapp.com/oauth2/authorize?scope=bot&client_id=503804826187071501&permissions=0) is a basic link (no permissions) you can use.
