@@ -1,5 +1,8 @@
-from util.file.omegaPsi import OmegaPsi
 from util.file.database import omegaPsi
+from util.file.omegaPsi import OmegaPsi
+
+from util.utils.dictUtils import setDefault
+from util.utils.stringUtils import PROFANE_WORDS
 
 from datetime import datetime
 from random import choice as choose
@@ -75,13 +78,6 @@ class Server:
         "Hola {}! Thank you for joining!"
     ]
 
-    # Member XP
-    PROFANE_WORDS = [
-        "asshole", "bastard", "bitch", "cock", "dick", "cunt", "pussy",
-        "fuck", "shit", "chode", "choad", "wanker", "twat", "nigger", "nigga",
-        "tits", "jizz", "dildo", "douche"
-    ]
-
     INTERVAL = 5 # Message Send Interval
     NORMAL_XP = 3
     REACTION_XP = 6
@@ -107,6 +103,17 @@ class Server:
                 "channel": None,
                 "messages": Server.JOIN_MESSAGES
             },
+            "category_colors": {
+                "code": None,
+                "game": None,
+                "image": None,
+                "insult": None,
+                "internet": None,
+                "math": None,
+                "misc": None,
+                "nsfw": None,
+                "rank": None
+            },
             "inactive_commands": {},
             "members": {}
         }
@@ -114,12 +121,7 @@ class Server:
         # Get server information
         serverDict = omegaPsi.getServer(str(discordServer.id))
 
-        # See if default values are missing
-        for value in defaultValues:
-            if value not in serverDict:
-                serverDict[value] = defaultValues[value]
-        
-        return serverDict
+        return setDefault(defaultValues, serverDict)
     
     def closeServer(serverDict):
         """Closes the file for the Discord Server.\n
@@ -303,7 +305,7 @@ class Server:
 
         # Setup default values
         defaultValues = {
-            "id": discordMember.id,
+            "id": str(discordMember.id),
             "moderator": False,
             "experience": 0,
             "level": 1,
@@ -321,11 +323,7 @@ class Server:
 
         # Iterate through keys in member dictionary
         member = server["members"][str(discordMember.id)]
-        for value in defaultValues:
-
-            # Check if value is not in member dictionary; Set default value
-            if value not in member:
-                member[value] = defaultValues[value]
+        member = setDefault(defaultValues, member)
         
         # Close server file
         Server.closeServer(server)
@@ -431,6 +429,51 @@ class Server:
 
         return server["join_message"]["active"]
     
+    def setColor(discordServer, categoryName, colorInt):
+        """Sets the color of the specified category in the specified Discord Server.
+        Parameters:
+            discordServer (discord.Guild): The Discord Server to set the color of a category in.
+            categoryName (str): The category to set the color of.
+            colorInt (int): The color to set.
+        """
+
+        # Open server file
+        server = Server.openServer(discordServer)
+        
+        # Set the color
+        server["category_colors"][categoryName] = colorInt
+    
+        # Close the server file
+        Server.closeServer(server)
+
+        return "The color of the {} Category was set.".format(
+            categoryName.capitalize()
+        )
+    
+    def getColor(discordServer, categoryName):
+        """Gets the color of the specified category in the specified Discord Server.
+
+        Parameters:
+            discordServer (discord.Guild): The Discord Server to get the color of a category in.
+            categoryName (str): The category to get the color of.
+        """
+
+        try:
+
+            # Open the server file
+            server = Server.openServer(discordServer)
+
+            # Get the color
+            colorInt = server["category_colors"][categoryName]
+
+            # Close the server file
+            Server.closeServer(server)
+
+            return colorInt
+        
+        except:
+            return None
+    
     def setLevel(discordServer, discordMember, level):
         """Sets the ranking level of the Discord Member in the Discord Server.\n
 
@@ -487,7 +530,7 @@ class Server:
                     totalExperience = Server.NORMAL_XP
 
                     # Check for profanity
-                    profanityUsed = [profane for profane in Server.PROFANE_WORDS if profane in message]
+                    profanityUsed = [profane for profane in PROFANE_WORDS if profane in message]
                     totalExperience += Server.PROFANE_XP * len(profanityUsed)
 
                     # Update experience
@@ -596,7 +639,7 @@ class Server:
         server = Server.openServer(discordServer)
 
         # Get the join message channel
-        channelId = server["join_message"]["channel"]
+        channelId = int(server["join_message"]["channel"])
 
         # Close the server file
         Server.closeServer(server)
@@ -632,8 +675,8 @@ class Server:
 
         # Set the join message channel
         success = False
-        if discordChannel.id != server["join_message"]["channel"]:
-            server["join_message"]["channel"] = discordChannel.id
+        if str(discordChannel.id) != server["join_message"]["channel"]:
+            server["join_message"]["channel"] = str(discordChannel.id)
             success = True
         
         # Close the server file
@@ -641,14 +684,13 @@ class Server:
 
         return success
     
-    def isAuthorModerator(discordServer, discordMember):
+    def isAuthorModerator(discordMember):
         """Returns whether or not the Discord Member is a moderator in the Discord Server.\n
 
-        discordServer - The Discord Server to check if the Discord Member is a moderator in.\n
         discordMember - The Discord Member to check if they are a moderator.\n
         """
 
-        return discordMember.guild_permissions.manage_guild
+        return discordMember.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(discordMember)
     
     def isCommandActive(discordServer, commandObject):
         """Returns whether or not the command given is active.\n
