@@ -209,13 +209,53 @@ class Database:
             "level": level,
             "tags": tags
         })
+
         return self.__set_insults(insultData)
+    
+    def __add_pending_insult(self, user, level, insult, tags):
+        """A helper method that adds a pending insult to the data information.
+
+        Parameters:
+            user (discord.User): The Discord User to notify if it gets added.
+            level (str): The level of the insult to add.
+            insult (str): The insult to add.
+            tags (list): The tags for the insult.
+        """
+        pendingData = self.__get_pending_insults()
+
+        pendingData["pending_insults"].append({
+            "user": str(user.id),
+            "value": insult,
+            "level": level,
+            "tags": tags,
+            "addedTags": []
+        })
+        
+        return self.__set_pending_insults(pendingData["pending_insults"])
+    
+    def __remove_pending_insult(self, value):
+        """A helper method that removes a pending insult from the data information.
+
+        Parameters:
+            value (int): The index of the pending insult to remove.
+        """
+        pendingData = self.__get_pending_insults()
+
+        pendingData["pending_insults"].pop(value)
+
+        return self.__set_pending_insults(pendingData["pending_insults"])
 
     def __get_insults(self):
         """A helper method that gets the insults from the data information.
         """
         insultData = self._data.find_one({"_id": "insults"})
         return insultData
+    
+    def __get_pending_insults(self):
+        """A helper method that gets the pending insults from the data information.
+        """
+        pendingData = self._data.find_one({"_id": "pending_insults"})
+        return pendingData
 
     def __set_insults(self, insults):
         """A helper method that sets the insults in the data information.
@@ -225,6 +265,15 @@ class Database:
         """
         insultData = self._data.update_one({"_id": "insults"}, {"$set": insults}, upsert = False)
         return insultData.raw_result
+    
+    def __set_pending_insults(self, pendingInsults):
+        """A helper method that sets the pending insults in the data information.
+
+        Parameters:
+            pendingInsults (dict): The pending insults info to set.
+        """
+        pendingData = self._data.update_one({"_id": "pending_insults"}, {"$set": {"pending_insults": pendingInsults}}, upsert = False)
+        return pendingData.raw_result
     
 
     def __get_hangman_words(self):
@@ -239,6 +288,13 @@ class Database:
         """
         scrambleData = self._data.find_one({"_id": "scramble"})
         return scrambleData
+    
+    
+    def __get_lang(self):
+        """A helper method that gets the language codes from the data information.
+        """
+        langData = self._data.find_one({"_id": "lang"})
+        return langData
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Methods - For Bot, Servers, and Users
@@ -361,11 +417,40 @@ class Database:
             tags (list): The tags for the insult.
         """
         return self.__add_insult(level, insult, tags)
+    
+    def addPendingInsult(self, user, level, insult, tags):
+        """Adds a pending insult to the database.
+
+        Parameters:
+            user (discord.User): The Discord User to message once it's approved.
+            level (str): The insult level to add the insult to.
+            insult (str): The insult to add to the pending list.
+            tags (list): The tags for the insult.
+        """
+        return self.__add_pending_insult(user, level, insult, tags)
+    
+    def removePendingInsult(self, value):
+        """Removes a pending insult from the database.
+
+        Parameters:
+            value (int): The index of the pending insult to remove.
+        """
+        return self.__remove_pending_insult(value)
 
     def getInsults(self):
         """Gets the insults from the database.
         """
         return self.__get_insults()
+    
+    def getPendingInsults(self):
+        """Gets the pending insults from the database.
+        """
+        return self.__get_pending_insults()
+    
+    def setPendingInsults(self, pendingInsults):
+        """Sets the pending insults.
+        """
+        return self.__set_pending_insults(pendingInsults)
     
 
     def getHangmanWords(self):
@@ -378,6 +463,12 @@ class Database:
         """Gets the scramble words from the database.
         """
         return self.__get_scramble_words()
+
+
+    def getLang(self):
+        """Gets the country codes from the database.
+        """
+        return self.__get_lang()
     
     
 omegaPsi = Database()
