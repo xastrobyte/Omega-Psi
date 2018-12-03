@@ -1,13 +1,24 @@
 # Commands
+  * [Help](#Help)
   * [Code](#Code)
   * [Game](#Game)
   * [Image](#Image)
   * [Insult](#Insult)
   * [Internet](#Internet)
   * [Math](#Math)
-  * [Rank](#Rank)
-  * [Misc](#Misc)
+  * [Meme](#Meme)
+  * [Miscellaneous](#Miscellaneous)
   * [NSFW](#NSFW)
+  * [Rank](#Rank)
+  * [Server Moderator](#Server-Moderator)
+  * [Bot Moderator](#Bot-Moderator)
+## Help
+  *Shows you the help menu.*
+
+  * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
+
+  * `markdown | getMarkdown | md | getMd ` - **`Bot Mod`** Creates and sends the markdown file for the commands.
+
 ## Code
   *Commands that have to do with coding!*
 
@@ -81,6 +92,10 @@
 
   * `gif | giphy | g [keywords]` - Sends a random gif from Giphy.
 
+  * `dog | doggy | dogMe ` - Sends a random picture of a random dog from the internet.
+
+  * `cat | kitty | catMe ` - Sends a random picture of a random cat from the internet.
+
   * `avatar | avatarMe ` - Sends a random cute avatar.
 
   * `robohash | robo [content]` - Sends a robohash avatar based off the text you enter.
@@ -90,52 +105,6 @@
   * `timchen | tim | chen | t ` - Sends a random picture of Timchen (a Repl.it moderator) using an API made by [mat#6207](https://repl.it/@mat1)
 
   * `nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]` - Gives you a random NASA image given a search term or no search term.
-
-  * `meme ` - Sends a random meme from Reddit.
-
-  * `areYouAwake <text>` - Sends a generated meme based off of [this](https://i.imgflip.com/2gqv88.jpg) image.
-
-  * `expandingBrain | expBrain <firstText> [secondText] [thirdText] [fourthText] [fifthText] [sixthText] [seventhText] [eighthText] [ninthText] [tenthText] [eleventhText]` - Sends a generated meme based off [this](https://i.imgur.com/JPdmXOY.png) image.
-
-  * `burnLetter <letterText> <spongebobText>` - Sends a generated meme based off of [this](https://tinyurl.com/burnLetter) image.
-
-  * `butILikeThis | thisIsBetter <redCarText> <whiteCarText>` - Sends a generated meme based off of [this](https://i.imgur.com/GzRvZUx.png) image.
-
-  * `carSkidding | carSkid <carText> <straightText> <exitText>` - Sends a generated meme based off of [this](https://tinyurl.com/carSkidding) image.
-
-  * `cardSlam <cardText> <bodyText> <tableText>` - Sends a generated meme based off of [this](https://i.imgur.com/GBMCNYM.jpg) image.
-
-  * `classroomStares <bubbleText>` - Sends a generated meme based off of [this](https://i.imgur.com/3QVQ2V5.jpg) image.
-
-  * `didYouMean [searchText] <didYouMeanText>` - Sends a generated meme based off of [this](https://i.imgur.com/8GpQQun.png) image.
-
-  * `icarlyStopSign | icarlyStop <spencerText> [stopText] <gibbyText>` - Sends a generated meme based off of [this](https://i.imgur.com/MSaTVD2.jpg) image.
-
-  * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://tinyurl.com/mastersBlessing) image.
-
-  * `armHandshake <handsText> <firstArm> <secondArm> [thirdArm] [fourthArm]` - Sends a generated meme based off of [this](https://tinyurl.com/twoArmHandshake) image.
-
-  * `pigeon | isThisAPigeon <pigeonText> <personText> <questionText>` - Sends a generated meme based off of [this](https://i.kym-cdn.com/photos/images/original/001/374/087/be2.png) image.
-
-  * `playstation [triangleText] [squareText] <xText> <circleText>` - Sends a generated meme based off of [this](https://i.imgur.com/ic6R1lS.png) image.
-
-  * `puppetMeme <handText> <puppetText>` - Sends a generated meme based off of [this](https://tinyurl.com/puppetMeme) image.
-
-  * `runAway <chaserText> <runnerText>` - Sends a generated meme based off of [this](https://tinyurl.com/y9zqyq92) image.
-
-  * `saveOne <personText> <leftBehindText> <savedText>` - Sends a generated meme based off of [this](https://tinyurl.com/saveOneMeme) image.
-
-  * `sayItAgain | dexterMeme <topText> <bottomText>` - Sends a generated meme based off of [this](https://i.imgflip.com/16iyn1.jpg?a428353) image.
-
-  * `spontaneousAnger | angerMeme <angerText> <questionText>` - Sends a generated meme based off of [this](https://i.imgur.com/o1NzXyW.jpg) image.
-
-  * `surprisedDwight <dwightText> <angelaText>` - Sends a generated meme based off of [this](https://tinyurl.com/surprisedDwight) image.
-
-  * `surprisedPikachu <firstLine> <secondLine> <thirdLine> [fourthLine] [fifthLine]` - Sends a generated meme based off of [this](https://imgflip.com/s/meme/Surprised-Pikachu.jpg) image.
-
-  * `trojanHorse <hidersText> <horseText> <castleText> <welcomersText>` - Sends a generated meme based off of [this](https://i.imgur.com/pNR2At1.jpg) image.
-
-  * `whoKilledHannibal <ericAndreText> <gunText> <hannibalText> <questionText>` - Sends a generated meme based off of [this](https://i.imgflip.com/28s2gu.jpg) image.
 
 ## Insult
   *If you feel in the mood to be insulted, here ya are.*
@@ -206,18 +175,54 @@
 
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
 
-## Rank
-  *The ranking system is strong with this category.*
+## Meme
+  *Memes, memes, and more memes.*
 
-  **_This category contains commands that can only be run in a Server._**
+  * `meme ` - Sends a random meme from Reddit.
 
-  * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
-    * Accepted Parameters for `interaction`
-      * `profanity | profane` - Check how many profane words you need to level up.
-      * `reactions | reacts` - Check how many reactions you need to level up.
-      * `normal | basic` - Check how many regular messages you need to send to level up.
+  * `areYouAwake <text>` - Sends a generated meme based off of [this](https://i.imgflip.com/2gqv88.jpg) image.
 
-  * `rank | r ` - Shows you your current level and experience in this server.
+  * `expandingBrain | expBrain <firstText> [secondText] [thirdText] [fourthText] [fifthText] [sixthText] [seventhText] [eighthText] [ninthText] [tenthText] [eleventhText]` - Sends a generated meme based off [this](https://i.imgur.com/JPdmXOY.png) image.
+
+  * `burnLetter <letterText> <spongebobText>` - Sends a generated meme based off of [this](https://tinyurl.com/burnLetter) image.
+
+  * `butILikeThis | thisIsBetter <redCarText> <whiteCarText>` - Sends a generated meme based off of [this](https://i.imgur.com/GzRvZUx.png) image.
+
+  * `carSkidding | carSkid <carText> <straightText> <exitText>` - Sends a generated meme based off of [this](https://tinyurl.com/carSkidding) image.
+
+  * `cardSlam <cardText> <bodyText> <tableText>` - Sends a generated meme based off of [this](https://i.imgur.com/GBMCNYM.jpg) image.
+
+  * `classroomStares <bubbleText>` - Sends a generated meme based off of [this](https://i.imgur.com/3QVQ2V5.jpg) image.
+
+  * `didYouMean [searchText] <didYouMeanText>` - Sends a generated meme based off of [this](https://i.imgur.com/8GpQQun.png) image.
+
+  * `icarlyStopSign | icarlyStop <spencerText> [stopText] <gibbyText>` - Sends a generated meme based off of [this](https://i.imgur.com/MSaTVD2.jpg) image.
+
+  * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://tinyurl.com/mastersBlessing) image.
+
+  * `armHandshake <handsText> <firstArm> <secondArm> [thirdArm] [fourthArm]` - Sends a generated meme based off of [this](https://tinyurl.com/twoArmHandshake) image.
+
+  * `pigeon | isThisAPigeon <pigeonText> <personText> <questionText>` - Sends a generated meme based off of [this](https://i.kym-cdn.com/photos/images/original/001/374/087/be2.png) image.
+
+  * `playstation [triangleText] [squareText] <xText> <circleText>` - Sends a generated meme based off of [this](https://i.imgur.com/ic6R1lS.png) image.
+
+  * `puppetMeme <handText> <puppetText>` - Sends a generated meme based off of [this](https://tinyurl.com/puppetMeme) image.
+
+  * `runAway <chaserText> <runnerText>` - Sends a generated meme based off of [this](https://tinyurl.com/y9zqyq92) image.
+
+  * `saveOne <personText> <leftBehindText> <savedText>` - Sends a generated meme based off of [this](https://tinyurl.com/saveOneMeme) image.
+
+  * `sayItAgain | dexterMeme <topText> <bottomText>` - Sends a generated meme based off of [this](https://i.imgflip.com/16iyn1.jpg?a428353) image.
+
+  * `spontaneousAnger | angerMeme <angerText> <questionText>` - Sends a generated meme based off of [this](https://i.imgur.com/o1NzXyW.jpg) image.
+
+  * `surprisedDwight <dwightText> <angelaText>` - Sends a generated meme based off of [this](https://tinyurl.com/surprisedDwight) image.
+
+  * `surprisedPikachu <firstLine> <secondLine> <thirdLine> [fourthLine] [fifthLine]` - Sends a generated meme based off of [this](https://imgflip.com/s/meme/Surprised-Pikachu.jpg) image.
+
+  * `trojanHorse <hidersText> <horseText> <castleText> <welcomersText>` - Sends a generated meme based off of [this](https://i.imgur.com/pNR2At1.jpg) image.
+
+  * `whoKilledHannibal <ericAndreText> <gunText> <hannibalText> <questionText>` - Sends a generated meme based off of [this](https://i.imgflip.com/28s2gu.jpg) image.
 
 ## Miscellaneous
   *Other commands that don't really fit into a category yet.*
@@ -281,6 +286,8 @@
       * `useVoiceActivity | useVoice | voice` - Gives the bot permission to use voice activity in a voice channel.
       * `prioritySpeaker` - Gives the bot permission to the priority speaker.
 
+  * `vote ` - Allows you to get a link to vote for Omega Psi on discordbots.org
+
   * `github ` - Sends you the Github link for the source code.
 
   * `replit | repl.it | repl ` - Sends you the Repl.it link for the bot.
@@ -302,4 +309,110 @@
   * `boobs | boob ` - **`NSFW`** Sends a random picture of boobs.
 
   * `booty | ass ` - **`NSFW`** Sends a random picture of some booty.
+
+## Rank
+  *The ranking system is strong with this category.*
+
+  **_This category contains commands that can only be run in a Server._**
+
+  * `levelUp [interaction]` - Shows you how many profane words, reactions, or normal messages you need to send to level up.
+    * Accepted Parameters for `interaction`
+      * `profanity | profane` - Check how many profane words you need to level up.
+      * `reactions | reacts` - Check how many reactions you need to level up.
+      * `normal | basic` - Check how many regular messages you need to send to level up.
+
+  * `rank | r ` - Shows you your current level and experience in this server.
+
+## Server Moderator
+  *Moderate your server with this.*
+
+  **In order to use these commands, you must have the Manage Server permissions.**
+
+  **_This category contains commands that can only be run in a Server._**
+
+  * `addMember | addM | am <member(s)...>` - **`Server Mod`** Allows you to add a member, or members, to the server file manually.
+
+  * `removeMember | removeM | rm <member(s)...>` - **`Server Mod`** Allows you to remove a member, or members, from the server file manually.
+
+  * `activate | enable <command>` - **`Server Mod`** Allows you to activate a command, or commands, in the server.
+
+  * `deactivate | disable <command> [reason]` - **`Server Mod`** Allows you to deactivate a command in the server.
+
+  * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel ` - **`Server Mod`** Allows you to toggle the ranking system in the server.
+
+  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg ` - **`Server Mod`** Allows you to toggle the join message in the server.
+
+  * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - **`Server Mod`** Allows you to set the channel that the Join Messages are sent in.
+
+  * `setLevel | setLvl <level> <member...>` - **`Server Mod`** Allows you to set the level of a member, or members, in the server.
+
+  * `addPrefix | addPre <prefix>` - **`Server Mod`** Allows you to add a prefix for this server.
+
+  * `removePrefix | removePre | remPre <prefix>` - **`Server Mod`** Allows you to remove a prefix from this server.
+
+  * `setColor | setEmbedColor | embedColor <category> <color>` - **`Server Mod`** Allows you to set the embed color of a specific category in this server.
+    * Accepted Parameters for `category`
+      * `code` - Allows you to set the color of the Code category.
+      * `game` - Allows you to set the color of the Game category.
+      * `image` - Allows you to set the color of the Image category.
+      * `insult` - Allows you to set the color of the Insult category.
+      * `internet` - Allows you to set the color of the Internet category.
+      * `math` - Allows you to set the color of the Math category.
+      * `misc` - Allows you to set the color of the Misc category.
+      * `nsfw` - Allows you to set the color of the NSFW category.
+      * `rank` - Allows you to set the color of the Rank category.
+
+  * `setServerName | setSvrName <name>` - **`Server Mod`** Allows you to set the Server's name.
+
+  * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - **`Server Mod`** Allows you to create an invite to this server.
+    * Accepted Parameters for `infinite`
+      * `True | true | T | t | Yes | yes | Y | y` - Set the server invite to never expire.
+      * `False | false | F | f | No | no | N | n` - Set the server invite to expire.
+
+  * `addRole <name> [colour]` - **`Server Mod`** Adds a role to the server.
+
+  * `removeRole <name>` - **`Server Mod`** Removes a role from the server.
+
+  * `kickMember | kickMbr <member(s)...>` - **`Server Mod`** Kicks a member, or members, from the server.
+
+  * `banMember | banMbr <member(s)...>` - **`Server Mod`** Bans a member, or members, from the server.
+
+  * `addMemberRole | addMbrRole | giveRole <member> <role(s)...>` - **`Server Mod`** Gives a member the mentioned role(s).
+
+  * `removeMemberRole | removeMbrRole | takeRole <member> <role(s)...>` - **`Server Mod`** Removes the mentioned role(s) from a member.
+
+  * `setMemberRoles | setMbrRoles | setRoles <member> <role(s)...>` - **`Server Mod`** Sets the roles for a member.
+
+## Bot Moderator
+  *Very private stuff.*
+
+  **You must be a Bot Moderator to run these commands.**
+
+  * `addBotModerator | addBotMod | abm <member(s)...>` - **`Bot Mod`** Allows you to add a bot moderator to the bot.
+
+  * `removeBotModerator | removeBotMod | remBotMod | rbm <member(s)...>` - **`Bot Mod`** Allows you to remove a bot moderator from the bot.
+
+  * `activateGlobally | enableGlobally <command(s)>` - **`Bot Mod`** Allows you to activate a command, or commands, globally.
+
+  * `deactivateGlobally | disableGlobally <command> [reason]` - **`Bot Mod`** Allows you to deactivate a command globally.
+
+  * `botInfo | bi ` - **`Bot Mod`** Allows you to get the info about the bot.
+
+  * `servers | botServers [markdown]` - **`Bot Mod`** Allows you to get a list of servers the bot is in.
+
+  * `setStatus | status <activity> <text>` - **`Bot Mod`** Allows you to change the presence of the bot.
+    * Accepted Parameters for `activity`
+      * `playing | Playing` - The playing activity type.
+      * `streaming | Streaming` - The streaming activity type.
+      * `listening | Listening | listening to | Listening to` - The listening activity type.
+      * `watching | Watching` - The watching activity type.
+
+  * `todo [action] [item]` - **`Bot Mod`** Adds, removes, or lists things in the TODO list.
+    * Accepted Parameters for `action`
+      * `add | a` - Adds something to the TODO list.
+      * `remove | r` - Removes something from the TODO list.
+
+  * `stop | quit | kill [process]` - **`Bot Mod`** Kills the bot.
+
+  * `debug ` - **`Bot Mod`** Debugs the bot.
 
