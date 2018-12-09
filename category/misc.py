@@ -40,10 +40,14 @@ class Misc(Category):
 
     TWITTER_ICON = "http://pngimg.com/uploads/twitter/twitter_PNG29.png"
 
-    GITHUB_COMMANDS = "https://www.github.com/FellowHashbrown/omega-psi-py/blob/master/category/commands.md"
-    GITHUB_LINK = "https://www.github.com/FellowHashbrown/omega-psi-py"
+    GITHUB_COMMANDS = "https://www.github.com/FellowHashbrown/omega-psi/blob/master/category/commands.md"
+    GITHUB_LINK = "https://www.github.com/FellowHashbrown/omega-psi"
 
-    REPL_IT_LINK = "https://repl.it/@FellowHashbrown/Omega-Psi-Discord"
+    REPL_IT_LINK = "https://repl.it/@FellowHashbrown/Omega-Psi"
+
+    UPTIME_LINK = "https://stats.uptimerobot.com/KQG3Rc54B"
+
+    VOTE_LINK = "https://discordbots.org/bot/503804826187071501/vote"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -482,6 +486,19 @@ class Misc(Category):
             "command": self.invite
         })
 
+        self._vote = Command(commandDict = {
+            "alternatives": ["vote"],
+            "info": "Allows you to get a link to vote for Omega Psi on discordbots.org",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the voting link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.vote
+        })
+
         self._github = Command(commandDict = {
             "alternatives": ["github"],
             "info": "Sends you the Github link for the source code.",
@@ -506,6 +523,19 @@ class Misc(Category):
                 }
             },
             "command": self.replit
+        })
+
+        self._uptime = Command(commandDict = {
+            "alternatives": ["uptime"],
+            "info": "Sends a link to see the uptime of Omega Psi.",
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the uptime of Omega Psi, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.uptime
         })
 
         self._sendBug = Command(commandDict = {
@@ -568,8 +598,10 @@ class Misc(Category):
             self._nickname,
             self._info,
             self._invite,
+            self._vote,
             self._github,
             self._replit,
+            self._uptime,
             self._sendBug
         ])
     
@@ -1114,11 +1146,11 @@ class Misc(Category):
 
             # See if there are no mentions
             if len(message.mentions) == 0:
-                embed = await self.getServerInfo(message.guild)
+                embed = await self.getServerInfo(message, message.guild)
 
             # There is one mention
             else:
-                embed = await self.getMemberInfo(message.guild, message.mentions[0])
+                embed = await self.getMemberInfo(message, message.guild, message.mentions[0])
         
         await sendMessage(
             self.client,
@@ -1132,7 +1164,7 @@ class Misc(Category):
             )
         )
     
-    async def getServerInfo(self, discordServer):
+    async def getServerInfo(self, message, discordServer):
         """Returns information about the server given as saved by Omega Psi.\n
 
         discordServer - The Discord Server to get information about as saved by Omega Psi.\n
@@ -1205,7 +1237,7 @@ class Misc(Category):
 
         return embed
     
-    async def getMemberInfo(self, discordServer, discordMember):
+    async def getMemberInfo(self, message, discordServer, discordMember):
         """Returns information about the member given as saved by Omega Psi.\n
 
         discordServer - The Discord Server to load the Discord Member information from.\n
@@ -1304,6 +1336,34 @@ class Misc(Category):
             message = Server.BOT_INVITE.format(permissionsInteger)
         )
     
+    async def vote(self, message, parameters):
+        """Sends a link to discordbots.org to vote for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._vote.getMaxParameters():
+            embed = getErrorMessage(self._vote, Misc.TOO_MANY_PARAMETERS)
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Misc.VOTE_LINK
+            )
+    
     async def github(self, message, parameters):
         """Returns the Github link for the bot.
         """
@@ -1311,6 +1371,7 @@ class Misc(Category):
         # Check for too many parameters
         if len(parameters) > self._github.getMaxParameters():
             embed = getErrorMessage(self._github, Misc.TOO_MANY_PARAMETERS)
+
             await sendMessage(
                 self.client,
                 message,
@@ -1356,6 +1417,33 @@ class Misc(Category):
                 self.client,
                 message,
                 message = Misc.REPL_IT_LINK
+            )
+    
+    async def uptime(self, message, parameters):
+        """Returns the uptime link for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._uptime.getMaxParameters():
+            embed = getErrorMessage(self._uptime, Misc.TOO_MANY_PARAMETERS)
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Misc.UPTIME_LINK
             )
     
     async def sendBug(self, message, parameters):
