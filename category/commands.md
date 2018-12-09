@@ -154,6 +154,8 @@
 
   * `wikipedia | wiki <term>` - Gets a wikipedia entry you type in.
 
+  * `shortenUrl | shorten | shortUrl | url <url>` - Shortens a URL given.
+
 ## Math
   *Need help with math? These commands got your back.*
 
@@ -174,6 +176,8 @@
   * `integral | integrate <expression>` - Gets the integral of an expression.
 
   * `fibonacci | fib <number>` - Gets the fibonacci number of a number.
+
+  * `solveKinematics | solveKine | kine | kinematics [X=] [Xo=] [Xf=] [V=] [Vo=] [Vf=] [a=] [t=]` - Solves for Basic Linear Kinematic Physics. Can be used for Horizontal or Vertical motion. To clarify a variable, make sure you set the variable (Vf=5 a=9.6 etc.)
 
 ## Meme
   *Memes, memes, and more memes.*
@@ -291,6 +295,8 @@
   * `github ` - Sends you the Github link for the source code.
 
   * `replit | repl.it | repl ` - Sends you the Repl.it link for the bot.
+
+  * `uptime ` - Sends a link to see the uptime of Omega Psi.
 
   * `sendBug | bug | error | feedback <messageType> <message>` - Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.
     * Accepted Parameters for `messageType`
@@ -415,4 +421,3 @@
   * `stop | quit | kill [process]` - **`Bot Mod`** Kills the bot.
 
   * `debug ` - **`Bot Mod`** Debugs the bot.
-
