@@ -4,9 +4,10 @@ from category.image import Image
 from category.insult import Insult
 from category.internet import Internet
 from category.math import Math
-from category.rank import Rank
+from category.meme import Meme
 from category.misc import Misc
 from category.nsfw import NSFW
+from category.rank import Rank
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
@@ -15,14 +16,16 @@ from util.utils.discordUtils import sendMessage, getErrorMessage
 from supercog import Category, Command
 import discord, os
 
+scrollEmbeds = {}
+
 class BotModerator(Category):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Class Fields
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    EMBED_COLOR = 0xA456B0
     BOT_MARKDOWN = "botMarkdown.md"
-    MARKDOWN_LOCATION = "commands.md"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -42,7 +45,6 @@ class BotModerator(Category):
             client, 
             "Bot Moderator",
             description = "Very private stuff.",
-            embed_color = 0xA456B0,
             restriction_info = "You must be a Bot Moderator to run these commands.",
             bot_mod_category = True,
             bot_mod_error = OmegaPsi.getNoAccessError,
@@ -280,20 +282,6 @@ class BotModerator(Category):
             "command": self.todo
         })
 
-        self._markdown = Command(commandDict = {
-            "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
-            "info": "Creates and sends the markdown file for the commands.",
-            "bot_moderator_only": True,
-            "errors": {
-                BotModerator.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the markdown file, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.markdown
-        })
-
         self._kill = Command(commandDict = {
             "alternatives": ["stop", "quit", "kill"],
             "info": "Kills the bot.",
@@ -339,7 +327,6 @@ class BotModerator(Category):
             self._servers,
             self._status,
             self._todo,
-            self._markdown,
             self._kill,
             self._debug
         ])
@@ -351,9 +338,10 @@ class BotModerator(Category):
             "Insult": Insult(None),
             "Internet": Internet(None),
             "Math": Math(None),
-            "Rank": Rank(None),
+            "Meme": Meme(None),
             "Misc": Misc(None),
-            "NSFW": NSFW(None)
+            "NSFW": NSFW(None),
+            "Rank": Rank(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -919,70 +907,6 @@ class BotModerator(Category):
             )
         )
     
-    async def markdown(self, message, parameters):
-        """Returns the markdown file for the commands.\n"
-
-        Parameters:
-            author (discord.User): The sender of the `markdown` command.
-        """
-
-        # Check for too many parameters
-        if len(parameters) > self._markdown.getMaxParameters():
-            embed = getErrorMessage(self._markdown, BotModerator.TOO_MANY_PARAMETERS)
-        
-        # Parameters do not exceed maximum parameters
-        else:
-
-            # Create markdown text
-            markdown = "# Commands\n"
-
-            # Add category's hyperlinks
-            for category in self._categories:
-                markdown += "  * [{}](#{})\n".format(
-                    category,
-                    category.replace(" ", "-")
-                )
-
-            # Go through categories
-            for category in self._categories:
-                markdown += self._categories[category]["object"].getMarkdown()
-            
-            # Open file
-            mdFile = open(BotModerator.MARKDOWN_LOCATION, "w")
-            mdFile.write(markdown)
-            mdFile.close()
-
-            mdFile = open(BotModerator.MARKDOWN_LOCATION, "r")
-
-            # Send file to author
-            await message.author.send(
-                file = discord.File(mdFile)
-            )
-
-            # Only send a message if the command was sent in a server
-            if message.guild != None:
-                embed = discord.Embed(
-                    title = "File Sent",
-                    description = "The markdown file was sent to your DM's",
-                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
-                )
-            else:
-                embed = None
-
-            os.remove(BotModerator.MARKDOWN_LOCATION)
-        
-        await sendMessage(
-            self.client,
-            message,
-            embed = embed.set_footer(
-                text = "Requested by {}#{}".format(
-                    message.author.name,
-                    message.author.discriminator
-                ),
-                icon_url = message.author.avatar_url
-            )
-        )
-    
     async def kill(self, message, parameters):
         """Kills the bot and logs out.
         """
@@ -1004,7 +928,7 @@ class BotModerator(Category):
             )
         
         # Only kill if processId is OmegaPsi.PROCESS_ID
-        if processId == OmegaPsi.PROCESS_ID:
+        if str(processId) == str(OmegaPsi.PROCESS_ID):
 
             await sendMessage(
                 self.client,
