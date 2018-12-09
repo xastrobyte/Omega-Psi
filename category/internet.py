@@ -26,6 +26,7 @@ class Internet(Category):
     TRANSLATE_API_CALL = "https://translate.yandex.net/api/v1.5/tr.json/translate?key={}&text={}&lang={}-{}"
     URBAN_API_CALL = "https://api.urbandictionary.com/v0/define?term={}"
     WEATHER_API_CALL = "https://api.openweathermap.org/data/2.5/weather?APPID={}&q={}"
+    TINYURL_API = "http://tinyurl.com/api-create.php?url={}"
 
     URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dictionary_--_logo.jpg/revision/latest?cb=20161002212954"
     WIKIPEDIA_PAGE_IMAGE = "https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles={}"
@@ -40,6 +41,7 @@ class Internet(Category):
     INVALID_TO_LANGUAGE = "INVALID_TO_LANGUAGE"
     INVALID_FROM_LANGUAGE = "INVALID_FROM_LANGUAGE"
     INVALID_LOCATION = "INVALID_LOCATION"
+    INVALID_URL = "INVALID_URL"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructors
@@ -220,6 +222,35 @@ class Internet(Category):
             "command": self.wikipedia
         })
 
+        self._shortenUrl = Command(commandDict = {
+            "alternatives": ["shortenUrl", "shorten", "shortUrl", "url"],
+            "info": "Shortens a URL given.",
+            "parameters": {
+                "url": {
+                    "info": "The URL to shorten.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Internet.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to shorten a URL, you need the URL to shorten."
+                    ]
+                },
+                Internet.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You don't need more than 1 URL to shorten."
+                    ]
+                },
+                Internet.INVALID_URL: {
+                    "messages": [
+                        "The URL you gave was invalid. It must start with \"https:\/\/\""
+                    ]
+                }
+            },
+            "command": self.shortenUrl
+        })
+
         self.setCommands([
             self._movie,
             self._tvShow,
@@ -227,7 +258,9 @@ class Internet(Category):
             self._translate,
             self._urban,
             self._weather,
-            self._wikipedia
+            self._wikipedia,
+
+            self._shortenUrl
         ])
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -780,6 +813,52 @@ class Internet(Category):
                     )
             except:
                 embed = getErrorMessage(self._weather, Internet.INVALID_LOCATION)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def shortenUrl(self, message, parameters):
+        """Shortens a URL
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._shortenUrl.getMinParameters():
+            embed = getErrorMessage(self._shortenUrl, Internet.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._shortenUrl.getMaxParameters():
+            embed = getErrorMessage(self._shortenUrl, Internet.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            url = parameters[0]
+
+            # Check if the url is not valid
+            if not url.startswith("https://") and not url.startswith("http://"):
+                embed = getErrorMessage(self._shortenUrl, Internet.INVALID_URL)
+            
+            # URL is valid
+            else:
+                tinyurl = await loop.run_in_executor(None,
+                    requests.get,
+                    Internet.TINYURL_API.format(url)
+                )
+                tinyurl = tinyurl.content.decode()
+
+                embed = discord.Embed(
+                    title = "Your TinyURL link was generated!",
+                    description = tinyurl,
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
         
         await sendMessage(
             self.client,
