@@ -1,6 +1,9 @@
 from util.file.database import loop
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
+
+from util.math.kinematics import Kinematics
+
 from util.utils.discordUtils import sendMessage, getErrorMessage
 
 from sympy.abc import x
@@ -279,7 +282,69 @@ class Math(Category):
             "command": self.fibonacci
         })
 
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        # Physics
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+        self._solveKinematics = Command(commandDict = {
+            "alternatives": ["solveKinematics", "solveKine", "kine", "kinematics"],
+            "info": "Solves for Basic Linear Kinematic Physics. Can be used for Horizontal or Vertical motion. To clarify a variable, make sure you set the variable (Vf=5 a=9.6 etc.)",
+            "parameters": {
+                "X=": {
+                    "info": "The displacement of an object (in meters). If this is given, Xo will be assumed to be 0 meters.",
+                    "optional": True
+                },
+                "Xo=": {
+                    "info": "The initial position of an object (in meters).",
+                    "optional": True
+                },
+                "Xf=": {
+                    "info": "The final position of an object (in meters).",
+                    "optional": True
+                },
+                "V=": {
+                    "info": "The velocity of an object (in meters / second). If this is given, Vo and Vf will be assumed to be the value of this.",
+                    "optional": True
+                },
+                "Vo=": {
+                    "info": "The initial velocity of an object (in meters / second).",
+                    "optional": True
+                },
+                "Vf=": {
+                    "info": "The final velocity of an object (in meters / second).",
+                    "optional": True
+                },
+                "a=": {
+                    "info": "The acceleration of an object (in meters / second^2)",
+                    "optional": True
+                },
+                "t=": {
+                    "info": "The time that an acceleration or velocity acts on an object (in seconds).",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Math.INVALID_PARAMETER: {
+                    "messages": [
+                        "You have an invalid variable in there somewhere."
+                    ]
+                },
+                Math.INVALID_INPUT: {
+                    "messages": [
+                        "A value you gave was not a number."
+                    ]
+                },
+                Math.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You have too many parameters to solve for kinematics."
+                    ]
+                }
+            },
+            "command": self.solveKinematics
+        })
+
         self.setCommands([
+            # Math Commands
             self._simplify,
             self._expand,
             self._factor,
@@ -288,7 +353,10 @@ class Math(Category):
             self._substitute,
             self._derivative,
             self._integral,
-            self._fibonacci
+            self._fibonacci,
+
+            # Physics Commands
+            self._solveKinematics
         ])
 
         self._transformations = (standard_transformations + (implicit_multiplication_application,))
@@ -456,6 +524,9 @@ class Math(Category):
 
                 for n in range(number - 1, 0, -1):
                     number *= n
+                
+                if number == 0:
+                    number = 1
 
                 # Setup embed
                 embed = discord.Embed(
@@ -797,6 +868,86 @@ class Math(Category):
 
         # Standardize expressions using parse_expr
         return parse_expr(expression.replace("^", "**"), transformations = self._transformations)
+    
+    async def solveKinematics(self, message, parameters):
+        """Solves for as many kinematics variables as possible.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._solveKinematics.getMaxParameters():
+            embed = getErrorMessage(self._solveKinematics, Math.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            variables = {}
+            
+            # Iterate through variables and make sure each variable is valid
+            for variable in parameters:
+
+                # Get the variable and the value
+                equals = variable.find("=")
+
+                # See if there was a missing equals sign
+                if equals == -1:
+                    embed = getErrorMessage(self._solveKinematics, Math.MISSING_EQUALS)
+                    break
+                
+                # There was no missing equals sign
+                var   = variable[:equals]
+                value = variable[equals + 1:]
+
+                # Make sure value is a number
+                try:
+                    value = eval(value)
+                except:
+                    embed = getErrorMessage(self._solveKinematics, Math.INVALID_INPUT)
+                    break
+
+                variables[var] = value
+            
+            # Check if any variables is invalid
+            if not Kinematics.isKinematicVariable(list(variables.keys())):
+                embed = getErrorMessage(self._solveKinematics, Math.INVALID_PARAMETER)
+            
+            # All variables are valid; Give it to the solver
+            else:
+                result = Kinematics.solve(variables)
+
+                # Separate displacement, velocity, and other variables
+                fields = {
+                    "Displacement": "X = {}\nXo = {}\nXf = {}".format(
+                        result["X"], result["Xo"], result["Xf"]
+                    ),
+                    "Velocity": "V = {}\nVo = {}\nVf = {}".format(
+                        result["V"], result["Vo"], result["Vf"]
+                    ),
+                    "Other": "a = {}\nt = {}".format(
+                        result["a"], result["t"]
+                    )
+                }
+                embed = discord.Embed(
+                    title = "Linear Kinematics",
+                    description = " ",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+
+                for field in fields:
+                    embed.add_field(
+                        name = field,
+                        value = fields[field],
+                        inline = True
+                    )
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
