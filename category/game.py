@@ -16,6 +16,7 @@ from util.game import league
 from util.utils.discordUtils import sendMessage, getErrorMessage
 
 from datetime import datetime
+from functools import partial
 from random import choice as choose
 from supercog import Category, Command
 import discord, os, requests
@@ -913,13 +914,13 @@ class Game(Category):
             if validInput:
 
                 # Check if values are the same
-                message = "You had {} and I had {}".format(
+                result = "You had {} and I had {}".format(
                     userRps, botRps
                 )
                 icon = Game.RPS_ICON
                 if botRps == userRps:
                     title = "Tied!"
-                    message = "You and I both tied."
+                    result = "You and I both tied."
                 
                 elif (
                     (botRps == "rock" and userRps == "paper") or
@@ -941,7 +942,7 @@ class Game(Category):
                 
                 embed = discord.Embed(
                     title = title,
-                    description = message,
+                    description = result,
                     colour = self.getEmbedColor()
                 ).set_thumbnail(
                     url = icon
@@ -1356,11 +1357,13 @@ class Game(Category):
 
                 # Request data
                 blackOps3Json = await loop.run_in_executor(None,
-                    requests.get,
-                    Game.BLACK_OPS_3_URL.format(platform, username),
-                    headers = {
-                        "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
-                    }
+                    partial(
+                        requests.get,
+                        Game.BLACK_OPS_3_URL.format(platform, username),
+                        headers = {
+                            "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
+                        }
+                    )
                 )
                 blackOps3Json = blackOps3Json.json()
 
@@ -1431,11 +1434,13 @@ class Game(Category):
             
                 # Request data
                 blackOps4Json = await loop.run_in_executor(None,
-                    requests.get,
-                    Game.BLACK_OPS_4_URL.format(platform, username),
-                    headers = {
-                        "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
-                    }
+                    partial(
+                        requests.get,
+                        Game.BLACK_OPS_4_URL.format(platform, username),
+                        headers = {
+                            "TRN-Api-Key": os.environ["BLACK_OPS_API_KEY"]
+                        }
+                    )
                 )
                 blackOps4Json = blackOps4Json.json()
 
@@ -1511,11 +1516,13 @@ class Game(Category):
 
                 # Request data
                 fortniteJson = await loop.run_in_executor(None,
-                    requests.get,
-                    Game.FORTNITE_URL.format(platform, username),
-                    headers = {
-                        "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
-                    }
+                    partial(
+                        requests.get,
+                        Game.FORTNITE_URL.format(platform, username),
+                        headers = {
+                            "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
+                        }
+                    )
                 )
                 fortniteJson = fortniteJson.json()
 
@@ -1624,11 +1631,13 @@ class Game(Category):
 
             # Request data
             fortniteItems = await loop.run_in_executor(None,
-                requests.get,
-                Game.FORTNITE_ITEM_SHOP_URL,
-                headers = {
-                    "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
-                }
+                partial(
+                    requests.get,
+                    Game.FORTNITE_ITEM_SHOP_URL,
+                    headers = {
+                        "TRN-Api-Key": os.environ["FORTNITE_API_KEY"]
+                    }
+                )
             )
             fortniteItems = fortniteItems.json()
 
@@ -1673,21 +1682,25 @@ class Game(Category):
             
             # Request the user data
             leagueJson = await loop.run_in_executor(None,
-                requests.get,
-                Game.LEAGUE_SUMMONER_URL.format(username),
-                headers = {
-                    "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
-                }
+                partial(
+                    requests.get,
+                    Game.LEAGUE_SUMMONER_URL.format(username),
+                    headers = {
+                        "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+                    }
+                )
             )
             leagueJson = leagueJson.json()
 
             # Request the matches data
             leagueMatchesJson = await loop.run_in_executor(None,
-                requests.get,
-                Game.LEAGUE_MATCHES_URL.format(leagueJson["accountId"]),
-                headers = {
-                    "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
-                }
+                partial(
+                    requests.get,
+                    Game.LEAGUE_MATCHES_URL.format(leagueJson["accountId"]),
+                    headers = {
+                        "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+                    }
+                )
             )
             leagueMatchesJson = leagueMatchesJson.json()
 
@@ -1699,11 +1712,13 @@ class Game(Category):
                 
                 # Request the match data
                 leagueMatchJson = await loop.run_in_executor(None,
-                    requests.get,
-                    Game.LEAGUE_MATCH_URL.format(match["gameId"]),
-                    headers = {
-                        "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
-                    }
+                    partial(
+                        requests.get,
+                        Game.LEAGUE_MATCH_URL.format(match["gameId"]),
+                        headers = {
+                            "X-Riot-Token": os.environ["LEAGUE_API_KEY"]
+                        }
+                    )
                 )
                 leagueMatchJson = leagueMatchJson.json()
 
