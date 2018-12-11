@@ -7,6 +7,8 @@ from util.utils.miscUtils import timeout
 from supercog import Category, Command
 import base64, discord
 
+scrollEmbeds = {}
+
 class Code(Category):
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -14,6 +16,8 @@ class Code(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     MAX_BRAINFUCK_LENGTH = 2 ** 15 # 32736
+
+    QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -157,10 +161,30 @@ class Code(Category):
             "command": self.base64
         })
 
+        self._qrCode = Command(commandDict = {
+            "alternatives": ["qrCode", "qr"],
+            "info": "Turns text into a QR code.",
+            "parameters": {
+                "data": {
+                    "info": "The data to set for the QR code.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Code.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to get the QR code for data, you need to type in the data."
+                    ]
+                }
+            },
+            "command": self.qrCode
+        })
+
         self.setCommands([
             self._brainfuck,
             self._convert,
-            self._base64
+            self._base64,
+            self._qrCode
         ])
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -438,6 +462,42 @@ class Code(Category):
                 icon_url = message.author.avatar_url
             )
         )
+    
+    async def qrCode(self, message, parameters):
+        """Turns data into a QR code.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._qrCode.getMinParameters():
+            embed = getErrorMessage(self._qrCode, Code.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            data = " ".join(parameters)
+
+            # The size should be a function of the data's length
+            # Use this --> size = 10(length // 20) + 200
+            size = 10*(len(data) // 20) + 200
+
+            embed = discord.Embed(
+                title = " ",
+                description = " ",
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            ).set_image(
+                url = Code.QR_API_CALL.format(size, data.replace(" ", "+"))
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -461,9 +521,10 @@ class Code(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
-                    
-                    # Run command; Don't try running other commands
-                    await cmd.getCommand()(message, parameters)
+                    async with message.channel.typing():
+
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):
