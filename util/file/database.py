@@ -10,7 +10,7 @@ class Database:
     # Initialization
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def init(self):
+    def __init__(self):
         """Initializes the Database to be used.
         """
 
@@ -472,4 +472,3 @@ class Database:
     
     
 omegaPsi = Database()
-omegaPsi.init()
