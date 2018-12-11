@@ -3,26 +3,42 @@ from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
 from util.meme import areYouAwake
-from util.meme import expandingBrain
+from util.meme import brainOf
 from util.meme import burnLetter
 from util.meme import butILikeThis
 from util.meme import carSkidding
 from util.meme import cardSlam
 from util.meme import classroomStares
+from util.meme import deerAboveWater
 from util.meme import didYouMean
+from util.meme import executiveOrder
+from util.meme import expandingBrain
+from util.meme import fearNot
+from util.meme import flexSeal
+from util.meme import gangUp
+from util.meme import grusPlan
+from util.meme import headacheTypes
+from util.meme import holdUpEarth
+from util.meme import iCantRead
 from util.meme import icarlyStopSign
+from util.meme import kevinHitDwight
 from util.meme import mastersBlessing
 from util.meme import nArmHandshake
 from util.meme import pigeon
 from util.meme import playstation
 from util.meme import puppetMeme
+from util.meme import rewindTime
 from util.meme import runAway
 from util.meme import saveOne
 from util.meme import sayItAgain
+from util.meme import soccerTongue
 from util.meme import spontaneousAnger
+from util.meme import startLearning
 from util.meme import surprisedDwight
 from util.meme import surprisedPikachu
+from util.meme import threeDoors
 from util.meme import trojanHorse
+from util.meme import trump
 from util.meme import whoKilledHannibal
 
 from util.utils.discordUtils import sendMessage, getErrorMessage, didAuthorVote
@@ -53,6 +69,8 @@ class Meme(Category):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     NO_IMAGE = "NO_IMAGE"
+
+    MISSING_PARAMETER = "MISSING_PARAMETER"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructor
@@ -118,72 +136,27 @@ class Meme(Category):
             "command": self.areYouAwake
         })
 
-        self._expandingBrain = Command(commandDict = {
-            "alternatives": ["expandingBrain", "expBrain"],
+        self._brainOf = Command(commandDict = {
+            "alternatives": ["brainOf"],
             "info": {
-                "text": "Sends a generated meme based off {} image.",
-                "hyperlink": expandingBrain.IMAGE,
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": brainOf.IMAGE,
                 "hyperlink_text": "this"
             },
             "parameters": {
-                "firstText": {
-                    "info": "The text to put in the first box.",
+                "text": {
+                    "info": "The text that goes on the last brain image.",
                     "optional": False
-                },
-                "secondText": {
-                    "info": "The text to put in the second box.",
-                    "optional": True
-                },
-                "thirdText": {
-                    "info": "The text to put in the third box.",
-                    "optional": True
-                },
-                "fourthText": {
-                    "info": "The text to put in the fourth box.",
-                    "optional": True
-                },
-                "fifthText": {
-                    "info": "The text to put in the fifth box.",
-                    "optional": True
-                },
-                "sixthText": {
-                    "info": "The text to put in the sixth box.",
-                    "optional": True
-                },
-                "seventhText": {
-                    "info": "The text to put in the seventh box.",
-                    "optional": True
-                },
-                "eighthText": {
-                    "info": "The text to put in the eighth box.",
-                    "optional": True
-                },
-                "ninthText": {
-                    "info": "The text to put in the ninth box.",
-                    "optional": True
-                },
-                "tenthText": {
-                    "info": "The text to put in the tenth box.",
-                    "optional": True
-                },
-                "eleventhText": {
-                    "info": "The text to put in the eleventh box.",
-                    "optional": True
                 }
             },
             "errors": {
                 Meme.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
-                        "In order to generate this meme, you need at least a single set of text wrapped in quotes (\")."
-                    ]
-                },
-                Meme.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to generate this meme, you can have a maximum of 11 sets of text wrapped in quotes (\")."
+                        "In order to generate this meme, you need text."
                     ]
                 }
             },
-            "command": self.expandingBrain
+            "command": self.brainOf
         })
 
         self._burnLetter = Command(commandDict = {
@@ -350,6 +323,38 @@ class Meme(Category):
             "command": self.classroomStares
         })
 
+        self._deerAboveWater = Command(commandDict = {
+            "alternatives": ["deerAboveWater", "deerAbove"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": deerAboveWater.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "deerText": {
+                    "info": "The text that goes on top of the deer.",
+                    "optional": False
+                },
+                "handText": {
+                    "info": "The text that goes on top of the arm.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need at least 2 parameters to generate this meme."
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You only need 2 parameters to generate this meme."
+                    ]
+                }
+            },
+            "command": self.deerAboveWater
+        })
+
         self._didYouMean = Command(commandDict = {
             "alternatives": ["didYouMean"],
             "info": {
@@ -380,6 +385,311 @@ class Meme(Category):
                 }
             },
             "command": self.didYouMean
+        })
+
+        self._executiveOrder = Command(commandDict = {
+            "alternatives": ["executiveOrder", "execOrder"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": executiveOrder.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "text": {
+                    "info": "The text that goes on top of the executive order.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need text to send to the executive order."
+                    ]
+                }
+            },
+            "command": self.executiveOrder
+        })
+
+        self._expandingBrain = Command(commandDict = {
+            "alternatives": ["expandingBrain", "expBrain"],
+            "info": {
+                "text": "Sends a generated meme based off {} image.",
+                "hyperlink": expandingBrain.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "firstText": {
+                    "info": "The text to put in the first box.",
+                    "optional": False
+                },
+                "secondText": {
+                    "info": "The text to put in the second box.",
+                    "optional": True
+                },
+                "thirdText": {
+                    "info": "The text to put in the third box.",
+                    "optional": True
+                },
+                "fourthText": {
+                    "info": "The text to put in the fourth box.",
+                    "optional": True
+                },
+                "fifthText": {
+                    "info": "The text to put in the fifth box.",
+                    "optional": True
+                },
+                "sixthText": {
+                    "info": "The text to put in the sixth box.",
+                    "optional": True
+                },
+                "seventhText": {
+                    "info": "The text to put in the seventh box.",
+                    "optional": True
+                },
+                "eighthText": {
+                    "info": "The text to put in the eighth box.",
+                    "optional": True
+                },
+                "ninthText": {
+                    "info": "The text to put in the ninth box.",
+                    "optional": True
+                },
+                "tenthText": {
+                    "info": "The text to put in the tenth box.",
+                    "optional": True
+                },
+                "eleventhText": {
+                    "info": "The text to put in the eleventh box.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least a single set of text wrapped in quotes (\")."
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you can have a maximum of 11 sets of text wrapped in quotes (\")."
+                    ]
+                }
+            },
+            "command": self.expandingBrain
+        })
+
+        self._fearNot = Command(commandDict = {
+            "alternatives": ["fearNot"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": fearNot.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "speechText": {
+                    "info": "The text that goes in the speech bubble of the woman.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to run this, you need the text that will go in the speech bubble."
+                    ]
+                }
+            },
+            "command": self.fearNot
+        })
+
+        self._flexSeal = Command(commandDict = {
+            "alternatives": ["flexSeal"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": flexSeal.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "holderText": {
+                    "info": "The text that goes on top of the person holding the box.",
+                    "optional": False
+                },
+                "boxText": {
+                    "info": "The text that goes on top of the box.",
+                    "optional": False
+                },
+                "receiverText": {
+                    "info": "The text that goes on top of the receiver.",
+                    "optional": False
+                }
+            },
+            "command": self.flexSeal
+        })
+
+        self._gangUp = Command(commandDict = {
+            "alternatives": ["gangUp"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": gangUp.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "attackerOne": {
+                    "info": "The text that goes on top of the first attacker.",
+                    "optional": False
+                },
+                "attackerTwo": {
+                    "info": "The text that goes on top of the second attacker.",
+                    "optional": False
+                },
+                "attackerThree": {
+                    "info": "The text that goes on top of the third attacker.",
+                    "optional": False
+                },
+                "bodySlamAttacker": {
+                    "info": "The text that goes on top of the attacker who body slams the person.",
+                    "optional": False
+                },
+                "personText": {
+                    "info": "The text that goes on top of the person.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 5 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 5 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.gangUp
+        })
+
+        self._grusPlan = Command(commandDict = {
+            "alternatives": ["grusPlan"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": grusPlan.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "firstPanelText": {
+                    "info": "The text that goes on the first panel.",
+                    "optional": False
+                },
+                "secondPanelText": {
+                    "info": "The text that goes on the second panel.",
+                    "optional": False
+                },
+                "lastPanelText": {
+                    "info": "The text that goes on the last panels.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 3 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 3 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.grusPlan
+        })
+
+        self._headacheTypes = Command(commandDict = {
+            "alternatives": ["headacheTypes", "headache"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": headacheTypes.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "text": {
+                    "info": "The text that goes above the last headache.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need the text in order to generate this meme."
+                    ]
+                }
+            },
+            "command": self.headacheTypes
+        })
+
+        self._holdUpEarth = Command(commandDict = {
+            "alternatives": ["holdUpEarth", "holdUp"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": holdUpEarth.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "earthText": {
+                    "info": "The text that goes on top of Earth.",
+                    "optional": False
+                },
+                "personText": {
+                    "info": "The text that goes on top of the person holding up the Earth.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 2 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.holdUpEarth
+        })
+
+        self._iCantRead = Command(commandDict = {
+            "alternatives": ["iCantRead", "cantRead"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": iCantRead.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "signText": {
+                    "info": "The text that goes on top of the sign.",
+                    "optional": False
+                },
+                "personText": {
+                    "info": "The text that goes on top of the person.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 2 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.iCantRead
         })
 
         self._icarlyStopSign = Command(commandDict = {
@@ -416,6 +726,38 @@ class Meme(Category):
                 }
             },
             "command": self.icarlyStopSign
+        })
+
+        self._kevinHitDwight = Command(commandDict = {
+            "alternatives": ["kevinHitDwight", "kevinDwight", "kevinPan"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": kevinHitDwight.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "kevinText": {
+                    "info": "The text that goes on top of Kevin.",
+                    "optional": False
+                },
+                "dwightText": {
+                    "info": "The text that goes on top of Dwight.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.kevinHitDwight
         })
 
         self._mastersBlessing = Command(commandDict = {
@@ -606,6 +948,29 @@ class Meme(Category):
             "command": self.puppetMeme
         })
 
+        self._rewindTime = Command(commandDict = {
+            "alternatives": ["rewindTime"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": rewindTime.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "text": {
+                    "info": "The text that goes at the top of the meme.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need some text to generate this meme."
+                    ]
+                }
+            },
+            "command": self.rewindTime
+        })
+
         self._runAway = Command(commandDict = {
             "alternatives": ["runAway"],
             "info": {
@@ -706,6 +1071,38 @@ class Meme(Category):
             "command": self.sayItAgain
         })
 
+        self._soccerTongue = Command(commandDict = {
+            "alternatives": ["soccerTongue", "soccer"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": soccerTongue.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "tongueText": {
+                    "info": "The text that goes on top of the guy sticking his tongue out.",
+                    "optional": False
+                },
+                "personText": {
+                    "info": "The text that goes on top of the guy in front of the tongue guy.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.soccerTongue
+        })
+
         self._spontaneousAnger = Command(commandDict = {
             "alternatives": ["spontaneousAnger", "angerMeme"],
             "info": {
@@ -736,6 +1133,87 @@ class Meme(Category):
                 }
             },
             "command": self.spontaneousAnger
+        })
+
+        self._startLearning = Command(commandDict = {
+            "alternatives": ["startLearning", "learnLanguage"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": startLearning.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "topText": {
+                    "info": "The text that goes on top of the meme.",
+                    "optional": False
+                },
+                "insteadOfOne": {
+                    "info": "The text that goes in the first Instead Of box.",
+                    "optional": False
+                },
+                "sayOne": {
+                    "info": "The text that goes in the first Say box.",
+                    "optional": False
+                },
+                "insteadOfTwo": {
+                    "info": "The text that goes in the second Instead Of box.",
+                    "optional": True
+                },
+                "sayTwo": {
+                    "info": "The text that goes in the second Say box.",
+                    "optional": True
+                },
+                "insteadOfThree": {
+                    "info": "The text that goes in the third Instead Of box.",
+                    "optional": True
+                },
+                "sayThree": {
+                    "info": "The text that goes in the third Say box.",
+                    "optional": True
+                },
+                "insteadOfFour": {
+                    "info": "The text that goes in the fourth Instead Of box.",
+                    "optional": True
+                },
+                "sayFour": {
+                    "info": "The text that goes in the fourth Say box.",
+                    "optional": True
+                },
+                "insteadOfFive": {
+                    "info": "The text that goes in the five Instead Of box.",
+                    "optional": True
+                },
+                "sayFive": {
+                    "info": "The text that goes in the five Say box.",
+                    "optional": True
+                },
+                "insteadOfSix": {
+                    "info": "The text that goes in the six Instead Of box.",
+                    "optional": True
+                },
+                "saySix": {
+                    "info": "The text that goes in the six Say box.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 3 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you can have a maximum of 13 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.MISSING_PARAMETER: {
+                    "messages": [
+                        "To generate this meme, you need a pair of \"instead of, say\" texts. You're missing one."
+                    ]
+                }
+            },
+            "command": self.startLearning
         })
 
         self._surprisedDwight = Command(commandDict = {
@@ -814,6 +1292,46 @@ class Meme(Category):
             "command": self.surprisedPikachu
         })
 
+        self._threeDoors = Command(commandDict = {
+            "alternatives": ["threeDoors"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": threeDoors.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "firstDoorText": {
+                    "info": "The text that goes above the first door.",
+                    "optional": False
+                },
+                "secondDoorText": {
+                    "info": "The text that goes above the first door.",
+                    "optional": False
+                },
+                "thirdDoorText": {
+                    "info": "The text that goes above the first door.",
+                    "optional": False
+                },
+                "personText": {
+                    "info": "The text that goes on top of the person.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need at least 3 sets of text wrapped in quotes (\")"
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 3 sets of text wrapped in quotes (\")"
+                    ]
+                }
+            },
+            "command": self.threeDoors
+        })
+
         self._trojanHorse = Command(commandDict = {
             "alternatives": ["trojanHorse"],
             "info": {
@@ -852,6 +1370,22 @@ class Meme(Category):
                 }
             },
             "command": self.trojanHorse
+        })
+
+        self._trump = Command(commandDict = {
+            "alternatives": ["trump", "trumpTweet"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": trump.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "tweetText": {
+                    "info": "The text that goes inside the tweet.",
+                    "optional": False
+                }
+            },
+            "command": self.trump
         })
 
         self._whoKilledHannibal = Command(commandDict = {
@@ -897,26 +1431,42 @@ class Meme(Category):
         self.setCommands([
             self._meme,
             self._areYouAwake,
-            self._expandingBrain,
+            self._brainOf,
             self._burnLetter,
             self._butILikeThis,
             self._carSkidding,
             self._cardSlam,
             self._classroomStares,
+            self._deerAboveWater,
             self._didYouMean,
+            self._executiveOrder,
+            self._expandingBrain,
+            self._fearNot,
+            self._flexSeal,
+            self._gangUp,
+            self._grusPlan,
+            self._headacheTypes,
+            self._holdUpEarth,
+            self._iCantRead,
             self._icarlyStopSign,
+            self._kevinHitDwight,
             self._mastersBlessing,
             self._nArmHandshake,
             self._pigeon,
             self._playstation,
             self._puppetMeme,
+            self._rewindTime,
             self._runAway,
             self._saveOne,
             self._sayItAgain,
+            self._soccerTongue,
             self._spontaneousAnger,
+            self._startLearning,
             self._surprisedDwight,
             self._surprisedPikachu,
+            self._threeDoors,
             self._trojanHorse,
+            self._trump,
             self._whoKilledHannibal
         ]) 
     
@@ -1034,61 +1584,40 @@ class Meme(Category):
 
             os.remove(result)
         
-    async def expandingBrain(self, message, parameters):
-        """Generates and sends the brain size meme.
+    async def brainOf(self, message, parameters):
+        """Generates and sends the Brain Of meme.
         """
 
-        # Check if user voted for bot on discordbots.org
-        if await didAuthorVote(message.author):
-
-            # Check for not enough parameters
-            if len(parameters) < self._expandingBrain.getMinParameters():
-                result = getErrorMessage(self._expandingBrain, Meme.NOT_ENOUGH_PARAMETERS)
-            
-            # Check for too many parameters
-            elif len(parameters) > self._expandingBrain.getMaxParameters():
-                result = getErrorMessage(self._expandingBrain, Meme.TOO_MANY_PARAMETERS)
-            
-            # There were the proper amount of parameters
-            else:
-                result = await loop.run_in_executor(None,
-                    expandingBrain.generateImage,
-                    parameters
-                )
-            
-            # Check if an error was made
-            if type(result) == discord.Embed:
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = result
-                )
-            
-            # No error was made, send image
-            else:
-
-                # Send message then remove image
-                await sendMessage(
-                    self.client,
-                    message,
-                    filename = result
-                )
-
-                os.remove(result)
+        # Check for not enough parameters
+        if len(parameters) < self._brainOf.getMinParameters():
+            result = getErrorMessage(self._brainOf, Meme.NOT_ENOUGH_PARAMETERS)
         
-        # Author did not vote
+        # There were the proper amount of parameters
         else:
-            embed = discord.Embed(
-                title = "Vote!",
-                description = "To run this command, you must [vote](https://discordbots.org/bot/503804826187071501/vote) for Omega Psi.",
-                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            result = await loop.run_in_executor(None,
+                brainOf.generateImage,
+                " ".join(parameters)
             )
-
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
             await sendMessage(
                 self.client,
                 message,
-                embed = embed
+                embed = result
             )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
     
     async def burnLetter(self, message, parameters):
         """Generates and sends the Burn Letter meme.
@@ -1291,6 +1820,46 @@ class Meme(Category):
 
             os.remove(result)
     
+    async def deerAboveWater(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._deerAboveWater.getMinParameters():
+            result = getErrorMessage(self._deerAboveWater, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._deerAboveWater.getMaxParameters():
+            result = getErrorMessage(self._deerAboveWater, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                deerAboveWater.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
     async def didYouMean(self, message, parameters):
         """
         """
@@ -1321,6 +1890,372 @@ class Meme(Category):
                     parameters[1]
                 )
 
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def executiveOrder(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._executiveOrder.getMinParameters():
+            result = getErrorMessage(self._executiveOrder, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                executiveOrder.generateImage,
+                " ".join(parameters)
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def expandingBrain(self, message, parameters):
+        """Generates and sends the brain size meme.
+        """
+
+        # Check if user voted for bot on discordbots.org
+        if await didAuthorVote(message.author):
+
+            # Check for not enough parameters
+            if len(parameters) < self._expandingBrain.getMinParameters():
+                result = getErrorMessage(self._expandingBrain, Meme.NOT_ENOUGH_PARAMETERS)
+            
+            # Check for too many parameters
+            elif len(parameters) > self._expandingBrain.getMaxParameters():
+                result = getErrorMessage(self._expandingBrain, Meme.TOO_MANY_PARAMETERS)
+            
+            # There were the proper amount of parameters
+            else:
+                result = await loop.run_in_executor(None,
+                    expandingBrain.generateImage,
+                    parameters
+                )
+            
+            # Check if an error was made
+            if type(result) == discord.Embed:
+                await sendMessage(
+                    self.client,
+                    message,
+                    embed = result
+                )
+            
+            # No error was made, send image
+            else:
+
+                # Send message then remove image
+                await sendMessage(
+                    self.client,
+                    message,
+                    filename = result
+                )
+
+                os.remove(result)
+        
+        # Author did not vote
+        else:
+            embed = discord.Embed(
+                title = "Vote!",
+                description = "To run this command, you must [vote](https://discordbots.org/bot/503804826187071501/vote) for Omega Psi.",
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed
+            )
+    
+    async def fearNot(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._fearNot.getMinParameters():
+            result = getErrorMessage(self._fearNot, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                fearNot.generateImage,
+                " ".join(parameters)
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def flexSeal(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._flexSeal.getMinParameters():
+            result = getErrorMessage(self._flexSeal, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._flexSeal.getMaxParameters():
+            result = getErrorMessage(self._flexSeal, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                flexSeal.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def gangUp(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._gangUp.getMinParameters():
+            result = getErrorMessage(self._gangUp, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._gangUp.getMaxParameters():
+            result = getErrorMessage(self._gangUp, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                gangUp.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2],
+                parameters[3],
+                parameters[4]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def grusPlan(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._grusPlan.getMinParameters():
+            result = getErrorMessage(self._grusPlan, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._grusPlan.getMaxParameters():
+            result = getErrorMessage(self._grusPlan, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                grusPlan.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def headacheTypes(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._headacheTypes.getMinParameters():
+            result = getErrorMessage(self._headacheTypes, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                headacheTypes.generateImage,
+                " ".join(parameters)
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def holdUpEarth(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._holdUpEarth.getMinParameters():
+            result = getErrorMessage(self._holdUpEarth, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._holdUpEarth.getMaxParameters():
+            result = getErrorMessage(self._holdUpEarth, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                holdUpEarth.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def iCantRead(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._iCantRead.getMinParameters():
+            result = getErrorMessage(self._iCantRead, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._iCantRead.getMaxParameters():
+            result = getErrorMessage(self._iCantRead, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                iCantRead.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+        
         # Check if an error was made
         if type(result) == discord.Embed:
             await sendMessage(
@@ -1372,6 +2307,46 @@ class Meme(Category):
                     parameters[2]
                 )
 
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def kevinHitDwight(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._kevinHitDwight.getMinParameters():
+            result = getErrorMessage(self._kevinHitDwight, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._kevinHitDwight.getMaxParameters():
+            result = getErrorMessage(self._kevinHitDwight, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                kevinHitDwight.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+        
         # Check if an error was made
         if type(result) == discord.Embed:
             await sendMessage(
@@ -1450,36 +2425,14 @@ class Meme(Category):
             
             # There were the proper amount of parameters
             else:
-                
-                # Check if there are only 3 parameters
-                if len(parameters) == 3:
-                    result = await loop.run_in_executor(None,
-                        nArmHandshake.generateImage,
-                        parameters[0],
-                        parameters[1],
-                        parameters[2]
-                    )
-                
-                # Check if there are 4 parameters
-                elif len(parameters) == 4:
-                    result = await loop.run_in_executor(None,
-                        nArmHandshake.generateImage,
-                        parameters[0],
-                        parameters[1],
-                        parameters[2],
-                        parameters[3]
-                    )
-                
-                # Check if there are 5 parameters
-                else:
-                    result = await loop.run_in_executor(None,
-                        nArmHandshake.generateImage,
-                        parameters[0],
-                        parameters[1],
-                        parameters[2],
-                        parameters[3],
-                        parameters[4]
-                    )
+                result = await loop.run_in_executor(None,
+                    nArmHandshake.generateImage,
+                    parameters[0],
+                    parameters[1],
+                    parameters[2],
+                    "" if len(parameters) < 4 else parameters[3],
+                    "" if len(parameters) < 5 else parameters[4]
+                )
 
             # Check if an error was made
             if type(result) == discord.Embed:
@@ -1670,6 +2623,41 @@ class Meme(Category):
             )
 
             os.remove(result)
+        
+    async def rewindTime(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._rewindTime.getMinParameters():
+            result = getErrorMessage(self._rewindTime, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                rewindTime.generateImage,
+                " ".join(parameters)
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
     
     async def runAway(self, message, parameters):
         """
@@ -1791,6 +2779,46 @@ class Meme(Category):
             )
 
             os.remove(result)
+        
+    async def soccerTongue(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._soccerTongue.getMinParameters():
+            result = getErrorMessage(self._soccerTongue, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._soccerTongue.getMaxParameters():
+            result = getErrorMessage(self._soccerTongue, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                soccerTongue.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
     
     async def spontaneousAnger(self, message, parameters):
         """
@@ -1812,6 +2840,64 @@ class Meme(Category):
                 parameters[1]
             )
 
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def startLearning(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._startLearning.getMinParameters():
+            result = getErrorMessage(self._startLearning, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._startLearning.getMaxParameters():
+            result = getErrorMessage(self._startLearning, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Check for an even amount of parameters (invalid amount)
+            if len(parameters) % 2 == 0:
+                result = getErrorMessage(self._startLearning, Meme.MISSING_PARAMETER)
+
+            # There were an odd amount of parameters (valid)
+            else:
+                result = await loop.run_in_executor(None,
+                    startLearning.generateImage,
+                    parameters[0],
+                    parameters[1],
+                    parameters[2],
+                    "" if len(parameters) < 5 else parameters[3],
+                    "" if len(parameters) < 5 else parameters[4],
+                    "" if len(parameters) < 7 else parameters[5],
+                    "" if len(parameters) < 7 else parameters[6],
+                    "" if len(parameters) < 9 else parameters[7],
+                    "" if len(parameters) < 9 else parameters[8],
+                    "" if len(parameters) < 11 else parameters[9],
+                    "" if len(parameters) < 11 else parameters[10],
+                    "" if len(parameters) < 13 else parameters[11],
+                    "" if len(parameters) < 13 else parameters[12]       
+                )
+        
         # Check if an error was made
         if type(result) == discord.Embed:
             await sendMessage(
@@ -1911,6 +2997,48 @@ class Meme(Category):
 
             os.remove(result)
     
+    async def threeDoors(self, message, parameters):
+        """Generates and sends the Brain Of meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._threeDoors.getMinParameters():
+            result = getErrorMessage(self._threeDoors, Meme.NOT_ENOUGH_PARAMETERS)
+
+        # Check for too many parameters
+        elif len(parameters) > self._threeDoors.getMaxParameters():
+            result = getErrorMessage(self._threeDoors, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                threeDoors.generateImage,
+                parameters[0],
+                parameters[1],
+                parameters[2],
+                "" if len(parameters) < 4 else parameters[3]
+            )
+        
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
     async def trojanHorse(self, message, parameters):
         """
         """
@@ -1933,6 +3061,41 @@ class Meme(Category):
                 parameters[3]
             )
 
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def trump(self, message, parameters):
+        """
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._trump.getMinParameters():
+            result = getErrorMessage(self._trump, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                trump.generateImage,
+                " ".join(parameters)
+            )
+        
         # Check if an error was made
         if type(result) == discord.Embed:
             await sendMessage(
@@ -2016,9 +3179,10 @@ class Meme(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):
