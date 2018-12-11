@@ -103,17 +103,6 @@ class Server:
                 "channel": None,
                 "messages": Server.JOIN_MESSAGES
             },
-            "category_colors": {
-                "code": None,
-                "game": None,
-                "image": None,
-                "insult": None,
-                "internet": None,
-                "math": None,
-                "misc": None,
-                "nsfw": None,
-                "rank": None
-            },
             "inactive_commands": {},
             "members": {}
         }
@@ -428,51 +417,6 @@ class Server:
         Server.closeServer(server)
 
         return server["join_message"]["active"]
-    
-    def setColor(discordServer, categoryName, colorInt):
-        """Sets the color of the specified category in the specified Discord Server.
-        Parameters:
-            discordServer (discord.Guild): The Discord Server to set the color of a category in.
-            categoryName (str): The category to set the color of.
-            colorInt (int): The color to set.
-        """
-
-        # Open server file
-        server = Server.openServer(discordServer)
-        
-        # Set the color
-        server["category_colors"][categoryName] = colorInt
-    
-        # Close the server file
-        Server.closeServer(server)
-
-        return "The color of the {} Category was set.".format(
-            categoryName.capitalize()
-        )
-    
-    def getColor(discordServer, categoryName):
-        """Gets the color of the specified category in the specified Discord Server.
-
-        Parameters:
-            discordServer (discord.Guild): The Discord Server to get the color of a category in.
-            categoryName (str): The category to get the color of.
-        """
-
-        try:
-
-            # Open the server file
-            server = Server.openServer(discordServer)
-
-            # Get the color
-            colorInt = server["category_colors"][categoryName]
-
-            # Close the server file
-            Server.closeServer(server)
-
-            return colorInt
-        
-        except:
-            return None
     
     def setLevel(discordServer, discordMember, level):
         """Sets the ranking level of the Discord Member in the Discord Server.\n

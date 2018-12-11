@@ -22,17 +22,6 @@ class User:
         # Default values
         defaultValues = {
             "_id": discordUser.id,
-            "category_colors": {
-                "code": None,
-                "game": None,
-                "image": None,
-                "insult": None,
-                "internet": None,
-                "math": None,
-                "misc": None,
-                "nsfw": None,
-                "rank": None
-            },
             "connect_four": {
                 "won": 0,
                 "lost": 0
@@ -68,55 +57,6 @@ class User:
 
         # Update user information
         omegaPsi.setUser(userDict["_id"], userDict)
-    
-    def setColor(discordUser, categoryName, colorInt):
-        """Sets the color of the specified category to the specified color.
-
-        Parameters:
-            discordUser (discord.User): The Discord User to set the category color for.
-            categoryName (str): The name of the Category to set the color of.
-            colorInt (int): The color integer to set.
-        """
-
-        # Open user file
-        user = User.openUser(discordUser)
-
-        # Update color
-        user["category_colors"][categoryName] = colorInt
-
-        # Close user file
-        User.closeUser(user)
-
-    def getColor(discordUser, categoryName):
-        """Gets the color of the specified category.
-
-        Parameters:
-            discordUser (discord.User): The Discord User to get the category color of.
-            categoryName (str): The name of the Category to get the color of.
-        """
-
-        # Check if discord user is part of a server
-        try:
-            guild = discordUser.guild
-
-            # Get guild category color
-            colorInt = Server.getColor(guild, categoryName)
-
-            return colorInt
-        
-        # User is not part of a server; Get their color
-        except:
-            
-            # Open user file
-            user = User.openUser(discordUser)
-
-            # Get the color
-            colorInt = user["category_colors"][categoryName]
-
-            # Close user file
-            User.closeUser(user)
-
-            return colorInt
         
     def updateConnectFour(discordUser, *, didWin = False):
         """Updates the connect four score.
