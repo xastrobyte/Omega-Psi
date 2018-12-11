@@ -25,6 +25,7 @@ Each category is labeled properly and includes commands tailored to that categor
     * Avatars
   * Math
     * Basic commands as of right now including simplification, derivatives, and even the fibonacci sequence
+    * Physics commands! Right now, there is only linear kinematics. But soon there will be more physics commands.
   * Internet
     * Anything you can find on the internet, you can find here
     * IMDb
