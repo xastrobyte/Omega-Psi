@@ -844,7 +844,7 @@ class BotModerator(Category):
             todoList = OmegaPsi.getToDoList()
             todoText = ""
             for item in range(len(todoList)):
-                todoText += "{}.) {}\n".format(
+                todoText += "`{}.) {}`\n".format(
                     item + 1, todoList[item]
                 )
                 
@@ -994,9 +994,10 @@ class BotModerator(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await cmd.getCommand()(message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):

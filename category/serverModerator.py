@@ -4,9 +4,10 @@ from category.image import Image
 from category.insult import Insult
 from category.internet import Internet
 from category.math import Math
-from category.rank import Rank
+from category.meme import Meme
 from category.misc import Misc
 from category.nsfw import NSFW
+from category.rank import Rank
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
@@ -328,82 +329,6 @@ class ServerModerator(Category):
                 }
             },
             "command": self.removePrefix
-        })
-
-        self._setColor = Command(commandDict = {
-            "alternatives": ["setColor", "setEmbedColor", "embedColor"],
-            "info": "Allows you to set the embed color of a specific category in this server.",
-            "parameters": {
-                "category": {
-                    "info": "The name of the category to set the color of.",
-                    "optional": False,
-                    "accepted": {
-                        "code": {
-                            "alternatives": ["code"],
-                            "info": "Allows you to set the color of the Code category."
-                        },
-                        "game": {
-                            "alternatives": ["game"],
-                            "info": "Allows you to set the color of the Game category."
-                        },
-                        "image": {
-                            "alternatives": ["image"],
-                            "info": "Allows you to set the color of the Image category."
-                        },
-                        "insult": {
-                            "alternatives": ["insult"],
-                            "info": "Allows you to set the color of the Insult category."
-                        },
-                        "internet": {
-                            "alternatives": ["internet"],
-                            "info": "Allows you to set the color of the Internet category."
-                        },
-                        "math": {
-                            "alternatives": ["math"],
-                            "info": "Allows you to set the color of the Math category."
-                        },
-                        "misc": {
-                            "alternatives": ["misc"],
-                            "info": "Allows you to set the color of the Misc category."
-                        },
-                        "nsfw": {
-                            "alternatives": ["nsfw"],
-                            "info": "Allows you to set the color of the NSFW category."
-                        },
-                        "rank": {
-                            "alternatives": ["rank"],
-                            "info": "Allows you to set the color of the Rank category."
-                        }
-                    }
-                },
-                "color": {
-                    "info": "The color, in hex, of the category to set.",
-                    "optional": False
-                }
-            },
-            "errors": {
-                ServerModerator.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "In order to set the color of a category, you need the category name and the color, in hex."
-                    ]
-                },
-                ServerModerator.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "You only need the category name and the color."
-                    ]
-                },
-                ServerModerator.INVALID_CATEGORY: {
-                    "messages": [
-                        "That is an invalid category."
-                    ]
-                },
-                ServerModerator.INVALID_COLOR: {
-                    "messages": [
-                        "That is an invalid color."
-                    ]
-                }
-            },
-            "command": self.setColor
         })
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -788,7 +713,6 @@ class ServerModerator(Category):
             self._setLevel,
             self._addPrefix,
             self._removePrefix,
-            self._setColor,
 
             # Bot Commands
             self._setServerName,
@@ -809,9 +733,10 @@ class ServerModerator(Category):
             "Insult": Insult(None),
             "Internet": Internet(None),
             "Math": Math(None),
-            "Rank": Rank(None),
+            "Meme": Meme(None),
             "Misc": Misc(None),
-            "NSFW": NSFW(None)
+            "NSFW": NSFW(None),
+            "Rank": Rank(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1177,7 +1102,6 @@ class ServerModerator(Category):
         author = message.author
         server = message.guild
         channels = message.channel_mentions
-        print(parameters)
 
         # Check for not enough parameters
         if len(channels) < self._setJoinMessageChannel.getMinParameters():
@@ -1232,7 +1156,6 @@ class ServerModerator(Category):
         author = message.author
         server = message.guild
         mentions = message.mentions
-        print(parameters)
 
         # Check if there are no parameters or no mentions
         if len(mentions) == 0 or len(parameters) < self._setLevel.getMinParameters():
@@ -1380,59 +1303,6 @@ class ServerModerator(Category):
         else:
             embed = getErrorMessage(self._removePrefix, ServerModerator.MEMBER_MISSING_PERMISSION)
 
-        await sendMessage(
-            self.client,
-            message,
-            embed = embed.set_footer(
-                text = "Requested by {}#{}".format(
-                    message.author.name,
-                    message.author.discriminator
-                ),
-                icon_url = message.author.avatar_url
-            )
-        )
-    
-    async def setColor(self, message, parameters):
-        """Sets the color of a category in the Discord Server.
-        """
-
-        # Check for not enough parameters
-        if len(parameters) < self._setColor.getMinParameters():
-            embed = getErrorMessage(self._setColor, ServerModerator.NOT_ENOUGH_PARAMETERS)
-        
-        # Check for too many parameters
-        elif len(parameters) > self._setColor.getMaxParameters():
-            embed = getErrorMessage(self._setColor, ServerModerator.TOO_MANY_PARAMETERS)
-        
-        # There were the proper amount of parameters
-        else:
-            category = parameters[0]
-            color = parameters[1]
-            acceptedCategories = self._setColor.getAcceptedParameters("category")
-
-            # Check for an invalid color
-            if len(color) < 6 or len(color) > 6:
-                embed = getErrorMessage(self._setColor, ServerModerator.INVALID_COLOR)
-            
-            # Check for an invalid category
-            elif category not in acceptedCategories:
-                embed = getErrorMessage(self._setColor, ServerModerator.INVALID_CATEGORY)
-            
-            # The values were valid
-            else:
-
-                embed = OmegaPsi.getImplementingError()
-                
-                """
-                colorInt = eval("0x" + color)
-
-                embed = discord.Embed(
-                    title = "Color Set",
-                    description = Server.setColor(message.guild, category, colorInt),
-                    colour = colorInt
-                )
-                """
-                
         await sendMessage(
             self.client,
             message,
@@ -2104,9 +1974,10 @@ class ServerModerator(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await cmd.getCommand()(message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):
