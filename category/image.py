@@ -9,7 +9,7 @@ from util.utils.stringUtils import generateRandomString, capitalizeSentences
 from functools import partial
 from random import choice as choose, randint
 from supercog import Category, Command
-import discord, os, pygame, requests
+import discord, os, pygame, requests, timchen
 
 pygame.init()
 
@@ -427,18 +427,14 @@ class Image(Category):
         else:
 
             # Get a random image
-            timchen = await loop.run_in_executor(None,
-                requests.get,
-                Image.TIMCHEN_API
-            )
-            timchen = timchen.json()
+            timchenData = await timchen.get_random()
 
             embed = discord.Embed(
                 title = "Timchen!",
-                description = capitalizeSentences(timchen["desc"]),
+                description = capitalizeSentences(timchenData.description),
                 colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             ).set_image(
-                url = timchen["url"]
+                url = timchenData.url
             )
         
         await sendMessage(
@@ -536,9 +532,10 @@ class Image(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):
