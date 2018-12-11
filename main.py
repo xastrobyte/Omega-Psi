@@ -2,20 +2,16 @@ from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
 from keepAlive import keepAlive
-from util.utils import sendMessage, sendErrorMessage, getChannel
+from util.utils.discordUtils import sendMessage, sendErrorMessage
 
 from discord.ext.commands import Bot
+from random import randint
 
-from random import choice as choose
 import discord, os, sys, traceback
 
 # Open Bot client
-omegaPsi = Bot(discord.ext.commands.when_mentioned_or(OmegaPsi.PREFIX))
+omegaPsi = Bot(command_prefix = OmegaPsi.PREFIX)
 omegaPsi.remove_command("help")
-
-# Load Opus sound library
-# if not discord.opus.is_loaded():
-    # discord.opus.load_opus("libopus-0")
 
 extensions = [
     "category.help",
@@ -23,11 +19,12 @@ extensions = [
     "category.game",
     "category.image",
     "category.insult",
-    "category.math",
-    "category.rank",
     "category.internet",
+    "category.math",
+    "category.meme",
     "category.misc",
-    # "category.music",
+    "category.nsfw",
+    "category.rank",
     "category.serverModerator",
     "category.botModerator"
 ]
@@ -38,11 +35,15 @@ extensions = [
 
 @omegaPsi.event
 async def on_ready():
+    activityType = OmegaPsi.getActivityType()
+    text = OmegaPsi.getActivityName()
+
     await omegaPsi.change_presence(
         status = discord.Status.online,
         activity = discord.Activity(
-            name = OmegaPsi.getActivityName(),
-            type = OmegaPsi.getActivityType()
+            name = text,
+            type = activityType,
+            url = "https://www.twitch.tv/FellowHashbrown"
         )
     )
 
@@ -77,62 +78,6 @@ async def on_message(message):
                 )
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Server Events
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-@omegaPsi.event
-async def on_server_join(server):
-
-    # Open server file
-    server = Server.openServer(server)
-
-    await sendMessage(omegaPsi,
-        getChannel(omegaPsi,
-            os.environ["DISCORD_TEST_SERVER_ID"],
-            os.environ["DISCORD_TEST_CHANNEL_ID"]
-        ),
-        embed = discord.Embed(
-            title = "Omega Psi Joined a Server",
-            description = "Server Name: {}".format(server.name),
-            colour = 0x00FF80
-        ).add_field(
-            name = "Server Owner: {}".format(server.owner.mention),
-            value = " ",
-            inline = False
-        )
-    )
-
-    # Close server file
-    Server.closeServer(server)
-
-@omegaPsi.event
-async def on_server_remove(server):
-    pass
-
-@omegaPsi.event
-async def on_server_update(before, after):
-    
-    # Change server name in files and owner if changed
-    server = Server.openServer(after)
-    Server.closeServer(server)
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Channel Events
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-@omegaPsi.event
-async def on_channel_delete(channel):
-    pass
-
-@omegaPsi.event
-async def on_channel_create(channel):
-    pass
-
-@omegaPsi.event
-async def on_channel_update(before, after):
-    pass
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Member Events
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -150,11 +95,9 @@ async def on_member_join(member):
         await sendMessage(
             omegaPsi,
             member.guild.get_channel(
-                server["join_message"]["channel"]
+                Server.getJoinMessageChannel(member.guild)
             ),
-            message = choose(Server.JOIN_MESSAGES).format(
-                "<@{}>".format(member.id)
-            )
+            message = Server.getJoinMessage(member.guild).format(member.mention)
         )
 
     # Close server file
@@ -173,32 +116,6 @@ async def on_member_remove(member):
     # Close servers file
     Server.closeServer(server)
 
-@omegaPsi.event
-async def on_member_update(before, after):
-    """
-    # Open server file
-    server = Server.openServer(after.guild)
-
-    # Update member in files
-    Server.updateMember(after.guild, after)
-
-    # Close server file
-    Server.closeServer(server)
-    """
-    pass
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Message Events
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-@omegaPsi.event
-async def on_message_delete(message):
-    pass
-
-@omegaPsi.event
-async def on_message_edit(before, after):
-    pass
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Reaction Events
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -216,19 +133,14 @@ async def on_reaction_add(reaction, member):
     # Close server file
     Server.closeServer(server)
 
-@omegaPsi.event
-async def on_reaction_remove(reaction, member):
-    pass
-
-@omegaPsi.event
-async def on_reaction_clear(message, reactions):
-    pass
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Run Bot
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 if __name__ == "__main__":
+
+    # Choose random process ID between (1000 and 9999)
+    OmegaPsi.PROCESS_ID = randint(1000, 9999)
 
     # Load command extensions
     for ext in extensions:
