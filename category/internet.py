@@ -8,6 +8,7 @@ from util.utils.stringUtils import splitText, minutesToRuntime
 from bs4 import BeautifulSoup
 from datetime import datetime
 from imdb import IMDb
+from random import randint
 from supercog import Category, Command
 import discord, os, requests, wikipediaapi
 
@@ -23,10 +24,16 @@ class Internet(Category):
 
     IMDB_LINK = "https://www.imdb.com/title/tt{}/?ref_=nv_sr_1"
 
+    SUPERHERO_API_CALL = "https://superheroapi.com/api.php/{}/search/{}"
+    TINYURL_API_CALL = "http://tinyurl.com/api-create.php?url={}"
     TRANSLATE_API_CALL = "https://translate.yandex.net/api/v1.5/tr.json/translate?key={}&text={}&lang={}-{}"
     URBAN_API_CALL = "https://api.urbandictionary.com/v0/define?term={}"
     WEATHER_API_CALL = "https://api.openweathermap.org/data/2.5/weather?APPID={}&q={}"
-    TINYURL_API = "http://tinyurl.com/api-create.php?url={}"
+    XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"
+    XKCD_RECENT_API_CALL = "https://xkcd.com/info.0.json"
+
+    DC_ICON = "https://www.dccomics.com/sites/default/files/imce/DC_Logo_Blue_Final_573b356bd056a9.41641801.jpg"
+    MARVEL_ICON = "http://thetechnews.com/wp-content/uploads/2018/03/2_The-latest-Marvel-logo.jpg"
 
     URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dictionary_--_logo.jpg/revision/latest?cb=20161002212954"
     WIKIPEDIA_PAGE_IMAGE = "https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles={}"
@@ -38,6 +45,8 @@ class Internet(Category):
     NO_TERM = "NO_TERM"
     NO_PAGE = "NO_PAGE"
 
+    INVALID_PUBLISHER = "INVALID_PUBLISHER"
+    INVALID_NUMBER = "INVALID_NUMBER"
     INVALID_TO_LANGUAGE = "INVALID_TO_LANGUAGE"
     INVALID_FROM_LANGUAGE = "INVALID_FROM_LANGUAGE"
     INVALID_LOCATION = "INVALID_LOCATION"
@@ -110,6 +119,99 @@ class Internet(Category):
                 }
             },
             "command": self.tvShow
+        })
+
+        self._xkcd = Command(commandDict = {
+            "alternatives": ["xkcd", "XKCD"],
+            "info": "Sends an XKCD comic with the specified number or sends a random one.",
+            "parameters": {
+                "number": {
+                    "info": "The number of the comic to get. (or recent)",
+                    "optional": True,
+                    "accepted": {
+                        "recent": {
+                            "alternatives": ["recent", "new", "mostRecent"],
+                            "info": "Gets the most recent XKCD comic."
+                        }
+                    }
+                }
+            },
+            "errors": {
+                Internet.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get an XKCD comic, you need only the number."
+                    ]
+                },
+                Internet.INVALID_NUMBER: {
+                    "messages": [
+                        "There was no comic with that number."
+                    ]
+                },
+                Internet.INVALID_PARAMETER: {
+                    "messages": [
+                        "That does not seem to be an accepted parameter."
+                    ]
+                }
+            },
+            "command": self.xkcd
+        })
+
+        self._dc = Command(commandDict = {
+            "alternatives": ["dc", "DC", "dcComics"],
+            "info": "Allows you to search up and get info about a DC character.",
+            "parameters": {
+                "name": {
+                    "info": "The name of the DC character to look up.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Internet.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need at least the name of the DC character to search up."
+                    ]
+                },
+                Internet.INVALID_PUBLISHER: {
+                    "messages": [
+                        "The character you looked up is not in DC comics."
+                    ]
+                },
+                Internet.NO_TERM: {
+                    "messages": [
+                        "The character you looked up does not exist."
+                    ]
+                }
+            },
+            "command": self.dc
+        })
+
+        self._marvel = Command(commandDict = {
+            "alternatives": ["marvel", "Marvel"],
+            "info": "Allows you to search up and get info about a Marvel character.",
+            "parameters": {
+                "name": {
+                    "info": "The name of the Marvel Character to look up.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Internet.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need at least the name of the Marvel Character to search up."
+                    ]
+                },
+                Internet.INVALID_PUBLISHER: {
+                    "messages": [
+                        "The character you looked up is not in Marvel comics."
+                    ]
+                },
+                Internet.NO_TERM: {
+                    "messages": [
+                        "The character you looked up does not exist."
+                    ]
+                }
+            },
+            "command": self.marvel
         })
 
         self._translate = Command(commandDict = {
@@ -254,6 +356,10 @@ class Internet(Category):
         self.setCommands([
             self._movie,
             self._tvShow,
+
+            self._xkcd,
+            self._dc,
+            self._marvel,
 
             self._translate,
             self._urban,
@@ -481,6 +587,312 @@ class Internet(Category):
             self.client,
             message,
             embed = embed
+        )
+    
+    async def xkcd(self, message, parameters):
+        """Sends a random XKCD comic or a specific comic.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._xkcd.getMaxParameters():
+            embed = getErrorMessage(self._xkcd, Internet.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            comic = " ".join(parameters)
+            recentComic = await loop.run_in_executor(None,
+                requests.get,
+                Internet.XKCD_RECENT_API_CALL
+            )
+            recentComic = recentComic.json()
+
+            # No comic; Choose random
+            if len(comic) == 0:
+                comic = str(randint(1, recentComic["num"]))
+
+            # Parameter was invalid
+            if comic not in self._xkcd.getAcceptedParameter("number", "recent").getAlternatives() and not comic.isnumeric():
+                embed = getErrorMessage(self._xkcd, Internet.INVALID_PARAMETER)
+            
+            # Parameter was valid
+            else:
+
+                # Check if user wants recent
+                if comic in self._xkcd.getAcceptedParameter("number", "recent").getAlternatives():
+                    comic = recentComic
+
+                    # Setup the embed
+                    embed = discord.Embed(
+                        title = comic["safe_title"],
+                        description = " ",
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                        timestamp = datetime(int(comic["year"]), int(comic["month"]), int(comic["day"]))
+                    ).set_image(
+                        url = comic["img"]
+                    )
+
+                # Check if number is in range
+                else:
+                    comic = int(comic)
+
+                    if comic < 1 or comic > recentComic["num"]:
+                        embed = getErrorMessage(self._xkcd, Internet.INVALID_NUMBER)
+                    
+                    else:
+                        comic = await loop.run_in_executor(None,
+                            requests.get,
+                            Internet.XKCD_API_CALL.format(
+                                comic
+                            )
+                        )
+                        comic = comic.json()
+
+                        # Setup the embed
+                        embed = discord.Embed(
+                            title = comic["safe_title"],
+                            description = " ",
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                            timestamp = datetime(int(comic["year"]), int(comic["month"]), int(comic["day"]))
+                        ).set_image(
+                            url = comic["img"]
+                        )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def dc(self, message, parameters):
+        """Sends information about a DC character.
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._dc.getMinParameters():
+            embed = getErrorMessage(self._dc, Internet.NOT_ENOUGH_PARAMETERS)
+
+        # There were the proper amount of parameters
+        else:
+            character = " ".join(parameters)
+
+            # Get the superhero data
+            superhero = await loop.run_in_executor(None,
+                requests.get,
+                Internet.SUPERHERO_API_CALL.format(
+                    os.environ["SUPERHERO_API_KEY"],
+                    character
+                )
+            )
+            superhero = superhero.json()
+
+            # See if the character was found
+            if superhero["response"] == "success":
+
+                # Look for first DC character
+                found = False
+                for hero in superhero["results"]:
+                    if hero["biography"]["publisher"] == "DC Comics":
+                        superhero = hero
+                        found = True
+                        break
+
+                if not found:
+                    superhero = superhero["results"][0]
+
+                # See if the character is from DC
+                if superhero["biography"]["publisher"] == "DC Comics":
+
+                    # Setup the fields and create the embed
+                    fields = {
+                        "First Appearance": superhero["biography"]["first-appearance"],
+                        "Place of Birth": superhero["biography"]["place-of-birth"],
+                        "Stats": (
+                            "**Intelligence: {}**\n" +
+                            "**Strength: {}**\n" +
+                            "**Speed: {}**\n" +
+                            "**Durability: {}**\n" +
+                            "**Power: {}**\n" +
+                            "**Combat: {}**\n"
+                        ).format(
+                            superhero["powerstats"]["intelligence"], superhero["powerstats"]["strength"],
+                            superhero["powerstats"]["speed"], superhero["powerstats"]["durability"],
+                            superhero["powerstats"]["power"], superhero["powerstats"]["combat"]
+                        ),
+                        "Aliases": ", ".join(superhero["biography"]["aliases"]),
+                        "Appearance": (
+                            "**Race: {}**\n" +
+                            "**Height: {} ({})**\n" +
+                            "**Weight: {} ({})**\n" +
+                            "**Eye Color: {}**\n" +
+                            "**Hair Color: {}**\n"
+                        ).format(
+                            superhero["appearance"]["race"],
+                            superhero["appearance"]["height"][0], superhero["appearance"]["height"][1],
+                            superhero["appearance"]["weight"][0], superhero["appearance"]["weight"][1],
+                            superhero["appearance"]["eye-color"], superhero["appearance"]["hair-color"]
+                        ),
+                        "Affiliations": superhero["connections"]["group-affiliation"],
+                        "Relatives": superhero["connections"]["relatives"]
+                    }
+
+                    embed = discord.Embed(
+                        title = "{} - {} {}".format(
+                            superhero["name"], 
+                            superhero["biography"]["full-name"],
+                            "({})".format(
+                                superhero["biography"]["alter-egos"]
+                            ) if superhero["biography"]["alter-egos"] != "No alter egos found." else ""
+                        ),
+                        description = " ",
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    ).set_image(
+                        url = superhero["image"]["url"]
+                    )
+
+                    for field in fields:
+                        embed.add_field(
+                            name = field,
+                            value = fields[field],
+                            inline = True
+                        )
+                
+                # Character is not from DC
+                else:
+                    embed = getErrorMessage(self._dc, Internet.INVALID_PUBLISHER)
+            
+            # Character was not found
+            else:
+                embed = getErrorMessage(self._dc, Internet.NO_TERM)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def marvel(self, message, parameters):
+        """Sends information about a Marvel character.
+        """
+        
+        # Check for not enough parameters
+        if len(parameters) < self._marvel.getMinParameters():
+            embed = getErrorMessage(self._marvel, Internet.NOT_ENOUGH_PARAMETERS)
+
+        # There were the proper amount of parameters
+        else:
+            character = " ".join(parameters)
+
+            # Get the superhero data
+            superhero = await loop.run_in_executor(None,
+                requests.get,
+                Internet.SUPERHERO_API_CALL.format(
+                    os.environ["SUPERHERO_API_KEY"],
+                    character
+                )
+            )
+            superhero = superhero.json()
+
+            # See if the character was found
+            if superhero["response"] == "success":
+
+                # Look for first DC character
+                found = False
+                for hero in superhero["results"]:
+                    if hero["biography"]["publisher"] == "Marvel Comics":
+                        superhero = hero
+                        found = True
+                        break
+
+                if not found:
+                    superhero = superhero["results"][0]
+
+                # See if the character is from Marvel
+                if superhero["biography"]["publisher"] == "Marvel Comics":
+
+                    # Setup the fields and create the embed
+                    fields = {
+                        "First Appearance": superhero["biography"]["first-appearance"],
+                        "Place of Birth": superhero["biography"]["place-of-birth"],
+                        "Stats": (
+                            "**Intelligence: {}**\n" +
+                            "**Strength: {}**\n" +
+                            "**Speed: {}**\n" +
+                            "**Durability: {}**\n" +
+                            "**Power: {}**\n" +
+                            "**Combat: {}**\n"
+                        ).format(
+                            superhero["powerstats"]["intelligence"], superhero["powerstats"]["strength"],
+                            superhero["powerstats"]["speed"], superhero["powerstats"]["durability"],
+                            superhero["powerstats"]["power"], superhero["powerstats"]["combat"]
+                        ),
+                        "Aliases": ", ".join(superhero["biography"]["aliases"]),
+                        "Appearance": (
+                            "**Race: {}**\n" +
+                            "**Height: {} ({})**\n" +
+                            "**Weight: {} ({})**\n" +
+                            "**Eye Color: {}**\n" +
+                            "**Hair Color: {}**\n"
+                        ).format(
+                            superhero["appearance"]["race"],
+                            superhero["appearance"]["height"][0], superhero["appearance"]["height"][1],
+                            superhero["appearance"]["weight"][0], superhero["appearance"]["weight"][1],
+                            superhero["appearance"]["eye-color"], superhero["appearance"]["hair-color"]
+                        ),
+                        "Affiliations": superhero["connections"]["group-affiliation"],
+                        "Relatives": superhero["connections"]["relatives"]
+                    }
+
+                    embed = discord.Embed(
+                        title = "{} - {} {}".format(
+                            superhero["name"], 
+                            superhero["biography"]["full-name"],
+                            "({})".format(
+                                superhero["biography"]["alter-egos"]
+                            ) if superhero["biography"]["alter-egos"] != "No alter egos found." else ""
+                        ),
+                        description = " ",
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    ).set_image(
+                        url = superhero["image"]["url"]
+                    )
+
+                    for field in fields:
+                        embed.add_field(
+                            name = field,
+                            value = fields[field],
+                            inline = True
+                        )
+                
+                # Character is not from DC
+                else:
+                    embed = getErrorMessage(self._marvel, Internet.INVALID_PUBLISHER)
+            
+            # Character was not found
+            else:
+                embed = getErrorMessage(self._marvel, Internet.NO_TERM)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
     async def translate(self, message, parameters):
@@ -850,7 +1262,7 @@ class Internet(Category):
             else:
                 tinyurl = await loop.run_in_executor(None,
                     requests.get,
-                    Internet.TINYURL_API.format(url)
+                    Internet.TINYURL_API_CALL.format(url)
                 )
                 tinyurl = tinyurl.content.decode()
 
@@ -893,9 +1305,10 @@ class Internet(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):
