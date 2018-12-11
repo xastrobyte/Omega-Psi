@@ -31,6 +31,8 @@
       * `encode | enc | e` - Encode text into base64.
       * `decode | dec | d` - Decode text from base64.
 
+  * `qrCode | qr <data>` - Turns text into a QR code.
+
 ## Game
   *You can play games with these.*
 
@@ -146,6 +148,14 @@
 
   * `tvShow | tv | show <query>` - Gives you information about a TV Show on IMDb.
 
+  * `xkcd | XKCD [number]` - Sends an XKCD comic with the specified number or sends a random one.
+    * Accepted Parameters for `number`
+      * `recent | new | mostRecent` - Gets the most recent XKCD comic.
+
+  * `dc | DC | dcComics <name>` - Allows you to search up and get info about a DC character.
+
+  * `marvel | Marvel <name>` - Allows you to search up and get info about a Marvel character.
+
   * `translate <to> [from] <text>` - Gives you the translation of given text to and from a language.
 
   * `urban | urbanDictionary | urbanDict <term>` - **`NSFW`** Gives you the top 5 urban dictionary entries for a term.
@@ -184,9 +194,9 @@
 
   * `meme ` - Sends a random meme from Reddit.
 
-  * `areYouAwake <text>` - Sends a generated meme based off of [this](https://i.imgflip.com/2gqv88.jpg) image.
+  * `areYouAwake <text>` - Sends a generated meme based off of [this](https://i.imgur.com/Tmasvyy.jpg) image.
 
-  * `expandingBrain | expBrain <firstText> [secondText] [thirdText] [fourthText] [fifthText] [sixthText] [seventhText] [eighthText] [ninthText] [tenthText] [eleventhText]` - Sends a generated meme based off [this](https://i.imgur.com/JPdmXOY.png) image.
+  * `brainOf <text>` - Sends a generated meme based off of [this](https://i.imgur.com/lIatply.jpg) image.
 
   * `burnLetter <letterText> <spongebobText>` - Sends a generated meme based off of [this](https://tinyurl.com/burnLetter) image.
 
@@ -198,9 +208,31 @@
 
   * `classroomStares <bubbleText>` - Sends a generated meme based off of [this](https://i.imgur.com/3QVQ2V5.jpg) image.
 
+  * `deerAboveWater | deerAbove <deerText> <handText>` - Sends a generated meme based off of [this](https://i.imgur.com/Npr993s.jpg) image.
+
   * `didYouMean [searchText] <didYouMeanText>` - Sends a generated meme based off of [this](https://i.imgur.com/8GpQQun.png) image.
 
+  * `executiveOrder | execOrder <text>` - Sends a generated meme based off of [this](https://i.imgur.com/lmZASmG.jpg) image.
+
+  * `expandingBrain | expBrain <firstText> [secondText] [thirdText] [fourthText] [fifthText] [sixthText] [seventhText] [eighthText] [ninthText] [tenthText] [eleventhText]` - Sends a generated meme based off [this](https://i.imgur.com/JPdmXOY.png) image.
+
+  * `fearNot <speechText>` - Sends a generated meme based off of [this](https://i.imgur.com/3aIi1fH.jpg) image.
+
+  * `flexSeal <holderText> <boxText> <receiverText>` - Sends a generated meme based off of [this](https://i.imgur.com/cGLvumT.jpg) image.
+
+  * `gangUp <attackerOne> <attackerTwo> <attackerThree> <bodySlamAttacker> <personText>` - Sends a generated meme based off of [this](https://i.imgur.com/wSQIQdC.png) image.
+
+  * `grusPlan <firstPanelText> <secondPanelText> <lastPanelText>` - Sends a generated meme based off of [this](https://i.imgur.com/rmUyMnP.jpg) image.
+
+  * `headacheTypes | headache <text>` - Sends a generated meme based off of [this](https://i.imgur.com/AWl1ktB.jpg) image.
+
+  * `holdUpEarth | holdUp <earthText> <personText>` - Sends a generated meme based off of [this](https://i.imgur.com/EzWiHEX.png) image.
+
+  * `iCantRead | cantRead <signText> <personText>` - Sends a generated meme based off of [this](https://i.imgur.com/fAsM4Vb.jpg) image.
+
   * `icarlyStopSign | icarlyStop <spencerText> [stopText] <gibbyText>` - Sends a generated meme based off of [this](https://i.imgur.com/MSaTVD2.jpg) image.
+
+  * `kevinHitDwight | kevinDwight | kevinPan <kevinText> <dwightText>` - Sends a generated meme based off of [this](https://i.imgur.com/Tuh9AqB.png) image.
 
   * `mastersBlessing <masterText> <swordText> <apprenticeText>` - Sends a generated meme based off of [this](https://tinyurl.com/mastersBlessing) image.
 
@@ -212,19 +244,29 @@
 
   * `puppetMeme <handText> <puppetText>` - Sends a generated meme based off of [this](https://tinyurl.com/puppetMeme) image.
 
+  * `rewindTime <text>` - Sends a generated meme based off of [this](https://i.imgur.com/uQ9GZUS.png) image.
+
   * `runAway <chaserText> <runnerText>` - Sends a generated meme based off of [this](https://tinyurl.com/y9zqyq92) image.
 
   * `saveOne <personText> <leftBehindText> <savedText>` - Sends a generated meme based off of [this](https://tinyurl.com/saveOneMeme) image.
 
   * `sayItAgain | dexterMeme <topText> <bottomText>` - Sends a generated meme based off of [this](https://i.imgflip.com/16iyn1.jpg?a428353) image.
 
+  * `soccerTongue | soccer <tongueText> <personText>` - Sends a generated meme based off of [this](https://i.imgur.com/91Orpkg.jpg) image.
+
   * `spontaneousAnger | angerMeme <angerText> <questionText>` - Sends a generated meme based off of [this](https://i.imgur.com/o1NzXyW.jpg) image.
+
+  * `startLearning | learnLanguage <topText> <insteadOfOne> <sayOne> [insteadOfTwo] [sayTwo] [insteadOfThree] [sayThree] [insteadOfFour] [sayFour] [insteadOfFive] [sayFive] [insteadOfSix] [saySix]` - Sends a generated meme based off of [this](https://i.imgur.com/xnBcGn8.jpg) image.
 
   * `surprisedDwight <dwightText> <angelaText>` - Sends a generated meme based off of [this](https://tinyurl.com/surprisedDwight) image.
 
   * `surprisedPikachu <firstLine> <secondLine> <thirdLine> [fourthLine] [fifthLine]` - Sends a generated meme based off of [this](https://imgflip.com/s/meme/Surprised-Pikachu.jpg) image.
 
+  * `threeDoors <firstDoorText> <secondDoorText> <thirdDoorText> [personText]` - Sends a generated meme based off of [this](https://i.imgur.com/rv80SIU.jpg) image.
+
   * `trojanHorse <hidersText> <horseText> <castleText> <welcomersText>` - Sends a generated meme based off of [this](https://i.imgur.com/pNR2At1.jpg) image.
+
+  * `trump | trumpTweet <tweetText>` - Sends a generated meme based off of [this](https://i.imgur.com/U2cudpx.png) image.
 
   * `whoKilledHannibal <ericAndreText> <gunText> <hannibalText> <questionText>` - Sends a generated meme based off of [this](https://i.imgflip.com/28s2gu.jpg) image.
 
@@ -356,18 +398,6 @@
 
   * `removePrefix | removePre | remPre <prefix>` - **`Server Mod`** Allows you to remove a prefix from this server.
 
-  * `setColor | setEmbedColor | embedColor <category> <color>` - **`Server Mod`** Allows you to set the embed color of a specific category in this server.
-    * Accepted Parameters for `category`
-      * `code` - Allows you to set the color of the Code category.
-      * `game` - Allows you to set the color of the Game category.
-      * `image` - Allows you to set the color of the Image category.
-      * `insult` - Allows you to set the color of the Insult category.
-      * `internet` - Allows you to set the color of the Internet category.
-      * `math` - Allows you to set the color of the Math category.
-      * `misc` - Allows you to set the color of the Misc category.
-      * `nsfw` - Allows you to set the color of the NSFW category.
-      * `rank` - Allows you to set the color of the Rank category.
-
   * `setServerName | setSvrName <name>` - **`Server Mod`** Allows you to set the Server's name.
 
   * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - **`Server Mod`** Allows you to create an invite to this server.
@@ -421,3 +451,4 @@
   * `stop | quit | kill [process]` - **`Bot Mod`** Kills the bot.
 
   * `debug ` - **`Bot Mod`** Debugs the bot.
+
