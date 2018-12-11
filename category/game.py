@@ -584,6 +584,8 @@ class Game(Category):
         
         # Check if move is None; Game is being created or quit
         embed = None
+        noError = False
+        finishedGame = None
         if move == None:
 
             # Check for too many parameters
@@ -599,6 +601,8 @@ class Game(Category):
 
                     # Check if user is playing a game
                     if authorId in self._connectFourGames[serverId]:
+                        finishedGame = self._connectFourGames[serverId][authorId]
+                        noError = True
                         self._connectFourGames[serverId].pop(authorId)
                         embed = getQuitGame("Connect Four", self.getEmbedColor(), Game.SUCCESS_ICON)
                     
@@ -626,6 +630,7 @@ class Game(Category):
                     ).set_thumbnail(
                         url = Game.CONNECT_FOUR_ICON
                     )
+                    noError = True
         
         # Check if move is being made
         elif move != None:
@@ -662,6 +667,7 @@ class Game(Category):
                         ).set_thumbnail(
                             url = Game.CONNECT_FOUR_ICON
                         )
+                        noError = True
                     
                     # Check for challenger / opponent winner
                     else:
@@ -680,6 +686,8 @@ class Game(Category):
                             url = Game.SUCCESS_ICON if move else Game.FAILED_ICON
                         )
 
+                        finishedGame = game
+
                         User.updateConnectFour(game.getChallenger(), didWin = move)
                         if game.getOpponent() != None:
                             User.updateConnectFour(game.getOpponent(), didWin = not move)
@@ -689,11 +697,19 @@ class Game(Category):
             except:
                 embed = getErrorMessage(self._connectFour, Game.INVALID_INPUT)
         
-        await sendMessage(
+        msg = await sendMessage(
             self.client,
             message,
             embed = embed
         )
+
+        if not finishedGame:
+            if noError:
+                if self._connectFourGames[serverId][authorId].getPrevious() != None:
+                    await self._connectFourGames[serverId][authorId].getPrevious().delete()
+                self._connectFourGames[serverId][authorId].setPrevious(msg)
+        else:
+            await finishedGame.getPrevious().delete()
 
     async def hangman(self, message, parameters, *, guess = None):
         """Creates a hangman game or continues a hangman game.\n
@@ -720,6 +736,8 @@ class Game(Category):
 
         # Check if guess is None; Game is being created or quit
         embed = None
+        noError = False
+        finishedGame = None
         if guess == None:
 
             # Check for too many parameters
@@ -735,6 +753,8 @@ class Game(Category):
 
                     # Check if user is playing a game
                     if authorId in self._hangmanGames[serverId]:
+                        finishedGame = self._hangmanGames[serverId][authorId]
+                        noError = True
                         self._hangmanGames[serverId].pop(authorId)
                         embed = getQuitGame("Hangman", self.getEmbedColor(), Game.SUCCESS_ICON)
                     
@@ -781,6 +801,7 @@ class Game(Category):
                         ).set_image(
                             url = game.getHangman()
                         )
+                        noError = True
         
         # Check if guess is being made
         elif guess != None:
@@ -803,6 +824,8 @@ class Game(Category):
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
                 )
+                noError = True
+                finishedGame = self._hangmanGames[serverId][authorId]
 
                 User.updateHangman(game.getPlayer(), didWin = True)
 
@@ -829,6 +852,9 @@ class Game(Category):
                     url = game.getHangman()
                 )
 
+                noError = True
+                finishedGame = self._hangmanGames[serverId][authorId]
+
                 User.updateHangman(game.getPlayer(), didWin = False)
 
                 self._hangmanGames[serverId].pop(authorId)
@@ -847,6 +873,9 @@ class Game(Category):
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
                 )
+
+                noError = True
+                finishedGame = self._hangmanGames[serverId][authorId]
 
                 User.updateHangman(game.getPlayer(), didWin = True)
 
@@ -867,12 +896,22 @@ class Game(Category):
                 ).set_image(
                     url = game.getHangman()
                 )
+
+                noError = True
         
-        await sendMessage(
+        msg = await sendMessage(
             self.client,
             message,
             embed = embed
         )
+
+        if not finishedGame:
+            if noError:
+                if self._hangmanGames[serverId][authorId].getPrevious() != None:
+                    await self._hangmanGames[serverId][authorId].getPrevious().delete()
+                self._hangman[serverId][authorId].setPrevious(msg)
+        else:
+            await finishedGame.getPrevious().delete()
     
     async def rps(self, message, parameters):
         """Starts or continues a Rock Paper Scissors game.\n
@@ -977,6 +1016,8 @@ class Game(Category):
         
         # Check if guess is None; Game being created or quit
         embed = None
+        noError = False
+        finishedGame = None
         if guess == None:
 
             # Check for too many parameters
@@ -992,6 +1033,8 @@ class Game(Category):
 
                     # Check if user is playing a game
                     if authorId in self._scrambleGames[serverId]:
+                        finishedGame = self._scrambleGames[serverId][authorId]
+                        noError = True
                         self._scrambleGames[serverId].pop(authorId)
                         embed = getQuitGame("Scramble", self.getEmbedColor(), Game.SUCCESS_ICON)
 
@@ -1034,6 +1077,7 @@ class Game(Category):
                         ).set_thumbnail(
                             url = Game.SCRAMBLE_ICON
                         )
+                        noError = True
         
         # There was a guess; Check if it was longer than a character
         elif guess != None:
@@ -1058,6 +1102,8 @@ class Game(Category):
                     ).set_thumbnail(
                         url = Game.SUCCESS_ICON
                     )
+                    noError = True
+                    finishedGame = self._scrambleGames[serverId][authorId]
 
                     User.updateScramble(game.getPlayer(), didWin = True)
 
@@ -1075,6 +1121,8 @@ class Game(Category):
                     ).set_thumbnail(
                         url = Game.FAILED_ICON
                     )
+                    noError = True
+                    finishedGame = self._scrambleGames[serverId][authorId]
 
                     User.updateScramble(game.getPlayer(), didWin = False)
 
@@ -1093,12 +1141,21 @@ class Game(Category):
                     ).set_thumbnail(
                         url = Game.SCRAMBLE_ICON
                     )
+                    noError = True
         
-        await sendMessage(
+        msg = await sendMessage(
             self.client,
             message,
             embed = embed
         )
+
+        if not finishedGame:
+            if noError:
+                if self._scrambleGames[serverId][authorId].getPrevious() != None:
+                    await self._scrambleGames[serverId][authorId].getPrevious().delete()
+                self._scrambleGames[serverId][authorId].setPrevious(msg)
+        else:
+            await finishedGame.getPrevious().delete()
                 
     async def ticTacToe(self, message, parameters, *, move = None):
         """Creates a Tic Tac Toe game or continues a Tic Tac Toe game.
@@ -1125,6 +1182,8 @@ class Game(Category):
         
         # Check if move is None; Game is being created or quit
         embed = None
+        noError = False
+        finishedGame = None
         if move == None:
 
             # Check for too many parameters
@@ -1140,6 +1199,8 @@ class Game(Category):
 
                     # Check if user is playing game
                     if authorId in self._ticTacToeGames[serverId]:
+                        finishedGame = self._ticTacToeGames[serverId][authorId]
+                        noError = True
                         self._ticTacToeGames[serverId].pop(authorId)
                         embed = getQuitGame("Tic Tac Toe", self.getEmbedColor(), Game.SUCCESS_ICON)
                     
@@ -1169,6 +1230,7 @@ class Game(Category):
                     ).set_thumbnail(
                         url = Game.TIC_TAC_TOE_ICON
                     )
+                    noError = True
         
         # There was a move; See what move it was
         elif move != None:
@@ -1204,6 +1266,8 @@ class Game(Category):
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
+                        noError = True
+                        finishedGame = self._ticTacToeGames[serverId][authorId]
 
                         self._ticTacToeGames[serverId].pop(authorId)
                     
@@ -1221,6 +1285,7 @@ class Game(Category):
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
+                        noError = True
 
                     # The challenger or opponent won
                     else:
@@ -1244,6 +1309,8 @@ class Game(Category):
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
+                        noError = True
+                        finishedGame = self._ticTacToeGames[serverId][authorId]
 
                         # Update scores
                         User.updateTicTacToe(game.getChallenger(), didWin = moveCheck)
@@ -1256,11 +1323,20 @@ class Game(Category):
             except:
                 embed = getErrorMessage(self._ticTacToe, Game.INVALID_INPUT)
         
-        await sendMessage(
+        msg = await sendMessage(
             self.client,
             message,
             embed = embed
         )
+
+        if not finishedGame:
+            if noError:
+                if self._ticTacToeGames[serverId][authorId].getPrevious() != None:
+                    await self._ticTacToeGames[serverId][authorId].getPrevious().delete()
+                self._ticTacToeGames[serverId][authorId].setPrevious(msg)
+        
+        else:
+            await finishedGame.getPrevious().delete()
     
     async def stats(self, message, parameters):
         """Shows the stats for the specified Discord User.\n
@@ -1807,9 +1883,10 @@ class Game(Category):
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
         
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1821,35 +1898,19 @@ class Game(Category):
 
             # Connect Four
             if self.isPlayerInGame(self._connectFourGames, message.author, message.guild):
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.connectFour(message, [], move = message.content)
-                )
+                await self.connectFour(message, [], move = message.content)
 
             # Hangman
             if self.isPlayerInGame(self._hangmanGames, message.author, message.guild):
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.hangman(message, [], guess = message.content)
-                )
+                await self.hangman(message, [], guess = message.content)
             
             # Scramble
             if self.isPlayerInGame(self._scrambleGames, message.author, message.guild):
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.scramble(message, [], guess = message.content)
-                )
+                await self.scramble(message, [], guess = message.content)
             
             # Tic Tac Toe
             if self.isPlayerInGame(self._ticTacToeGames, message.author, message.guild):
-                await sendMessage(
-                    self.client,
-                    message,
-                    embed = await self.ticTacToe(message, [], move = message.content)
-                )
+                await self.ticTacToe(message, [], move = message.content)
 
 def setup(client):
     client.add_cog(Game(client))
