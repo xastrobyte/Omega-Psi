@@ -3,7 +3,7 @@ from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 from util.weather.weather import getCity, getCountry, getSky, getCurrentTemp, getHighTemp, getLowTemp, getLongitude, getLatitude, getWindSpeed, getWindDirection, getLastUpdated, getWeatherIcon
 from util.utils.discordUtils import sendMessage, getErrorMessage
-from util.utils.stringUtils import splitText, minutesToRuntime
+from util.utils.stringUtils import minutesToRuntime
 
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -12,7 +12,7 @@ from random import randint
 from supercog import Category, Command
 import discord, os, requests, wikipediaapi
 
-scrollEmbeds = {}
+reactions = ["⏪", "⬅", "➡", "⏩"]
 
 class Internet(Category):
 
@@ -27,7 +27,7 @@ class Internet(Category):
     SUPERHERO_API_CALL = "https://superheroapi.com/api.php/{}/search/{}"
     TINYURL_API_CALL = "http://tinyurl.com/api-create.php?url={}"
     TRANSLATE_API_CALL = "https://translate.yandex.net/api/v1.5/tr.json/translate?key={}&text={}&lang={}-{}"
-    URBAN_API_CALL = "https://api.urbandictionary.com/v0/define?term={}"
+    
     WEATHER_API_CALL = "https://api.openweathermap.org/data/2.5/weather?APPID={}&q={}"
     XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"
     XKCD_RECENT_API_CALL = "https://xkcd.com/info.0.json"
@@ -35,7 +35,6 @@ class Internet(Category):
     DC_ICON = "https://www.dccomics.com/sites/default/files/imce/DC_Logo_Blue_Final_573b356bd056a9.41641801.jpg"
     MARVEL_ICON = "http://thetechnews.com/wp-content/uploads/2018/03/2_The-latest-Marvel-logo.jpg"
 
-    URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dictionary_--_logo.jpg/revision/latest?cb=20161002212954"
     WIKIPEDIA_PAGE_IMAGE = "https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles={}"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -251,31 +250,6 @@ class Internet(Category):
             "command": self.translate
         })
 
-        self._urban = Command(commandDict = {
-            "alternatives": ["urban", "urbanDictionary", "urbanDict"],
-            "info": "Gives you the top 5 urban dictionary entries for a term.",
-            "nsfw": True,
-            "parameters": {
-                "term": {
-                    "info": "The term to look up in urban dictionary.",
-                    "optional": False
-                }
-            },
-            "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "You need the term to look something up in urban dictionary."
-                    ]
-                },
-                Internet.NO_TERM: {
-                    "messages": [
-                        "The term you entered does not exist on urban dictionary."
-                    ]
-                }
-            },
-            "command": self.urban
-        })
-
         self._weather = Command(commandDict = {
             "alternatives": ["weather", "forecast", "getWeather"],
             "info": "Gets the weather for a specified location.",
@@ -362,12 +336,13 @@ class Internet(Category):
             self._marvel,
 
             self._translate,
-            self._urban,
             self._weather,
             self._wikipedia,
 
             self._shortenUrl
         ])
+
+        self._scrollEmbeds = {}
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
@@ -593,9 +568,12 @@ class Internet(Category):
         """Sends a random XKCD comic or a specific comic.
         """
 
+        success = True
+
         # Check for too many parameters
         if len(parameters) > self._xkcd.getMaxParameters():
             embed = getErrorMessage(self._xkcd, Internet.TOO_MANY_PARAMETERS)
+            success = False
         
         # There were the proper amount of parameters
         else:
@@ -613,6 +591,7 @@ class Internet(Category):
             # Parameter was invalid
             if comic not in self._xkcd.getAcceptedParameter("number", "recent").getAlternatives() and not comic.isnumeric():
                 embed = getErrorMessage(self._xkcd, Internet.INVALID_PARAMETER)
+                success = False
             
             # Parameter was valid
             else:
@@ -631,12 +610,18 @@ class Internet(Category):
                         url = comic["img"]
                     )
 
+                    self._scrollEmbeds[str(message.author.id)] = {
+                        "value": comic["num"],
+                        "max": recentComic["num"]
+                    }
+
                 # Check if number is in range
                 else:
                     comic = int(comic)
 
                     if comic < 1 or comic > recentComic["num"]:
                         embed = getErrorMessage(self._xkcd, Internet.INVALID_NUMBER)
+                        success = False
                     
                     else:
                         comic = await loop.run_in_executor(None,
@@ -657,7 +642,14 @@ class Internet(Category):
                             url = comic["img"]
                         )
 
-        await sendMessage(
+                        self._scrollEmbeds[str(message.author.id)] = {
+                            "origin": self._xkcd,
+                            "value": comic["num"],
+                            "max": recentComic["num"],
+                            "min": 1
+                        }
+
+        msg = await sendMessage(
             self.client,
             message,
             embed = embed.set_footer(
@@ -668,6 +660,11 @@ class Internet(Category):
                 icon_url = message.author.avatar_url
             )
         )
+
+        if success:
+            for reaction in reactions:
+                await msg.add_reaction(reaction)
+            self._scrollEmbeds[str(message.author.id)]["message"] = msg
     
     async def dc(self, message, parameters):
         """Sends information about a DC character.
@@ -921,8 +918,8 @@ class Internet(Category):
                 fromLang = parameters[1].lower()
                 text = " ".join(parameters[2:])
             
-            lang = omegaPsi.getLang()["lang"]
-            code = omegaPsi.getLang()["code"]
+            lang = await omegaPsi.getLang()["lang"]
+            code = await omegaPsi.getLang()["code"]
             
             # Check if toLang is a language name
             if len(toLang) > 3:
@@ -970,83 +967,6 @@ class Internet(Category):
                     url = "http://translate.yandex.com"
                 )
 
-        await sendMessage(
-            self.client,
-            message,
-            embed = embed.set_footer(
-                text = "Requested by {}#{}".format(
-                    message.author.name,
-                    message.author.discriminator
-                ),
-                icon_url = message.author.avatar_url
-            )
-        )
-
-    async def urban(self, message, parameters):
-        """Returns the top 5 urban dictionary entries for the specified term.\n
-
-         - term - The term to search on urban dictionary.\n
-         - discordChannel - The Discord Channel the definition is being sent in.\n
-        """
-
-        # Check for not enough parameters
-        if len(parameters) < self._urban.getMinParameters():
-            embed = getErrorMessage(self._urban, Internet.NOT_ENOUGH_PARAMETERS)
-        
-        # There were the proper amount of parameters
-        else:
-
-            term = " ".join(parameters)
-
-            # Use requests to get the data in JSON
-            try:
-                urlCall = Internet.URBAN_API_CALL.format(term.replace(" ", "+"))
-                urbanData = await loop.run_in_executor(None,
-                    requests.get,
-                    urlCall
-                )
-                urbanData = urbanData.json()
-
-                # Get first 5 values (or values if there are less than 5)
-                if len(urbanData["list"]) < 5:
-                    definitions = urbanData["list"]
-                else:
-                    definitions = urbanData["list"][:5]
-                
-                # Create discord embed
-                embed = discord.Embed(
-                    title = "{} Results Of `{}`".format("Top 5" if len(definitions) > 5 else "", term),
-                    description = " ",
-                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
-                ).set_thumbnail(
-                    url = Internet.URBAN_ICON
-                )
-
-                # Add definitions
-                defCount = 0
-                for definition in definitions:
-                    defCount += 1
-
-                    # Get definition; Split up into multiple fields if necessary
-                    definitionFields = splitText(definition["definition"], OmegaPsi.MESSAGE_THRESHOLD)
-
-                    count = 0
-                    for field in definitionFields:
-                        count += 1
-                        embed.add_field(
-                            name = "Definition {} {}".format(
-                                defCount,
-                                "({} / {})".format(
-                                    count, len(definitionFields)
-                                ) if len(definitionFields) > 1 else ""
-                            ),
-                            value = field,
-                            inline = False
-                        )
-
-            except:
-                embed = getErrorMessage(self._urban, Internet.NO_TERM)
-        
         await sendMessage(
             self.client,
             message,
@@ -1295,10 +1215,10 @@ class Internet(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -1310,6 +1230,92 @@ class Internet(Category):
                         # Run the command but don't try running others
                         await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Reactions
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def manage_scrolling(self, reaction, member):
+        """Manages the scrolling of any scroll embeds
+        """
+
+        # Check for message ID in scrollable embeds
+        memberId = str(member.id)
+        if memberId in self._scrollEmbeds:
+            initial = self._scrollEmbeds[memberId]["value"]
+
+            # Rewind reaction was added; Move to first field
+            if str(reaction) == "⏪":
+                self._scrollEmbeds[memberId]["value"] = self._scrollEmbeds[memberId]["min"]
+            
+            # Fast Forward reaction was added; Move to last field
+            elif str(reaction) == "⏩":
+                self._scrollEmbeds[memberId]["value"] = self._scrollEmbeds[memberId]["max"]
+            
+            # Arrow Left reaction was added; Move field left
+            elif str(reaction) == "⬅":
+                self._scrollEmbeds[memberId]["value"] -= 1
+                if self._scrollEmbeds[memberId]["value"] < self._scrollEmbeds[memberId]["min"]:
+                    self._scrollEmbeds[memberId]["value"] = self._scrollEmbeds[memberId]["min"]
+            
+            # Arrow Right reaction was added; Move field right
+            elif str(reaction) == "➡":
+                self._scrollEmbeds[memberId]["value"] += 1
+                if self._scrollEmbeds[memberId]["value"] > self._scrollEmbeds[memberId]["max"]:
+                    self._scrollEmbeds[memberId]["value"] = self._scrollEmbeds[memberId]["max"]
+            
+            # Update the scroll embed
+            if self._scrollEmbeds[memberId]["value"] != initial and reaction.message.id == self._scrollEmbeds[memberId]["message"].id:
+                value = self._scrollEmbeds[memberId]["value"]
+
+                # Create the new embed
+                # XKCD
+                if self._scrollEmbeds[memberId]["origin"] == self._xkcd:
+
+                    # Request comic
+                    comic = await loop.run_in_executor(None,
+                        requests.get,
+                        Internet.XKCD_API_CALL.format(
+                            value
+                        )
+                    )
+                    comic = comic.json()
+
+                    # Setup the embed
+                    embed = discord.Embed(
+                        title = comic["safe_title"],
+                        description = " ",
+                        colour = self.getEmbedColor() if reaction.message.guild == None else member.top_role.color,
+                        timestamp = datetime(int(comic["year"]), int(comic["month"]), int(comic["day"]))
+                    ).set_image(
+                        url = comic["img"]
+                    )
+
+                # Update the embed
+                await self._scrollEmbeds[str(member.id)]["message"].edit(
+                    embed = embed
+                )
+
+    async def on_reaction_add(self, reaction, member):
+        """Determines which reaction was added to a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+        await self.manage_scrolling(reaction, member)
+    
+    async def on_reaction_remove(self, reaction, member):
+        """Determines which reaction was removed from a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+        await self.manage_scrolling(reaction, member)
+
 
 def setup(client):
     client.add_cog(Internet(client))

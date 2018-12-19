@@ -8,8 +8,9 @@ from util.utils.discordUtils import sendMessage, getErrorMessage
 from util.utils.miscUtils import loadImageFromUrl, timestampToDatetime, datetimeToString
 
 from datetime import datetime
+from functools import partial
 from supercog import Category, Command
-import discord, os, pygame, random, requests
+import discord, os, pygame, random, requests, time
 
 pygame.init()
 
@@ -39,15 +40,6 @@ class Misc(Category):
     TRONALD_DUMP_MEME = "https://api.tronalddump.io/random/meme"
 
     TWITTER_ICON = "http://pngimg.com/uploads/twitter/twitter_PNG29.png"
-
-    GITHUB_COMMANDS = "https://www.github.com/FellowHashbrown/omega-psi/blob/master/category/commands.md"
-    GITHUB_LINK = "https://www.github.com/FellowHashbrown/omega-psi"
-
-    REPL_IT_LINK = "https://repl.it/@FellowHashbrown/Omega-Psi"
-
-    UPTIME_LINK = "https://stats.uptimerobot.com/KQG3Rc54B"
-
-    VOTE_LINK = "https://discordbots.org/bot/503804826187071501/vote"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -329,6 +321,20 @@ class Misc(Category):
             "command": self.nickname
         })
 
+        self._botInfo = Command(commandDict = {
+            "alternatives": ["botInfo", "bi"],
+            "info": "Allows you to get the info about the bot.",
+            "max_parameters": 0,
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get info about the bot, or the servers it's in, you don't need anything else."
+                    ]
+                }
+            },
+            "command": self.botInfo
+        })
+
         self._info = Command(commandDict = {
             "alternatives": ["info", "??"],
             "info": "Gives you info on a member or the server as saved by the bot.",
@@ -348,194 +354,6 @@ class Misc(Category):
                 }
             },
             "command": self.info
-        })
-
-        self._invite = Command(commandDict = {
-            "alternatives": ["inviteBot", "invite"],
-            "info": "Gives you a link so you can invite the bot to your own server.",
-            "can_be_deactivated": False,
-            "parameters": {
-                "permissions...": {
-                    "info": "The permissions you want the bot to have in your server.",
-                    "optional": True,
-                    "accepted_parameters": {
-                        # General Permissions
-                        "administrator": {
-                            "alternatives": ["administrator", "admin"],
-                            "info": "Gives the bot administrator privileges.",
-                        },
-                        "viewAuditLog": {
-                            "alternatives": ["viewAuditLog", "auditLog", "audit"],
-                            "info": "Gives the bot access to the audit log.",
-                        },
-                        "manageServer":{
-                            "alternatives": ["manageServer", "mngSvr"],
-                            "info": "Gives the bot permission to manage the server."
-                        },
-                        "manageRoles": {
-                            "alternatives": ["manageRoles", "mngRoles"],
-                            "info": "Gives the bot permission to manage the roles."
-                        },
-                        "manageChannels": {
-                            "alternatives": ["manageChannels", "mngChnls"],
-                            "info": "Gives the bot permission to manage the channels."
-                        },
-                        "kickMembers": {
-                            "alternatives": ["kickMembers", "kickMbrs"],
-                            "info": "Gives the bot permission to kick members."
-                        },
-                        "banMembers": {
-                            "alternatives": ["banMembers", "banMbrs"],
-                            "info": "Gives the bot permission to ban members."
-                        },
-                        "createInstantInvite": {
-                            "alternatives": ["createInstantInvite", "instantInvite", "invite"],
-                            "info": "Gives the bot permission to create an instant invite for the server."
-                        },
-                        "changeNickname": {
-                            "alternatives": ["changeNickname", "chngNick"],
-                            "info": "Gives the bot permission to change their nickname."
-                        },
-                        "manageNicknames": {
-                            "alternatives": ["manageNicknames", "mngNick"],
-                            "info": "Gives the bot permission to manage other people's nicknames."
-                        },
-                        "manageEmojis": {
-                            "alternatives": ["manageEmojis", "mngEmojis"],
-                            "info": "Gives the bot permission to manage the server's emojis."
-                        },
-                        "manageWebhooks": {
-                            "alternatives": ["manageWebhooks", "mngWbhks"],
-                            "info": "Gives the bot permission to manage the server's webhooks."
-                        },
-                        "viewChannels": {
-                            "alternatives": ["viewChannels", "viewChnls"],
-                            "info": "Gives the bot permission to view the channels."
-                        },
-
-                        # Text Permissions
-                        "sendMessages": {
-                            "alternatives": ["sendMessages", "message", "msg"],
-                            "info": "Gives the bot permission to send messages."
-                        },
-                        "sendTtsMessages": {
-                            "alternatives": ["sendTtsMessages", "ttsMessages"],
-                            "info": "Gives the bot permission to send TTS (text-to-speech) messages."
-                        },
-                        "manageMessages": {
-                            "alternatives": ["manageMessages", "mngMsgs"],
-                            "info": "Gives the bot permission to manage messages."
-                        },
-                        "embedLinks": {
-                            "alternatives": ["embedLinks", "links"],
-                            "info": "Gives the bot permission to embed links."
-                        },
-                        "attachFiles": {
-                            "alternatives": ["attachFiles", "files"],
-                            "info": "Gives the bot permission to attach files."
-                        },
-                        "readMessageHistory": {
-                            "alternatives": ["readMessageHistory", "messageHistory", "msgHist"],
-                            "info": "Gives the bot permission to read the message history."
-                        },
-                        "mentionEveryone": {
-                            "alternatives": ["mentionEveryone"],
-                            "info": "Gives the bot permission to mention everyone."
-                        },
-                        "useExternalEmojis": {
-                            "alternatives": ["useExternalEmojis", "externalEmojis", "emojis"],
-                            "info": "Gives the bot permission to use other server's emojis."
-                        },
-                        "addReactions": {
-                            "alternatives": ["addReactions", "reactions"],
-                            "info": "Gives the bot permission to react to messages."
-                        },
-
-                        # Voice Permissions
-                        "connect": {
-                            "alternatives": ["connect"],
-                            "info": "Gives the bot permission to connect to a voice channel."
-                        },
-                        "speak": {
-                            "alternatives": ["speak"],
-                            "info": "Gives the bot permission to speak in a voice channel."
-                        },
-                        "muteMembers": {
-                            "alternatives": ["muteMembers", "mute"],
-                            "info": "Gives the bot permission to mute members in a voice channel."
-                        },
-                        "deafenMembers": {
-                            "alternatives": ["deafenMembers", "deafen"],
-                            "info": "Gives the bot permission to deafen members in a voice channel."
-                        },
-                        "useMembers": {
-                            "alternatives": ["useMembers"],
-                            "info": "Gives the bot permission to move members to a different voice channel."
-                        },
-                        "useVoiceActivity": {
-                            "alternatives": ["useVoiceActivity", "useVoice", "voice"],
-                            "info": "Gives the bot permission to use voice activity in a voice channel."
-                        },
-                        "prioritySpeaker": {
-                            "alternatives": ["prioritySpeaker"],
-                            "info": "Gives the bot permission to the priority speaker."
-                        }
-                    }
-                }
-            },
-            "command": self.invite
-        })
-
-        self._vote = Command(commandDict = {
-            "alternatives": ["vote"],
-            "info": "Allows you to get a link to vote for Omega Psi on discordbots.org",
-            "errors": {
-                Misc.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the voting link, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.vote
-        })
-
-        self._github = Command(commandDict = {
-            "alternatives": ["github"],
-            "info": "Sends you the Github link for the source code.",
-            "errors": {
-                Misc.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the Github link, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.github
-        })
-
-        self._replit = Command(commandDict = {
-            "alternatives": ["replit", "repl.it", "repl"],
-            "info": "Sends you the Repl.it link for the bot.",
-            "errors": {
-                Misc.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the Repl.it link, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.replit
-        })
-
-        self._uptime = Command(commandDict = {
-            "alternatives": ["uptime"],
-            "info": "Sends a link to see the uptime of Omega Psi.",
-            "errors": {
-                Misc.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the uptime of Omega Psi, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.uptime
         })
 
         self._sendBug = Command(commandDict = {
@@ -596,12 +414,8 @@ class Misc(Category):
 
             self._ping,
             self._nickname,
+            self._botInfo,
             self._info,
-            self._invite,
-            self._vote,
-            self._github,
-            self._replit,
-            self._uptime,
             self._sendBug
         ])
     
@@ -1133,6 +947,69 @@ class Misc(Category):
             )
         )
     
+    async def botInfo(self, message, parameters):
+        """Returns the info on the bot.\n
+        """
+
+        # Check if parameters exceeds maximum parameter
+        if len(parameters) > self._info.getMaxParameters():
+            embed = getErrorMessage(self._info, Misc.TOO_MANY_PARAMETERS)
+        
+        # Parameters do not exceed maximum parameters
+        else:
+
+            # Open the bot info
+            omegaPsi = await OmegaPsi.openOmegaPsi()
+
+            # Add a list of bot moderators and inactive commands
+            botModerators = ""
+            for moderator in omegaPsi["moderators"]:
+                botModerators += "<@{}>\n".format(moderator)
+        
+            inactiveCommands = ""
+            for command in omegaPsi["inactive_commands"]:
+                inactiveCommands += "{}\nReason: {}\n".format(
+                    command, omegaPsi["inactive_commands"][command]
+                )
+
+            # Set these up in a dictionary to add to an embed
+            tags = {
+                "Bot Moderators": botModerators,
+                "Inactive Commands": inactiveCommands
+            }
+
+            # Create the embed and add the tags as fields
+            owner = await self.client.application_info()
+            owner = owner.owner
+            
+            embed = discord.Embed(
+                title = "Omega Psi",
+                description = "Owner: {} ({}#{})".format(
+                    owner.mention,
+                    owner.name, owner.discriminator
+                ),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+
+            for tag in tags:
+                embed.add_field(
+                    name = tag,
+                    value = tags[tag] if len(tags[tag]) > 0 else "None",
+                    inline = False
+                )
+            
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
     async def info(self, message, parameters):
         """Returns information about the server or a member mentioned
         """
@@ -1171,8 +1048,8 @@ class Misc(Category):
         """
 
         # Open server file and bot file
-        server = Server.openServer(discordServer)
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        server = await Server.openServer(discordServer)
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Get name, owner, ranking, join message, inactive commands
         serverPrefixes = server["prefixes"]
@@ -1180,8 +1057,8 @@ class Misc(Category):
         serverOwner = discordServer.owner
         serverCreate = datetimeToString(discordServer.created_at)
         serverRanking = server["ranking"]
-        serverJoinMessage = server["join_message"]["active"]
-        serverJoinMessageChannel = server["join_message"]["channel"]
+        serverWelcomeMessage = server["welcome_message"]["active"]
+        serverWelcomeMessageChannel = server["welcome_message"]["channel"]
         serverInactiveCommands = server["inactive_commands"]
 
         botInactiveCommands = omegaPsi["inactive_commands"]
@@ -1190,8 +1067,8 @@ class Misc(Category):
         embed = discord.Embed(
             title = serverName,
             description = "Owner: {} ({})".format(
-                serverOwner.mention,
-                serverOwner.name + "#" + serverOwner.discriminator
+                "Unknown" if serverOwner == None else serverOwner.mention,
+                "Unknown" if serverOwner == None else (serverOwner.name + "#" + serverOwner.discriminator)
             ),
             colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
         )
@@ -1213,11 +1090,11 @@ class Misc(Category):
             "Created At": serverCreate,
             "Prefixes": ", ".join(serverPrefixes),
             "Ranking": "Yes" if serverRanking else "No",
-            "Join Message": "{}\n{}".format(
-                "Active" if serverJoinMessage else "Inactive",
+            "Welcome Message": "{}\n{}".format(
+                "Active" if serverWelcomeMessage else "Inactive",
                 "<#{}>".format(
-                    serverJoinMessageChannel
-                ) if serverJoinMessageChannel != None else ""
+                    serverWelcomeMessageChannel
+                ) if serverWelcomeMessageChannel != None else ""
             ),
             "Locally Inactive Commands": serverCommands if len(serverCommands) > 0 else None,
             "Globally Inactive Commands": botCommands if len(botCommands) > 0 else None
@@ -1233,7 +1110,7 @@ class Misc(Category):
                 )
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return embed
     
@@ -1245,17 +1122,17 @@ class Misc(Category):
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Get member
-        member = Server.getMember(discordServer, discordMember)
+        member = await Server.getMember(discordServer, discordMember)
         memberName = discordMember.name
         memberDiscriminator = discordMember.discriminator
         memberCreate = datetimeToString(discordMember.created_at)
         memberJoin = datetimeToString(discordMember.joined_at)
         memberId = discordMember.id
         memberNickname = discordMember.nick
-        memberModerator = Server.isAuthorModerator(discordMember)
+        memberModerator = await Server.isAuthorModerator(discordMember)
         memberExperience = member["experience"]
         memberLevel = member["level"]
 
@@ -1288,163 +1165,9 @@ class Misc(Category):
             )
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return embed
-    
-    async def invite(self, message, parameters):
-        """Returns the link so someone can invite the bot to their own server.\n
-
-        permissions - The permissions that you want the bot to have.\n
-        """
-
-        permissions = parameters
-
-        # Set default permissions
-        permissionsInteger = 0
-
-        # Get permissions needed; If the admin permission is found, the integer will default to 8
-        adminFound = False
-
-        # Iterate through permissions
-        for permission in permissions:
-
-            # Iterate through accepted permissions
-            for acceptedPermission in self._invite.getAcceptedParameters("permissions..."):
-
-                # Permission is in the accepted permissions
-                if permission in self._invite.getAcceptedParameter("permissions...", acceptedPermission).getAlternatives():
-
-                    # Add the integer value to the permissions integer
-                    permissionsInteger += Server.PERMISSIONS[acceptedPermission]
-
-                    # Check if the accepted permission was administrator
-                    if acceptedPermission == "administrator":
-                        adminFound = True
-
-                    # Since it was found, we don't want to continue searching through the accepted permissions
-                    # We want to move to the next permission
-                    break
-
-        # The admin permission was found, default the integer to 8
-        if adminFound:
-            permissionsInteger = Server.PERMISSIONS["administrator"]
-
-        await sendMessage(
-            self.client,
-            message,
-            message = Server.BOT_INVITE.format(permissionsInteger)
-        )
-    
-    async def vote(self, message, parameters):
-        """Sends a link to discordbots.org to vote for the bot.
-        """
-
-        # Check for too many parameters
-        if len(parameters) > self._vote.getMaxParameters():
-            embed = getErrorMessage(self._vote, Misc.TOO_MANY_PARAMETERS)
-
-            await sendMessage(
-                self.client,
-                message,
-                embed = embed.set_footer(
-                    text = "Requested by {}#{}".format(
-                        message.author.name,
-                        message.author.discriminator
-                    ),
-                    icon_url = message.author.avatar_url
-                )
-            )
-        
-        # There were the proper amount of parameters
-        else:
-            await sendMessage(
-                self.client,
-                message,
-                message = Misc.VOTE_LINK
-            )
-    
-    async def github(self, message, parameters):
-        """Returns the Github link for the bot.
-        """
-
-        # Check for too many parameters
-        if len(parameters) > self._github.getMaxParameters():
-            embed = getErrorMessage(self._github, Misc.TOO_MANY_PARAMETERS)
-
-            await sendMessage(
-                self.client,
-                message,
-                embed = embed.set_footer(
-                    text = "Requested by {}#{}".format(
-                        message.author.name,
-                        message.author.discriminator
-                    ),
-                    icon_url = message.author.avatar_url
-                )
-            )
-
-        # There were the proper amount of parameters
-        else:
-            await sendMessage(
-                self.client,
-                message,
-                message = Misc.GITHUB_LINK
-            )
-    
-    async def replit(self, message, parameters):
-        """Returns the Repl.it link for the bot.
-        """
-
-        # Check for too many parameters
-        if len(parameters) > self._replit.getMaxParameters():
-            embed = getErrorMessage(self._replit, Misc.TOO_MANY_PARAMETERS)
-            await sendMessage(
-                self.client,
-                message,
-                embed = embed.set_footer(
-                    text = "Requested by {}#{}".format(
-                        message.author.name,
-                        message.author.discriminator
-                    ),
-                    icon_url = message.author.avatar_url
-                )
-            )
-
-        # There were the proper amount of parameters
-        else:
-            await sendMessage(
-                self.client,
-                message,
-                message = Misc.REPL_IT_LINK
-            )
-    
-    async def uptime(self, message, parameters):
-        """Returns the uptime link for the bot.
-        """
-
-        # Check for too many parameters
-        if len(parameters) > self._uptime.getMaxParameters():
-            embed = getErrorMessage(self._uptime, Misc.TOO_MANY_PARAMETERS)
-            await sendMessage(
-                self.client,
-                message,
-                embed = embed.set_footer(
-                    text = "Requested by {}#{}".format(
-                        message.author.name,
-                        message.author.discriminator
-                    ),
-                    icon_url = message.author.avatar_url
-                )
-            )
-
-        # There were the proper amount of parameters
-        else:
-            await sendMessage(
-                self.client,
-                message,
-                message = Misc.UPTIME_LINK
-            )
     
     async def sendBug(self, message, parameters):
         """Sends all bot moderators a message from the bot.\n
@@ -1520,7 +1243,7 @@ class Misc(Category):
                     )
                 
                 # Iterate through Omega Psi moderators
-                for moderator in OmegaPsi.getModerators():
+                for moderator in await OmegaPsi.getModerators():
 
                     # Get the user
                     user = self.client.get_user(moderator)
@@ -1562,19 +1285,20 @@ class Misc(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):

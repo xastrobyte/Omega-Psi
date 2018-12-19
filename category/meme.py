@@ -3,6 +3,7 @@ from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
 from util.meme import areYouAwake
+from util.meme import bikeCrash
 from util.meme import brainOf
 from util.meme import burnLetter
 from util.meme import butILikeThis
@@ -36,6 +37,7 @@ from util.meme import spontaneousAnger
 from util.meme import startLearning
 from util.meme import surprisedDwight
 from util.meme import surprisedPikachu
+from util.meme import thanosStone
 from util.meme import threeDoors
 from util.meme import trojanHorse
 from util.meme import trump
@@ -134,6 +136,38 @@ class Meme(Category):
                 }
             },
             "command": self.areYouAwake
+        })
+
+        self._bikeCrash = Command(commandDict = {
+            "alternatives": ["bikeCrash"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": bikeCrash.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "firstText": {
+                    "info": "The text that goes where the bike riders are normally driving.",
+                    "optional": False
+                },
+                "crashText": {
+                    "info": "The text that goes where the riders crash.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Meme.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you need 2 sets of text wrapped in quotes (\")."
+                    ]
+                },
+                Meme.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to generate this meme, you only need 2 sets of text wrapped in quotes (\")."
+                    ]
+                }
+            },
+            "command": self.bikeCrash
         })
 
         self._brainOf = Command(commandDict = {
@@ -1292,6 +1326,26 @@ class Meme(Category):
             "command": self.surprisedPikachu
         })
 
+        self._thanosStone = Command(commandDict = {
+            "alternatives": ["thanosStone"],
+            "info": {
+                "text": "Sends a generated meme based off of {} image.",
+                "hyperlink": thanosStone.IMAGE,
+                "hyperlink_text": "this"
+            },
+            "parameters": {
+                "stoneText": {
+                    "info": "The text that goes above where Thanos puts in the mind stone.",
+                    "optional": False
+                },
+                "thanosText": {
+                    "info": "The text that goes where Thanos is feeling the charge of all the stones.",
+                    "optional": False
+                }
+            },
+            "command": self.thanosStone
+        })
+
         self._threeDoors = Command(commandDict = {
             "alternatives": ["threeDoors"],
             "info": {
@@ -1431,6 +1485,7 @@ class Meme(Category):
         self.setCommands([
             self._meme,
             self._areYouAwake,
+            self._bikeCrash,
             self._brainOf,
             self._burnLetter,
             self._butILikeThis,
@@ -1464,6 +1519,7 @@ class Meme(Category):
             self._startLearning,
             self._surprisedDwight,
             self._surprisedPikachu,
+            self._thanosStone,
             self._threeDoors,
             self._trojanHorse,
             self._trump,
@@ -1562,6 +1618,46 @@ class Meme(Category):
             result = await loop.run_in_executor(None,
                 areYouAwake.generateImage,
                 parameters[0]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
+    async def bikeCrash(self, message, parameters):
+        """Generates and sends the Bike Crash meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._bikeCrash.getMinParameters():
+            result = getErrorMessage(self._bikeCrash, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._bikeCrash.getMaxParameters():
+            result = getErrorMessage(self._bikeCrash, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                bikeCrash.generateImage,
+                parameters[0],
+                parameters[1]
             )
 
         # Check if an error was made
@@ -2997,6 +3093,46 @@ class Meme(Category):
 
             os.remove(result)
     
+    async def thanosStone(self, message, parameters):
+        """Generates and sends the Thanos Stone meme.
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._thanosStone.getMinParameters():
+            result = getErrorMessage(self._thanosStone, Meme.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._thanosStone.getMaxParameters():
+            result = getErrorMessage(self._thanosStone, Meme.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            result = await loop.run_in_executor(None,
+                thanosStone.generateImage,
+                parameters[0],
+                parameters[1]
+            )
+
+        # Check if an error was made
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result
+            )
+        
+        # No error was made, send image
+        else:
+
+            # Send message then remove image
+            await sendMessage(
+                self.client,
+                message,
+                filename = result
+            )
+
+            os.remove(result)
+    
     async def threeDoors(self, message, parameters):
         """Generates and sends the Brain Of meme.
         """
@@ -3169,10 +3305,10 @@ class Meme(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

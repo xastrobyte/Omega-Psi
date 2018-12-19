@@ -117,10 +117,7 @@ class Rank(Category):
         # There were the proper amount of parameters
         else:
 
-            result = await loop.run_in_executor(None,
-                createRankImage,
-                message.author
-            )
+            result = await createRankImage(message.author)
 
         # Check for an error
         if type(result) == discord.Embed:
@@ -165,7 +162,7 @@ class Rank(Category):
             interactionType = None if len(parameters) == 0 else parameters[0]
 
             # Get member info from server
-            member = Server.getMember(message.guild, message.author)
+            member = await Server.getMember(message.guild, message.author)
 
             # Get member's current and next experience
             currentExp = member["experience"]
@@ -193,7 +190,7 @@ class Rank(Category):
                 )
             
             # Check if interaction type is valid
-            if interactionType in self._levelUp.getAcceptedParameter("interaction", "profanity").getAlternatives():
+            elif interactionType in self._levelUp.getAcceptedParameter("interaction", "profanity").getAlternatives():
                 embed = discord.Embed(
                     title = "In order to level up, you need",
                     description = "{} Profane Messages".format(profanity),
@@ -203,14 +200,14 @@ class Rank(Category):
             elif interactionType in self._levelUp.getAcceptedParameter("interaction", "reactions").getAlternatives():
                 embed = discord.Embed(
                     title = "In order to level up, you need",
-                    description = "{} Reactions".format(profanity),
+                    description = "{} Reactions".format(reactions),
                     colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 )
             
             elif interactionType in self._levelUp.getAcceptedParameter("interaction", "normal").getAlternatives():
                 embed = discord.Embed(
                     title = "In order to level up, you need",
-                    description = "{} Regular Messages".format(profanity),
+                    description = "{} Regular Messages".format(normal),
                     colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 )
             
@@ -241,19 +238,20 @@ class Rank(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):

@@ -522,10 +522,10 @@ class Image(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

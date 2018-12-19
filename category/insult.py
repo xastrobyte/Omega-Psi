@@ -391,7 +391,8 @@ class Insult(Category):
             if valid:
 
                 # Load insults file for insult level
-                insults = omegaPsi.getInsults()[insultLevel]
+                insults = await omegaPsi.getInsults()
+                insults = insults[insultLevel]
 
                 # Choose insult
                 target = choose(insults)
@@ -490,8 +491,8 @@ class Insult(Category):
                 if validTag or len(tags) == 0:
 
                     # Directly add to list if author is a bot moderator
-                    if OmegaPsi.isAuthorModerator(message.author):
-                        omegaPsi.addInsult(insultLevel, insult, tags)
+                    if await OmegaPsi.isAuthorModerator(message.author):
+                        await omegaPsi.addInsult(insultLevel, insult, tags)
 
                         embed = discord.Embed(
                             title = "Insult Added.",
@@ -506,10 +507,10 @@ class Insult(Category):
                     
                     # Add to pending list and send to bot moderators
                     else:
-                        omegaPsi.addPendingInsult(message.author, insultLevel, insult, tags)
+                        await omegaPsi.addPendingInsult(message.author, insultLevel, insult, tags)
 
                         # Send message to all bot moderators
-                        for moderator in OmegaPsi.getModerators():
+                        for moderator in await OmegaPsi.getModerators():
                             mod = self.client.get_user(int(moderator))
                             await mod.send(
                                 embed = discord.Embed(
@@ -630,7 +631,8 @@ class Insult(Category):
                     insultLevel = "noremorse"
                 
                 # Open insult file
-                insults = omegaPsi.getInsults()[insultLevel]
+                insults = await omegaPsi.getInsults()
+                insults = insults[insultLevel]
 
                 # Setup insults text
                 insultsFields = []
@@ -734,7 +736,7 @@ class Insult(Category):
                 value = int(parameters[0]) - 1
 
                 # Get the pending insults
-                pendingInsults = omegaPsi.getPendingInsults()["pending_insults"]
+                pendingInsults = await omegaPsi.getPendingInsults()["pending_insults"]
 
                 # See if value is within range of pending insults
                 if value >= 0 and value < len(pendingInsults):
@@ -747,7 +749,7 @@ class Insult(Category):
                     if user != None:
 
                         # Add insult to bot
-                        omegaPsi.addInsult(insult["level"], insult["insult"], insult["tags"])
+                        await omegaPsi.addInsult(insult["level"], insult["insult"], insult["tags"])
 
                         # Message user saying that it's been added
                         await user.send(
@@ -816,7 +818,7 @@ class Insult(Category):
                 reason = " ".join(parameters[1:])
 
                 # Get the pending insults
-                pendingInsults = omegaPsi.getPendingInsults()["pending_insults"]
+                pendingInsults = await omegaPsi.getPendingInsults()["pending_insults"]
 
                 # See if value is within range of pending insults
                 if value >= 0 and value < len(pendingInsults):
@@ -853,7 +855,7 @@ class Insult(Category):
                             )
                         )
 
-                    omegaPsi.removePendingInsult(value)
+                    await omegaPsi.removePendingInsult(value)
 
                     embed = discord.Embed(
                         title = "Insult Denied.",
@@ -904,7 +906,7 @@ class Insult(Category):
                 tag = parameters[1]
 
                 # Get the pending insults
-                pendingInsults = omegaPsi.getPendingInsults()["pending_insults"]
+                pendingInsults = await omegaPsi.getPendingInsults()["pending_insults"]
 
                 # See if value is within range of pending results
                 if value >= 0 and value < len(pendingInsults):
@@ -924,7 +926,7 @@ class Insult(Category):
 
                         # Add insult tag and update insult
                         insult["addedTags"].append(tag)
-                        omegaPsi.setPendingInsult(value, pendingInsults)
+                        await omegaPsi.setPendingInsult(value, pendingInsults)
 
                         embed = discord.Embed(
                             title = "Tag Added.",
@@ -974,7 +976,7 @@ class Insult(Category):
         else:
 
             # Iterate through pending insults
-            pendingInsults = omegaPsi.getPendingInsults()["pending_insults"]
+            pendingInsults = await omegaPsi.getPendingInsults()["pending_insults"]
             fields = []
             fieldText = ""
 
@@ -1051,19 +1053,20 @@ class Insult(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
             # Iterate through commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the command but don't try running others
-                    await self.run(message, cmd, cmd.getCommand(), message, parameters)
+                        # Run the command but don't try running others
+                        await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
 
 def setup(client):

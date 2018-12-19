@@ -8,19 +8,22 @@ from category.meme import Meme
 from category.misc import Misc
 from category.nsfw import NSFW
 from category.rank import Rank
+from category.updates import Updates
 from category.serverModerator import ServerModerator
 from category.botModerator import BotModerator
 
+from util.file.database import omegaPsi, loop
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
 
 from util.utils.discordUtils import sendMessage, getErrorMessage
+from util.utils.miscUtils import datetimeToString
 from util.utils.stringUtils import censor
 
+from datetime import datetime
+from functools import partial
 from supercog import Category, Command
-import discord, os
-
-scrollEmbeds = {}
+import discord, os, requests, time
 
 class Help(Category):
 
@@ -38,15 +41,28 @@ class Help(Category):
         "Math": ":asterisk:",
         "Meme": ":laughing:",
         "Misc": ":mag:",
-        "NSFW": ":no_entry_sign:", 
+        "NSFW": ":underage:", 
         "Rank": ":up:",
+        "Updates": ":new:",
         "Moderator": ":pick:",
-        "Bot": ":gear:"
+        "Owner": ":gear:"
     }
 
     MARKDOWN_LOCATION = "commands.md"
 
     GITHUB = "https://www.github.com/FellowHashbrown/omega-psi/blob/master/category/commands.md"
+
+    SUPPORT = "https://discord.gg/mvNxh3f"
+
+    GITHUB_COMMANDS = "https://www.github.com/FellowHashbrown/omega-psi/blob/master/category/commands.md"
+    GITHUB_LINK = "https://www.github.com/FellowHashbrown/omega-psi"
+
+    REPL_IT_LINK = "https://repl.it/@FellowHashbrown/Omega-Psi"
+
+    UPTIME_LINK = "https://stats.uptimerobot.com/KQG3Rc54B"
+    UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
+
+    VOTE_LINK = "https://discordbots.org/bot/503804826187071501/vote"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -118,12 +134,213 @@ class Help(Category):
             "command": self.help
         })
 
+        self._support = Command(commandDict = {
+            "alternatives": ["support", "supportServer"],
+            "info": "Gives you an invite to the support server for Omega Psi support.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the support invite, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.support
+        })
+
+        self._invite = Command(commandDict = {
+            "alternatives": ["inviteBot", "invite"],
+            "info": "Gives you a link so you can invite the bot to your own server.",
+            "can_be_deactivated": False,
+            "parameters": {
+                "permissions...": {
+                    "info": "The permissions you want the bot to have in your server.",
+                    "optional": True,
+                    "accepted_parameters": {
+                        # General Permissions
+                        "administrator": {
+                            "alternatives": ["administrator", "admin"],
+                            "info": "Gives the bot administrator privileges.",
+                        },
+                        "viewAuditLog": {
+                            "alternatives": ["viewAuditLog", "auditLog", "audit"],
+                            "info": "Gives the bot access to the audit log.",
+                        },
+                        "manageServer":{
+                            "alternatives": ["manageServer", "mngSvr"],
+                            "info": "Gives the bot permission to manage the server."
+                        },
+                        "manageRoles": {
+                            "alternatives": ["manageRoles", "mngRoles"],
+                            "info": "Gives the bot permission to manage the roles."
+                        },
+                        "manageChannels": {
+                            "alternatives": ["manageChannels", "mngChnls"],
+                            "info": "Gives the bot permission to manage the channels."
+                        },
+                        "kickMembers": {
+                            "alternatives": ["kickMembers", "kickMbrs"],
+                            "info": "Gives the bot permission to kick members."
+                        },
+                        "banMembers": {
+                            "alternatives": ["banMembers", "banMbrs"],
+                            "info": "Gives the bot permission to ban members."
+                        },
+                        "createInstantInvite": {
+                            "alternatives": ["createInstantInvite", "instantInvite", "invite"],
+                            "info": "Gives the bot permission to create an instant invite for the server."
+                        },
+                        "changeNickname": {
+                            "alternatives": ["changeNickname", "chngNick"],
+                            "info": "Gives the bot permission to change their nickname."
+                        },
+                        "manageNicknames": {
+                            "alternatives": ["manageNicknames", "mngNick"],
+                            "info": "Gives the bot permission to manage other people's nicknames."
+                        },
+                        "manageEmojis": {
+                            "alternatives": ["manageEmojis", "mngEmojis"],
+                            "info": "Gives the bot permission to manage the server's emojis."
+                        },
+                        "manageWebhooks": {
+                            "alternatives": ["manageWebhooks", "mngWbhks"],
+                            "info": "Gives the bot permission to manage the server's webhooks."
+                        },
+                        "viewChannels": {
+                            "alternatives": ["viewChannels", "viewChnls"],
+                            "info": "Gives the bot permission to view the channels."
+                        },
+
+                        # Text Permissions
+                        "sendMessages": {
+                            "alternatives": ["sendMessages", "message", "msg"],
+                            "info": "Gives the bot permission to send messages."
+                        },
+                        "sendTtsMessages": {
+                            "alternatives": ["sendTtsMessages", "ttsMessages"],
+                            "info": "Gives the bot permission to send TTS (text-to-speech) messages."
+                        },
+                        "manageMessages": {
+                            "alternatives": ["manageMessages", "mngMsgs"],
+                            "info": "Gives the bot permission to manage messages."
+                        },
+                        "embedLinks": {
+                            "alternatives": ["embedLinks", "links"],
+                            "info": "Gives the bot permission to embed links."
+                        },
+                        "attachFiles": {
+                            "alternatives": ["attachFiles", "files"],
+                            "info": "Gives the bot permission to attach files."
+                        },
+                        "readMessageHistory": {
+                            "alternatives": ["readMessageHistory", "messageHistory", "msgHist"],
+                            "info": "Gives the bot permission to read the message history."
+                        },
+                        "mentionEveryone": {
+                            "alternatives": ["mentionEveryone"],
+                            "info": "Gives the bot permission to mention everyone."
+                        },
+                        "useExternalEmojis": {
+                            "alternatives": ["useExternalEmojis", "externalEmojis", "emojis"],
+                            "info": "Gives the bot permission to use other server's emojis."
+                        },
+                        "addReactions": {
+                            "alternatives": ["addReactions", "reactions"],
+                            "info": "Gives the bot permission to react to messages."
+                        },
+
+                        # Voice Permissions
+                        "connect": {
+                            "alternatives": ["connect"],
+                            "info": "Gives the bot permission to connect to a voice channel."
+                        },
+                        "speak": {
+                            "alternatives": ["speak"],
+                            "info": "Gives the bot permission to speak in a voice channel."
+                        },
+                        "muteMembers": {
+                            "alternatives": ["muteMembers", "mute"],
+                            "info": "Gives the bot permission to mute members in a voice channel."
+                        },
+                        "deafenMembers": {
+                            "alternatives": ["deafenMembers", "deafen"],
+                            "info": "Gives the bot permission to deafen members in a voice channel."
+                        },
+                        "useMembers": {
+                            "alternatives": ["useMembers"],
+                            "info": "Gives the bot permission to move members to a different voice channel."
+                        },
+                        "useVoiceActivity": {
+                            "alternatives": ["useVoiceActivity", "useVoice", "voice"],
+                            "info": "Gives the bot permission to use voice activity in a voice channel."
+                        },
+                        "prioritySpeaker": {
+                            "alternatives": ["prioritySpeaker"],
+                            "info": "Gives the bot permission to the priority speaker."
+                        }
+                    }
+                }
+            },
+            "command": self.invite
+        })
+
+        self._vote = Command(commandDict = {
+            "alternatives": ["vote"],
+            "info": "Allows you to get a link to vote for Omega Psi on discordbots.org",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the voting link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.vote
+        })
+
+        self._github = Command(commandDict = {
+            "alternatives": ["github"],
+            "info": "Sends you the Github link for the source code.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the Github link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.github
+        })
+
+        self._replit = Command(commandDict = {
+            "alternatives": ["replit", "repl.it", "repl"],
+            "info": "Sends you the Repl.it link for the bot.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the Repl.it link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.replit
+        })
+
+        self._uptime = Command(commandDict = {
+            "alternatives": ["uptime"],
+            "info": "Sends a link to see the uptime of Omega Psi.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the uptime of Omega Psi, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.uptime
+        })
+
         self._markdown = Command(commandDict = {
             "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
             "info": "Creates and sends the markdown file for the commands.",
             "bot_moderator_only": True,
             "errors": {
-                BotModerator.TOO_MANY_PARAMETERS: {
+                Help.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "In order to get the markdown file, you don't need any parameters."
                     ]
@@ -134,6 +351,12 @@ class Help(Category):
 
         self.setCommands([
             self._help,
+            self._support,
+            self._invite,
+            self._vote,
+            self._github,
+            self._replit,
+            self._uptime,
             self._markdown
         ])
 
@@ -183,15 +406,26 @@ class Help(Category):
                 "object": Rank(None),
                 "command": "ranking"
             },
+            "Updates": {
+                "object": Updates(None),
+                "command": "updates"
+            },
             "Moderator": {
                 "object": ServerModerator(None),
                 "command": "serverMod"
             },
-            "Bot": {
+            "Owner": {
                 "object": BotModerator(None),
                 "command": "botMod"
             }
         }
+
+        amountCommands = 0
+        for category in self._categories:
+           amountCommands += len(self._categories[category]["object"].getCommands())
+        # print(amountCommands)
+
+        self._scrollEmbeds = {}
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
@@ -222,6 +456,20 @@ class Help(Category):
         return html.format(
             "\n".join(tableOfContents)
         )
+    
+    def getAllFancyHTML(self):
+        """Returns the Fancy HTML render text for all the categories in Omega Psi
+        """
+
+        # Setup HTML
+        html = ""
+
+        # Iterate through categories
+        for category in self._categories:
+            html += "  <!--{} Category-->\n".format(category)
+            html += self._categories[category]["object"].getFancyHTML() + "\n"
+        
+        return html
 
     async def getHelpMenu(self, message):
         """Returns a full help menu on all the commands in Omega Psi.\n
@@ -256,12 +504,12 @@ class Help(Category):
 
             # See if category is a Bot Moderator Category and author is a Bot Moderator
             onBotMod = self._categories[category]["object"].isBotModCategory()
-            isBotMod = OmegaPsi.isAuthorModerator(message.author)
+            isBotMod = await OmegaPsi.isAuthorModerator(message.author)
 
             # See if category is a Server Moderator Category and author is a Server Moderator
             if message.guild != None:
                 onServerMod = self._categories[category]["object"].isServerModCategory()
-                isServerMod = Server.isAuthorModerator(message.author)
+                isServerMod = await Server.isAuthorModerator(message.author)
             else:
                 onServerMod = isServerMod = False
 
@@ -352,12 +600,12 @@ class Help(Category):
 
                 # See if category is a Bot Moderator Category and author is a Bot Moderator
                 onBotMod = self._categories[category]["object"].isBotModCategory()
-                isBotMod = OmegaPsi.isAuthorModerator(message.author)
+                isBotMod = await OmegaPsi.isAuthorModerator(message.author)
 
                 # See if category is a Server Moderator Category and author is a Server Moderator
                 if message.guild != None:
                     onServerMod = self._categories[category]["object"].isServerModCategory()
-                    isServerMod = Server.isAuthorModerator(message.author)
+                    isServerMod = await Server.isAuthorModerator(message.author)
                 else:
                     onServerMod = isServerMod = False
 
@@ -441,7 +689,7 @@ class Help(Category):
                         await msg.add_reaction("➡")
                         await msg.add_reaction("⏩")
 
-                    scrollEmbeds[str(msg.id)] = {
+                    self._scrollEmbeds[str(msg.id)] = {
                         "author": str(message.author.id),
                         "fields": [],
                         "value": 0,
@@ -453,7 +701,7 @@ class Help(Category):
                     for field in categoryHelp["fields"]:
                         count += 1
 
-                        scrollEmbeds[str(msg.id)]["fields"].append({
+                        self._scrollEmbeds[str(msg.id)]["fields"].append({
                             "name": "Commands {}".format(
                                 "Page ({} / {})".format(
                                     count, len(categoryHelp["fields"])
@@ -496,7 +744,7 @@ class Help(Category):
             
             if guild != None:
                 onServerMod = category == "Server Moderator"
-                isServerMod = Server.isAuthorModerator(discordMember)
+                isServerMod = await Server.isAuthorModerator(discordMember)
             else:
                 onServerMod = isServerMod = False
 
@@ -542,6 +790,12 @@ class Help(Category):
         """Runs the help command for the bot.
         """
 
+        try:
+            self._update
+        except:
+            self._update = await omegaPsi.getUpdate()
+            self._update = self._update["version"]
+
         # Check for too many parameters
         if len(parameters) > self._help.getMaxParameters():
             embed = getErrorMessage(self._help, Help.TOO_MANY_PARAMETERS)
@@ -569,6 +823,31 @@ class Help(Category):
                     embed = await self.run(message, self._help, self.getHelpForCommand, message.author, parameters[0], isNSFW = isNSFW)
 
         if embed != None:
+
+            msg = await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                ).set_author(
+                    name = "Version {}".format(self._update)
+                )
+            ) 
+
+            if str(message.author.id) in self._scrollEmbeds:  
+                self._scrollEmbeds[str(message.author.id)]["message"] = msg
+    
+    async def support(self, message, parameters):
+        """
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._support.getMaxParameters():
+            embed = getErrorMessage(self._support, Help.TOO_MANY_PARAMETERS)
             await sendMessage(
                 self.client,
                 message,
@@ -579,7 +858,253 @@ class Help(Category):
                     ),
                     icon_url = message.author.avatar_url
                 )
-            )   
+            )
+
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Help.SUPPORT
+            )
+    
+    async def invite(self, message, parameters):
+        """Returns the link so someone can invite the bot to their own server.\n
+
+        permissions - The permissions that you want the bot to have.\n
+        """
+
+        permissions = parameters
+
+        # Set default permissions
+        permissionsInteger = 0
+
+        # Get permissions needed; If the admin permission is found, the integer will default to 8
+        adminFound = False
+
+        # Iterate through permissions
+        for permission in permissions:
+
+            # Iterate through accepted permissions
+            for acceptedPermission in self._invite.getAcceptedParameters("permissions..."):
+
+                # Permission is in the accepted permissions
+                if permission in self._invite.getAcceptedParameter("permissions...", acceptedPermission).getAlternatives():
+
+                    # Add the integer value to the permissions integer
+                    permissionsInteger += Server.PERMISSIONS[acceptedPermission]
+
+                    # Check if the accepted permission was administrator
+                    if acceptedPermission == "administrator":
+                        adminFound = True
+
+                    # Since it was found, we don't want to continue searching through the accepted permissions
+                    # We want to move to the next permission
+                    break
+
+        # The admin permission was found, default the integer to 8
+        if adminFound:
+            permissionsInteger = Server.PERMISSIONS["administrator"]
+
+        await sendMessage(
+            self.client,
+            message,
+            message = Server.BOT_INVITE.format(permissionsInteger)
+        )
+    
+    async def vote(self, message, parameters):
+        """Sends a link to discordbots.org to vote for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._vote.getMaxParameters():
+            embed = getErrorMessage(self._vote, Help.TOO_MANY_PARAMETERS)
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Help.VOTE_LINK
+            )
+    
+    async def github(self, message, parameters):
+        """Returns the Github link for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._github.getMaxParameters():
+            embed = getErrorMessage(self._github, Help.TOO_MANY_PARAMETERS)
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Help.GITHUB_LINK
+            )
+    
+    async def replit(self, message, parameters):
+        """Returns the Repl.it link for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._replit.getMaxParameters():
+            embed = getErrorMessage(self._replit, Help.TOO_MANY_PARAMETERS)
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Help.REPL_IT_LINK
+            )
+    
+    async def uptime(self, message, parameters):
+        """Returns the uptime link for the bot.
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._uptime.getMaxParameters():
+            embed = getErrorMessage(self._uptime, Help.TOO_MANY_PARAMETERS)
+
+        # There were the proper amount of parameters
+        else:
+
+            # Request the downtime from Uptime Robot
+            downtime = await loop.run_in_executor(None,
+                partial(
+                    requests.post,
+                    Help.UPTIME_API_URL,
+                    data = "api_key={}&format=json&logs=1".format(os.environ["UPTIME_API_KEY"]),
+                    headers = {
+                        'content-type': "application/x-www-form-urlencoded",
+                        'cache-control': "no-cache"
+                    }
+                )
+            )
+            downtime = downtime.json()
+
+            # Only get the data if there is no error
+            if "error" not in downtime:
+                downtimeDay = 0
+                downtimeWeek = 0
+                downtimeMonth = 0
+                recentDowntime = None
+
+                # Go through all the logs and detect the downtime (any log that is not of type 2)
+                for log in downtime["monitors"][0]["logs"]:
+
+                    # Get the most recent downtime
+                    if log["type"] != 2:
+                        if recentDowntime == None:
+                            seconds = log["duration"]
+
+                            hours = seconds // 3600
+                            seconds -= 3600 * hours
+
+                            minutes = seconds // 60
+
+                            recentDowntime = {
+                                "hours": hours,
+                                "minutes": minutes,
+                                "last": datetimeToString(datetime.fromtimestamp(log["datetime"]))
+                            }
+
+                        # Keep track of the last 24 hours
+                        if time.time() - log["datetime"] <= 60*60*24:
+                            downtimeDay += log["duration"]
+                        
+                        # Keep track of the last 7 days
+                        if time.time() - log["datetime"] <= 60*60*24*7:
+                            downtimeWeek += log["duration"]
+                        
+                        # Keep track of the last 30 days
+                        if time.time() - log["datetime"] <= 60*60*24*30:
+                            downtimeMonth += log["duration"]
+                
+                # Keep uptime in separate fields
+                fields = {
+                    "Last 24 Hours": round(100 - (downtimeDay / (60 * 60 * 24) * 100), 2),
+                    "Last 7 Days": round(100 - (downtimeWeek / (60 * 60 * 24 * 7) * 100), 2),
+                    "Last 30 Days": round(100 - (downtimeMonth / (60 * 60 * 25 * 30) * 100), 2)
+                }
+
+                # Put the text for the most recent downtime in its own text
+                recentDowntime = "The latest downtime happened on {} for {} hr{} {} min{}".format(
+                    recentDowntime["last"],
+                    recentDowntime["hours"], "s" if recentDowntime["hours"] != 1 else "",
+                    recentDowntime["minutes"], "s" if recentDowntime["minutes"] != 1 else ""
+                )
+                
+                # Create the embed and add the fields
+                embed = discord.Embed(
+                    title = "Omega Psi Uptime",
+                    description = recentDowntime,
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                    url = Help.UPTIME_LINK
+                )
+
+                for field in fields:
+                    embed.add_field(
+                        name = field,
+                        value = str(fields[field]) + "%"
+                    )
+            
+            # There was an error
+            else:
+                embed = discord.Embed(
+                    title = downtime["error"],
+                    description = " ",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
 
     async def markdown(self, message, parameters):
         """Returns the markdown file for the commands.\n"
@@ -657,24 +1182,76 @@ class Help(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
             # Iterate through Commands
             for cmd in self.getCommands():
                 if command in cmd.getAlternatives():
+                    async with message.channel.typing():
 
-                    # Run the comand but don't try running others
-                    await cmd.getCommand()(message, parameters)
+                        # Run the comand but don't try running others
+                        await cmd.getCommand()(message, parameters)
                     break
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Scrollable Embeds
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def manage_scrolling(self, reaction, member):
+        """Manages the scrolling of any help embeds
+        """
+
+        # Check for message ID in scrollable embeds
+        messageId = str(reaction.message.id)
+        if messageId in self._scrollEmbeds:
+            initial = self._scrollEmbeds[messageId]["value"]
+
+            # Check if the member ID is the same as the stored ID
+            if str(member.id) == self._scrollEmbeds[messageId]["author"]:
+
+                # Rewind reaction was added; Move to first field
+                if str(reaction) == "⏪":
+                    self._scrollEmbeds[messageId]["value"] = self._scrollEmbeds[messageId]["min"]
+                
+                # Fast Forward reaction was added; Move to last field
+                elif str(reaction) == "⏩":
+                    self._scrollEmbeds[messageId]["value"] = self._scrollEmbeds[messageId]["max"]
+                
+                # Arrow Left reaction was added; Move field left
+                elif str(reaction) == "⬅":
+                    self._scrollEmbeds[messageId]["value"] -= 1
+                    if self._scrollEmbeds[messageId]["value"] < self._scrollEmbeds[messageId]["min"]:
+                        self._scrollEmbeds[messageId]["value"] = self._scrollEmbeds[messageId]["min"]
+                
+                # Arrow Right reaction was added; Move field right
+                elif str(reaction) == "➡":
+                    self._scrollEmbeds[messageId]["value"] += 1
+                    if self._scrollEmbeds[messageId]["value"] > self._scrollEmbeds[messageId]["max"]:
+                        self._scrollEmbeds[messageId]["value"] = self._scrollEmbeds[messageId]["max"]
+                
+            # Update the scroll embed
+            if self._scrollEmbeds[messageId]["value"] != initial:
+                value = self._scrollEmbeds[messageId]["value"]
+                
+                # Get the embed that is stored; There will only be 1 always
+                embed = reaction.message.embeds[0]
+
+                # Set the field at 0
+                embed.set_field_at(0,
+                    name = self._scrollEmbeds[messageId]["fields"][value]["name"],
+                    value = self._scrollEmbeds[messageId]["fields"][value]["value"],
+                    inline = self._scrollEmbeds[messageId]["fields"][value]["inline"]
+                )
+
+                # Update the embed
+                await reaction.message.edit(
+                    embed = embed
+                )
 
     async def on_reaction_add(self, reaction, member):
         """Determines which reaction was added to a message. Only reactions right now are
@@ -684,53 +1261,7 @@ class Help(Category):
         :rewind: which tells the embed to go back to the beginning.
         :fast_forward: which tells the embed to go to the end.
         """
-
-        # Check for message ID in scrollable embeds
-        messageId = str(reaction.message.id)
-        if messageId in scrollEmbeds:
-            initial = scrollEmbeds[messageId]["value"]
-
-            # Check if the member ID is the same as the stored ID
-            if str(member.id) == scrollEmbeds[messageId]["author"]:
-
-                # Rewind reaction was added; Move to first field
-                if str(reaction) == "⏪":
-                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
-                
-                # Fast Forward reaction was added; Move to last field
-                elif str(reaction) == "⏩":
-                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
-                
-                # Arrow Left reaction was added; Move field left
-                elif str(reaction) == "⬅":
-                    scrollEmbeds[messageId]["value"] -= 1
-                    if scrollEmbeds[messageId]["value"] < scrollEmbeds[messageId]["min"]:
-                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
-                
-                # Arrow Right reaction was added; Move field right
-                elif str(reaction) == "➡":
-                    scrollEmbeds[messageId]["value"] += 1
-                    if scrollEmbeds[messageId]["value"] > scrollEmbeds[messageId]["max"]:
-                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
-                
-            # Update the scroll embed
-            if scrollEmbeds[messageId]["value"] != initial:
-                value = scrollEmbeds[messageId]["value"]
-                
-                # Get the embed that is stored; There will only be 1 always
-                embed = reaction.message.embeds[0]
-
-                # Set the field at 0
-                embed.set_field_at(0,
-                    name = scrollEmbeds[messageId]["fields"][value]["name"],
-                    value = scrollEmbeds[messageId]["fields"][value]["value"],
-                    inline = scrollEmbeds[messageId]["fields"][value]["inline"]
-                )
-
-                # Update the embed
-                await reaction.message.edit(
-                    embed = embed
-                )
+        await self.manage_scrolling(reaction, member)
     
     async def on_reaction_remove(self, reaction, member):
         """Determines which reaction was removed from a message. Only reactions right now are
@@ -740,53 +1271,7 @@ class Help(Category):
         :rewind: which tells the embed to go back to the beginning.
         :fast_forward: which tells the embed to go to the end.
         """
-
-        # Check for message ID in scrollable embeds
-        messageId = str(reaction.message.id)
-        if messageId in scrollEmbeds:
-            initial = scrollEmbeds[messageId]["value"]
-
-            # Check if the member ID is the same as the stored ID
-            if str(member.id) == scrollEmbeds[messageId]["author"]:
-
-                # Rewind reaction was added; Move to first field
-                if str(reaction) == "⏪":
-                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
-                
-                # Fast Forward reaction was added; Move to last field
-                elif str(reaction) == "⏩":
-                    scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
-                
-                # Arrow Left reaction was added; Move field left
-                elif str(reaction) == "⬅":
-                    scrollEmbeds[messageId]["value"] -= 1
-                    if scrollEmbeds[messageId]["value"] < scrollEmbeds[messageId]["min"]:
-                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["min"]
-                
-                # Arrow Right reaction was added; Move field right
-                elif str(reaction) == "➡":
-                    scrollEmbeds[messageId]["value"] += 1
-                    if scrollEmbeds[messageId]["value"] > scrollEmbeds[messageId]["max"]:
-                        scrollEmbeds[messageId]["value"] = scrollEmbeds[messageId]["max"]
-                
-            # Update the scroll embed
-            if scrollEmbeds[messageId]["value"] != initial:
-                value = scrollEmbeds[messageId]["value"]
-                
-                # Get the embed that is stored; There will only be 1 always
-                embed = reaction.message.embeds[0]
-
-                # Set the field at 0
-                embed.set_field_at(0,
-                    name = scrollEmbeds[messageId]["fields"][value]["name"],
-                    value = scrollEmbeds[messageId]["fields"][value]["value"],
-                    inline = scrollEmbeds[messageId]["fields"][value]["inline"]
-                )
-
-                # Update the embed
-                await reaction.message.edit(
-                    embed = embed
-                )
+        await self.manage_scrolling(reaction, member)
 
 def setup(client):
     client.add_cog(Help(client))

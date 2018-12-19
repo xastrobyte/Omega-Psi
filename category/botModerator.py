@@ -8,6 +8,7 @@ from category.meme import Meme
 from category.misc import Misc
 from category.nsfw import NSFW
 from category.rank import Rank
+from category.updates import Updates
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
@@ -161,21 +162,6 @@ class BotModerator(Category):
             "command": self.deactivate
         })
 
-        self._info = Command(commandDict = {
-            "alternatives": ["botInfo", "bi"],
-            "info": "Allows you to get the info about the bot.",
-            "bot_moderator_only": True,
-            "max_parameters": 0,
-            "errors": {
-                BotModerator.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get info about the bot, or the servers it's in, you don't need anything else."
-                    ]
-                }
-            },
-            "command": self.getInfo
-        })
-
         self._servers = Command(commandDict = {
             "alternatives": ["servers", "botServers"],
             "info": "Allows you to get a list of servers the bot is in.",
@@ -323,7 +309,6 @@ class BotModerator(Category):
             self._removeModerator,
             self._activate,
             self._deactivate,
-            self._info,
             self._servers,
             self._status,
             self._todo,
@@ -341,7 +326,8 @@ class BotModerator(Category):
             "Meme": Meme(None),
             "Misc": Misc(None),
             "NSFW": NSFW(None),
-            "Rank": Rank(None)
+            "Rank": Rank(None),
+            "Updates": Updates(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -367,7 +353,7 @@ class BotModerator(Category):
             for member in message.mentions:
                 result += "{} {}".format(
                     member.mention,
-                    " was successfully added as a bot moderator." if OmegaPsi.addModerator(member) else (
+                    " was successfully added as a bot moderator." if await OmegaPsi.addModerator(member) else (
                         " is already a bot moderator."
                     )
                 )
@@ -409,7 +395,7 @@ class BotModerator(Category):
             for member in message.mentions:
                 result += "{} {} a bot moderator.".format(
                     member.mention,
-                    "was successfully removed as" if OmegaPsi.removeModerator(member) else (
+                    "was successfully removed as" if await OmegaPsi.removeModerator(member) else (
                         "is not"
                     )
                 )
@@ -450,7 +436,7 @@ class BotModerator(Category):
             commands = parameters
             
             # Open bot file
-            bot = OmegaPsi.openOmegaPsi()
+            bot = await OmegaPsi.openOmegaPsi()
 
             # Iterate through commands
             if len(commands) > 0:
@@ -492,7 +478,7 @@ class BotModerator(Category):
                 bot["inactive_commands"] = {}
             
             # Close bot file
-            OmegaPsi.closeOmegaPsi(bot)
+            await OmegaPsi.closeOmegaPsi(bot)
             
             embed = discord.Embed(
                 name = "Activated",
@@ -534,7 +520,7 @@ class BotModerator(Category):
                 reason = " ".join(parameters[1:])
             
             # Open bot file
-            bot = OmegaPsi.openOmegaPsi()
+            bot = await OmegaPsi.openOmegaPsi()
 
             # Check if command is valid
             commandObject = None
@@ -554,7 +540,7 @@ class BotModerator(Category):
                 )
             
             # Close bot file
-            OmegaPsi.closeOmegaPsi(bot)
+            await OmegaPsi.closeOmegaPsi(bot)
 
             embed = discord.Embed(
                 name = "Deactivated",
@@ -562,63 +548,6 @@ class BotModerator(Category):
                 colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
-        await sendMessage(
-            self.client,
-            message,
-            embed = embed.set_footer(
-                text = "Requested by {}#{}".format(
-                    message.author.name,
-                    message.author.discriminator
-                ),
-                icon_url = message.author.avatar_url
-            )
-        )
-    
-    async def getInfo(self, message, parameters):
-        """Returns the info on the bot.\n
-        """
-
-        # Check if parameters exceeds maximum parameter
-        if len(parameters) > self._info.getMaxParameters():
-            embed = getErrorMessage(self._info, BotModerator.TOO_MANY_PARAMETERS)
-        
-        # Parameters do not exceed maximum parameters
-        else:
-
-            # Open the bot info
-            omegaPsi = OmegaPsi.openOmegaPsi()
-
-            # Add a list of bot moderators and inactive commands
-            botModerators = ""
-            for moderator in omegaPsi["moderators"]:
-                botModerators += "<@{}>\n".format(moderator)
-        
-            inactiveCommands = ""
-            for command in omegaPsi["inactive_commands"]:
-                inactiveCommands += "{}\nReason: {}\n".format(
-                    command, omegaPsi["inactive_commands"][command]
-                )
-
-            # Set these up in a dictionary to add to an embed
-            tags = {
-                "Bot Moderators": botModerators,
-                "Inactive Commands": inactiveCommands
-            }
-
-            # Create the embed and add the tags as fields
-            embed = discord.Embed(
-                title = "Omega Psi",
-                description = "Owner: <@{}>".format(omegaPsi["owner"]),
-                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
-            )
-
-            for tag in tags:
-                embed.add_field(
-                    name = tag,
-                    value = tags[tag] if len(tags[tag]) > 0 else "None",
-                    inline = False
-                )
-            
         await sendMessage(
             self.client,
             message,
@@ -695,7 +624,7 @@ class BotModerator(Category):
                 for guild in self.client.guilds:
 
                     # Load file
-                    server = Server.openServer(guild)
+                    server = await Server.openServer(guild)
 
                     # Add server information (owner, name)
                     try:
@@ -797,8 +726,8 @@ class BotModerator(Category):
                 activityText = "Watching"
             
             # Update the bot's activity setting
-            OmegaPsi.setActivityType(activityType)
-            OmegaPsi.setActivityName(text)
+            await OmegaPsi.setActivityType(activityType)
+            await OmegaPsi.setActivityName(text)
 
             # Change the presence of the bot
             await self.client.change_presence(
@@ -841,7 +770,7 @@ class BotModerator(Category):
         # Check for no parameters; list the TODO list
         if len(parameters) == 0:
 
-            todoList = OmegaPsi.getToDoList()
+            todoList = await OmegaPsi.getToDoList()
             todoText = ""
             for item in range(len(todoList)):
                 todoText += "`{}.) {}`\n".format(
@@ -874,7 +803,7 @@ class BotModerator(Category):
                     index = 0
                     item = " ".join(parameters[1:])
 
-                success = OmegaPsi.addToDo(item, index)
+                success = await OmegaPsi.addToDo(item, index)
 
                 embed = discord.Embed(
                     title = "Added TODO Item" if success["success"] else "Failed to add TODO Item",
@@ -883,7 +812,7 @@ class BotModerator(Category):
                 )
 
             elif action in self._todo.getAcceptedParameter("action", "remove").getAlternatives():
-                success = OmegaPsi.removeToDo(" ".join(parameters[1:]))
+                success = await OmegaPsi.removeToDo(" ".join(parameters[1:]))
 
                 embed = discord.Embed(
                     title = "Removed TODO Item" if success["success"] else "Failed to remove TODO Item",
@@ -984,10 +913,10 @@ class BotModerator(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

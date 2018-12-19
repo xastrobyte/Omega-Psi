@@ -1,4 +1,4 @@
-from util.file.database import loop
+from util.file.database import loop, omegaPsi
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
 from util.file.user import User
@@ -20,6 +20,33 @@ from functools import partial
 from random import choice as choose
 from supercog import Category, Command
 import discord, os, requests
+
+scrollEmbeds = {}
+reactions = ["⏪", "⬅", "➡", "⏩"]
+columns = [
+    "1\u20e3",
+    "2\u20e3",
+    "3\u20e3",
+    "4\u20e3",
+    "5\u20e3",
+    "6\u20e3",
+    "7\u20e3",
+    "❌"
+]
+spots = [
+    "1\u20e3",
+    "2\u20e3",
+    "3\u20e3",
+    "4\u20e3",
+    "5\u20e3",
+    "6\u20e3",
+    "7\u20e3",
+    "8\u20e3",
+    "9\u20e3",
+    "❌"
+]
+
+quitReaction = "❌"
 
 class Game(Category):
 
@@ -366,6 +393,78 @@ class Game(Category):
             "command": self.stats
         })
 
+        self._addHangman = Command(commandDict = {
+            "alternatives": ["addHangman", "hangmanAdd"],
+            "info": "Adds a hangman word/phrase to the database.",
+            "bot_moderator_only": True,
+            "parameters": {
+                "difficulty": {
+                    "info": "The difficulty of the phrase to add it to.",
+                    "optional": False,
+                    "accepted": {
+                        "easy": {
+                            "alternatives": ["easy", "e"],
+                            "info": "Add the phrase to the easy difficulty level."
+                        },
+                        "medium": {
+                            "alternatives": ["medium", "m"],
+                            "info": "Add the phrase to the medium difficulty level."
+                        },
+                        "hard": {
+                            "alternatives": ["hard", "h"],
+                            "info": "Add the phrase to the hard difficulty level."
+                        }
+                    }
+                },
+                "phrase": {
+                    "info": "The phrase to add to the hangman words.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Game.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "To add a word/phrase to hangman, you need the difficulty and the word/phrase."
+                    ]
+                },
+                Game.INVALID_DIFFICULTY: {
+                    "messages": [
+                        "That is an invalid difficulty."
+                    ]
+                }
+            },
+            "command": self.addHangman
+        })
+
+        self._addScramble = Command(commandDict = {
+            "alternatives": ["addScramble", "scrambleAdd"],
+            "info": "Adds a scramble word/phrase to the database.",
+            "bot_moderator_only": True,
+            "parameters": {
+                "hints": {
+                    "info": "A list of hints, separated by commas, to add to the word/phrase.",
+                    "optional": False
+                },
+                "phrase": {
+                    "info": "The phrase to add",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Game.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "To add a word/phrase to scramble, you need the difficulty, any hints (separated by commas), and the word/phrase."
+                    ]
+                },
+                Game.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You have too many parameters for this. You just need the difficulty, any hints (separated by commas), and the word/phrase."
+                    ]
+                }
+            },
+            "command": self.addScramble
+        })
+
         self._blackOps3 = Command(commandDict = {
             "alternatives": ["blackOps3", "blackops3", "bo3"],
             "info": "Gives you stats on a specific player in Black Ops 3",
@@ -540,6 +639,8 @@ class Game(Category):
             self._scramble,
             self._ticTacToe,
             self._stats,
+            self._addHangman,
+            self._addScramble,
 
             self._blackOps3,
             self._blackOps4,
@@ -586,6 +687,7 @@ class Game(Category):
         embed = None
         noError = False
         finishedGame = None
+        initialState = move
         if move == None:
 
             # Check for too many parameters
@@ -614,10 +716,14 @@ class Game(Category):
                 else:
 
                     # Create game instance
-                    self._connectFourGames[serverId][authorId] = connectFour.ConnectFour(
-                        message.author
-                    )
-                    game = self._connectFourGames[serverId][authorId]
+                    self._connectFourGames[serverId][authorId] = {
+                        "game": connectFour.ConnectFour(
+                            message.author
+                        ),
+                        "original_message": message,
+                        "message": None
+                    }
+                    game = self._connectFourGames[serverId][authorId]["game"]
 
                     embed = discord.Embed(
                         title = "Connect Four",
@@ -634,7 +740,7 @@ class Game(Category):
         
         # Check if move is being made
         elif move != None:
-            game = self._connectFourGames[serverId][authorId]
+            game = self._connectFourGames[serverId][authorId]["game"]
 
             # Check if move is not number
             try:
@@ -688,28 +794,32 @@ class Game(Category):
 
                         finishedGame = game
 
-                        User.updateConnectFour(game.getChallenger(), didWin = move)
+                        await User.updateConnectFour(game.getChallenger(), didWin = move)
                         if game.getOpponent() != None:
-                            User.updateConnectFour(game.getOpponent(), didWin = not move)
+                            await User.updateConnectFour(game.getOpponent(), didWin = not move)
 
                         self._connectFourGames[serverId].pop(authorId)
 
             except:
                 embed = getErrorMessage(self._connectFour, Game.INVALID_INPUT)
         
-        msg = await sendMessage(
-            self.client,
-            message,
-            embed = embed
-        )
+        if initialState == None or finishedGame:
+            msg = await sendMessage(
+                self.client,
+                message,
+                embed = embed
+            )
 
         if not finishedGame:
             if noError:
-                if self._connectFourGames[serverId][authorId].getPrevious() != None:
-                    await self._connectFourGames[serverId][authorId].getPrevious().delete()
-                self._connectFourGames[serverId][authorId].setPrevious(msg)
-        else:
-            await finishedGame.getPrevious().delete()
+                if initialState != None:
+                    await self._connectFourGames[serverId][authorId]["message"].edit(
+                        embed = embed
+                    )
+                else:
+                    for reaction in columns:
+                        await msg.add_reaction(reaction)
+                    self._connectFourGames[serverId][authorId]["message"] = msg
 
     async def hangman(self, message, parameters, *, guess = None):
         """Creates a hangman game or continues a hangman game.\n
@@ -783,10 +893,10 @@ class Game(Category):
                     if validDifficulty:
                     
                         # Create game instance
-                        self._hangmanGames[serverId][authorId] = hangman.Hangman(
-                            message.author,
-                            difficulty
-                        )
+                        game = hangman.Hangman(message.author, difficulty)
+                        await game.generateWord()
+
+                        self._hangmanGames[serverId][authorId] = game
                         game = self._hangmanGames[serverId][authorId]
 
                         embed = discord.Embed(
@@ -827,7 +937,7 @@ class Game(Category):
                 noError = True
                 finishedGame = self._hangmanGames[serverId][authorId]
 
-                User.updateHangman(game.getPlayer(), didWin = True)
+                await User.updateHangman(game.getPlayer(), didWin = True)
 
                 self._hangmanGames[serverId].pop(authorId)
             
@@ -855,7 +965,7 @@ class Game(Category):
                 noError = True
                 finishedGame = self._hangmanGames[serverId][authorId]
 
-                User.updateHangman(game.getPlayer(), didWin = False)
+                await User.updateHangman(game.getPlayer(), didWin = False)
 
                 self._hangmanGames[serverId].pop(authorId)
             
@@ -877,14 +987,14 @@ class Game(Category):
                 noError = True
                 finishedGame = self._hangmanGames[serverId][authorId]
 
-                User.updateHangman(game.getPlayer(), didWin = True)
+                await User.updateHangman(game.getPlayer(), didWin = True)
 
                 self._hangmanGames[serverId].pop(authorId)
             
             # Guess was a correct/incorrect letter
             elif guess in [True, False]:
 
-                return discord.Embed(
+                embed = discord.Embed(
                     title = "Hangman",
                     description = "{}\nGuesses: {}".format(
                         game.getHangmanWord(),
@@ -909,7 +1019,7 @@ class Game(Category):
             if noError:
                 if self._hangmanGames[serverId][authorId].getPrevious() != None:
                     await self._hangmanGames[serverId][authorId].getPrevious().delete()
-                self._hangman[serverId][authorId].setPrevious(msg)
+                self._hangmanGames[serverId][authorId].setPrevious(msg)
         else:
             await finishedGame.getPrevious().delete()
     
@@ -968,7 +1078,7 @@ class Game(Category):
                 ):
                     title = "You Won!"
                     icon = Game.SUCCESS_ICON
-                    User.updateRPS(message.author, didWin = True)
+                    await User.updateRPS(message.author, didWin = True)
 
                 elif (
                     (botRps == "rock" and userRps == "scissors") or
@@ -977,7 +1087,7 @@ class Game(Category):
                 ):
                     title = "You Lost!"
                     icon = Game.FAILED_ICON
-                    User.updateRPS(message.author, didWin = False)
+                    await User.updateRPS(message.author, didWin = False)
                 
                 embed = discord.Embed(
                     title = title,
@@ -1061,10 +1171,10 @@ class Game(Category):
                     if validDifficulty:
 
                         # Create game
-                        self._scrambleGames[serverId][authorId] = scramble.Scramble(
-                            message.author,
-                            difficulty
-                        )
+                        game = scramble.Scramble(message.author, difficulty)
+                        await game.generateWord()
+
+                        self._scrambleGames[serverId][authorId] = game
                         game = self._scrambleGames[serverId][authorId]
 
                         # Return embed
@@ -1105,7 +1215,7 @@ class Game(Category):
                     noError = True
                     finishedGame = self._scrambleGames[serverId][authorId]
 
-                    User.updateScramble(game.getPlayer(), didWin = True)
+                    await User.updateScramble(game.getPlayer(), didWin = True)
 
                     self._scrambleGames[serverId].pop(authorId)
                 
@@ -1124,7 +1234,7 @@ class Game(Category):
                     noError = True
                     finishedGame = self._scrambleGames[serverId][authorId]
 
-                    User.updateScramble(game.getPlayer(), didWin = False)
+                    await User.updateScramble(game.getPlayer(), didWin = False)
 
                     self._scrambleGames[serverId].pop(authorId)
                 
@@ -1184,6 +1294,7 @@ class Game(Category):
         embed = None
         noError = False
         finishedGame = None
+        initialState = move
         if move == None:
 
             # Check for too many parameters
@@ -1212,12 +1323,16 @@ class Game(Category):
                 else:
 
                     # Create game
-                    self._ticTacToeGames[serverId][authorId] = ticTacToe.TicTacToe(
-                        difficulty if difficulty not in [None, ""] else "easy",
-                        message.author
-                    )
+                    self._ticTacToeGames[serverId][authorId] = {
+                        "game": ticTacToe.TicTacToe(
+                            difficulty if difficulty not in [None, ""] else "easy",
+                            message.author
+                        ),
+                        "original_message": message,
+                        "message": None
+                    }
 
-                    game = self._ticTacToeGames[serverId][authorId]
+                    game = self._ticTacToeGames[serverId][authorId]["game"]
 
                     embed = discord.Embed(
                         title = "Tic Tac Toe",
@@ -1234,7 +1349,7 @@ class Game(Category):
         
         # There was a move; See what move it was
         elif move != None:
-            game = self._ticTacToeGames[serverId][authorId]
+            game = self._ticTacToeGames[serverId][authorId]["game"]
 
             # Check if move is not number
             try:
@@ -1313,9 +1428,9 @@ class Game(Category):
                         finishedGame = self._ticTacToeGames[serverId][authorId]
 
                         # Update scores
-                        User.updateTicTacToe(game.getChallenger(), didWin = moveCheck)
+                        await User.updateTicTacToe(game.getChallenger(), didWin = moveCheck)
                         if game.getOpponent() != None:
-                            User.updateTicTacToe(game.getOpponent(), didWin = not moveCheck)
+                            await User.updateTicTacToe(game.getOpponent(), didWin = not moveCheck)
 
                         # Remove game instance
                         self._ticTacToeGames[serverId].pop(authorId)
@@ -1323,20 +1438,23 @@ class Game(Category):
             except:
                 embed = getErrorMessage(self._ticTacToe, Game.INVALID_INPUT)
         
-        msg = await sendMessage(
-            self.client,
-            message,
-            embed = embed
-        )
+        if initialState == None or finishedGame or not noError:
+            msg = await sendMessage(
+                self.client,
+                message,
+                embed = embed
+            )
 
         if not finishedGame:
             if noError:
-                if self._ticTacToeGames[serverId][authorId].getPrevious() != None:
-                    await self._ticTacToeGames[serverId][authorId].getPrevious().delete()
-                self._ticTacToeGames[serverId][authorId].setPrevious(msg)
-        
-        else:
-            await finishedGame.getPrevious().delete()
+                if initialState != None:
+                    await self._ticTacToeGames[serverId][authorId]["message"].edit(
+                        embed = embed
+                    )
+                else:
+                    for reaction in spots:
+                        await msg.add_reaction(reaction)
+                    self._ticTacToeGames[serverId][authorId]["message"] = msg
     
     async def stats(self, message, parameters):
         """Shows the stats for the specified Discord User.\n
@@ -1353,7 +1471,7 @@ class Game(Category):
         else:
 
             # Open user file
-            user = User.openUser(message.author)
+            user = await User.openUser(message.author)
 
             # Get game stats
             games = {
@@ -1365,7 +1483,7 @@ class Game(Category):
             }
 
             # Close user file
-            User.closeUser(user)
+            await User.closeUser(user)
 
             embed = discord.Embed(
                 title = "Stats",
@@ -1398,6 +1516,94 @@ class Game(Category):
             self.client,
             message,
             embed = embed
+        )
+    
+    async def addHangman(self, message, parameters):
+        """Adds a word/phrase to Hangman
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._addHangman.getMinParameters():
+            embed = getErrorMessage(self._addHangman, Game.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            difficulty = parameters[0]
+            phrase = " ".join(parameters[1:])
+
+            # Make sure difficulty is valid
+            validDifficulty = False
+            for accepted in self._addHangman.getAcceptedParameters("difficulty"):
+                if difficulty in self._addHangman.getAcceptedParameter("difficulty", accepted).getAlternatives():
+                    difficulty = accepted
+                    validDifficulty = True
+                    break
+            
+            # Difficulty was valid
+            if validDifficulty:
+                omegaPsi.addHangman(difficulty, phrase)
+
+                embed = discord.Embed(
+                    title = "Hangman Phrase Added",
+                    description = "**Phrase: {}**\n**Difficulty: {}**\n".format(
+                        phrase, difficulty
+                    ),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            # Difficulty was not valid
+            else:
+                embed = getErrorMessage(self._addHangman, Game.INVALID_DIFFICULTY)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def addScramble(self, message, parameters):
+        """Adds a word/phrase to Scramble
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._addScramble.getMinParameters():
+            embed = getErrorMessage(self._addScramble, Game.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._addScramble.getMaxParameters():
+            embed = getErrorMessage(self._addScramble, Game.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            hints = parameters[0].split(",")
+            phrase = parameters[1]
+            
+            omegaPsi.addScramble(hints, phrase)
+
+            embed = discord.Embed(
+                title = "Scramble Phrase Added",
+                description = "**Phrase: {}**\n**Hints: {}**\n".format(
+                    phrase, ", ".join(hints)
+                ),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
         )
     
     async def blackOps3(self, message, parameters):
@@ -1780,7 +1986,7 @@ class Game(Category):
             )
             leagueMatchesJson = leagueMatchesJson.json()
 
-            # Request the first 5 matches data
+            # Request the first 20 matches data
             matches = []
             count = 0
             for match in leagueMatchesJson["matches"]:
@@ -1800,31 +2006,46 @@ class Game(Category):
 
                 matches.append(leagueMatchJson)
 
-                if count >= 5:
+                if count >= 10:
                     break
-
-            # Setup embed
-            embed = discord.Embed(
-                title = "League of Legends Stats",
-                description = "5 Most Recent Games for **{}**".format(leagueJson["name"]),
-                colour = self.getEmbedColor(),
-                timestamp = datetime.now()
-            ).set_author(
-                name = leagueJson["name"],
-                icon_url = Game.LEAGUE_ICON_URL.format(version, leagueJson["profileIconId"])
-            ).set_footer(
-                text = "Riot Games API"
-            )
-
-            # Add each game's data
-            for match in matches:
-                embed = league.getMatchStats(embed, match, leagueJson["accountId"])
             
-        await sendMessage(
+            # Create scrollable embeds
+            scroll = {
+                "embeds": [],
+                "value": 0
+            }
+            count = 0
+            for match in matches:
+                count += 1
+
+                # Setup embed
+                embed = discord.Embed(
+                    title = "League of Legends Stats",
+                    description = "({} / 10) Most Recent Game for **{}**".format(count, leagueJson["name"]),
+                    colour = self.getEmbedColor(),
+                    timestamp = datetime.now()
+                ).set_author(
+                    name = leagueJson["name"],
+                    icon_url = Game.LEAGUE_ICON_URL.format(version, leagueJson["profileIconId"])
+                ).set_footer(
+                    text = "Riot Games API"
+                )
+
+                embed = league.getMatchStats(embed, match, leagueJson["accountId"])
+
+                scroll["embeds"].append(embed)
+            
+            scrollEmbeds[str(message.author.id)] = scroll
+            embed = scroll["embeds"][0]
+            
+        msg = await sendMessage(
             self.client,
             message,
             embed = embed
         )
+
+        for reaction in reactions:
+            await msg.add_reaction(reaction)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Helper Methods
@@ -1873,10 +2094,10 @@ class Game(Category):
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
             
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -1894,11 +2115,7 @@ class Game(Category):
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         # Only run games if prefix is not found
-        if not Server.startsWithPrefix(message.guild, message.content):
-
-            # Connect Four
-            if self.isPlayerInGame(self._connectFourGames, message.author, message.guild):
-                await self.connectFour(message, [], move = message.content)
+        elif not (await Server.startsWithPrefix(message.guild, message.content)):
 
             # Hangman
             if self.isPlayerInGame(self._hangmanGames, message.author, message.guild):
@@ -1907,10 +2124,130 @@ class Game(Category):
             # Scramble
             if self.isPlayerInGame(self._scrambleGames, message.author, message.guild):
                 await self.scramble(message, [], guess = message.content)
-            
-            # Tic Tac Toe
-            if self.isPlayerInGame(self._ticTacToeGames, message.author, message.guild):
-                await self.ticTacToe(message, [], move = message.content)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Reactions
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def on_reaction_add(self, reaction, member):
+        """Determines which reaction was added to a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+        await self.manage_scrolling(reaction, member)
+        await self.manage_games(reaction, member)
+        
+    
+    async def on_reaction_remove(self, reaction, member):
+        """Determines which reaction was removed from a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+        await self.manage_scrolling(reaction, member)
+        await self.manage_games(reaction, member)
+
+    async def manage_scrolling(self, reaction, member):
+        """Manages any scrolling embeds that exist
+        """
+
+        # See if the member has a scrolling embed in the list
+        if str(member.id) in scrollEmbeds:
+            initial = scrollEmbeds[str(member.id)]["value"]
+
+            # User wants to go to the beginning
+            if str(reaction) == "⏪":
+                scrollEmbeds[str(member.id)]["value"] = 0
+
+            # User wants to go to the end
+            elif str(reaction) == "⏩":
+                scrollEmbeds[str(member.id)]["value"] = len(scrollEmbeds[str(member.id)]["embeds"]) - 1
+
+            # User wants to go left
+            elif str(reaction) == "⬅":
+                scrollEmbeds[str(member.id)]["value"] -= 1
+                if scrollEmbeds[str(member.id)]["value"] < 0:
+                    scrollEmbeds[str(member.id)]["value"] = 0
+
+            # User wants to go right
+            elif str(reaction) == "➡":
+                scrollEmbeds[str(member.id)]["value"] += 1
+                if scrollEmbeds[str(member.id)]["value"] > len(scrollEmbeds[str(member.id)]["embeds"]) - 1:
+                    scrollEmbeds[str(member.id)]["value"] = len(scrollEmbeds[str(member.id)]["embeds"]) - 1
+
+            # Update the embed if necessary
+            if scrollEmbeds[str(member.id)]["value"] != initial:
+                value = scrollEmbeds[str(member.id)]["value"]
+
+                await reaction.message.edit(
+                    embed = scrollEmbeds[str(member.id)]["embeds"][value]
+                )
+    
+    async def manage_games(self, reaction, member):
+        """Manages any games that are being played
+        """
+
+        try:
+            guild = member.guild
+            serverId = str(guild.id)
+        except:
+            guild = None
+            serverId = "private"
+        
+        authorId = str(member.id)
+
+        # See if the member is playing a Connect four game
+        if self.isPlayerInGame(self._connectFourGames, member, guild):
+            origMessage = self._connectFourGames[serverId][authorId]["original_message"]
+            message = self._connectFourGames[serverId][authorId]["message"]
+
+            # Make sure the reactor is the author of the original message
+            # We don't want other people overriding the message
+
+            # Also make sure that the message is the same as the sent message
+            if origMessage.author.id == member.id and reaction.message.id == message.id:
+                if str(reaction) in columns and str(reaction) != quitReaction:
+                    move = columns.index(str(reaction)) + 1
+                    await self.connectFour(
+                        self._connectFourGames[serverId][authorId]["original_message"],
+                        [],
+                        move = str(move)
+                    )
+                
+                if str(reaction) == quitReaction:
+                    await self.connectFour(
+                        self._connectFourGames[serverId][authorId]["original_message"],
+                        ["quit"]
+                    )
+        
+        # See if member is playing a Tic Tac Toe game
+        if self.isPlayerInGame(self._ticTacToeGames, member, guild):
+            origMessage = self._ticTacToeGames[serverId][authorId]["original_message"]
+            message = self._ticTacToeGames[serverId][authorId]["message"]
+
+            # Make sure the reactor is the author of the original message
+            # We don't want other people overriding the message
+
+            # Also make sure that the message is the same as the sent message
+            if origMessage.author.id == member.id and reaction.message.id == message.id:
+                if str(reaction) in spots and str(reaction) != quitReaction:
+                    move = spots.index(str(reaction)) + 1
+                    await self.ticTacToe(
+                        self._ticTacToeGames[serverId][authorId]["original_message"],
+                        [],
+                        move = str(move)
+                    )
+                
+                if str(reaction) == quitReaction:
+                    await self.ticTacToe(
+                        self._ticTacToeGames[serverId][authorId]["original_message"],
+                        ["quit"]
+                    )
 
 def setup(client):
     client.add_cog(Game(client))

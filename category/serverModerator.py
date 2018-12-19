@@ -8,6 +8,7 @@ from category.meme import Meme
 from category.misc import Misc
 from category.nsfw import NSFW
 from category.rank import Rank
+from category.updates import Updates
 
 from util.file.omegaPsi import OmegaPsi
 from util.file.server import Server
@@ -16,7 +17,6 @@ from util.utils.discordUtils import sendMessage, getErrorMessage
 from supercog import Category, Command
 import discord
 
-scrollEmbeds = {}
 
 class ServerModerator(Category):
 
@@ -35,6 +35,8 @@ class ServerModerator(Category):
 
     BOT_MISSING_PERMISSION = "BOT_MISSING_PERMISSION"
     MEMBER_MISSING_PERMISSION = "MEMBER_MISSING_PERMISSION"
+
+    NUMBER_TOO_LARGE = "NUMBER_TOO_LARGE"
 
     NO_ROLES = "NO_ROLE"
     NO_MEMBER = "NO_MEMBER"
@@ -209,9 +211,9 @@ class ServerModerator(Category):
             "command": self.toggleRanking
         })
 
-        self._toggleJoinMessage = Command(commandDict = {
-            "alternatives": ["toggleJoinMessage", "toggleJoinMsg", "togJoinMessage", "togJoinMsg"],
-            "info": "Allows you to toggle the join message in the server.",
+        self._toggleWelcomeMessage = Command(commandDict = {
+            "alternatives": ["toggleWelcomeMessage", "toggleWelcomeMsg", "togWelcomeMessage", "togWelcomeMsg"],
+            "info": "Allows you to toggle the welcome message in the server.",
             "run_in_private": False,
             "server_moderator_only": True,
             "can_be_deactivated": False,
@@ -223,11 +225,11 @@ class ServerModerator(Category):
                     ]
                 }
             },
-            "command": self.toggleJoinMessage
+            "command": self.toggleWelcomeMessage
         })
 
-        self._setJoinMessageChannel = Command(commandDict = {
-            "alternatives": ["setJoinMessageChannel", "setJoinMsgChannel", "setJoinMsgChan"],
+        self._setWelcomeMessageChannel = Command(commandDict = {
+            "alternatives": ["setWelcomeMessageChannel", "setWelcomeMsgChannel", "setWelcomeMsgChan"],
             "info": "Allows you to set the channel that the Join Messages are sent in.",
             "run_in_private": False,
             "server_moderator_only": True,
@@ -252,7 +254,7 @@ class ServerModerator(Category):
                     ]
                 }
             },
-            "command": self.setJoinMessageChannel
+            "command": self.setWelcomeMessageChannel
         })
 
         self._setLevel = Command(commandDict = {
@@ -411,6 +413,55 @@ class ServerModerator(Category):
             "command": self.createInvite
         })
 
+        self._purge = Command(commandDict = {
+            "alternatives": ["purge"],
+            "info": "Purges messages in a channel.",
+            "restriction_info": "You and Omega Psi must have manage_messages permissions.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "min_parameters": 1,
+            "max_parameters": 1,
+            "parameters": {
+                "amount": {
+                    "info": "The amount of messages to delete in the channel.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                ServerModerator.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to purge this channel, you need the amount of messages to delete."
+                    ]
+                },
+                ServerModerator.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to purge this channel, you only need the amount of messages to delete and nothing more."
+                    ]
+                },
+                ServerModerator.BOT_MISSING_PERMISSION: {
+                    "messages": [
+                        "The bot does not have the `manage_messages` permission in this server."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_messages` permission in this server."
+                    ]
+                },
+                ServerModerator.INVALID_PARAMETER: {
+                    "messages": [
+                        "The amount you entered is not a number."
+                    ]
+                },
+                ServerModerator.NUMBER_TOO_LARGE: {
+                    "messages": [
+                        "The amount you entered is too high. Must be max of 100."
+                    ]
+                }
+            },
+            "command": self.purge
+        })
+
         self._addRole = Command(commandDict = {
             "alternatives": ["addRole"],
             "info": "Adds a role to the server.",
@@ -505,21 +556,21 @@ class ServerModerator(Category):
 
         self._kickMember = Command(commandDict = {
             "alternatives": ["kickMember", "kickMbr"],
-            "info": "Kicks a member, or members, from the server.",
+            "info": "Kicks a member from the server.",
             "restriction_info": "You and Omega Psi must have kick_members permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
             "min_parameters": 1,
             "parameters": {
-                "member(s)...": {
-                    "info": "The member(s) to kick.",
+                "member": {
+                    "info": "The member to kick.",
                     "optional": False
                 }
             },
             "errors": {
                 Category.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
-                        "In order to kick a member, or members, you need to mention them."
+                        "In order to kick a member you need to mention them."
                     ]
                 },
                 ServerModerator.BOT_MISSING_PERMISSION: {
@@ -537,22 +588,22 @@ class ServerModerator(Category):
         })
 
         self._banMember = Command(commandDict = {
-            "alternatives": ["banMember", "banMbr"],
-            "info": "Bans a member, or members, from the server.",
+            "alternatives": ["banMember", "banMbr", "ban"],
+            "info": "Bans a member from the server.",
             "restriction_info": "You and Omega Psi must have ban_members permissions.",
             "run_in_private": False,
             "server_moderator_only": True,
             "min_parameters": 1,
             "parameters": {
-                "member(s)...": {
-                    "info": "The member(s) to ban.",
+                "member": {
+                    "info": "The memberto ban.",
                     "optional": False
                 }
             },
             "errors": {
                 Category.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
-                        "In order to ban a member, or members, you need to mention them."
+                        "In order to ban a member you need to mention them."
                     ]
                 },
                 ServerModerator.BOT_MISSING_PERMISSION: {
@@ -567,6 +618,105 @@ class ServerModerator(Category):
                 }
             },
             "command": self.banMember
+        })
+
+        self._unbanMember = Command(commandDict = {
+            "alternatives": ["unbanMember", "unbanMbr", "unban"],
+            "info": "Unbans a member in the server.",
+            "restriction_info": "You and Omega Psi must have ban_members permissions.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "min_parameters": 1,
+            "parameters": {
+                "member": {
+                    "info": "The member to unban.",
+                    "optional": False
+                }
+            }   ,
+            "errors": {
+                ServerModerator.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to unban a member you need to mention them."
+                    ]
+                },
+                ServerModerator.BOT_MISSING_PERMISSION: {
+                    "messages": [
+                        "The bot does not have `ban_members` permission in this server."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `ban_members` permission in this server."
+                    ]
+                }
+            },
+            "command": self.unbanMember
+        })
+
+        self._muteMember = Command(commandDict = {
+            "alternatives": ["muteMember", "muteMbr", "mute"],
+            "info": "Mutes a member in the server.",
+            "restriction_info": "You and Omega Psi must have manage_server permissions.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "min_parameters": 1,
+            "parameters": {
+                "member": {
+                    "info": "The member to mute.",
+                    "optional": False
+                }
+            }   ,
+            "errors": {
+                ServerModerator.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to mute a member you need to mention them."
+                    ]
+                },
+                ServerModerator.BOT_MISSING_PERMISSION: {
+                    "messages": [
+                        "The bot does not have `manage_server` permission in this server."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_server` permission in this server."
+                    ]
+                }
+            },
+            "command": self.muteMember
+        })
+
+        self._unmuteMember = Command(commandDict = {
+            "alternatives": ["unmuteMember", "unmuteMbr", "unmute"],
+            "info": "Unmutes a member in the server.",
+            "restriction_info": "You and Omega Psi must have manage_server permissions.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "min_parameters": 1,
+            "parameters": {
+                "member": {
+                    "info": "The member to unmute.",
+                    "optional": False
+                }
+            }   ,
+            "errors": {
+                ServerModerator.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to unmute a member you need to mention them."
+                    ]
+                },
+                ServerModerator.BOT_MISSING_PERMISSION: {
+                    "messages": [
+                        "The bot does not have `manage_server` permission in this server."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_server` permission in this server."
+                    ]
+                }
+            },
+            "command": self.unmuteMember
         })
 
         self._addMemberRole = Command(commandDict = {
@@ -708,8 +858,8 @@ class ServerModerator(Category):
             self._activate,
             self._deactivate,
             self._toggleRanking,
-            self._toggleJoinMessage,
-            self._setJoinMessageChannel,
+            self._toggleWelcomeMessage,
+            self._setWelcomeMessageChannel,
             self._setLevel,
             self._addPrefix,
             self._removePrefix,
@@ -717,10 +867,14 @@ class ServerModerator(Category):
             # Bot Commands
             self._setServerName,
             self._createInvite,
+            self._purge,
             self._addRole,
             self._removeRole,
             self._kickMember,
             self._banMember,
+            self._unbanMember,
+            self._muteMember,
+            self._unmuteMember,
             self._addMemberRole,
             self._removeMemberRole,
             self._setMemberRoles
@@ -736,7 +890,8 @@ class ServerModerator(Category):
             "Meme": Meme(None),
             "Misc": Misc(None),
             "NSFW": NSFW(None),
-            "Rank": Rank(None)
+            "Rank": Rank(None),
+            "Updates": Updates(None)
         }
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -761,14 +916,14 @@ class ServerModerator(Category):
         # There was at least one mention
         else:
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
                 # Iterate through each member
                 result = ""
                 for member in mentions:
                     result += member.mention + (
                         " was successfully added."
-                    ) if Server.updateMember(server, member, action = Server.ADD_MEMBER) else (
+                    ) if await Server.updateMember(server, member, action = Server.ADD_MEMBER) else (
                         " already existed in files."
                     )
                 
@@ -811,14 +966,14 @@ class ServerModerator(Category):
         # There was at least one mention
         else:
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
                 # Iterate through each member
                 result = ""
                 for member in mentions:
                     result += member.mention + (
                         " was successfully removed."
-                    ) if Server.removeMember(server, member) else (
+                    ) if await Server.removeMember(server, member) else (
                         " didn't exist in files."
                     )
                 
@@ -862,10 +1017,10 @@ class ServerModerator(Category):
 
             commands = parameters
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
             
                 # Open server file
-                server = Server.openServer(server)
+                server = await Server.openServer(server)
 
                 # Iterate through commands if commands are not empty
                 if len(commands) > 0:
@@ -908,7 +1063,7 @@ class ServerModerator(Category):
                     server["inactive_commands"] = {}
                 
                 # Close server file
-                Server.closeServer(server)
+                await Server.closeServer(server)
                 
                 embed = discord.Embed(
                     name = "Activated",
@@ -952,10 +1107,10 @@ class ServerModerator(Category):
             command = parameters[0]
             reason = " ".join(parameters[1:])
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
             
                 # Open server file
-                server = Server.openServer(server)
+                server = await Server.openServer(server)
 
                 # Check if command is valid
                 commandObject = None
@@ -975,7 +1130,7 @@ class ServerModerator(Category):
                     )
                 
                 # Close server file
-                Server.closeServer(server)
+                await Server.closeServer(server)
 
                 embed = discord.Embed(
                     name = "Deactivated",
@@ -1014,12 +1169,12 @@ class ServerModerator(Category):
         # There were the proper amount of parameters
         else:
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
                 # Toggle ranking
-                Server.toggleRanking(server)
+                await Server.toggleRanking(server)
 
-                if Server.isRankingActive(server):
+                if await Server.isRankingActive(server):
                     result = "Ranking has been activated."
                 else:
                     result = "Ranking has been deactivated."
@@ -1045,40 +1200,40 @@ class ServerModerator(Category):
             )
         )
     
-    async def toggleJoinMessage(self, message, parameters):
-        """Toggles the join messaging in the specified Discord Server.\n
+    async def toggleWelcomeMessage(self, message, parameters):
+        """Toggles the join messaging in the specified Discord await Server.\n
 
-        discordServer - The Discord Server to toggle the join messaging in.\n
+        discordServer - The Discord Server to toggle the welcome messaging in.\n
         """
 
         author = message.author
         server = message.guild
 
         # Check for too many parameters
-        if len(parameters) > self._toggleJoinMessage.getMaxParameters():
-            embed = getErrorMessage(self._toggleJoinMessage, ServerModerator.TOO_MANY_PARAMETERS)
+        if len(parameters) > self._toggleWelcomeMessage.getMaxParameters():
+            embed = getErrorMessage(self._toggleWelcomeMessage, ServerModerator.TOO_MANY_PARAMETERS)
         
         # There were the proper amount of parameters
         else:
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
                 # Toggle join message
-                Server.toggleJoinMessage(server)
+                await Server.toggleWelcomeMessage(server)
 
-                if Server.isJoinMessageActive(server):
-                    result = "The join message has been activated."
+                if await Server.isWelcomeMessageActive(server):
+                    result = "The welcome message has been activated."
                 else:
-                    result = "The join message has been deactivated."
+                    result = "The welcome message has been deactivated."
                 
                 embed = discord.Embed(
-                    name = "Join Message",
+                    name = "Welcome Message",
                     description = result,
                     colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 )
             
             else:
-                embed = getErrorMessage(self._toggleJoinMessage, ServerModerator.MEMBER_MISSING_PERMISSION)
+                embed = getErrorMessage(self._toggleWelcomeMessage, ServerModerator.MEMBER_MISSING_PERMISSION)
         
         await sendMessage(
             self.client,
@@ -1092,7 +1247,7 @@ class ServerModerator(Category):
             )
         )
     
-    async def setJoinMessageChannel(self, message, parameters):
+    async def setWelcomeMessageChannel(self, message, parameters):
         """Sets the channel that the join message is sent to.\n
 
         discordServer - The Discord Server to set the channel of the join message.\n
@@ -1104,21 +1259,21 @@ class ServerModerator(Category):
         channels = message.channel_mentions
 
         # Check for not enough parameters
-        if len(channels) < self._setJoinMessageChannel.getMinParameters():
-            embed = getErrorMessage(self._setJoinMessageChannel, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        if len(channels) < self._setWelcomeMessageChannel.getMinParameters():
+            embed = getErrorMessage(self._setWelcomeMessageChannel, ServerModerator.NOT_ENOUGH_PARAMETERS)
         
         # Check for too many parameters
-        elif len(channels) > self._setJoinMessageChannel.getMaxParameters():
-            embed = getErrorMessage(self._setJoinMessageChannel, ServerModerator.TOO_MANY_PARAMETERS)
+        elif len(channels) > self._setWelcomeMessageChannel.getMaxParameters():
+            embed = getErrorMessage(self._setWelcomeMessageChannel, ServerModerator.TOO_MANY_PARAMETERS)
         
         # There were the proper amount of parameters
         else:
 
             channel = channels[0]
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
-                success = Server.setJoinMessageChannel(server, channel)
+                success = await Server.setWelcomeMessageChannel(server, channel)
 
                 embed = discord.Embed(
                     title = "Channel {}Set".format(
@@ -1131,7 +1286,7 @@ class ServerModerator(Category):
                 )
             
             else:
-                embed = getErrorMessage(self._setJoinMessageChannel, ServerModerator.MEMBER_MISSION_PERMISSION)
+                embed = getErrorMessage(self._setWelcomeMessageChannel, ServerModerator.MEMBER_MISSION_PERMISSION)
         
         await sendMessage(
             self.client,
@@ -1172,12 +1327,12 @@ class ServerModerator(Category):
             try:
                 level = int(parameters[0])
 
-                if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+                if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
                     
                     # Set the level of each member
                     result = ""
                     for member in mentions:
-                        result += Server.setLevel(server, member, level) + "\n"
+                        result += await Server.setLevel(server, member, level) + "\n"
                     
                     embed = discord.Embed(
                         name = "Result",
@@ -1222,13 +1377,13 @@ class ServerModerator(Category):
 
             prefixes = parameters
 
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
                 # Iterate through the prefixes
                 addPrefixes = ""
                 addCount = 0
                 for prefix in prefixes:
-                    temp = Server.addPrefix(server, prefix)
+                    temp = await Server.addPrefix(server, prefix)
                     addPrefixes += temp["message"]
                     addCount += temp["success_int"]
                 
@@ -1268,11 +1423,11 @@ class ServerModerator(Category):
 
         prefixes = parameters
 
-        if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+        if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
 
             # No prefixes in list; Reset prefixes to default prefix
             if len(prefixes) == 0:
-                Server.resetPrefixes(server)
+                await Server.resetPrefixes(server)
 
                 embed = discord.Embed(
                     title = "Prefixes Reset",
@@ -1287,7 +1442,7 @@ class ServerModerator(Category):
                 removePrefixes = ""
                 removeCount = 0
                 for prefix in prefixes:
-                    temp = Server.removePrefix(server, prefix)
+                    temp = await Server.removePrefix(server, prefix)
                     removePrefixes += temp["message"]
                     removeCount += temp["success_int"]
                 
@@ -1337,7 +1492,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author has permissions
-            if author.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     name = " ".join(parameters)
@@ -1394,7 +1549,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author has permissions
-            if author.guild_permissions.create_instant_invite or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.create_instant_invite or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     infinite = parameters[0]
@@ -1433,6 +1588,83 @@ class ServerModerator(Category):
             )
         )
     
+    async def purge(self, message, parameters):
+        """
+        """
+
+        author = message.author
+        channel = message.channel
+
+        # Check for not enough parameters
+        if len(parameters) < self._purge.getMinParameters():
+            embed = getErrorMessage(self._purge, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(parameters) > self._purge.getMaxParameters():
+            embed = getErrorMessage(self._purge, ServerModerator.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Check if amount is a number
+            try:
+                amount = int(parameters[0])
+
+                # Make sure amount is within 100
+                if amount <= 100:
+
+                    # Only run if bot and author have permissions
+                    if author.guild_permissions.manage_messages or await OmegaPsi.isAuthorModerator(author):
+                        try:
+
+                            # Get list of messages to delete
+                            messages = []
+                            async for target in channel.history(limit = amount):
+                                messages.append(target)
+                            
+                            # Delete Original Message
+                            await message.delete()
+
+                            # Delete list of message
+                            await channel.delete_messages(messages)
+
+                            embed = discord.Embed(
+                                title = "Purged",
+                                description = "{} message{} {} purged from this channel.".format(
+                                    amount, 
+                                    "" if amount == 1 else "s",
+                                    "was" if amount == 1 else "were"
+                                ),
+                                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                            )
+
+                        except:
+                            embed = getErrorMessage(self._purge, ServerModerator.BOT_MISSING_PERMISSION)
+            
+                    # Author does not have permissions
+                    else:
+                        embed = getErrorMessage(self._purge, ServerModerator.MEMBER_MISSING_PERMISSION)
+                
+                # Amount is greater than 100
+                else:
+                    embed = getErrorMessage(self._purge, ServerModerator.NUMBER_TOO_LARGE)
+            
+            # Amount is not a number
+            except:
+                embed = getErrorMessage(self._purge, ServerModerator.INVALID_PARAMETER)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
     async def addRole(self, message, parameters):
         """Adds a role to the specified Discord Server.\n
 
@@ -1457,7 +1689,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_roles or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     roleName = parameters[0]
@@ -1532,7 +1764,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_roles or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     role = roles[0]
@@ -1596,7 +1828,7 @@ class ServerModerator(Category):
             member = mentions[0]
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.kick_members or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.kick_members or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     # Kick the member
@@ -1647,7 +1879,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.ban_members or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.ban_members or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     member = mentions[0]
@@ -1668,6 +1900,191 @@ class ServerModerator(Category):
             # Author does not have permission
             else:
                 embed = getErrorMessage(self._banMember, ServerModerator.MEMBER_MISSING_PERMISSION)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def unbanMember(self, message, parameters):
+        """
+        """
+
+        author = message.author
+        server = message.guild
+        mentions = message.mentions
+
+        # Check for not enough parameters
+        if len(mentions) < self._unbanMember.getMinParameters():
+            embed = getErrorMessage(self._unbanMember, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Only run if bot and author have permissions
+            if author.guild_permissions.ban_members or await OmegaPsi.isAuthorModerator(author):
+                try:
+
+                    member = mentions[0]
+
+                    # Ban the member
+                    await server.unban(member)
+
+                    embed = discord.Embed(
+                        title = "Member Unbanned",
+                        description = "{}#{} was unbanned in the server.".format(member.name, member.discriminator),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+
+                # Bot does not have permission
+                except discord.Forbidden:
+                    embed = getErrorMessage(self._unbanMember, ServerModerator.BOT_MISSING_PERMISSION)
+            
+            # Author does not have permission
+            else:
+                embed = getErrorMessage(self._unbanMember, ServerModerator.MEMBER_MISSING_PERMISSION)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def muteMember(self, message, parameters):
+        """
+        """
+        
+        author = message.author
+        server = message.guild
+        mentions = message.mentions
+
+        # Check for not enough parameters
+        if len(mentions) < self._muteMember.getMinParameters():
+            embed = getErrorMessage(self._muteMember, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Only run if bot and author have permissions
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
+                try:
+                    
+                    # Eventually add support for multiple members
+                    member = mentions[0]
+
+                    # Create Muted role if it doesn't exist
+                    mutedRole = None
+                    for role in server.roles:
+                        if role.name == "Muted":
+                            mutedRole = role
+                            break
+                    
+                    if not mutedRole:
+                        mutedRole = await server.create_role(
+                            name = "Muted"
+                        )
+                        for channel in server.channels:
+                            if member.permissions_in(channel) != 0:
+                                await channel.set_permissions(
+                                    mutedRole,
+                                    send_messages = False, read_messages = True,
+                                    add_reactions = False, connect = True,
+                                    speak = False
+                                )
+                    
+                    await member.add_roles(mutedRole)
+
+                    embed = discord.Embed(
+                        title = "Member Muted",
+                        description = "{}#{} was muted in the server.".format(member.name, member.discriminator),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+
+                # Bot does not have permission
+                except discord.Forbidden:
+                    embed = getErrorMessage(self._muteMember, ServerModerator.BOT_MISSING_PERMISSION)
+            
+            # Author does not have permission
+            else:
+                embed = getErrorMessage(self.muteMember, ServerModerator.MEMBER_MISSING_PERMISSION)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def unmuteMember(self, message, parameters):
+        """
+        """
+        
+        author = message.author
+        server = message.guild
+        mentions = message.mentions
+
+        # Check for not enough parameters
+        if len(mentions) < self._muteMember.getMinParameters():
+            embed = getErrorMessage(self._muteMember, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Only run if bot and author have permissions
+            if author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(author):
+                try:
+
+                    # Eventually add support for multiple members
+                    member = mentions[0]
+
+                    # Check if member is muted
+                    mutedRole = None
+                    for role in server.roles:
+                        if role.name == "Muted":
+                            mutedRole = role
+                            break
+                    
+                    if not mutedRole:
+                        embed = discord.Embed(
+                            title = "Member not Muted",
+                            description = "{}#{} is not muted in the server.".format(member.name, member.discriminator),
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                        )
+                    
+                    else:
+                        await member.remove_roles(mutedRole)
+
+                        embed = discord.Embed(
+                            title = "Member Unmuted",
+                            description = "{}#{} was unmuted in the server.".format(member.name, member.discriminator),
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                        )
+
+                # Bot does not have permission
+                except discord.Forbidden:
+                    embed = getErrorMessage(self._muteMember, ServerModerator.BOT_MISSING_PERMISSION)
+            
+            # Author does not have permission
+            else:
+                embed = getErrorMessage(self.muteMember, ServerModerator.MEMBER_MISSING_PERMISSION)
 
         await sendMessage(
             self.client,
@@ -1704,7 +2121,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_roles or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     # Iterate through members
@@ -1794,7 +2211,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_roles or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     for member in mentions:
@@ -1882,7 +2299,7 @@ class ServerModerator(Category):
         else:
 
             # Only run if bot and author have permissions
-            if author.guild_permissions.manage_roles or OmegaPsi.isAuthorModerator(author):
+            if author.guild_permissions.manage_roles or await OmegaPsi.isAuthorModerator(author):
                 try:
 
                     for member in mentions:
@@ -1964,10 +2381,10 @@ class ServerModerator(Category):
         """
 
         # Make sure message starts with the prefix
-        if Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
+        if await Server.startsWithPrefix(message.guild, message.content) and not message.author.bot:
 
             # Split up into command and parameters if possible
-            command, parameters = Category.parseText(Server.getPrefixes(message.guild), message.content)
+            command, parameters = Category.parseText(await Server.getPrefixes(message.guild), message.content)
 
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
