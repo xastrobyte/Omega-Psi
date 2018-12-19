@@ -8,4 +8,5 @@ pymongo
 requests
 supercog
 sympy
+timchen
 wikipedia-api
