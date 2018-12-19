@@ -113,7 +113,7 @@ class MemeTemplate:
             if "color" not in self._text_attributes[textType]:
                 self._text_attributes[textType]["color"] = [0, 0, 0]
             if "font" not in self._text_attributes[textType]:
-                self._text_attributes[textType]["font"] = pygame.font.SysFont("util/image/Light.ttf", self._text_attributes[textType]["size"])
+                self._text_attributes[textType]["font"] = pygame.font.SysFont("/util/image/Light.ttf", self._text_attributes[textType]["size"])
             if "max" not in self._text_attributes[textType]:
                 self._text_attributes[textType]["max"] = 10
             if "centered" not in self._text_attributes[textType]:
