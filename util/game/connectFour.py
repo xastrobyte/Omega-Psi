@@ -23,9 +23,21 @@ class ConnectFour:
 
         self._challenger_move = randint(1, 100) % 2 == 0
 
+        self._previous = None
+
         self.generateBoard()
     
     # Getters
+
+    def getPrevious(self):
+        """Gets the previous message sent
+        """
+        return self._previous
+    
+    def setPrevious(self, previous):
+        """Sets the previous message sent
+        """
+        self._previous = previous
 
     def getChallenger(self):
         """Returns the challenger.
@@ -91,7 +103,10 @@ class ConnectFour:
         # Check if playing with AI
         if self.getOpponent() == None:
             addPiece(self._board, column, True)
-            getAIMove(self._board)
+
+            # Only do AI move if there is no winner
+            if checkForWinner(self._board) == None:
+                getAIMove(self._board)
         
         # Check if playing with real player
         else:
@@ -294,7 +309,6 @@ def getAIMove(board):
             # Player move would win; continue to next column
             if playerWinCheck == True:
                 restrictedMoves.append(column)  # Add column to restricted moves; We don't want AI to go there
-                continue
 
     # aiMove was -1 (no move or full); Generate random column
     if aiMove == -1:
@@ -304,7 +318,6 @@ def getAIMove(board):
             return False
 
         # Board is not full; generate random column
-        aiMove = None
         while True:
             aiMove = randint(0, len(board[0]) - 1)
 
@@ -314,7 +327,7 @@ def getAIMove(board):
             
             # Check to see if this column is the only available column
             #   OR check to see if the restrictedMoves include the only available columns
-            elif countPieces(board[0]) == 1 or len(restrictedMoves) == countPieces(board[0]):
+            elif len(board[0]) - countPieces(board[0]) == 1 or len(restrictedMoves) == len(board[0]) - countPieces(board[0]):
                 break
             
             # Check to see if move is not in restricted moves

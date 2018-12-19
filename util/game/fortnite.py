@@ -1,4 +1,4 @@
-from util.utils import loadImageFromUrl, getSmallestRect
+from util.utils.miscUtils import loadImageFromUrl, getSmallestRect
 
 from datetime import datetime
 import pygame
@@ -89,13 +89,16 @@ def getItemShopImage(itemShopDict):
 
     count = 0
     for item in itemShopDict:
-        shopSurface.blit(
-            getItemImage(item),
-            (
-                (count %  smallestRect[0]) * 512 + (count %  smallestRect[0]),
-                (count // smallestRect[1]) * 512 + (count // smallestRect[1])
+        try:
+            shopSurface.blit(
+                getItemImage(item),
+                (
+                    (count %  smallestRect[0]) * 512 + (count %  smallestRect[0]),
+                    (count // smallestRect[0]) * 512 + (count // smallestRect[0])
+                )
             )
-        )
+        except:
+            pass
         count += 1
     
     # Save Shop surface

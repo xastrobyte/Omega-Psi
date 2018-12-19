@@ -4,7 +4,8 @@ SEASONS = {
     "4": "Preseason 2015", "5": "Season 2015",
     "6": "Preseason 2016", "7": "Season 2016",
     "8": "Preseason 2017", "9": "Season 2017",
-    "10": "Preseason 2018", "11": "Season 2018"
+    "10": "Preseason 2018", "11": "Season 2018",
+    "12": "Preseason 2019", "13": "Season 2019"
 }
 
 MATCH_QUEUES = {

@@ -37,15 +37,26 @@ class Hangman:
 
         self._player = player
         self._difficulty = difficulty
-        self.generateWord()
 
         self._guesses = 0
         self._found = []
 
         self._fails = 0
         self._guessed = []
+
+        self._previous = None
     
     # Getters
+    
+    def getPrevious(self):
+        """Returns the previous message sent during gameplay
+        """
+        return self._previous
+    
+    def setPrevious(self, previous):
+        """Sets the previous message sent during gameplay
+        """
+        self._previous = previous
 
     def getPlayer(self):
         """Returns the player that is playing this Hangman game.
@@ -74,7 +85,7 @@ class Hangman:
 
     # Setters
 
-    def generateWord(self):
+    async def generateWord(self):
         """Generates a random word and returns it in hangman style.\n
 
         difficulty - The difficulty of the word to get.\n
@@ -84,7 +95,8 @@ class Hangman:
                 \"ping pong\"   --> \"_ _ _ _  _ _ _ _\"\n
                 \"apple\"       --> \"_ _ _ _ _\"\n
         """
-        self._word = choose(omegaPsi.getHangmanWords()[self._difficulty])["value"]
+        self._word = await omegaPsi.getHangmanWords()
+        self._word = choose(self._word[self._difficulty])["value"]
 
     def getHangmanWord(self):
 

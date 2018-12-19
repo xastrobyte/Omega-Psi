@@ -26,7 +26,7 @@ def getQuitGame(game, colour, icon):
     
     return discord.Embed(
         title = "Quit Game",
-        description = "Your {} game was successfully ended.".format(game),
+        description = "Your `{}` game was successfully ended.".format(game),
         colour = colour
     ).set_thumbnail(
         url = icon

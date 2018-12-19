@@ -37,7 +37,19 @@ class TicTacToe:
             None, None, None
         ] 
 
+        self._previous = None
+
     # Getters
+
+    def getPrevious(self):
+        """Returns the previous message sent during gameplay
+        """
+        return self._previous
+    
+    def setPrevious(self, previous):
+        """Sets the previous message sent during gameplay
+        """
+        self._previous = previous
 
     def getChallenger(self):
         """Returns the challenger of the Tic-Tac-Toe game.
@@ -119,7 +131,10 @@ class TicTacToe:
 
             # Do player and AI moves
             self._board[spot] = True
-            self.getAIMove()
+
+            # Only do AI move if no winner
+            if self.checkForWinner() == None:
+                self.getAIMove()
         
         # Check if going against actual opponent
         else:

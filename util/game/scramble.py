@@ -27,12 +27,21 @@ class Scramble:
 
         self._player = player
         self._difficulty = difficulty
-        self.generateWord()
-        self._scramble = self.scrambleWord(self._word["value"], difficulty)
         self._hints = self._word["hints"]
         self._hints_used = 0
+        self._previous = None
     
     # Getters
+
+    def getPrevious(self):
+        """Returns the previous message sent during gameplay
+        """
+        return self._previous
+    
+    def setPrevious(self, previous):
+        """Sets the previous message sent during gameplay
+        """
+        self._previous = previous
 
     def getPlayer(self):
         """Returns the player that is playing the scramble game.
@@ -62,10 +71,12 @@ class Scramble:
 
     # Setters
 
-    def generateWord(self):
+    async def generateWord(self):
         """Returns a random word from the list of words in the database
         """
-        self._word = choose(omegaPsi.getScrambleWords()["words"])
+        self._word = await omegaPsi.getScrambleWords()
+        self._word = choose(self._word["words"])
+        self._scramble = self.scrambleWord(self._word["value"], self._difficulty)
 
     def scrambleWord(self, word, difficulty):
         """Returns a scrambled word.\n
