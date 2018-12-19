@@ -2,7 +2,7 @@
 [![Discord Bots](https://discordbots.org/api/widget/upvotes/503804826187071501.svg)](https://discordbots.org/bot/503804826187071501)
 [![Discord Bots](https://discordbots.org/api/widget/owner/503804826187071501.svg)](https://discordbots.org/bot/503804826187071501)
 
-Support Server: https://discord.gg/mvNxh3f
+Support Server: [![Discord Server](https://img.shields.io/discord/521185038969208850.svg)](https://discord.gg/mvNxh3f)
 
 # Omega Psi
 A Discord Bot, constantly being developed, that includes all sorts of commands from minigames to server moderation.
