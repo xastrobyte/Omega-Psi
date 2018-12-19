@@ -281,6 +281,22 @@ class Database:
         """
         hangmanData = self._data.find_one({"_id": "hangman"})
         return hangmanData
+    
+    def __set_hangman_words(self, hangmanData):
+        """A helper method to set the hangman words in the data information
+        """
+        hangmanData = self._data.update_one({"_id": "hangman"}, {"$set": hangmanData}, upsert = False)
+        return hangmanData
+    
+    def __add_hangman(self, difficulty, phrase):
+        """A helper method that adds a phrase to the specified difficulty for hangman
+        """
+        hangmanData = self.__get_hangman_words()
+        hangmanData[difficulty].append({
+            "value": phrase,
+            "level": difficulty
+        })
+        return self.__set_hangman_words(hangmanData)
 
 
     def __get_scramble_words(self):
@@ -289,6 +305,22 @@ class Database:
         scrambleData = self._data.find_one({"_id": "scramble"})
         return scrambleData
     
+    def __set_scramble_words(self, scrambleData):
+        """A helper method to set the scramble words in the data information.
+        """
+        scrambleData = self._data.update_one({"_id": "scramble"}, {"$set": scrambleData}, upsert = False)
+        return scrambleData    
+
+    def __add_scramble(self, hints, phrase):
+        """A helper method that adds a phrase to the specified difficulty for scramble
+        """
+        scrambleData = self.__get_scramble_words()
+        scrambleData["words"].append({
+            "value": phrase,
+            "hints": hints
+        })
+        return self.__set_scramble_words(scrambleData)
+
     
     def __get_lang(self):
         """A helper method that gets the language codes from the data information.
@@ -297,58 +329,125 @@ class Database:
         return langData
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Helper Methods - For Updates
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def __get_updates(self):
+        """A helper method that gets the most recent bot update from the data information.
+        """
+        updatesData = self._bot.find_one({"_id": "updates"})
+        return updatesData["updates"]
+    
+    def __set_updates(self, updatesData):
+        """A helper method to set the updates data in the data information.
+        """
+        return self._bot.update_one({"_id": "updates"}, {"$set": {"updates": updatesData}}, upsert = False)
+    
+    def __add_update(self, updateDict):
+        """A helper method that creates a new update to the bot.
+        """
+        updatesData = self.__get_updates()
+        updatesData.insert(0, updateDict)
+        return self.__set_updates(updatesData)
+
+
+    def __get_pending_update(self):
+        """A helper method that gets a pending update from the data information.
+        """
+        pendingUpdateData = self._bot.find_one({"_id": "pending_update"})
+        return pendingUpdateData["pending_update"]
+    
+    def __set_pending_update(self, pendingUpdateData):
+        """A helper method to set the pending update data in the data information.
+        """
+        return self._bot.update_one({"_id": "pending_update"}, {"$set": {"pending_update": pendingUpdateData}}, upsert = False)
+    
+    def __add_pending_fix(self, fix):
+        """A helper method that adds information about a fix to the bot.
+        """
+        pendingUpdateData = self.__get_pending_update()
+        pendingUpdateData["fixes"].append(fix)
+        return self.__set_pending_update(pendingUpdateData)
+    
+    def __add_pending_feature(self, feature):
+        """A helper method that adds information about a feature added to the bot.
+        """
+        pendingUpdateData = self.__get_pending_update()
+        pendingUpdateData["features"].append(feature)
+        return self.__set_pending_update(pendingUpdateData)
+    
+    def __create_pending_update(self, versionNumber):
+        """A helper method that creates a pending update for the bot.
+        """
+        pendingUpdateData = {
+            "fixes": [],
+            "features": [],
+            "version": versionNumber
+        }
+        return self.__set_pending_update(pendingUpdateData)
+    
+    def __commit_pending_update(self, description):
+        """A helper method that commits the update and adds it to the updates.
+        """
+        pendingUpdateData = self.__get_pending_update()
+        pendingUpdateData["description"] = description
+        self.__set_pending_update({})
+        return self.__add_update(pendingUpdateData)
+
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Methods - For Bot, Servers, and Users
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def addBot(self):
+    async def addBot(self):
         """Adds the bot information to the database.
         """
-        return self.__add_bot()
+        return await loop.run_in_executor(None, self.__add_bot)
     
-    def getBot(self, create = True):
+    async def getBot(self, create = True):
         """Gets the bot information from the database.
 
         Parameters:
             create (bool): Whether or not to create the entry if it doesn't exist.
         """
-        return self.__get_bot(create)
+        return await loop.run_in_executor(None, self.__get_bot, create)
     
-    def editBot(self, key, value):
+    async def editBot(self, key, value):
         """Edits the bot information in the database.
 
         Parameters:
             key (str): The key to set the value of.
             value (object): The value to set.
         """
-        return self.__edit_bot(key, value)
+        return await loop.run_in_executor(None, self.__edit_bot, key, value)
 
-    def setBot(self, botInfo):
+    async def setBot(self, botInfo):
         """Sets the bot information in the database.
 
         Parameters:
             botInfo (dict): The dictionary to set for the bot information.
         """
-        return self.__set_bot_info(botInfo)
+        return await loop.run_in_executor(None, self.__set_bot_info, botInfo)
     
     
-    def addServer(self, serverId):
+    async def addServer(self, serverId):
         """Adds the server information to the database.
 
         Parameters:
             serverId (str): The ID of the Server to add.
         """
-        return self.__add_server(serverId)
+        return await loop.run_in_executor(None, self.__add_server, serverId)
     
-    def getServer(self, serverId, create = True):
+    async def getServer(self, serverId, create = True):
         """Gets the server information from the database.
 
         Parameters:
             serverId (str): The ID of the Server to get.
             create (bool): Whether or not to create the entry if it doesn't exist.
         """
-        return self.__get_server(serverId, create)
+        return await loop.run_in_executor(None, self.__get_server, serverId, create)
     
-    def editServer(self, serverId, key, value):
+    async def editServer(self, serverId, key, value):
         """Edits the server information in the database.
 
         Parameters:
@@ -356,36 +455,36 @@ class Database:
             key (str): The key to set the value of.
             value (object): The value to set.
         """
-        return self.__edit_server(serverId, key, value)
+        return await loop.run_in_executor(None, self.__edit_server, serverId, key, value)
     
-    def setServer(self, serverId, serverInfo):
+    async def setServer(self, serverId, serverInfo):
         """Sets the server information in the database.
 
         Parameters:
             serverId (str): The ID of the Server to set.
             serverInfo (dict): The dictionary to set for the server information.
         """
-        return self.__set_server_info(serverId, serverInfo)
+        return await loop.run_in_executor(None, self.__set_server_info, serverId, serverInfo)
     
     
-    def addUser(self, userId):
+    async def addUser(self, userId):
         """Adds the user information to the database.
 
         Parameters:
             userId (str): The ID of the User to add.
         """
-        return self.__add_user(userId)
+        return await loop.run_in_executor(None, self.__add_user, userId)
     
-    def getUser(self, userId, create = True):
+    async def getUser(self, userId, create = True):
         """Gets the user information from the database.
 
         Parameters:
             userId (str): The ID of the User to get.
             create (bool): Whether or not to create the entry if it doesn't exist.
         """
-        return self.__get_user(userId, create)
+        return await loop.run_in_executor(None, self.__get_user, userId, create)
     
-    def editUser(self, userId, key, value):
+    async def editUser(self, userId, key, value):
         """Edits the user information from the database.
 
         Parameters:
@@ -393,22 +492,22 @@ class Database:
             key (str): The key to set the value of.
             value (object): The value to set.
         """
-        return self.__edit_user(userId, key, value)
+        return await loop.run_in_executor(None, self.__edit_user, userId, key, value)
     
-    def setUser(self, userId, userInfo):
+    async def setUser(self, userId, userInfo):
         """Sets the user information in the database.
 
         Parameters:
             userId (str): The ID of the User to set.
             userInfo (dict): The dictionary to set for the user information.
         """
-        return self.__set_user_info(userId, userInfo)
+        return await loop.run_in_executor(None, self.__set_user_info, userId, userInfo)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Methods - For Data
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def addInsult(self, level, insult, tags):
+    async def addInsult(self, level, insult, tags):
         """Adds an insult to the database.
 
         Parameters:
@@ -416,9 +515,9 @@ class Database:
             insult (str): The insult to add.
             tags (list): The tags for the insult.
         """
-        return self.__add_insult(level, insult, tags)
+        return await loop.run_in_executor(None, self.__add_insult, level, insult, tags)
     
-    def addPendingInsult(self, user, level, insult, tags):
+    async def addPendingInsult(self, user, level, insult, tags):
         """Adds a pending insult to the database.
 
         Parameters:
@@ -427,48 +526,97 @@ class Database:
             insult (str): The insult to add to the pending list.
             tags (list): The tags for the insult.
         """
-        return self.__add_pending_insult(user, level, insult, tags)
+        return await loop.run_in_executor(None, self.__add_pending_insult, user, level, insult, tags)
     
-    def removePendingInsult(self, value):
+    async def removePendingInsult(self, value):
         """Removes a pending insult from the database.
 
         Parameters:
             value (int): The index of the pending insult to remove.
         """
-        return self.__remove_pending_insult(value)
+        return await loop.run_in_executor(None, self.__remove_pending_insult, value)
 
-    def getInsults(self):
+    async def getInsults(self):
         """Gets the insults from the database.
         """
-        return self.__get_insults()
+        return await loop.run_in_executor(None, self.__get_insults)
     
-    def getPendingInsults(self):
+    async def getPendingInsults(self):
         """Gets the pending insults from the database.
         """
-        return self.__get_pending_insults()
+        return await loop.run_in_executor(None, self.__get_pending_insults)
     
-    def setPendingInsults(self, pendingInsults):
+    async def setPendingInsults(self, pendingInsults):
         """Sets the pending insults.
         """
-        return self.__set_pending_insults(pendingInsults)
+        return await loop.run_in_executor(None, self.__set_pending_insults, pendingInsults)
     
 
-    def getHangmanWords(self):
+    async def getHangmanWords(self):
         """Gets the hangman words from the database.
         """
-        return self.__get_hangman_words()
+        return await loop.run_in_executor(None, self.__get_hangman_words)
+
+    async def addHangman(self, difficulty, phrase):
+        """Adds a phrase to the specified difficulty for hangman
+        """
+        return await loop.run_in_executor(None, self.__add_hangman, difficulty, phrase)
 
 
-    def getScrambleWords(self):
+    async def getScrambleWords(self):
         """Gets the scramble words from the database.
         """
-        return self.__get_scramble_words()
+        return await loop.run_in_executor(None, self.__get_scramble_words)
+    
+    async def addScramble(self, hints, phrase):
+        """Adds a phrase to the specified difficulty for scramble
+        """
+        return await loop.run_in_executor(None, self.__add_scramble, hints, phrase)
 
 
-    def getLang(self):
+    async def getLang(self):
         """Gets the country codes from the database.
         """
-        return self.__get_lang()
+        return await loop.run_in_executor(None, self.__get_lang)
     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Methods - For Updates
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def getUpdates(self):
+        """Gets all the updates to the bot.
+        """
+        return await loop.run_in_executor(None, self.__get_updates)
+
+    async def getUpdate(self):
+        """Gets the most recent update to the bot.
+        """
+        result = await self.getUpdates()
+        return result[0]
+    
+    async def getPendingUpdate(self):
+        """Gets the pending update for the bot.
+        """
+        return await loop.run_in_executor(None, self.__get_pending_update)
+    
+    async def createPendingUpdate(self, versionNumber):
+        """Creates a pending update for the bot.
+        """
+        return await loop.run_in_executor(None, self.__create_pending_update, versionNumber)
+    
+    async def createFix(self, fix):
+        """Creates a pending fix for the bot.
+        """
+        return await loop.run_in_executor(None, self.__add_pending_fix, fix)
+    
+    async def createFeature(self, feature):
+        """Creates a pending feature for the bot.
+        """
+        return await loop.run_in_executor(None, self.__add_pending_feature, feature)
+    
+    async def commitPendingUpdate(self, description):
+        """Commits the pending update for the bot.
+        """
+        return await loop.run_in_executor(None, self.__commit_pending_update, description)
     
 omegaPsi = Database()

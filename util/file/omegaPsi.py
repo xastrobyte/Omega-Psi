@@ -1,4 +1,5 @@
 from util.file.database import omegaPsi
+from util.utils.dictUtils import setDefault
 
 from random import choice as choose
 import discord, json, os
@@ -14,16 +15,19 @@ class OmegaPsi:
     NO_ACCESS = "NO_ACCESS"
     INACTIVE = "INACTIVE"
     ACTIVE = "ACTIVE"
+    IMPLEMENTING = "IMPLEMENTING"
 
     EMBED_COLOR = 0xCE6000
 
     MESSAGE_THRESHOLD = 1000
 
+    PROCESS_ID = None
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Helper Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def openOmegaPsi():
+    async def openOmegaPsi():
         """Opens the JSON file that keeps track of Bot Moderators and
         globally inactive commands.
         """
@@ -39,28 +43,23 @@ class OmegaPsi:
         }
 
         # Get Bot Information from database
-        botDict = omegaPsi.getBot()
+        botDict = await omegaPsi.getBot()
         
-        # See if default values are missing
-        for value in defaultValues:
-            if value not in botDict:
-                botDict[value] = defaultValues[value]
-        
-        return botDict
+        return setDefault(defaultValues, botDict)
     
-    def closeOmegaPsi(botDict):
+    async def closeOmegaPsi(botDict):
         """Closes the JSON file that keeps track of Bot Moderators and
         globally inactive commands.
         """
 
         # Update bot information
-        omegaPsi.setBot(botDict)
+        await omegaPsi.setBot(botDict)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def addModerator(discordUser):
+    async def addModerator(discordUser):
         """Adds a bot moderator to the bot. Different from a Server moderator.
 
         Parameters:
@@ -71,7 +70,7 @@ class OmegaPsi:
         """
         
         # Open the OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Add the Discord User as a bot moderator if User is not already in
         success = False
@@ -80,11 +79,11 @@ class OmegaPsi:
             success = True
 
         # Close the OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return success
     
-    def removeModerator(discordUser):
+    async def removeModerator(discordUser):
         """Removes a bot moderator from the bot. Different from a Server moderator.
 
         Parameters:
@@ -95,7 +94,7 @@ class OmegaPsi:
         """
         
         # Open the OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Remove the Discord User as a bot moderator if User is already in
         success = False
@@ -104,26 +103,26 @@ class OmegaPsi:
             success = True
 
         # Close the OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return success
     
-    def getModerators():
+    async def getModerators():
         """Returns a list of the moderator ID's for Omega Psi.\n
         """
         
         # Open the Omega Psi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Get moderators
         moderators = omegaPsi["moderators"]
 
         # Close the Omega Psi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return moderators
     
-    def activate(commandObject):
+    async def activate(commandObject):
         """Globally activates a command based off the commandObject given. Different from a Server activate.
 
         Parameters:
@@ -134,7 +133,7 @@ class OmegaPsi:
         """
         
         # Open the OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Activate a command if the command is already inactive
         success = False
@@ -143,11 +142,11 @@ class OmegaPsi:
             success = True
 
         # Close the OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return success
     
-    def deactivate(commandObject, reason):
+    async def deactivate(commandObject, reason):
         """Globally deactivates a command based off the commandObject given. Different from a Server deactivate.\n
 
         commandObject - The command to deactivate.\n
@@ -158,7 +157,7 @@ class OmegaPsi:
         """
         
         # Open the OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Deactivate a command if the command is still active
         success = False
@@ -167,18 +166,18 @@ class OmegaPsi:
             success = True
 
         # Close the OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return success
 
-    def setActivityType(activityType):
+    async def setActivityType(activityType):
         """Sets the activity type for setting the presence of the bot.\n
 
         activityType - The type of activity to set.\n
         """
 
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Get the activity type
         success = False
@@ -187,18 +186,18 @@ class OmegaPsi:
             success = True
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return success
     
-    def setActivityName(activityName):
+    async def setActivityName(activityName):
         """Sets the activity name for setting the presence of the bot.\n
 
         activityName - The name of the activity to set.\n
         """
 
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Get the activity name
         success = False
@@ -207,41 +206,41 @@ class OmegaPsi:
             success = True
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return success
     
-    def getActivityType():
+    async def getActivityType():
         """Returns the activity type for setting the presence of the bot.\n
         """
         
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Get the activity type
         activityType = omegaPsi["activity_type"]
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return activityType
     
-    def getActivityName():
+    async def getActivityName():
         """Returns the activity name for setting the presence of the bot.\n
         """
         
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Get the activity name
         activityName = omegaPsi["activity_name"]
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return activityName
     
-    def addToDo(todoItem):
+    async def addToDo(todoItem, index):
         """Adds an item to the Bot's TODO list.
         
         Parameters:
@@ -249,24 +248,48 @@ class OmegaPsi:
         """
 
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Add the item
         value = {"success": False, "reason": "Unknown"}
 
+        # Check if item already exists
         if todoItem in omegaPsi["todo"]:
             value = {"success": False, "reason": "`{}` is already on your TODO list.".format(todoItem)}
         
+        # Item does not exist
         else:
-            omegaPsi["todo"].append(todoItem)
-            value = {"success": True, "reason": "`{}` was added to your TODO list.".format(todoItem)}
+
+            # Check if index is greater than 0
+            if index > 0:
+
+                # Check if index is within range of list
+                if index - 1 < len(omegaPsi["todo"]):
+                    omegaPsi["todo"].insert(index - 1, todoItem)
+                    value = {"success": True, "reason": "`{}` was inserted into your TODO list.".format(todoItem)}
+                
+                # Index is not within range
+                else:
+                    value = {"success": False, "reason": "That index is out of range."}
+                    
+            # Index is less than or is 0
+            else:
+
+                # Index is 0
+                if index == 0:
+                    omegaPsi["todo"].append(todoItem)
+                    value = {"success": True, "reason": "`{}` was added to your TODO list.".format(todoItem)}
+                
+                # Index is negative
+                else:
+                    value = {"success": False, "reason": "You cannot insert into a negative index."}
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return value
 
-    def removeToDo(todoItem):
+    async def removeToDo(todoItem):
         """Removes an item from the Bot's TODO list.
 
         Parameters:
@@ -274,7 +297,7 @@ class OmegaPsi:
         """
 
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         value = {"success": False, "reason": "Unknown"}
 
@@ -301,60 +324,60 @@ class OmegaPsi:
                 value = {"success": True, "reason": "`{}` was removed from the TODO list.".format(removed)}    
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return value
     
-    def getToDoList():
+    async def getToDoList():
         """Returns the Bot's TODO list.
         """
 
         # Open OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # ToDo list
         todo = omegaPsi["todo"]
 
         # Close OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return todo
     
-    def isAuthorModerator(discordUser):
+    async def isAuthorModerator(discordUser):
         """Returns whether or not the Discord User is a bot moderator.\n
 
         discordUser - The Discord User to add as a bot moderator.\n
         """
         
         # Open the OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Check if author is a moderator
         moderator = str(discordUser.id) in omegaPsi["moderators"]
 
         # Close the OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return moderator
     
-    def isCommandActive(commandObject):
+    async def isCommandActive(commandObject):
         """Returns whether or not the command given is active.\n
 
         commandObject - The Command to check if it's active.\n
         """
         
         # Open the OmegaPsi file
-        omegaPsi = OmegaPsi.openOmegaPsi()
+        omegaPsi = await OmegaPsi.openOmegaPsi()
 
         # Check if command is in inactive_commands
         active = commandObject.getAlternatives()[0] not in omegaPsi["inactive_commands"]
 
         # Close the OmegaPsi file
-        OmegaPsi.closeOmegaPsi(omegaPsi)
+        await OmegaPsi.closeOmegaPsi(omegaPsi)
 
         return active
     
-    def getDeactivatedReason(commandObject):
+    async def getDeactivatedReason(commandObject):
         """Returns the reason the command given is inactive.\n
 
         commandObject - The Command to get the inactive reason for.\n
@@ -370,13 +393,13 @@ class OmegaPsi:
         else:
 
             # Open the OmegaPsi file
-            omegaPsi = OmegaPsi.openOmegaPsi()
+            omegaPsi = await OmegaPsi.openOmegaPsi()
 
             # Get reason of command's inactivity
             reason = omegaPsi["inactive_commands"][commandObject.getAlternatives()[0]]
 
             # Close the OmegaPsi file
-            OmegaPsi.closeOmegaPsi(omegaPsi)
+            await OmegaPsi.closeOmegaPsi(omegaPsi)
 
             return discord.Embed(
                 title = commandObject.getAlternatives()[0],
@@ -406,6 +429,9 @@ class OmegaPsi:
             ],
             OmegaPsi.ACTIVE: [
                 "This command is already globally active."
+            ],
+            OmegaPsi.IMPLEMENTING: [
+                "This command is being implemented currently."
             ]
         }
 
@@ -425,3 +451,6 @@ class OmegaPsi:
     
     def getActiveError():
         return OmegaPsi.getErrorMessage(OmegaPsi.ACTIVE)
+    
+    def getImplementingError():
+        return OmegaPsi.getErrorMessage(OmegaPsi.IMPLEMENTING)

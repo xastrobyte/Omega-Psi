@@ -1,5 +1,4 @@
 from util.file.database import omegaPsi
-from util.file.server import Server
 
 from util.utils.dictUtils import setDefault
 
@@ -13,7 +12,7 @@ class User:
     # Helper Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def openUser(discordUser):
+    async def openUser(discordUser):
         """Opens the file for the Discord User given.\n
 
         discordUser - The Discord User to load.\n
@@ -45,20 +44,20 @@ class User:
         }
 
         # Get user information
-        userDict = omegaPsi.getUser(str(discordUser.id))
+        userDict = await omegaPsi.getUser(str(discordUser.id))
             
         return setDefault(defaultValues, userDict)
     
-    def closeUser(userDict):
+    async def closeUser(userDict):
         """Closes the file for the Discord User.\n
 
         userDict - The Discord User to save.\n
         """
 
         # Update user information
-        omegaPsi.setUser(userDict["_id"], userDict)
+        await omegaPsi.setUser(userDict["_id"], userDict)
         
-    def updateConnectFour(discordUser, *, didWin = False):
+    async def updateConnectFour(discordUser, *, didWin = False):
         """Updates the connect four score.
 
         Parameters:
@@ -67,16 +66,16 @@ class User:
         """
 
         # Open user file
-        user = User.openUser(discordUser)
+        user = await User.openUser(discordUser)
 
         # Update member connect four stats
         user["connect_four"]["won"] += 1 if didWin else 0
         user["connect_four"]["lost"] += 1 if not didWin else 0
 
         # Close user file
-        User.closeUser(user)
+        await User.closeUser(user)
     
-    def updateHangman(discordUser, *, didWin = False):
+    async def updateHangman(discordUser, *, didWin = False):
         """Updates the hangman score.
 
         Parameters:
@@ -85,16 +84,16 @@ class User:
         """
 
         # Open user file
-        user = User.openUser(discordUser)
+        user = await User.openUser(discordUser)
 
         # Update member hangman stats
         user["hangman"]["won"] += 1 if didWin else 0
         user["hangman"]["lost"] += 1 if not didWin else 0
 
         # Close user file
-        User.closeUser(user)
+        await User.closeUser(user)
     
-    def updateRPS(discordUser, *, didWin = False):
+    async def updateRPS(discordUser, *, didWin = False):
         """Updates the tic tac toe score.
 
         Parameters:
@@ -103,16 +102,16 @@ class User:
         """
 
         # Open user file
-        user = User.openUser(discordUser)
+        user = await User.openUser(discordUser)
 
         # Update member RPS stats
         user["rps"]["won"] += 1 if didWin else 0
         user["rps"]["lost"] += 1 if not didWin else 0
 
         # Close user file
-        User.closeUser(user)
+        await User.closeUser(user)
     
-    def updateScramble(discordUser, *, didWin = False):
+    async def updateScramble(discordUser, *, didWin = False):
         """Updates the tic tac toe score.
 
         Parameters:
@@ -121,16 +120,16 @@ class User:
         """
 
         # Open user file
-        user = User.openUser(discordUser)
+        user = await User.openUser(discordUser)
 
         # Update member scramble stats
         user["scramble"]["won"] += 1 if didWin else 0
         user["scramble"]["lost"] += 1 if not didWin else 0
 
         # Close user file
-        User.closeUser(user)
+        await User.closeUser(user)
     
-    def updateTicTacToe(discordUser, *, didWin = False):
+    async def updateTicTacToe(discordUser, *, didWin = False):
         """Updates the tic tac toe score.
 
         Parameters:
@@ -139,11 +138,11 @@ class User:
         """
 
         # Open user file
-        user = User.openUser(discordUser)
+        user = await User.openUser(discordUser)
 
         # Update member tic tac toe stats
         user["tic_tac_toe"]["won"] += 1 if didWin else 0
         user["tic_tac_toe"]["lost"] += 1 if not didWin else 0
 
         # Close user file
-        User.closeUser(user)
+        await User.closeUser(user)

@@ -71,7 +71,7 @@ class Server:
         "prioritySpeaker": 256
     }
 
-    JOIN_MESSAGES = [
+    WELCOME_MESSAGES = [
         "{} has joined this wonderful server!",
         "Let us all welcome {} to this server!",
         "Welcome {}!",
@@ -87,7 +87,7 @@ class Server:
     # Helper Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def openServer(discordServer):
+    async def openServer(discordServer):
         """Opens the file for the Discord Server given.\n
 
         discordServer - The Discord Server to load.\n
@@ -98,28 +98,28 @@ class Server:
             "prefixes": [OmegaPsi.PREFIX],
             "_id": str(discordServer.id),
             "ranking": False,
-            "join_message": {
+            "welcome_message": {
                 "active": False,
                 "channel": None,
-                "messages": Server.JOIN_MESSAGES
+                "messages": Server.WELCOME_MESSAGES
             },
             "inactive_commands": {},
             "members": {}
         }
 
         # Get server information
-        serverDict = omegaPsi.getServer(str(discordServer.id))
+        serverDict = await omegaPsi.getServer(str(discordServer.id))
 
         return setDefault(defaultValues, serverDict)
     
-    def closeServer(serverDict):
+    async def closeServer(serverDict):
         """Closes the file for the Discord Server.\n
 
         serverDict - The Discord Server to save.\n
         """
 
         # Update the server information
-        omegaPsi.setServer(serverDict["_id"], serverDict)
+        await omegaPsi.setServer(serverDict["_id"], serverDict)
     
     def getLevelFromExp(experience):
         """Returns the level that the given experience represents.\n
@@ -163,7 +163,7 @@ class Server:
     # Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def startsWithPrefix(discordServer, message):
+    async def startsWithPrefix(discordServer, message):
         """Returns whether or not the message is a prefix for the specified Discord Server.\n
 
         discordServer - The Discord Server to get the prefixes for.\n
@@ -171,7 +171,7 @@ class Server:
         """
 
         # Get prefixes
-        prefixes = Server.getPrefixes(discordServer)
+        prefixes = await Server.getPrefixes(discordServer)
 
         # See if message starts with any prefix
         for prefix in prefixes:
@@ -180,7 +180,7 @@ class Server:
 
         return False
 
-    def getPrefixes(discordServer):
+    async def getPrefixes(discordServer):
         """Returns the prefix for the specified Discord Server.\n
 
         discordServer - The Discord Server to get the prefix of.\n
@@ -190,7 +190,7 @@ class Server:
         if discordServer != None:
 
             # Open server file
-            server = Server.openServer(discordServer)
+            server = await Server.openServer(discordServer)
 
             # Get prefixes; Add spaces to any that are only alphas
             prefixes = server["prefixes"]
@@ -199,29 +199,29 @@ class Server:
                     prefixes[prefix] += " "
 
             # Close server file
-            Server.closeServer(server)
+            await Server.closeServer(server)
 
             return prefixes
         
         # Return default prefix
         return [OmegaPsi.PREFIX]
     
-    def resetPrefixes(discordServer): 
+    async def resetPrefixes(discordServer): 
         """Resest the prefixes in the specified Discord Server and sets it to the default.\n
 
         discordServer - The Discord Server to reset the prefixes of.\n
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Remove all prefixes
         server["prefixes"] = [OmegaPsi.PREFIX]
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
     
-    def addPrefix(discordServer, prefix):
+    async def addPrefix(discordServer, prefix):
         """Adds a prefix to the specified Discord Server.\n
 
         discordServer - The Discord Server to add the prefix to.\n
@@ -229,7 +229,7 @@ class Server:
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
         
         # Only add if prefix does not already exist
         if prefix not in server["prefixes"]:
@@ -241,11 +241,11 @@ class Server:
             successMessage = "`{}` could not be added as a prefix. It already exists."
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return {"success_int": successInt, "message": successMessage.format(prefix) + "\n"}
     
-    def removePrefix(discordServer, prefix):
+    async def removePrefix(discordServer, prefix):
         """Removes a prefix from the specified Discord Server.\n
 
         discordServer - The Discord Server to remove the prefix from.\n
@@ -253,7 +253,7 @@ class Server:
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Add space if it is an alpha prefix and len is greater than 1
         if len(prefix) > 1 and prefix.isalpha():
@@ -278,11 +278,11 @@ class Server:
             server["prefixes"].remove(prefix)
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return {"success_int": successInt, "message": successMessage.format(prefix) + "\n"}
 
-    def updateMember(discordServer, discordMember, *, action = UPDATE_MEMBER):
+    async def updateMember(discordServer, discordMember, *, action = UPDATE_MEMBER):
         """Updates the Discord Member that belongs the Discord Server given.\n
 
         discordServer - The Discord Server to update the Discord Member in.\n
@@ -302,7 +302,7 @@ class Server:
         }
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Check if member is not in server file; Create empty dictionary
         addMemberSuccess = False
@@ -315,12 +315,12 @@ class Server:
         member = setDefault(defaultValues, member)
         
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         if action == Server.ADD_MEMBER:
             return addMemberSuccess
 
-    def removeMember(discordServer, discordMember):
+    async def removeMember(discordServer, discordMember):
         """Removes a Discord Member from a Discord Server.\n
 
         discordServer - The Discord Server to remove the Discord Member from.\n
@@ -328,7 +328,7 @@ class Server:
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Check if member is in server
         success = False
@@ -337,11 +337,11 @@ class Server:
             success = True
         
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return success
 
-    def activate(discordServer, commandObject):
+    async def activate(discordServer, commandObject):
         """Activates a Command in the Discord Server.\n
 
         discordServer - The Discord Server to activate the Command in.\n
@@ -349,7 +349,7 @@ class Server:
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Check if command is in inactive commands
         success = False
@@ -358,11 +358,11 @@ class Server:
             success = True
         
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return success
     
-    def deactivate(discordServer, commandObject, reason):
+    async def deactivate(discordServer, commandObject, reason):
         """Deactivates a Command in the Discord Server.\n
 
         discordServer - The Discord Server to deactivate the Command in.\n
@@ -371,7 +371,7 @@ class Server:
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Check if command is not in inactive commands
         success = False
@@ -380,45 +380,45 @@ class Server:
             success = True
         
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return success
     
-    def toggleRanking(discordServer):
+    async def toggleRanking(discordServer):
         """Toggles the ranking/leveling system in the Discord Server.\n
 
         discordServer - The Discord Server to toggle the ranking in.\n
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Toggle the ranking system
         server["ranking"] = not server["ranking"]
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return server["ranking"]
     
-    def toggleJoinMessage(discordServer):
+    async def toggleWelcomeMessage(discordServer):
         """Toggles the message that the bot will say whenever someone new joins the Discord Server.\n
 
         discordServer - The Discord Server to toggle the join message in.\n
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Toggle the join messaging
-        server["join_message"]["active"] = not server["join_message"]["active"]
+        server["welcome_message"]["active"] = not server["welcome_message"]["active"]
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
-        return server["join_message"]["active"]
+        return server["welcome_message"]["active"]
     
-    def setLevel(discordServer, discordMember, level):
+    async def setLevel(discordServer, discordMember, level):
         """Sets the ranking level of the Discord Member in the Discord Server.\n
 
         discordServer - The Discord Server to set the level of the Discord Member in.\n
@@ -427,21 +427,21 @@ class Server:
         """
 
         # Open server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Set level and experience
         server["members"][str(discordMember.id)]["level"] = level
         server["members"][str(discordMember.id)]["experience"] = Server.getExpFromLevel(level)
 
         # Close server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return "{} was set to Level {}".format(
             discordMember.name if discordMember.nick == None else discordMember.nick,
             level
         )
     
-    def updateExperience(discordMessage):
+    async def updateExperience(discordMessage):
         """Updates the experience for the Discord Member in the Discord Server given the Discord Message.\n
 
         discordMessage - The Discord Message to use in order to figure out how much experience is earned.\n
@@ -455,13 +455,13 @@ class Server:
             discordMember = discordMessage.author
 
             # Only run if ranking is active and message is not from a bot
-            if Server.isRankingActive(discordServer) and not discordMember.bot:
+            if await Server.isRankingActive(discordServer) and not discordMember.bot:
 
                 # Update member
-                Server.updateMember(discordServer, discordMember)
+                await Server.updateMember(discordServer, discordMember)
 
                 # Open server file
-                server = Server.openServer(discordServer)
+                server = await Server.openServer(discordServer)
 
                 # Update experience; Make sure last message was over the interval
                 previous = Server.dictToDatetime(server["members"][str(discordMember.id)]["last_message"])
@@ -487,7 +487,7 @@ class Server:
                 message = Server.updateLevel(server, discordMember)
 
                 # Close server file
-                Server.closeServer(server)
+                await Server.closeServer(server)
 
                 return message
 
@@ -518,7 +518,7 @@ class Server:
         
         return None
     
-    def getMember(discordServer, discordMember):
+    async def getMember(discordServer, discordMember):
         """Returns the dictionary of the Discord Member in the Discord Server.\n
 
         discordServer - The Discord Server to use to get the Discord Member's dictionary.\n
@@ -526,88 +526,88 @@ class Server:
         """
 
         # Update member if not in server
-        Server.updateMember(discordServer, discordMember)
+        await Server.updateMember(discordServer, discordMember)
 
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Get the members information
         member = server["members"][str(discordMember.id)]
 
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return member
     
-    def isRankingActive(discordServer):
+    async def isRankingActive(discordServer):
         """Returns whether or not the ranking system is active in the Discord Server.\n
 
         discordServer - The Discord Server to check if ranking is active.\n
         """
 
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Get the ranking status
         active = server["ranking"]
 
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return active
     
-    def isJoinMessageActive(discordServer):
+    async def isWelcomeMessageActive(discordServer):
         """Returns whether or not the join message is active in the Discord Server.\n
 
         discordServer - The Discord Server to check if the join message is active.\n
         """
         
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Get the join message active status
-        active = server["join_message"]["active"]
+        active = server["welcome_message"]["active"]
 
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
         
         return active
     
-    def getJoinMessageChannel(discordServer):
+    async def getWelcomeMessageChannel(discordServer):
         """Returns the channel that the join message is sent to.\n
 
         discordServer - The Discord Server to get the join message channel of.\n
         """
 
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Get the join message channel
-        channelId = int(server["join_message"]["channel"])
+        channelId = int(server["welcome_message"]["channel"])
 
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return channelId
     
-    def getJoinMessage(discordServer):
+    async def getWelcomeMessage(discordServer):
         """Returns a random join message for the server.
         """
 
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Choose a join message
-        if "messages" not in server["join_message"]:
-            server["join_message"]["messages"] = Server.JOIN_MESSAGES
-        message = choose(server["join_message"]["messages"])
+        if "messages" not in server["welcome_message"]:
+            server["welcome_message"]["messages"] = Server.JOIN_MESSAGES
+        message = choose(server["welcome_message"]["messages"])
 
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return message
     
-    def setJoinMessageChannel(discordServer, discordChannel):
+    async def setWelcomeMessageChannel(discordServer, discordChannel):
         """Sets the Discord Channel that join messages are sent to in a Discord Server.\n
 
         discordServer - The Discord Server that the join message channel is being set in.\n
@@ -615,28 +615,28 @@ class Server:
         """
 
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Set the join message channel
         success = False
-        if str(discordChannel.id) != server["join_message"]["channel"]:
-            server["join_message"]["channel"] = str(discordChannel.id)
+        if str(discordChannel.id) != server["welcome_message"]["channel"]:
+            server["welcome_message"]["channel"] = str(discordChannel.id)
             success = True
         
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return success
     
-    def isAuthorModerator(discordMember):
+    async def isAuthorModerator(discordMember):
         """Returns whether or not the Discord Member is a moderator in the Discord Server.\n
 
         discordMember - The Discord Member to check if they are a moderator.\n
         """
 
-        return discordMember.guild_permissions.manage_guild or OmegaPsi.isAuthorModerator(discordMember)
+        return discordMember.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(discordMember)
     
-    def isCommandActive(discordServer, commandObject):
+    async def isCommandActive(discordServer, commandObject):
         """Returns whether or not the command given is active.\n
 
         discordServer - The Discord Server to check if the Command is active.\n
@@ -644,17 +644,17 @@ class Server:
         """
         
         # Open the server file
-        server = Server.openServer(discordServer)
+        server = await Server.openServer(discordServer)
 
         # Check if command is in inactive_commands
         active = commandObject.getAlternatives()[0] not in server["inactive_commands"]
 
         # Close the server file
-        Server.closeServer(server)
+        await Server.closeServer(server)
 
         return active
     
-    def getDeactivatedReason(discordServer, commandObject):
+    async def getDeactivatedReason(discordServer, commandObject):
         """Returns the reason the command given is inactive.\n
 
         discordServer - The Discord Server to check the Command's inactive reason in.\n
@@ -664,20 +664,20 @@ class Server:
         """
         
         # Check if command is active
-        if Server.isCommandActive(discordServer, commandObject):
+        if await Server.isCommandActive(discordServer, commandObject):
             return Server.getErrorMessage(Server.ACTIVE)
         
         # Command must be inactive, get the reason
         else:
 
             # Open the server file
-            server = Server.openServer(discordServer)
+            server = await Server.openServer(discordServer)
 
             # Get reason of command's inactivity
             reason = server["inactive_commands"][commandObject.getAlternatives()[0]]
 
             # Close the server file
-            Server.closeServer(server)
+            await Server.closeServer(server)
 
             return discord.Embed(
                 title = commandObject.getAlternatives()[0],
