@@ -25,6 +25,7 @@ extensions = [
     "category.misc",
     "category.nsfw",
     "category.rank",
+    "category.updates",
     "category.serverModerator",
     "category.botModerator"
 ]
@@ -35,8 +36,8 @@ extensions = [
 
 @omegaPsi.event
 async def on_ready():
-    activityType = OmegaPsi.getActivityType()
-    text = OmegaPsi.getActivityName()
+    activityType = await OmegaPsi.getActivityType()
+    text = await OmegaPsi.getActivityName()
 
     await omegaPsi.change_presence(
         status = discord.Status.online,
@@ -67,7 +68,7 @@ async def on_message(message):
         if message.guild != None:
 
             # Update experience; Get message
-            message = Server.updateExperience(message)
+            message = await Server.updateExperience(message)
 
             # Rank up message existed
             if message != None:
@@ -85,36 +86,56 @@ async def on_message(message):
 async def on_member_join(member):
 
     # Open server file
-    server = Server.openServer(member.guild)
+    server = await Server.openServer(member.guild)
 
     # Update member
-    Server.updateMember(member.guild, member)
+    await Server.updateMember(member.guild, member)
 
-    # Send message in join message channel
-    if server["join_message"]["active"]:
-        await sendMessage(
-            omegaPsi,
-            member.guild.get_channel(
-                Server.getJoinMessageChannel(member.guild)
-            ),
-            message = Server.getJoinMessage(member.guild).format(member.mention)
-        )
+    # Send message in welcome message channel
+    if server["welcome_message"]["active"]:
+        
+        # Make sure the welcome message channel exists
+        if server["welcome_message"]["channel"]:
+            await sendMessage(
+                omegaPsi,
+                member.guild.get_channel(
+                    await Server.getWelcomeMessageChannel(member.guild)
+                ),
+                message = await Server.getWelcomeMessage(member.guild).format(member.mention)
+            )
+        
+        # Send message to owner if they can be grabbed
+        else:
+            owner = member.guild.owner
+
+            if owner != None:
+                await owner.send(
+                    embed = discord.Embed(
+                        title = "Welcome Channel Not Set",
+                        description = "You have the Welcome Message activated but you don't have a channel set. Set it with `omega setWelcomeMessageChannel`",
+                        colour = 0xFF0000
+                    ).set_author(
+                        name = "In Server: {}".format(
+                            member.guild.name
+                        )
+                    )
+                )
 
     # Close server file
-    Server.closeServer(server)
+    await Server.closeServer(server)
 
 @omegaPsi.event
 async def on_member_remove(member):
 
     # Open servers file
-    server = Server.openServer(member.guild)
+    server = await Server.openServer(member.guild)
 
     # Remove member
     if str(member.id) in server["members"]:
         server["members"].pop(str(member.id))
 
     # Close servers file
-    Server.closeServer(server)
+    await Server.closeServer(server)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Reaction Events
@@ -124,14 +145,14 @@ async def on_member_remove(member):
 async def on_reaction_add(reaction, member):
     
     # Open server file
-    server = Server.openServer(member.guild)
+    server = await Server.openServer(member.guild)
 
     # Update member experience
     if str(member.id) in server["members"]:
         server["members"][str(member.id)]["experience"] += Server.REACTION_XP
 
     # Close server file
-    Server.closeServer(server)
+    await Server.closeServer(server)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Run Bot
