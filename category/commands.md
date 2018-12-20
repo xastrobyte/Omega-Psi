@@ -10,6 +10,7 @@
   * [Miscellaneous](#Miscellaneous)
   * [NSFW](#NSFW)
   * [Rank](#Rank)
+  * [Updates](#Updates)
   * [Server Moderator](#Server-Moderator)
   * [Bot Moderator](#Bot-Moderator)
 ## Help
@@ -17,12 +18,54 @@
 
   * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
+  * `support | supportServer ` - Gives you an invite to the support server for Omega Psi support.
+
+  * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
+    * Accepted Parameters for `permissions...`
+      * `administrator | admin` - Gives the bot administrator privileges.
+      * `viewAuditLog | auditLog | audit` - Gives the bot access to the audit log.
+      * `manageServer | mngSvr` - Gives the bot permission to manage the server.
+      * `manageRoles | mngRoles` - Gives the bot permission to manage the roles.
+      * `manageChannels | mngChnls` - Gives the bot permission to manage the channels.
+      * `kickMembers | kickMbrs` - Gives the bot permission to kick members.
+      * `banMembers | banMbrs` - Gives the bot permission to ban members.
+      * `createInstantInvite | instantInvite | invite` - Gives the bot permission to create an instant invite for the server.
+      * `changeNickname | chngNick` - Gives the bot permission to change their nickname.
+      * `manageNicknames | mngNick` - Gives the bot permission to manage other people's nicknames.
+      * `manageEmojis | mngEmojis` - Gives the bot permission to manage the server's emojis.
+      * `manageWebhooks | mngWbhks` - Gives the bot permission to manage the server's webhooks.
+      * `viewChannels | viewChnls` - Gives the bot permission to view the channels.
+      * `sendMessages | message | msg` - Gives the bot permission to send messages.
+      * `sendTtsMessages | ttsMessages` - Gives the bot permission to send TTS (text-to-speech) messages.
+      * `manageMessages | mngMsgs` - Gives the bot permission to manage messages.
+      * `embedLinks | links` - Gives the bot permission to embed links.
+      * `attachFiles | files` - Gives the bot permission to attach files.
+      * `readMessageHistory | messageHistory | msgHist` - Gives the bot permission to read the message history.
+      * `mentionEveryone` - Gives the bot permission to mention everyone.
+      * `useExternalEmojis | externalEmojis | emojis` - Gives the bot permission to use other server's emojis.
+      * `addReactions | reactions` - Gives the bot permission to react to messages.
+      * `connect` - Gives the bot permission to connect to a voice channel.
+      * `speak` - Gives the bot permission to speak in a voice channel.
+      * `muteMembers | mute` - Gives the bot permission to mute members in a voice channel.
+      * `deafenMembers | deafen` - Gives the bot permission to deafen members in a voice channel.
+      * `useMembers` - Gives the bot permission to move members to a different voice channel.
+      * `useVoiceActivity | useVoice | voice` - Gives the bot permission to use voice activity in a voice channel.
+      * `prioritySpeaker` - Gives the bot permission to the priority speaker.
+
+  * `vote ` - Allows you to get a link to vote for Omega Psi on discordbots.org
+
+  * `github ` - Sends you the Github link for the source code.
+
+  * `replit | repl.it | repl ` - Sends you the Repl.it link for the bot.
+
+  * `uptime ` - Sends a link to see the uptime of Omega Psi.
+
   * `markdown | getMarkdown | md | getMd ` - **`Bot Mod`** Creates and sends the markdown file for the commands.
 
 ## Code
   *Commands that have to do with coding!*
 
-  * `brainfuck | brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
+  * `brainf | brainfuck | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
 
   * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
 
@@ -31,14 +74,17 @@
       * `encode | enc | e` - Encode text into base64.
       * `decode | dec | d` - Decode text from base64.
 
+  * `morse | m <conversion> <text>` - Encodes or decodes text to Morse code.
+    * Accepted Parameters for `conversion`
+      * `encode | enc | e` - Encodes text into Morse Code.
+      * `decode | dec | d` - Decodes text from Morse Code.
+
   * `qrCode | qr <data>` - Turns text into a QR code.
 
 ## Game
   *You can play games with these.*
 
-  * `connectFour | connect4 | cf [difficulty]` - Play connect four with Omega Psi.
-    * Accepted Parameters for `difficulty`
-      * `quit | q | exit` - Allows you to quit the Connect 4 game.
+  * `connectFour | connect4 | cf ` - Play connect four with Omega Psi.
 
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
     * Accepted Parameters for `difficulty`
@@ -57,7 +103,6 @@
     * Accepted Parameters for `difficulty`
       * `normal | n | easy | e` - Only each word is scrambled.
       * `expert | hard | difficult` - The entire phrase is scrambled.
-      * `quit | q | exit` - Allows you to quit the scramble game.
 
   * `ticTacToe | ttt [difficulty]` - Lets you play a Tic-Tac-Toe game against Omega Psi.
     * Accepted Parameters for `difficulty`
@@ -67,6 +112,14 @@
       * `quit | q | exit` - Quit your game of Tic-Tac-Toe.
 
   * `stats | gameStats ` - Gives you stats on the games you've won/lost.
+
+  * `addHangman | hangmanAdd <difficulty> <phrase>` - **`Bot Mod`** Adds a hangman word/phrase to the database.
+    * Accepted Parameters for `difficulty`
+      * `easy | e` - Add the phrase to the easy difficulty level.
+      * `medium | m` - Add the phrase to the medium difficulty level.
+      * `hard | h` - Add the phrase to the hard difficulty level.
+
+  * `addScramble | scrambleAdd <hints> <phrase>` - **`Bot Mod`** Adds a scramble word/phrase to the database.
 
   * `blackOps3 | blackops3 | bo3 <platform> <username>` - Gives you stats on a specific player in Black Ops 3
     * Accepted Parameters for `platform`
@@ -158,8 +211,6 @@
 
   * `translate <to> [from] <text>` - Gives you the translation of given text to and from a language.
 
-  * `urban | urbanDictionary | urbanDict <term>` - **`NSFW`** Gives you the top 5 urban dictionary entries for a term.
-
   * `weather | forecast | getWeather <location>` - Gets the weather for a specified location.
 
   * `wikipedia | wiki <term>` - Gets a wikipedia entry you type in.
@@ -195,6 +246,8 @@
   * `meme ` - Sends a random meme from Reddit.
 
   * `areYouAwake <text>` - Sends a generated meme based off of [this](https://i.imgur.com/Tmasvyy.jpg) image.
+
+  * `bikeCrash <firstText> <crashText>` - Sends a generated meme based off of [this](https://i.imgur.com/Y6p8GZw.jpg) image.
 
   * `brainOf <text>` - Sends a generated meme based off of [this](https://i.imgur.com/lIatply.jpg) image.
 
@@ -262,6 +315,8 @@
 
   * `surprisedPikachu <firstLine> <secondLine> <thirdLine> [fourthLine] [fifthLine]` - Sends a generated meme based off of [this](https://imgflip.com/s/meme/Surprised-Pikachu.jpg) image.
 
+  * `thanosStone <stoneText> <thanosText>` - Sends a generated meme based off of [this](https://i.imgur.com/EyBqASK.png) image.
+
   * `threeDoors <firstDoorText> <secondDoorText> <thirdDoorText> [personText]` - Sends a generated meme based off of [this](https://i.imgur.com/rv80SIU.jpg) image.
 
   * `trojanHorse <hidersText> <horseText> <castleText> <welcomersText>` - Sends a generated meme based off of [this](https://i.imgur.com/pNR2At1.jpg) image.
@@ -298,47 +353,9 @@
 
   * `nickname | nick [nickname]` - Changes your nickname.
 
+  * `botInfo | bi ` - Allows you to get the info about the bot.
+
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
-
-  * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
-    * Accepted Parameters for `permissions...`
-      * `administrator | admin` - Gives the bot administrator privileges.
-      * `viewAuditLog | auditLog | audit` - Gives the bot access to the audit log.
-      * `manageServer | mngSvr` - Gives the bot permission to manage the server.
-      * `manageRoles | mngRoles` - Gives the bot permission to manage the roles.
-      * `manageChannels | mngChnls` - Gives the bot permission to manage the channels.
-      * `kickMembers | kickMbrs` - Gives the bot permission to kick members.
-      * `banMembers | banMbrs` - Gives the bot permission to ban members.
-      * `createInstantInvite | instantInvite | invite` - Gives the bot permission to create an instant invite for the server.
-      * `changeNickname | chngNick` - Gives the bot permission to change their nickname.
-      * `manageNicknames | mngNick` - Gives the bot permission to manage other people's nicknames.
-      * `manageEmojis | mngEmojis` - Gives the bot permission to manage the server's emojis.
-      * `manageWebhooks | mngWbhks` - Gives the bot permission to manage the server's webhooks.
-      * `viewChannels | viewChnls` - Gives the bot permission to view the channels.
-      * `sendMessages | message | msg` - Gives the bot permission to send messages.
-      * `sendTtsMessages | ttsMessages` - Gives the bot permission to send TTS (text-to-speech) messages.
-      * `manageMessages | mngMsgs` - Gives the bot permission to manage messages.
-      * `embedLinks | links` - Gives the bot permission to embed links.
-      * `attachFiles | files` - Gives the bot permission to attach files.
-      * `readMessageHistory | messageHistory | msgHist` - Gives the bot permission to read the message history.
-      * `mentionEveryone` - Gives the bot permission to mention everyone.
-      * `useExternalEmojis | externalEmojis | emojis` - Gives the bot permission to use other server's emojis.
-      * `addReactions | reactions` - Gives the bot permission to react to messages.
-      * `connect` - Gives the bot permission to connect to a voice channel.
-      * `speak` - Gives the bot permission to speak in a voice channel.
-      * `muteMembers | mute` - Gives the bot permission to mute members in a voice channel.
-      * `deafenMembers | deafen` - Gives the bot permission to deafen members in a voice channel.
-      * `useMembers` - Gives the bot permission to move members to a different voice channel.
-      * `useVoiceActivity | useVoice | voice` - Gives the bot permission to use voice activity in a voice channel.
-      * `prioritySpeaker` - Gives the bot permission to the priority speaker.
-
-  * `vote ` - Allows you to get a link to vote for Omega Psi on discordbots.org
-
-  * `github ` - Sends you the Github link for the source code.
-
-  * `replit | repl.it | repl ` - Sends you the Repl.it link for the bot.
-
-  * `uptime ` - Sends a link to see the uptime of Omega Psi.
 
   * `sendBug | bug | error | feedback <messageType> <message>` - Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.
     * Accepted Parameters for `messageType`
@@ -358,6 +375,8 @@
 
   * `booty | ass ` - **`NSFW`** Sends a random picture of some booty.
 
+  * `urban | urbanDictionary | urbanDict <term>` - **`NSFW`** Gives you the top 5 urban dictionary entries for a term.
+
 ## Rank
   *The ranking system is strong with this category.*
 
@@ -370,6 +389,21 @@
       * `normal | basic` - Check how many regular messages you need to send to level up.
 
   * `rank | r ` - Shows you your current level and experience in this server.
+
+## Updates
+  *Anything having to do with updates goes here.*
+
+  * `update ` - Gets information about the most recent update to the bot.
+
+  * `pendingUpdate | pendUpdate | pendingUpd | pendUpd ` - Gets information about the current pending update to the bot.
+
+  * `createUpdate <version>` - **`Bot Mod`** Creates a pending update to the bot.
+
+  * `createFix <fix>` - **`Bot Mod`** Creates a fix to a pending update of the bot.
+
+  * `createFeature <feature>` - **`Bot Mod`** Creates a feature to a pending update of the bot.
+
+  * `commitUpdate | commit <description>` - **`Bot Mod`** Commits the pending update to the bot as an update.
 
 ## Server Moderator
   *Moderate your server with this.*
@@ -388,9 +422,15 @@
 
   * `toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel ` - **`Server Mod`** Allows you to toggle the ranking system in the server.
 
-  * `toggleJoinMessage | toggleJoinMsg | togJoinMessage | togJoinMsg ` - **`Server Mod`** Allows you to toggle the join message in the server.
+  * `toggleWelcomeMessage | toggleWelcomeMsg | togWelcomeMessage | togWelcomeMsg ` - **`Server Mod`** Allows you to toggle the welcome message in the server.
 
-  * `setJoinMessageChannel | setJoinMsgChannel | setJoinMsgChan <channel>` - **`Server Mod`** Allows you to set the channel that the Join Messages are sent in.
+  * `setWelcomeMessageChannel | setWelcomeMsgChannel | setWelcomeMsgChan <channel>` - **`Server Mod`** Allows you to set the channel that the Join Messages are sent in.
+
+  * `toggleWelcomeFail | togWelcomeFail | togWelcFail ` - **`Server Mod`** Toggles whether or not you receive a message if the welcome message fails.
+
+  * `toggleProfanity | togProfanity | toggleProfane | togProfane ` - **`Server Mod`** Toggles the profanity filter.
+
+  * `toggleProfanityFail | togProfaneFail ` - **`Server Mod`** Toggles whether or not you receive a message if the profanity filter fails.
 
   * `setLevel | setLvl <level> <member...>` - **`Server Mod`** Allows you to set the level of a member, or members, in the server.
 
@@ -405,13 +445,21 @@
       * `True | true | T | t | Yes | yes | Y | y` - Set the server invite to never expire.
       * `False | false | F | f | No | no | N | n` - Set the server invite to expire.
 
+  * `purge <amount>` - **`Server Mod`** Purges messages in a channel.
+
   * `addRole <name> [colour]` - **`Server Mod`** Adds a role to the server.
 
   * `removeRole <name>` - **`Server Mod`** Removes a role from the server.
 
-  * `kickMember | kickMbr <member(s)...>` - **`Server Mod`** Kicks a member, or members, from the server.
+  * `kickMember | kickMbr <member>` - **`Server Mod`** Kicks a member from the server.
 
-  * `banMember | banMbr <member(s)...>` - **`Server Mod`** Bans a member, or members, from the server.
+  * `banMember | banMbr | ban <member>` - **`Server Mod`** Bans a member from the server.
+
+  * `unbanMember | unbanMbr | unban <member>` - **`Server Mod`** Unbans a member in the server.
+
+  * `muteMember | muteMbr | mute <member>` - **`Server Mod`** Mutes a member in the server.
+
+  * `unmuteMember | unmuteMbr | unmute <member>` - **`Server Mod`** Unmutes a member in the server.
 
   * `addMemberRole | addMbrRole | giveRole <member> <role(s)...>` - **`Server Mod`** Gives a member the mentioned role(s).
 
@@ -432,8 +480,6 @@
 
   * `deactivateGlobally | disableGlobally <command> [reason]` - **`Bot Mod`** Allows you to deactivate a command globally.
 
-  * `botInfo | bi ` - **`Bot Mod`** Allows you to get the info about the bot.
-
   * `servers | botServers [markdown]` - **`Bot Mod`** Allows you to get a list of servers the bot is in.
 
   * `setStatus | status <activity> <text>` - **`Bot Mod`** Allows you to change the presence of the bot.
@@ -443,7 +489,7 @@
       * `listening | Listening | listening to | Listening to` - The listening activity type.
       * `watching | Watching` - The watching activity type.
 
-  * `todo [action] [item]` - **`Bot Mod`** Adds, removes, or lists things in the TODO list.
+  * `todo [action] [item]` - Adds, removes, or lists things in the TODO list.
     * Accepted Parameters for `action`
       * `add | a` - Adds something to the TODO list.
       * `remove | r` - Removes something from the TODO list.
