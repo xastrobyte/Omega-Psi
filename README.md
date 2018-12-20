@@ -1,6 +1,4 @@
-[![Discord Bots](https://discordbots.org/api/widget/status/503804826187071501.svg)](https://discordbots.org/bot/503804826187071501)
-[![Discord Bots](https://discordbots.org/api/widget/upvotes/503804826187071501.svg)](https://discordbots.org/bot/503804826187071501)
-[![Discord Bots](https://discordbots.org/api/widget/owner/503804826187071501.svg)](https://discordbots.org/bot/503804826187071501)
+[![Discord Bots](https://discordbots.org/api/widget/503804826187071501.svg)](https://discordbots.org/bot/503804826187071501)
 
 Support Server: [![Discord Server](https://img.shields.io/discord/521185038969208850.svg)](https://discord.gg/mvNxh3f)
 
