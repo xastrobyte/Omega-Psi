@@ -18,6 +18,8 @@
 
   * `help | h | ? [command | category]` - Gives you help on all commands or a specific command in the bot.
 
+  * `ping ` - Pings the bot.
+
   * `support | supportServer ` - Gives you an invite to the support server for Omega Psi support.
 
   * `inviteBot | invite [permissions...]` - Gives you a link so you can invite the bot to your own server.
@@ -60,12 +62,19 @@
 
   * `uptime ` - Sends a link to see the uptime of Omega Psi.
 
+  * `sendBug | bug | error | feedback <messageType> <message>` - Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.
+    * Accepted Parameters for `messageType`
+      * `bug` - The type of message is a bug in Omega Psi.
+      * `error` - Something is going wrong but you don't know what.
+      * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
+      * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
+
   * `markdown | getMarkdown | md | getMd ` - **`Bot Mod`** Creates and sends the markdown file for the commands.
 
 ## Code
   *Commands that have to do with coding!*
 
-  * `brainf | brainfuck | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
+  * `brainf | bf <code> [parameters]` - Runs brainfuck code. Kinda confusing stuff at first glance.
 
   * `convert | conversion | baseConversion | baseConverter [startBase] <endBase> <number>` - Converts a number from one base to another base.
 
@@ -84,7 +93,9 @@
 ## Game
   *You can play games with these.*
 
-  * `connectFour | connect4 | cf ` - Play connect four with Omega Psi.
+  * `connectFour | connect4 | cf [difficulty]` - Play connect four with Omega Psi.
+    * Accepted Parameters for `difficulty`
+      * `quit | q | exit` - Allows you to quit the Connect 4 game.
 
   * `hangman | playHangman [difficulty]` - Let's you play hangman!
     * Accepted Parameters for `difficulty`
@@ -103,6 +114,7 @@
     * Accepted Parameters for `difficulty`
       * `normal | n | easy | e` - Only each word is scrambled.
       * `expert | hard | difficult` - The entire phrase is scrambled.
+      * `quit | q | exit` - Allows you to quit the scramble game.
 
   * `ticTacToe | ttt [difficulty]` - Lets you play a Tic-Tac-Toe game against Omega Psi.
     * Accepted Parameters for `difficulty`
@@ -341,7 +353,11 @@
       * `hsl | HSL` - Get color information using HSL.
       * `cmyk | CMYK` - Get color information using CMYK.
 
-  * `numberFact | number ` - Gives you a fact about a number.
+  * `llamas | llamasWithHats | llama [episode] [fullScript]` - Gives you a random quote from Llamas With Hats. You can also get the full script of an episode.
+    * Accepted Parameters for `fullScript`
+      * `fullScript | full | script` - Get the full script of an episode.
+
+  * `numberFact | number <number>` - Gives you a fact about a number.
 
   * `random | rand | randint <start> <end>` - Gives you a random number between the specified range.
 
@@ -349,20 +365,11 @@
 
   * `tronaldDumpQuote | tronaldQuote | trumpQuote ` - Gives you a random quote from Donald Trump.
 
-  * `ping ` - Pings the bot.
-
   * `nickname | nick [nickname]` - Changes your nickname.
 
   * `botInfo | bi ` - Allows you to get the info about the bot.
 
   * `info | ?? [member]` - Gives you info on a member or the server as saved by the bot.
-
-  * `sendBug | bug | error | feedback <messageType> <message>` - Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.
-    * Accepted Parameters for `messageType`
-      * `bug` - The type of message is a bug in Omega Psi.
-      * `error` - Something is going wrong but you don't know what.
-      * `feedback` - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.
-      * `moderator` - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.
 
 ## NSFW
   *An NSFW category for 18+*
@@ -397,13 +404,13 @@
 
   * `pendingUpdate | pendUpdate | pendingUpd | pendUpd ` - Gets information about the current pending update to the bot.
 
-  * `createUpdate <version>` - **`Bot Mod`** Creates a pending update to the bot.
+  * `createUpdate ` - **`Bot Mod`** Creates a pending update to the bot.
 
   * `createFix <fix>` - **`Bot Mod`** Creates a fix to a pending update of the bot.
 
   * `createFeature <feature>` - **`Bot Mod`** Creates a feature to a pending update of the bot.
 
-  * `commitUpdate | commit <description>` - **`Bot Mod`** Commits the pending update to the bot as an update.
+  * `commitUpdate | commit <version> <description>` - **`Bot Mod`** Commits the pending update to the bot as an update.
 
 ## Server Moderator
   *Moderate your server with this.*
@@ -432,6 +439,12 @@
 
   * `toggleProfanityFail | togProfaneFail ` - **`Server Mod`** Toggles whether or not you receive a message if the profanity filter fails.
 
+  * `setAutorole | autorole <role>` - **`Server Mod`** Sets the role that will be given when someone joins the server.
+
+  * `toggleAutorole | togAutorole | toggleAuto | togAuto ` - **`Server Mod`** Toggles the autorole feature in the server.
+
+  * `toggleAutoroleFail | toggleAutoFail | togAutoroleFail | togAutoFail ` - **`Server Mod`** Toggles whether or not you receive a message if the autorole feature fails.
+
   * `setLevel | setLvl <level> <member...>` - **`Server Mod`** Allows you to set the level of a member, or members, in the server.
 
   * `addPrefix | addPre <prefix>` - **`Server Mod`** Allows you to add a prefix for this server.
@@ -439,6 +452,10 @@
   * `removePrefix | removePre | remPre <prefix>` - **`Server Mod`** Allows you to remove a prefix from this server.
 
   * `setServerName | setSvrName <name>` - **`Server Mod`** Allows you to set the Server's name.
+
+  * `setChannelName | setChnlName <name>` - **`Server Mod`** Allows you to set the current channel's name.
+
+  * `setChannelTopic | setChnlTopic [name]` - **`Server Mod`** Allows you to set the current Channel's topic.
 
   * `createInvite | createServerInvite | getInvite | getServerInvite [infinite]` - **`Server Mod`** Allows you to create an invite to this server.
     * Accepted Parameters for `infinite`
