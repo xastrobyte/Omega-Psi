@@ -29,7 +29,6 @@ Each category is labeled properly and includes commands tailored to that categor
   * Internet
     * Anything you can find on the internet, you can find here
     * IMDb
-    * Urban Dictionary (__can only be run in an NSFW channel__)
     * Translations between 95 different languages
   * Miscellaneous
     * Things that just don't quite fit into anything
@@ -39,6 +38,7 @@ Each category is labeled properly and includes commands tailored to that categor
   * NSFW
     * Naughty commands (18+)
     * Can only be run in an NSFW channel (It just makes sense)
+    * Urban Dictionary
 
 ## Some Examples of Commands
 
