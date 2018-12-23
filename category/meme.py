@@ -48,7 +48,7 @@ from util.utils.discordUtils import sendMessage, getErrorMessage, didAuthorVote
 from functools import partial
 from random import choice as choose
 from supercog import Category, Command
-import discord, os, requests
+import discord, os, requests, json
 
 class Meme(Category):
 
@@ -1569,7 +1569,7 @@ class Meme(Category):
 
             # Choose random reddit post
             redditPost = choose(redditData["data"]["children"])["data"]
-            while redditPost["is_video"] or (redditPost["over_18"] and not isNSFW):
+            while redditPost["is_video"] or (redditPost["over_18"] and not isNSFW) or redditPost["url"].find("gallery") != -1:
                 redditPost = choose(redditData["data"]["children"])["data"]
 
             # Return an embed for the reddit post
@@ -1592,13 +1592,7 @@ class Meme(Category):
         await sendMessage(
             self.client,
             message,
-            embed = embed.set_footer(
-                text = "Requested by {}#{}".format(
-                    message.author.name,
-                    message.author.discriminator
-                ),
-                icon_url = message.author.avatar_url
-            )
+            embed = embed
         )
     
     async def areYouAwake(self, message, parameters):

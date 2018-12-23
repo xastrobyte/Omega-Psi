@@ -631,8 +631,7 @@ class Insult(Category):
                     insultLevel = "noremorse"
                 
                 # Open insult file
-                insults = await omegaPsi.getInsults()
-                insults = insults[insultLevel]
+                insults = await omegaPsi.getInsults()[insultLevel]
 
                 # Setup insults text
                 insultsFields = []

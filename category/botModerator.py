@@ -316,6 +316,8 @@ class BotModerator(Category):
             self._debug
         ])
 
+        self._todo.setBotModeratorOnly(False)
+
         self._categories = {
             "Code": Code(None),
             "Game": Game(None),
@@ -786,43 +788,50 @@ class BotModerator(Category):
         # Check for 2 or more parameters
         else:
 
-            action = parameters[0]
+            # Check if author is a bot moderator
+            if await OmegaPsi.isAuthorModerator(message.author):
 
-            # There is nothing to add
-            if len(parameters) == 1:
-                embed = getErrorMessage(self._todo, BotModerator.NOT_ENOUGH_PARAMETERS)
-            
-            # Check if action is valid
-            elif action in self._todo.getAcceptedParameter("action", "add").getAlternatives():
+                action = parameters[0]
 
-                # Check if index is given
-                if parameters[1].isdigit():
-                    index = int(parameters[1])
-                    item = " ".join(parameters[2:])
+                # There is nothing to add
+                if len(parameters) == 1:
+                    embed = getErrorMessage(self._todo, BotModerator.NOT_ENOUGH_PARAMETERS)
+                
+                # Check if action is valid
+                elif action in self._todo.getAcceptedParameter("action", "add").getAlternatives():
+
+                    # Check if index is given
+                    if parameters[1].isdigit():
+                        index = int(parameters[1])
+                        item = " ".join(parameters[2:])
+                    else:
+                        index = 0
+                        item = " ".join(parameters[1:])
+
+                    success = await OmegaPsi.addToDo(item, index)
+
+                    embed = discord.Embed(
+                        title = "Added TODO Item" if success["success"] else "Failed to add TODO Item",
+                        description = success["reason"],
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+
+                elif action in self._todo.getAcceptedParameter("action", "remove").getAlternatives():
+                    success = await OmegaPsi.removeToDo(" ".join(parameters[1:]))
+
+                    embed = discord.Embed(
+                        title = "Removed TODO Item" if success["success"] else "Failed to remove TODO Item",
+                        description = success["reason"],
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+                
+                # Action is invalid
                 else:
-                    index = 0
-                    item = " ".join(parameters[1:])
-
-                success = await OmegaPsi.addToDo(item, index)
-
-                embed = discord.Embed(
-                    title = "Added TODO Item" if success["success"] else "Failed to add TODO Item",
-                    description = success["reason"],
-                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
-                )
-
-            elif action in self._todo.getAcceptedParameter("action", "remove").getAlternatives():
-                success = await OmegaPsi.removeToDo(" ".join(parameters[1:]))
-
-                embed = discord.Embed(
-                    title = "Removed TODO Item" if success["success"] else "Failed to remove TODO Item",
-                    description = success["reason"],
-                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
-                )
+                    embed = getErrorMessage(self._todo, BotModerator.INVALID_PARAMETER)
             
-            # Action is invalid
+            # Author is not bot moderator
             else:
-                embed = getErrorMessage(self._todo, BotModerator.INVALID_PARAMETER)
+                embed = OmegaPsi.getNoAccessError()
         
         await sendMessage(
             self.client,

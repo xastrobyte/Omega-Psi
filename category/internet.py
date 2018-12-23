@@ -918,8 +918,10 @@ class Internet(Category):
                 fromLang = parameters[1].lower()
                 text = " ".join(parameters[2:])
             
-            lang = await omegaPsi.getLang()["lang"]
-            code = await omegaPsi.getLang()["code"]
+            lang = await omegaPsi.getLang()
+            lang = lang["lang"]
+            code = await omegaPsi.getLang()
+            code = code["code"]
             
             # Check if toLang is a language name
             if len(toLang) > 3:

@@ -1,11 +1,12 @@
 from util.code.code import convert
+from util.file.database import loop
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
 from util.utils.discordUtils import sendMessage, getErrorMessage
 from util.utils.miscUtils import timeout
 
 from supercog import Category, Command
-import base64, discord
+import base64, discord, requests
 
 scrollEmbeds = {}
 
@@ -18,6 +19,7 @@ class Code(Category):
     MAX_BRAINFUCK_LENGTH = 2 ** 15 # 32736
 
     QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
+    MORSE_API_CALL = "https://www.fellowhashbrown.com/api/morse/{}?text={}"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
@@ -50,7 +52,7 @@ class Code(Category):
 
         # Commands
         self._brainfuck = Command(commandDict = {
-            "alternatives": ["brainfuck", "brainf", "bf"],
+            "alternatives": ["brainf", "bf"],
             "info": "Runs brainfuck code. Kinda confusing stuff at first glance.",
             "min_parameters": 1,
             "parameters": {
@@ -64,12 +66,12 @@ class Code(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Code.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "The brainfuck command requires at least the brainfuck code."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Code.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "The brainfuck command only needs the code and the parameters. Make sure you remove spaces from both."
                     ]
@@ -98,12 +100,12 @@ class Code(Category):
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Code.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "You need at least the end base and the number to convert."
                     ]
                 },
-                Category.TOO_MANY_PARAMETERS: {
+                Code.TOO_MANY_PARAMETERS: {
                     "messages": [
                         "You only need the start base, the end base, and the number."
                     ]
@@ -142,12 +144,12 @@ class Code(Category):
                     }
                 },
                 "text": {
-                    "info": "The text to encode.",
+                    "info": "The text to encode or decode.",
                     "optional": False
                 }
             },
             "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
+                Code.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
                         "In order to encode or decode text, you need the conversion type and the text."
                     ]
@@ -159,6 +161,44 @@ class Code(Category):
                 }
             },
             "command": self.base64
+        })
+
+        self._morse = Command(commandDict = {
+            "alternatives": ["morse", "m"],
+            "info": "Encodes or decodes text to Morse code.",
+            "parameters": {
+                "conversion": {
+                    "info": "Whether to encode/decode text into/from Morse Code.",
+                    "optional": False,
+                    "accepted": {
+                        "encode": {
+                            "alternatives": ["encode", "enc", "e"],
+                            "info": "Encodes text into Morse Code."
+                        },
+                        "decode": {
+                            "alternatives": ["decode", "dec", "d"],
+                            "info": "Decodes text from Morse Code."
+                        }
+                    }
+                },
+                "text": {
+                    "info": "The text to encode or decode.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Code.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to encode or decode text, you need the conversion type and the text."
+                    ]
+                },
+                Code.INVALID_PARAMETER: {
+                    "messages": [
+                        "That is not a valid conversion type."
+                    ]
+                }
+            },
+            "command": self.morse
         })
 
         self._qrCode = Command(commandDict = {
@@ -184,6 +224,7 @@ class Code(Category):
             self._brainfuck,
             self._convert,
             self._base64,
+            self._morse,
             self._qrCode
         ])
     
@@ -449,7 +490,7 @@ class Code(Category):
             
             # Conversion is Invalid
             else:
-                embed = getErrorMessage(self._base64, Category.INVALID_PARAMETER)
+                embed = getErrorMessage(self._base64, Code.INVALID_PARAMETER)
         
         await sendMessage(
             self.client,
@@ -463,6 +504,68 @@ class Code(Category):
             )
         )
     
+    async def morse(self, message, parameters):
+        """Turns text into/from morse code
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._morse.getMinParameters():
+            embed = getErrorMessage(self._morse, Code.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            conversion = parameters[0]
+            text = " ".join(parameters[1:])
+
+            # Check if the conversion is valid
+            valid = True
+            if conversion in self._morse.getAcceptedParameter("conversion", "encode").getAlternatives():
+                conversion = "encode"
+            elif conversion in self._morse.getAcceptedParameter("conversion", "decode").getAlternatives():
+                conversion = "decode"
+            
+            # Conversion is invalid
+            else:
+                embed = getErrorMessage(self._morse, Code.INVALID_PARAMETER)
+                valid = False
+            
+            if valid:
+
+                response = await loop.run_in_executor(None,
+                    requests.get,
+                    Code.MORSE_API_CALL.format(
+                        conversion,
+                        text
+                    )
+                )           
+                response = response.json()
+
+                # Check if the API call was a success
+                if response["success"]:
+                    value = response["value"]
+                else:
+                    value = response["error"]
+
+                embed = discord.Embed(
+                    title = "{}".format(
+                        "Text to Morse" if conversion == "encode" else "Morse To Text"
+                    ) if response["success"] else "Failed to convert",
+                    description = "`{}`".format(value),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+
     async def qrCode(self, message, parameters):
         """Turns data into a QR code.
         """
