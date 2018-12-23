@@ -376,20 +376,20 @@ class Database:
         pendingUpdateData["features"].append(feature)
         return self.__set_pending_update(pendingUpdateData)
     
-    def __create_pending_update(self, versionNumber):
+    def __create_pending_update(self):
         """A helper method that creates a pending update for the bot.
         """
         pendingUpdateData = {
             "fixes": [],
-            "features": [],
-            "version": versionNumber
+            "features": []
         }
         return self.__set_pending_update(pendingUpdateData)
     
-    def __commit_pending_update(self, description):
+    def __commit_pending_update(self, version, description):
         """A helper method that commits the update and adds it to the updates.
         """
         pendingUpdateData = self.__get_pending_update()
+        pendingUpdateData["version"] = version
         pendingUpdateData["description"] = description
         self.__set_pending_update({})
         return self.__add_update(pendingUpdateData)
@@ -599,10 +599,10 @@ class Database:
         """
         return await loop.run_in_executor(None, self.__get_pending_update)
     
-    async def createPendingUpdate(self, versionNumber):
+    async def createPendingUpdate(self):
         """Creates a pending update for the bot.
         """
-        return await loop.run_in_executor(None, self.__create_pending_update, versionNumber)
+        return await loop.run_in_executor(None, self.__create_pending_update)
     
     async def createFix(self, fix):
         """Creates a pending fix for the bot.
@@ -614,9 +614,9 @@ class Database:
         """
         return await loop.run_in_executor(None, self.__add_pending_feature, feature)
     
-    async def commitPendingUpdate(self, description):
+    async def commitPendingUpdate(self, version, description):
         """Commits the pending update for the bot.
         """
-        return await loop.run_in_executor(None, self.__commit_pending_update, description)
+        return await loop.run_in_executor(None, self.__commit_pending_update, version, description)
     
 omegaPsi = Database()

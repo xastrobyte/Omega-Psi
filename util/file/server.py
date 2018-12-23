@@ -101,7 +101,17 @@ class Server:
             "welcome_message": {
                 "active": False,
                 "channel": None,
-                "messages": Server.WELCOME_MESSAGES
+                "messages": Server.WELCOME_MESSAGES,
+                "dm_on_fail": False
+            },
+            "profanity_filter": {
+                "active": False,
+                "dm_on_fail": False
+            },
+            "autorole": {
+                "active": False,
+                "role": None,
+                "dm_on_fail": None
             },
             "inactive_commands": {},
             "members": {}
@@ -417,6 +427,23 @@ class Server:
         await Server.closeServer(server)
 
         return server["welcome_message"]["active"]
+
+    async def toggleProfanityFilter(discordServer):
+        """Toggles the profanity filter in the Discord Server.
+
+        discordServer - The Discord Server to toggle the filter in.
+        """
+
+        # Open server file
+        server = await Server.openServer(discordServer)
+
+        # Toggle the profanity filter
+        server["profanity_filter"]["active"] = not server["profanity_filter"]["active"]
+
+        # Close server file
+        await Server.closeServer(server)
+
+        return server["profanity_filter"]["active"]
     
     async def setLevel(discordServer, discordMember, level):
         """Sets the ranking level of the Discord Member in the Discord Server.\n
@@ -623,6 +650,161 @@ class Server:
             server["welcome_message"]["channel"] = str(discordChannel.id)
             success = True
         
+        # Close the server file
+        await Server.closeServer(server)
+
+        return success
+
+    async def toggleWelcomeFail(discordServer):
+        """Toggles whether or not the owner wants to receive a DM when the welcome message fails
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # See if the owner wants to receive a message
+        server["welcome_message"]["dm_on_fail"] = not server["welcome_message"]["dm_on_fail"]
+        
+        # Close the server file
+        await Server.closeServer(server)
+
+        return server["welcome_message"]["dm_on_fail"]
+    
+    async def dmOwnerOnWelcomeFail(discordServer):
+        """Returns whether or not the owner wants to receive a DM when the welcome message fails
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # See if the owner wants to receive a message
+        success = server["welcome_message"]["dm_on_fail"]
+        
+        # Close the server file
+        await Server.closeServer(server)
+
+        return success
+    
+    async def isProfanityFilterActive(discordServer):
+        """Returns whether or not the profanity filter is active in the Discord Server.\n
+
+        discordServer - The Discord Server to check if the profanity filter is active.\n
+        """
+        
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # Get the profanity filter active status
+        active = server["profanity_filter"]["active"]
+
+        # Close the server file
+        await Server.closeServer(server)
+        
+        return active
+    
+    async def toggleProfanityFail(discordServer):
+        """Toggles whether or not the owner wants to receive a DM when the profanity filter fails
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # See if the owner wants to receive a message
+        server["profanity_filter"]["dm_on_fail"] = not server["profanity_filter"]["dm_on_fail"]
+        
+        # Close the server file
+        await Server.closeServer(server)
+
+        return server["profanity_filter"]["dm_on_fail"]
+    
+    async def dmOwnerOnProfanityFail(discordServer):
+        """Returns whether or not the owner wants to receive a DM when the profanity filter fails
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # See if the owner wants to receive a message
+        success = server["profanity_filter"]["dm_on_fail"]
+        
+        # Close the server file
+        await Server.closeServer(server)
+
+        return success
+    
+    async def setAutorole(discordServer, role):
+        """
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+        
+        # Set the role
+        success = False
+        if str(role.id) != server["autorole"]["role"]:
+            server["autorole"]["role"] = str(role.id)
+            success = True
+        
+        # Close the server file
+        await Server.closeServer(server)
+
+        return success
+    
+    async def toggleAutorole(discordServer):
+        """
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # Toggle the autorole
+        server["autorole"]["active"] = not server["autorole"]["active"]
+
+        # Close the server file
+        await Server.closeServer(server)
+
+        return server["autorole"]["active"]
+    
+    async def toggleAutoroleFail(discordServer):
+        """
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # Toggle the fail message
+        server["autorole"]["dm_on_fail"] = not server["autorole"]["dm_on_fail"]
+
+        # Close the server file
+        await Server.closeServer(server)
+
+        return server["autorole"]["dm_on_fail"]
+    
+    async def dmOwnerOnAutoroleFail(discordServer):
+        """
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # See if the owner wants to receive a message
+        success = server["autorole"]["dm_on_fail"]
+
+        # Close the server file
+        await Server.closeServer(server)
+
+        return success
+    
+    async def isAutoroleActive(discordServer):
+        """
+        """
+
+        # Open the server file
+        server = await Server.openServer(discordServer)
+
+        # Get the active status of the autorole
+        success = server["autorole"]["active"]
+
         # Close the server file
         await Server.closeServer(server)
 
