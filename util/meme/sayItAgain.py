@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 IMAGE ="https://i.imgflip.com/16iyn1.jpg?a428353"
 
 sayItAgain = MemeTemplate(

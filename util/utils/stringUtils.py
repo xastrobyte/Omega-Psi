@@ -3,7 +3,7 @@ from random import choice, randint
 PROFANE_WORDS = [
     "asshole", "bastard", "bitch", "cock", "dick", "cunt", "pussy",
     "fuck", "shit", "chode", "choad", "wanker", "twat", "nigger", "nigga",
-    "tits", "jizz", "dildo", "douche"
+    "jizz", "dildo", "douche"
 ]
 
 def censor(text, inCodeBlock = False):

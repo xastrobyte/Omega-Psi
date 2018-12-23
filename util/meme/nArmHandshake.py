@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 IMAGE_TWO = "https://tinyurl.com/twoArmHandshake"
 IMAGE_THREE = "https://tinyurl.com/threeArmHandshake"
 IMAGE_FOUR = "https://tinyurl.com/fourArmHandshake"
@@ -89,15 +85,15 @@ fourArmHandshake = MemeTemplate(
     }
 )
 
-def generateImage(handsText, firstArm, secondArm, thirdArm = None, fourthArm = None):
-    if thirdArm == None:
+def generateImage(handsText, firstArm, secondArm, thirdArm, fourthArm):
+    if len(thirdArm) == 0:
         return twoArmHandshake.generateImage(
             handsText = handsText,
             firstArm = firstArm,
             secondArm = secondArm
         )
     
-    if fourthArm == None:
+    if len(fourthArm) == 0:
         return threeArmHandshake.generateImage(
             handsText = handsText,
             firstArm = firstArm,

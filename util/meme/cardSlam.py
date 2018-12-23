@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 IMAGE = "https://i.imgur.com/GBMCNYM.jpg"
 
 cardSlam = MemeTemplate(

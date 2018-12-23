@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 # IMAGE = "https://preview.redd.it/erpvm5m39gw11.jpg?width=640&crop=smart&auto=webp&s=5f06e60d8ce81befbc5d9005772f82e19d0514b1"
 IMAGE = "https://tinyurl.com/surprisedDwight"
 

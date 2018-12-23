@@ -1,4 +1,9 @@
-import discord, os, traceback
+from util.file.database import loop
+
+from functools import partial
+import discord, os, requests, traceback
+
+DISCORD_BOT_ORG_API = "https://discordbots.org/api/bots/503804826187071501/votes"
 
 async def sendMessage(client, origMessage, *, message = None, embed = None, filename = None, plain = False):
     """A utility method to send a message to a channel that automatically handles exceptions.\n
@@ -79,3 +84,21 @@ def getErrorMessage(commandObject, errorType):
         description = commandObject.getErrorMessage(errorType),
         colour = 0xFF0000
     )
+
+async def didAuthorVote(discordUser):
+    """Returns whether or not the Discord User voted for Omega Psi on discordbots.org
+    """
+
+    # Get request
+    response = await loop.run_in_executor(None,
+        partial(
+            requests.get,
+            DISCORD_BOT_ORG_API,
+            headers = {
+                "Authorization": os.environ["DISCORD_BOT_ORG_TOKEN"]
+            }
+        )
+    )
+    voters = response.json()
+
+    return any(voter["id"] == str(discordUser.id) for voter in voters)

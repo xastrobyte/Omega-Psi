@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 IMAGE = "https://i.imgur.com/MSaTVD2.jpg"
 
 icarlyStopSign = MemeTemplate(

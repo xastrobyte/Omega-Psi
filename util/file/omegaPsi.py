@@ -16,6 +16,7 @@ class OmegaPsi:
     INACTIVE = "INACTIVE"
     ACTIVE = "ACTIVE"
     IMPLEMENTING = "IMPLEMENTING"
+    TIMEOUT_ERROR = "TIMEOUT_ERROR"
 
     EMBED_COLOR = 0xCE6000
 
@@ -432,6 +433,9 @@ class OmegaPsi:
             ],
             OmegaPsi.IMPLEMENTING: [
                 "This command is being implemented currently."
+            ],
+            OmegaPsi.TIMEOUT_ERROR: [
+                "That seemed to have timed out. oof"
             ]
         }
 
@@ -454,3 +458,6 @@ class OmegaPsi:
     
     def getImplementingError():
         return OmegaPsi.getErrorMessage(OmegaPsi.IMPLEMENTING)
+    
+    def getTimeoutError():
+        return OmegaPsi.getErrorMessage(OmegaPsi.TIMEOUT_ERROR)

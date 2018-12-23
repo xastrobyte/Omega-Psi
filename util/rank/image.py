@@ -3,6 +3,8 @@ from util.file.server import Server
 from util.utils.miscUtils import loadImageFromUrl
 
 import pygame
+import pygame.freetype
+import pygame.color
 
 pygame.init()
 
@@ -57,7 +59,7 @@ class Rect:
         """
         return self._font
 
-def createRankImage(discordMember):
+async def createRankImage(discordMember):
     """Creates an XP card image for the member.
 
     Parameters:
@@ -94,7 +96,7 @@ def createRankImage(discordMember):
     )
 
     # Get necessary values for rank image
-    member = Server.getMember(discordMember.guild, discordMember)
+    member = await Server.getMember(discordMember.guild, discordMember)
 
     ID = discordMember.id
     name = discordMember.name

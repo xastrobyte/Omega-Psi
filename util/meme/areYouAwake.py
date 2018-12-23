@@ -1,10 +1,6 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
-IMAGE = "https://i.imgflip.com/2gqv88.jpg"
+IMAGE = "https://i.imgur.com/Tmasvyy.jpg"
 
 areYouAwake = MemeTemplate(
     "are you awake",

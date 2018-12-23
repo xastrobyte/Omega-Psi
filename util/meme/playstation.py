@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 IMAGE = "https://i.imgur.com/ic6R1lS.png"
 IMAGE_THREE = "https://i.imgur.com/vO06vSr.png"
 IMAGE_TWO = "https://i.imgur.com/vZhv4Hh.png"

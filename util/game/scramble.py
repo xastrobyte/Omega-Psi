@@ -27,7 +27,6 @@ class Scramble:
 
         self._player = player
         self._difficulty = difficulty
-        self._hints = self._word["hints"]
         self._hints_used = 0
         self._previous = None
     
@@ -68,6 +67,17 @@ class Scramble:
         """Returns the amount of hints used in the game.
         """
         return self._hints_used
+    
+    async def getGuess(self, client, event, *, timeout = None, check = None):
+        """Gets the guess only for this game
+        """
+
+        def check(message):
+            return message.author == self.getPlayer()
+            
+        response = await client.wait_for(event, timeout = timeout, check = check)
+        if response.author == self.getPlayer():
+            return response.content
 
     # Setters
 
@@ -76,6 +86,7 @@ class Scramble:
         """
         self._word = await omegaPsi.getScrambleWords()
         self._word = choose(self._word["words"])
+        self._hints = self._word["hints"]
         self._scramble = self.scrambleWord(self._word["value"], self._difficulty)
 
     def scrambleWord(self, word, difficulty):

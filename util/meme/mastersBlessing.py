@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 # IMAGE = "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/intermediary/f/918578eb-1cd2-494b-a4cf-549d6c9a7ceb/dagvpp7-9548a83d-07aa-4bf1-87e5-9c8d4fed81ec.jpg/v1/fill/w_963,h_830,q_70,strp/master_s_blessing_by_morkardfc_dagvpp7-pre.jpg"
 IMAGE = "https://tinyurl.com/mastersBlessing"
 
