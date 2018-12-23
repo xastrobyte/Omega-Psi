@@ -69,16 +69,10 @@ class Updates(Category):
             "alternatives": ["createUpdate"],
             "info": "Creates a pending update to the bot.",
             "bot_moderator_only": True,
-            "parameters": {
-                "version": {
-                    "info": "The version of the bot.",
-                    "optional": False
-                }
-            },
             "errors": {
-                Updates.NOT_ENOUGH_PARAMETERS: {
+                Updates.TOO_MANY_PARAMETERS: {
                     "messages": [
-                        "In order to create a pending update, you need the version name/number."
+                        "In order to create a pending update, you don't need any parameters."
                     ]
                 }
             },
@@ -130,6 +124,10 @@ class Updates(Category):
             "info": "Commits the pending update to the bot as an update.",
             "bot_moderator_only": True,
             "parameters": {
+                "version": {
+                    "info": "The version of the bot.",
+                    "optional": False
+                },
                 "description": {
                     "info": "A short description of the update to the bot.",
                     "optional": False
@@ -138,7 +136,7 @@ class Updates(Category):
             "errors": {
                 Updates.NOT_ENOUGH_PARAMETERS: {
                     "messages": [
-                        "In order to commit an update to the bot, you need a short description."
+                        "In order to commit an update to the bot, you need the version and a short description."
                     ]
                 }
             },
@@ -239,7 +237,7 @@ class Updates(Category):
 
                 # Create a discord embed out of it
                 embed = discord.Embed(
-                    title = "Current Pending Update - {}".format(pendingUpdate["version"]),
+                    title = "Current Pending Update",
                     description = " ",
                     colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 )
@@ -291,13 +289,11 @@ class Updates(Category):
         # There were the proper amount of parameters
         else:
 
-            version = " ".join(parameters)
-
-            await omegaPsi.createPendingUpdate(version)
+            await omegaPsi.createPendingUpdate()
 
             embed = discord.Embed(
                 title = "Update Created",
-                description = "A pending update was created with the version of {}".format(version),
+                description = "A pending update was created.",
                 colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
@@ -390,9 +386,10 @@ class Updates(Category):
         # There were the proper amount of parameters
         else:
 
-            description = " ".join(parameters)
+            version = parameters[0]
+            description = " ".join(parameters[1:])
 
-            await omegaPsi.commitPendingUpdate(description)
+            await omegaPsi.commitPendingUpdate(version, description)
             update = await omegaPsi.getUpdate()
 
             embed = discord.Embed(
