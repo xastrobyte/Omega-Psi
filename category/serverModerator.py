@@ -257,6 +257,117 @@ class ServerModerator(Category):
             "command": self.setWelcomeMessageChannel
         })
 
+        self._toggleWelcomeFail = Command(commandDict = {
+            "alternatives": ["toggleWelcomeFail", "togWelcomeFail", "togWelcFail"],
+            "info": "Toggles whether or not you receive a message if the welcome message fails.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You have too many parameters. You don't need any."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_roles` permission in this server."
+                    ]
+                }
+            },
+            "command": self.toggleWelcomeFail
+        })
+
+        self._toggleProfanity = Command(commandDict = {
+            "alternatives": ["toggleProfanity", "togProfanity", "toggleProfane", "togProfane"],
+            "info": "Toggles the profanity filter.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You have too many parameters. You don't need any."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_roles` permission in this server."
+                    ]
+                }
+            },
+            "command": self.toggleProfanity
+        })
+
+        self._toggleProfanityFail = Command(commandDict = {
+            "alternatives": ["toggleProfanityFail", "togProfaneFail"],
+            "info": "Toggles whether or not you receive a message if the profanity filter fails.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "errors": {
+                Category.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You have too many parameters. You don't need any."
+                    ]
+                }
+            },
+            "command": self.toggleProfanityFail
+        })
+
+        self._setAutorole = Command(commandDict = {
+            "alternatives": ["setAutorole", "autorole"],
+            "info": "Sets the role that will be given when someone joins the server.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "parameters": {
+                "role": {
+                    "info": "The role to give when someone joins the server.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                ServerModerator.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "You need the role to give when someone joins the server."
+                    ]
+                },
+                ServerModerator.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You only need the role to give when someone joins the server."
+                    ]
+                }
+            },
+            "command": self.setAutorole
+        })
+
+        self._toggleAutorole = Command(commandDict = {
+            "alternatives": ["toggleAutorole", "togAutorole", "toggleAuto", "togAuto"],
+            "info": "Toggles the autorole feature in the server.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "errors": {
+                ServerModerator.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You don't need any parameters to toggle the autorole feature."
+                    ]
+                }
+            },
+            "command": self.toggleAutorole
+        })
+
+        self._toggleAutoroleFail = Command(commandDict = {
+            "alternatives": ["toggleAutoroleFail", "toggleAutoFail", "togAutoroleFail", "togAutoFail"],
+            "info": "Toggles whether or not you receive a message if the autorole feature fails.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "errors": {
+                ServerModerator.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You have too many parameters. You don't need any."
+                    ]
+                }
+            },
+            "command": self.toggleAutoroleFail
+        })
+
         self._setLevel = Command(commandDict = {
             "alternatives": ["setLevel", "setLvl"],
             "info": "Allows you to set the level of a member, or members, in the server.",
@@ -368,6 +479,71 @@ class ServerModerator(Category):
                 }
             },
             "command": self.setServerName
+        })
+
+        self._setChannelName = Command(commandDict = {
+            "alternatives": ["setChannelName", "setChnlName"],
+            "info": "Allows you to set the current channel's name.",
+            "restriction_info": "You and Omega Psi must have manage_channels permissions.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "min_parameters": 1,
+            "parameters": {
+                "name": {
+                    "info": "The new name of the Channel.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to set the name of the Channel, you must type in the name."
+                    ]
+                },
+                ServerModerator.BOT_MISSING_PERMISSION: {
+                    "messages": [
+                        "The bot does not have the `manage_channels` permission in this server."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_channels` permission in this server."
+                    ]
+                }
+            },
+            "command": self.setChannelName
+        })
+
+        self._setChannelTopic = Command(commandDict = {
+            "alternatives": ["setChannelTopic", "setChnlTopic"],
+            "info": "Allows you to set the current Channel's topic.",
+            "restriction_info": "You and Omega Psi must have manage_channels permissions.",
+            "run_in_private": False,
+            "server_moderator_only": True,
+            "parameters": {
+                "name": {
+                    "info": "The new topic of the Channel.",
+                    "optional": True
+                }
+            },
+            "errors": {
+                Category.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to set the topic of the Channel, you must type in the topic."
+                    ]
+                },
+                ServerModerator.BOT_MISSING_PERMISSION: {
+                    "messages": [
+                        "The bot does not have the `manage_channels` permission in this server."
+                    ]
+                },
+                ServerModerator.MEMBER_MISSING_PERMISSION: {
+                    "messages": [
+                        "You do not have the `manage_channels` permission in this server."
+                    ]
+                }
+            },
+            "command": self.setChannelTopic
         })
 
         self._createInvite = Command(commandDict = {
@@ -860,12 +1036,20 @@ class ServerModerator(Category):
             self._toggleRanking,
             self._toggleWelcomeMessage,
             self._setWelcomeMessageChannel,
+            self._toggleWelcomeFail,
+            self._toggleProfanity,
+            self._toggleProfanityFail,
+            self._setAutorole,
+            self._toggleAutorole,
+            self._toggleAutoroleFail,
             self._setLevel,
             self._addPrefix,
             self._removePrefix,
 
             # Bot Commands
             self._setServerName,
+            self._setChannelName,
+            self._setChannelTopic,
             self._createInvite,
             self._purge,
             self._addRole,
@@ -1276,10 +1460,10 @@ class ServerModerator(Category):
                 success = await Server.setWelcomeMessageChannel(server, channel)
 
                 embed = discord.Embed(
-                    title = "Channel {}Set".format(
+                    title = "Channel {} Set".format(
                         "Was" if success else "Was Not"
                     ),
-                    description = "{} {} the join message channel.".format(
+                    description = "{} {} the welcome message channel.".format(
                         channel.mention,
                         "was set as" if success else "is already"
                     )
@@ -1299,6 +1483,133 @@ class ServerModerator(Category):
                 icon_url = message.author.avatar_url
             )
         )
+
+    async def toggleWelcomeFail(self, message, parameters):
+        """
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._toggleWelcomeFail.getMaxParameters():
+            embed = getErrorMessage(self._toggleWelcomeFail, Category.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Check if the author has manage server permissions
+            # Don't include bot moderator because that isn't up to a bot moderator, only the server owner
+            #  FUTURE: Maybe add a way to have specific people messaged
+            if message.author.guild_permissions.manage_guild:
+
+                await Server.toggleWelcomeFail(message.guild)
+
+                active = await Server.dmOwnerOnWelcomeFail(message.guild)
+
+                embed = discord.Embed(
+                    title = "Active" if active else "Inactive",
+                    description = "You will {} receive messages if the Welcome Message fails.".format(
+                        "now" if active else "not"
+                    ),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            else:
+                embed = getErrorMessage(self._toggleWelcomeFail, ServerModerator.MEMBER_MISSING_PERMISSION)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )        
+    
+    async def toggleProfanity(self, message, parameters):
+        """
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._toggleProfanity.getMaxParameters():
+            embed = getErrorMessage(self._toggleProfanity, ServerModerator.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Check if the author has manage server permissions or is a bot moderator
+            if message.author.guild_permissions.manage_guild or await OmegaPsi.isAuthorModerator(message.author):
+
+                await Server.toggleProfanityFilter(message.guild)
+
+                active = await Server.isProfanityFilterActive(message.guild)
+
+                embed = discord.Embed(
+                    title = "Active" if active else "Inactive",
+                    description = "The Profanity Filter was {} in this server.".format(
+                        "activated" if active else "deactivated"
+                    ),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            else:
+                embed = getErrorMessage(self._toggleProfanity, ServerModerator.MEMBER_MISSION_PERMISSION)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def toggleProfanityFail(self, message, parameters):
+        """
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._toggleProfanityFail.getMaxParameters():
+            embed = getErrorMessage(self._toggleProfanityFail, Category.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Check if the author has manage server permissions
+            # Don't include bot moderator because that isn't up to a bot moderator, only the server owner
+            #  FUTURE: Maybe add a way to have specific people messaged
+            if message.author.guild_permissions.manage_guild:
+
+                await Server.toggleProfanityFail(message.guild)
+
+                active = await Server.dmOwnerOnProfanityFail(message.guild)
+
+                embed = discord.Embed(
+                    title = "Active" if active else "Inactive",
+                    description = "You will {} receive messages if the Profanity Filter fails.".format(
+                        "now" if active else "not"
+                    ),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+            
+            else:
+                embed = getErrorMessage(self._toggleProfanityFail, ServerModerator.MEMBER_MISSING_PERMISSION)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )  
     
     async def setLevel(self, message, parameters):
         """Sets the level of a member, or members, in the Discord Server.\n
@@ -1530,6 +1841,113 @@ class ServerModerator(Category):
                 icon_url = message.author.avatar_url
             )
         )
+
+    async def setChannelName(self, message, parameters):
+        """
+        """
+
+        author = message.author
+        channel = message.channel
+
+        # Check for not enough parameters
+        if len(parameters) < self._setChannelName.getMinParameters():
+            embed = getErrorMessage(self._setChannelName, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Only run if bot and author has permissions
+            if author.guild_permissions.manage_channels or await OmegaPsi.isAuthorModerator(author):
+                try:
+
+                    name = " ".join(parameters)
+
+                    # Change the name
+                    oldName = channel.name
+                    await channel.edit(
+                        name = name
+                    )
+
+                    embed = discord.Embed(
+                        title = "Changed Name",
+                        description = "{} was changed to {}".format(
+                            oldName, name
+                        ),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    )
+                
+                # Bot does not have permission
+                except:
+                    embed = getErrorMessage(self._setChannelName, ServerModerator.BOT_MISSING_PERMISSION)
+            
+            # Author does not have permission
+            else:
+                embed = getErrorMessage(self._setChannelName, ServerModerator.AUTHOR_MISSING_PERMISSION)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def setChannelTopic(self, message, parameters):
+        """
+        """
+
+        author = message.author
+        channel = message.channel
+
+        # Only run if bot and author has permissions
+        if author.guild_permissions.manage_channels or await OmegaPsi.isAuthorModerator(author):
+            try:
+
+                topic = " ".join(parameters)
+
+                # Change the topic
+                oldTopic = channel.topic
+                await channel.edit(
+                    topic = topic
+                )
+
+                embed = discord.Embed(
+                    title = "Changed Topic",
+                    description = " ",
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                ).add_field(
+                    name = "Old Topic",
+                    value = oldTopic,
+                    inline = False
+                ).add_field(
+                    name = "New Topic",
+                    value = topic,
+                    inline = False
+                )
+            
+            # Bot does not have permission
+            except:
+                embed = getErrorMessage(self._setChannelName, ServerModerator.BOT_MISSING_PERMISSION)
+        
+        # Author does not have permission
+        else:
+            embed = getErrorMessage(self._setChannelName, ServerModerator.AUTHOR_MISSING_PERMISSION)
+        
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
     
     async def createInvite(self, message, parameters):
         """Creates an Instant Invite for the Discord Server.\n
@@ -1545,7 +1963,7 @@ class ServerModerator(Category):
         if len(parameters) > self._createInvite.getMaxParameters():
             embed = getErrorMessage(self._createInvite, ServerModerator.TOO_MANY_PARAMETERS)
         
-        # There were the proper amouny of parameters
+        # There were the proper amount of parameters
         else:
 
             # Only run if bot and author has permissions
@@ -1794,6 +2212,120 @@ class ServerModerator(Category):
             # Author does not have permission
             else:
                 embed = getErrorMessage(self._removeRole, ServerModerator.MEMBER_MISSING_PERMISSION)
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def setAutorole(self, message, parameters):
+        """
+        """
+
+        guild = message.guild
+        author = message.author
+        roles = message.role_mentions
+
+        # Check for not enough parameters
+        if len(roles) < self._setAutorole.getMinParameters():
+            embed = getErrorMessage(self._setAutorole, ServerModerator.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too many parameters
+        elif len(roles) > self._setAutorole.getMaxParameters():
+            embed = getErrorMessage(self._setAutorole, ServerModerator.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            role = roles[0]
+
+            # Set the autorole in the server
+            await Server.setAutorole(guild, role)
+
+            # Create success embed
+            embed = discord.Embed(
+                title = "Autorole Set",
+                description = "{} has been set as the role to be given automatically.".format(role.mention),
+                colour = self.getEmbedColor() if guild == None else author.top_role.color
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    author.name,
+                    author.discriminator
+                ),
+                icon_url = author.avatar_url
+            )
+        )
+    
+    async def toggleAutorole(self, message, parameters):
+        """
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._setAutorole.getMaxParameters():
+            embed = getErrorMessage(self._setAutorole, ServerModerator.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Toggle the autorole
+            await Server.toggleAutorole(message.guild)
+            active = await Server.isAutoroleActive(message.guild)
+
+            # Create embed
+            embed = discord.Embed(
+                title = "Activated" if active else "Deactivated",
+                description = "The Autorole feature was {}".format(
+                    "activated" if active else "deactivated"
+                ),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def toggleAutoroleFail(self, message, parameters):
+        """
+        """
+        
+        # Check for too many parameters
+        if len(parameters) > self._toggleAutoroleFail.getMaxParameters():
+            embed = getErrorMessage(self._toggleAutoroleFail, ServerModerator.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            # Toggle the autorole
+            await Server.toggleAutoroleFail(message.guild)
+            active = await Server.dmOwnerOnAutoroleFail(message.guild)
+
+            # Create embed
+            embed = discord.Embed(
+                title = "Activated" if active else "Deactivated",
+                description = "You will {} be notified if the autorole feature fails".format(
+                    "now" if active else "not"
+                ),
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+            )
 
         await sendMessage(
             self.client,
