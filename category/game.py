@@ -19,7 +19,7 @@ from datetime import datetime
 from functools import partial
 from random import choice as choose
 from supercog import Category, Command
-import discord, os, requests
+import asyncio, discord, os, requests
 
 scrollEmbeds = {}
 reactions = ["⏪", "⬅", "➡", "⏩"]
@@ -706,11 +706,11 @@ class Game(Category):
                         finishedGame = self._connectFourGames[serverId][authorId]
                         noError = True
                         self._connectFourGames[serverId].pop(authorId)
-                        embed = getQuitGame("Connect Four", self.getEmbedColor(), Game.SUCCESS_ICON)
+                        embed = getQuitGame("Connect Four", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.SUCCESS_ICON)
                     
                     # User was not playing a game
                     else:
-                        embed = getNoGame("Connect Four", self.getEmbedColor(), Game.FAILED_ICON)
+                        embed = getNoGame("Connect Four", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.FAILED_ICON)
                 
                 # User does not want to quit
                 else:
@@ -732,7 +732,7 @@ class Game(Category):
                             ":large_blue_circle: " + game.getChallenger().mention,
                             ":red_circle: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                         ),
-                        colour = self.getEmbedColor()
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                     ).set_thumbnail(
                         url = Game.CONNECT_FOUR_ICON
                     )
@@ -769,11 +769,30 @@ class Game(Category):
                                 ":large_blue_circle: " + game.getChallenger().mention,
                                 ":red_circle: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                            colour = self.getEmbedColor()
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                         ).set_thumbnail(
                             url = Game.CONNECT_FOUR_ICON
                         )
                         noError = True
+                    
+                    # Check for a DRAW
+                    elif move == connectFour.ConnectFour.DRAW:
+
+                        embed = discord.Embed(
+                            title = "Draw",
+                            description = "{}\n{}\n{}".format(
+                                game.showBoard(),
+                                ":large_blue_circle: " + game.getChallenger().mention,
+                                ":red_circle: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
+                            ),
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                        ).set_thumbnail(
+                            url = Game.CONNECT_FOUR_ICON
+                        )
+
+                        finishedGame = game
+
+                        self._connectFourGames[serverId].pop(authorId)
                     
                     # Check for challenger / opponent winner
                     else:
@@ -787,7 +806,7 @@ class Game(Category):
                                 ":large_blue_circle: " + game.getChallenger().mention,
                                 ":red_circle: " + "AI" if game.getOpponent() == None else game.opponent().mention
                             ),
-                            colour = self.getEmbedColor()
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                         ).set_thumbnail(
                             url = Game.SUCCESS_ICON if move else Game.FAILED_ICON
                         )
@@ -866,11 +885,11 @@ class Game(Category):
                         finishedGame = self._hangmanGames[serverId][authorId]
                         noError = True
                         self._hangmanGames[serverId].pop(authorId)
-                        embed = getQuitGame("Hangman", self.getEmbedColor(), Game.SUCCESS_ICON)
+                        embed = getQuitGame("Hangman", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.SUCCESS_ICON)
                     
                     # User was not playing a game
                     else:
-                        embed = getNoGame("Hangman", self.getEmbedColor(), Game.FAILED_ICON)
+                        embed = getNoGame("Hangman", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.FAILED_ICON)
                 
                 # User does not want to quit
                 else:
@@ -905,7 +924,7 @@ class Game(Category):
                                 game.getHangmanWord(),
                                 ", ".join(game.getGuessed()) if len(game.getGuessed()) > 0 else "No Guesses"
                             ),
-                            colour = self.getEmbedColor()
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                         ).set_thumbnail(
                             url = Game.HANGMAN_ICON
                         ).set_image(
@@ -930,7 +949,7 @@ class Game(Category):
                         game.getGuesses(),
                         "s" if game.getGuesses() != 1 else ""
                     ),
-                    colour = self.getEmbedColor()
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
                 )
@@ -955,7 +974,7 @@ class Game(Category):
                 embed = discord.Embed(
                     title = "Game Ended - Word: `{}`".format(game.getWord()),
                     description = "You did not guess the word quick enough.",
-                    colour = self.getEmbedColor()
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 ).set_thumbnail(
                     url = Game.FAILED_ICON
                 ).set_image(
@@ -979,7 +998,7 @@ class Game(Category):
                         game.getGuesses(),
                         "es" if game.getGuesses() > 1 else ""
                     ),
-                    colour = self.getEmbedColor()
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 ).set_thumbnail(
                     url = Game.SUCCESS_ICON
                 )
@@ -1000,7 +1019,7 @@ class Game(Category):
                         game.getHangmanWord(),
                         ", ".join(game.getGuessed()) if len(game.getGuessed()) > 0 else "No Guesses"
                     ),
-                    colour = self.getEmbedColor()
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 ).set_thumbnail(
                     url = Game.HANGMAN_ICON
                 ).set_image(
@@ -1092,7 +1111,7 @@ class Game(Category):
                 embed = discord.Embed(
                     title = title,
                     description = result,
-                    colour = self.getEmbedColor()
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                 ).set_thumbnail(
                     url = icon
                 )
@@ -1103,7 +1122,7 @@ class Game(Category):
             embed = embed
         )
 
-    async def scramble(self, message, parameters, *, guess = None):
+    async def scramble(self, message, parameters):
         """Starts or continues a scrambled word game.\n
 
         Parameters:
@@ -1123,149 +1142,118 @@ class Game(Category):
         # Add serverId to scramble games if it does not exist
         if serverId not in self._scrambleGames:
             self._scrambleGames[serverId] = {}
-        
-        # Check if guess is None; Game being created or quit
-        embed = None
-        noError = False
-        finishedGame = None
-        if guess == None:
 
-            # Check for too many parameters
-            if len(parameters) > self._scramble.getMaxParameters():
-                embed = getErrorMessage(self._scramble, Game.TOO_MANY_PARAMETERS)
+        # Check for too many parameters
+        if len(parameters) > self._scramble.getMaxParameters():
+            embed = getErrorMessage(self._scramble, Game.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            difficulty = "normal" if len(parameters) == 0 else parameters[0]
+
+            # Check if user wants to quit
+            if difficulty in self._scramble.getAcceptedParameter("difficulty", "quit").getAlternatives():
+
+                # Check if user is playing a game
+                if authorId in self._scrambleGames[serverId]:
+                    self._scrambleGames[serverId].pop(authorId)
+                    embed = getQuitGame("Scramble", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.SUCCESS_ICON)
+
+                # User was not playing a game
+                else:
+                    embed = getNoGame("Scramble", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.FAILED_ICON)
             
-            # There were the proper amount of parameters
+            # User does not want to quit
             else:
-                difficulty = "normal" if len(parameters) == 0 else parameters[0]
-
-                # Check if user wants to quit
-                if difficulty in self._scramble.getAcceptedParameter("difficulty", "quit").getAlternatives():
-
-                    # Check if user is playing a game
-                    if authorId in self._scrambleGames[serverId]:
-                        finishedGame = self._scrambleGames[serverId][authorId]
-                        noError = True
-                        self._scrambleGames[serverId].pop(authorId)
-                        embed = getQuitGame("Scramble", self.getEmbedColor(), Game.SUCCESS_ICON)
-
-                    # User was not playing a game
-                    else:
-                        embed = getNoGame("Scramble", self.getEmbedColor(), Game.FAILED_ICON)
+            
+                # Make sure difficulty is valid
+                validDifficulty = True
+                difficulty = difficulty if difficulty not in [None, ""] else "normal"
+                if difficulty in self._scramble.getAcceptedParameter("difficulty", "normal").getAlternatives():
+                    difficulty = "normal"
+                elif difficulty in self._scramble.getAcceptedParameter("difficulty", "expert").getAlternatives():
+                    difficulty = "expert"
                 
-                # User does not want to quit
+                # Difficult is invalid
                 else:
+                    embed = getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
+                    validDifficulty = False
                 
-                    # Make sure difficulty is valid
-                    validDifficulty = True
-                    difficulty = difficulty if difficulty not in [None, ""] else "normal"
-                    if difficulty in self._scramble.getAcceptedParameter("difficulty", "normal").getAlternatives():
-                        difficulty = "normal"
-                    elif difficulty in self._scramble.getAcceptedParameter("difficulty", "expert").getAlternatives():
-                        difficulty = "expert"
-                    
-                    # Difficult is invalid
-                    else:
-                        embed = getErrorMessage(self._hangman, Game.INVALID_DIFFICULTY)
-                        validDifficulty = False
-                    
-                    if validDifficulty:
+                if validDifficulty:
 
-                        # Create game
-                        game = scramble.Scramble(message.author, difficulty)
-                        await game.generateWord()
+                    # Create game
+                    game = scramble.Scramble(message.author, difficulty)
+                    await game.generateWord()
 
-                        self._scrambleGames[serverId][authorId] = game
-                        game = self._scrambleGames[serverId][authorId]
+                    self._scrambleGames[serverId][authorId] = game
+                    game = self._scrambleGames[serverId][authorId]
 
-                        # Return embed
-                        embed = discord.Embed(
-                            title = "Scrambled",
-                            description = "Unscramble this word/phrase. Good luck.\n`{}`".format(
-                                game.getScrambledWord()
-                            ),
-                            colour = self.getEmbedColor()
-                        ).set_thumbnail(
-                            url = Game.SCRAMBLE_ICON
-                        )
-                        noError = True
-        
-        # There was a guess; Check if it was longer than a character
-        elif guess != None:
-            game = self._scrambleGames[serverId][authorId]
-            guess = guess.lower()
-
-            if len(guess) > 1:
-
-                guess = game.makeGuess(guess)
-
-                # Guess was the answer
-                if guess == True:
-
-                    embed = discord.Embed(
-                        title = "Success",
-                        description = "You got the word correctly! `{}`\nYou {}used {} hints.".format(
-                            game.getWord(),
-                            "only " if game.getHintsUsed() <= 3 else "",
-                            game.getHintsUsed()
-                        ),
-                        colour = self.getEmbedColor()
-                    ).set_thumbnail(
-                        url = Game.SUCCESS_ICON
-                    )
-                    noError = True
-                    finishedGame = self._scrambleGames[serverId][authorId]
-
-                    await User.updateScramble(game.getPlayer(), didWin = True)
-
-                    self._scrambleGames[serverId].pop(authorId)
-                
-                # Guess was not the answer
-                elif guess == False:
-
-                    embed = discord.Embed(
-                        title = "Failed",
-                        description = "Unfortunately, you did not guess the word.\nThe word was {}".format(
-                            game.getWord()
-                        ),
-                        colour = self.getEmbedColor()
-                    ).set_thumbnail(
-                        url = Game.FAILED_ICON
-                    )
-                    noError = True
-                    finishedGame = self._scrambleGames[serverId][authorId]
-
-                    await User.updateScramble(game.getPlayer(), didWin = False)
-
-                    self._scrambleGames[serverId].pop(authorId)
-                
-                # Guess asked for a hint
-                else:
-
+                    # Return embed
                     embed = discord.Embed(
                         title = "Scrambled",
-                        description = "`{}`\nHint: {}".format(
-                            game.getScrambledWord(),
-                            guess
+                        description = "Unscramble this word/phrase. You have 15 seconds. Good luck.\n`{}`".format(
+                            game.getScrambledWord()
                         ),
-                        colour = self.getEmbedColor()
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                     ).set_thumbnail(
                         url = Game.SCRAMBLE_ICON
+                    ).add_field(
+                        name = "Hint",
+                        value = game.getHint()
                     )
-                    noError = True
-        
-        msg = await sendMessage(
-            self.client,
-            message,
-            embed = embed
-        )
 
-        if not finishedGame:
-            if noError:
-                if self._scrambleGames[serverId][authorId].getPrevious() != None:
-                    await self._scrambleGames[serverId][authorId].getPrevious().delete()
-                self._scrambleGames[serverId][authorId].setPrevious(msg)
-        else:
-            await finishedGame.getPrevious().delete()
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = embed
+                    )
+
+                    # Wait for guess
+                    try:
+                        guess = await self.client.wait_for("message", timeout = 15, check = self.isAuthorPlayer)
+                        guess = guess.content.lower()
+
+                        # Check if it's right
+                        if len(guess) > 1:
+
+                            guess = game.makeGuess(guess)
+
+                            embed = discord.Embed(
+                                title = "Success" if guess else "Failed",
+                                description = "{} `{}`.".format(
+                                    "You guessed the word correctly! It was" if guess else "Unfortunately, you did not guess the word.\nThe word was",
+                                    game.getWord()
+                                ),
+                                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                            ).set_thumbnail(
+                                url = Game.SUCCESS_ICON if guess else Game.FAILED_ICON
+                            )
+
+                            await User.updateScramble(game.getPlayer(), didWin = guess)
+
+                            self._scrambleGames[serverId].pop(authorId)
+                        
+                    except asyncio.TimeoutError:
+
+                        embed = discord.Embed(
+                            title = "Timed Out",
+                            description = "Unfortunately, you did not guess the word in time.\nThe word was `{}`".format(
+                                game.getWord()
+                            ),
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                        ).set_thumbnail(
+                            url = Game.FAILED_ICON
+                        )
+
+                        await User.updateScramble(game.getPlayer(), didWin = False)
+
+                        self._scrambleGames[serverId].pop(authorId)
+                        
+                    await sendMessage(
+                        self.client,
+                        message,
+                        embed = embed
+                    )
                 
     async def ticTacToe(self, message, parameters, *, move = None):
         """Creates a Tic Tac Toe game or continues a Tic Tac Toe game.
@@ -1313,11 +1301,11 @@ class Game(Category):
                         finishedGame = self._ticTacToeGames[serverId][authorId]
                         noError = True
                         self._ticTacToeGames[serverId].pop(authorId)
-                        embed = getQuitGame("Tic Tac Toe", self.getEmbedColor(), Game.SUCCESS_ICON)
+                        embed = getQuitGame("Tic Tac Toe", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.SUCCESS_ICON)
                     
                     # User was not playing a game
                     else:
-                        embed = getNoGame("Tic Tac Toe", self.getEmbedColor(), Game.FAILED_ICON)
+                        embed = getNoGame("Tic Tac Toe", self.getEmbedColor() if message.guild == None else message.author.top_role.color, Game.FAILED_ICON)
                 
                 # User does not want to quit
                 else:
@@ -1341,7 +1329,7 @@ class Game(Category):
                                 ":x: " + game.getChallenger().mention,
                                 ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                        colour = self.getEmbedColor()
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                     ).set_thumbnail(
                         url = Game.TIC_TAC_TOE_ICON
                     )
@@ -1377,7 +1365,7 @@ class Game(Category):
                                 ":x: " + game.getChallenger().mention,
                                 ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                            colour = self.getEmbedColor()
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
@@ -1396,7 +1384,7 @@ class Game(Category):
                                 ":x: " + game.getChallenger().mention,
                                 ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                            colour = self.getEmbedColor()
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
@@ -1420,7 +1408,7 @@ class Game(Category):
                                 ":x: " + game.getChallenger().mention,
                                 ":o: " + "AI" if game.getOpponent() == None else game.getOpponent().mention
                             ),
-                            colour = self.getEmbedColor()
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
                         ).set_thumbnail(
                             url = Game.TIC_TAC_TOE_ICON
                         )
@@ -1488,7 +1476,7 @@ class Game(Category):
             embed = discord.Embed(
                 title = "Stats",
                 description = "Game Stats for {}".format(message.author.mention),
-                colour = self.getEmbedColor()
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
 
             # Add each game
@@ -1548,7 +1536,7 @@ class Game(Category):
                     description = "**Phrase: {}**\n**Difficulty: {}**\n".format(
                         phrase, difficulty
                     ),
-                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color if message.guild == None else message.author.top_role.color
                 )
             
             # Difficulty was not valid
@@ -1591,7 +1579,7 @@ class Game(Category):
                 description = "**Phrase: {}**\n**Hints: {}**\n".format(
                     phrase, ", ".join(hints)
                 ),
-                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color if message.guild == None else message.author.top_role.color
             )
         
         await sendMessage(
@@ -1663,7 +1651,7 @@ class Game(Category):
                             blackOps3Json["data"]["metadata"]["platformUserHandle"],
                             "Xbox" if blackOps3Json["data"]["metadata"]["platformId"] == 1 else "PSN"
                         ),
-                        colour = self.getEmbedColor(),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
                         timestamp = datetime.now()
                     ).set_author(
                         name = blackOps3Json["data"]["metadata"]["platformUserHandle"],
@@ -1745,7 +1733,7 @@ class Game(Category):
                             blackOps4Json["data"]["metadata"]["platformUserHandle"],
                             "Xbox" if blackOps4Json["data"]["metadata"]["platformId"] == 1 else "PSN"
                         ),
-                        colour = self.getEmbedColor(),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
                         timestamp = datetime.now()
                     ).set_author(
                         name = blackOps4Json["data"]["metadata"]["platformUserHandle"],
@@ -1858,7 +1846,7 @@ class Game(Category):
                     embed = discord.Embed(
                         title = "Fortnite Stats",
                         description = fortniteJson["epicUserHandle"] + " - " + fortniteJson["platformNameLong"],
-                        colour = self.getEmbedColor(),
+                        colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
                         timestamp = datetime.now()
                     ).set_author(
                         name = fortniteJson["epicUserHandle"],
@@ -2022,7 +2010,7 @@ class Game(Category):
                 embed = discord.Embed(
                     title = "League of Legends Stats",
                     description = "({} / 10) Most Recent Game for **{}**".format(count, leagueJson["name"]),
-                    colour = self.getEmbedColor(),
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
                     timestamp = datetime.now()
                 ).set_author(
                     name = leagueJson["name"],
@@ -2077,6 +2065,9 @@ class Game(Category):
         
         # Author or Server is not in gameDict
         return False
+    
+    def isAuthorPlayer(self, message):
+        return self.isPlayerInGame(self._scrambleGames, message.author, message.guild)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
@@ -2120,10 +2111,6 @@ class Game(Category):
             # Hangman
             if self.isPlayerInGame(self._hangmanGames, message.author, message.guild):
                 await self.hangman(message, [], guess = message.content)
-            
-            # Scramble
-            if self.isPlayerInGame(self._scrambleGames, message.author, message.guild):
-                await self.scramble(message, [], guess = message.content)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Reactions
