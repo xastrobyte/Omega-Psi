@@ -18,11 +18,12 @@ from util.file.server import Server
 
 from util.utils.discordUtils import sendMessage, getErrorMessage
 from util.utils.miscUtils import datetimeToString
-from util.utils.stringUtils import censor
+# from util.utils.stringUtils import censor
 
 from datetime import datetime
 from functools import partial
 from supercog import Category, Command
+from supercog.censor import censor
 import discord, os, requests, time
 
 class Help(Category):
@@ -74,6 +75,7 @@ class Help(Category):
 
     INVALID_CATEGORY = "INVALID_CATEGORY"
     INVALID_COMMAND = "INVALID_COMMAND"
+    INVALID_PARAMETER = "INVALID_PARAMETER"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructor
@@ -132,6 +134,19 @@ class Help(Category):
                 }
             },
             "command": self.help
+        })
+
+        self._ping = Command(commandDict = {
+            "alternatives": ["ping"],
+            "info": "Pings the bot.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "You don't need any parameters to ping the bot."
+                    ]
+                }
+            },
+            "command": self.ping
         })
 
         self._support = Command(commandDict = {
@@ -335,6 +350,52 @@ class Help(Category):
             "command": self.uptime
         })
 
+        self._sendBug = Command(commandDict = {
+            "alternatives": ["sendBug", "bug", "error", "feedback"],
+            "info": "Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.",
+            "parameters": {
+                "messageType": {
+                    "info": "The type of message this is.",
+                    "optional": False,
+                    "accepted_parameters": {
+                        "bug": {
+                            "alternatives": ["bug"],
+                            "info": "The type of message is a bug in Omega Psi."
+                        },
+                        "error": {
+                            "alternatives": ["error"],
+                            "info": "Something is going wrong but you don't know what."
+                        },
+                        "feedback": {
+                            "alternatives": ["feedback"],
+                            "info": "You want to provide feedback, suggest features, or anything else that doesn't fit into a message type."
+                        },
+                        "moderator": {
+                            "alternatives": ["moderator"],
+                            "info": "If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this."
+                        }
+                    }
+                },
+                "message": {
+                    "info": "The message to send to the developers of Omega Psi.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Help.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to send a bug, error, or feedback to the developers of Omega Psi, you need to type in the message."
+                    ]
+                },
+                Help.INVALID_PARAMETER: {
+                    "messages": [
+                        "That was an invalid message type."
+                    ]
+                }
+            },
+            "command": self.sendBug
+        })
+
         self._markdown = Command(commandDict = {
             "alternatives": ["markdown", "getMarkdown", "md", "getMd"],
             "info": "Creates and sends the markdown file for the commands.",
@@ -351,12 +412,14 @@ class Help(Category):
 
         self.setCommands([
             self._help,
+            self._ping,
             self._support,
             self._invite,
             self._vote,
             self._github,
             self._replit,
             self._uptime,
+            self._sendBug,
             self._markdown
         ])
 
@@ -736,7 +799,7 @@ class Help(Category):
 
             # See if category is Bot Moderator or Server Moderator and author is a Bot Moderator or Server Moderator
             onBotMod = category == "Bot Moderator"
-            isBotMod = OmegaPsi.isAuthorModerator(discordMember)
+            isBotMod = await OmegaPsi.isAuthorModerator(discordMember)
             try:
                 guild = discordMember.guild
             except:
@@ -840,6 +903,44 @@ class Help(Category):
 
             if str(message.author.id) in self._scrollEmbeds:  
                 self._scrollEmbeds[str(message.author.id)]["message"] = msg
+    
+    async def ping(self, message, parameters):
+        """Pings the bot
+        """
+
+        # Check for too many parameters
+        if len(parameters) > self._ping.getMaxParameters():
+            embed = getErrorMessage(self._ping, Help.TOO_MANY_PARAMETERS)
+
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        # There were the proper amount of parameters
+        else:
+            start = datetime.now()
+
+            pingMessage = await message.channel.send(
+                "Ping :slight_smile:"
+            )
+
+            end = datetime.now()
+
+            diff = int((end - start).total_seconds() * 1000)
+
+            await pingMessage.edit(
+                content = "Ping :slight_smile: `{} ms`".format(
+                    diff
+                )
+            )
     
     async def support(self, message, parameters):
         """
@@ -1092,6 +1193,111 @@ class Help(Category):
                     title = downtime["error"],
                     description = " ",
                     colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                )
+
+        await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+    
+    async def sendBug(self, message, parameters):
+        """Sends all bot moderators a message from the bot.\n
+
+        discordServer - The Discord Server that the message originated from.\n
+        discordMember - The Discord User/Member that wants to send the message.\n
+        messageType - The type of message being sent. (Bug, Error, Feedback).\n
+        message - The message to send.\n
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._sendBug.getMinParameters():
+            embed = getErrorMessage(self._sendBug, Help.NOT_ENOUGH_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+
+            messageType = parameters[0]
+            msg = " ".join(parameters[1:])
+
+            # Get color and message type for Embed Title
+            messageTypeParameters = self._sendBug.getAcceptedParameters("messageType")
+            matched = False
+
+            # Iterate through accepted parameters
+            for accepted in messageTypeParameters:
+
+                # Message type was an alternative of the accepted parameter
+                if messageType in messageTypeParameters[accepted].getAlternatives():
+
+                    # Capitalize message type; Get the embed color; Parameter matched message type
+                    messageType = accepted.capitalize()
+                    color = Misc.BUG_EMBED_COLORS[messageType]
+                    matched = True
+                    
+                    # We don't need to continue looping
+                    break
+
+            # Invalid message type
+            if not matched:
+                embed = getErrorMessage(self._sendBug, Help.INVALID_PARAMETER)
+
+            # Valid message type
+            else:
+
+                # Setup embed
+                embed = discord.Embed(
+                    title = messageType,
+                    description = "Author: {}#{}\n{}\n".format(
+                        message.author.name,
+                        message.author.discriminator,
+                        msg
+                    ),
+                    colour = color
+                )
+
+                # Server is not None
+                if message.guild != None:
+                    embed.add_field(
+                        name = "Server Information",
+                        value = "Name: {}\nID: {}\n".format(
+                            message.guild.name,
+                            message.guild.id
+                        ),
+                        inline = False
+                    )
+                
+                else:
+                    embed.add_field(
+                        name = "Did Not Originate From Server.",
+                        value = "Originated From User",
+                        inline = False
+                    )
+                
+                # Iterate through Omega Psi moderators
+                for moderator in await OmegaPsi.getModerators():
+
+                    # Get the user
+                    user = self.client.get_user(int(moderator))
+
+                    # Only send message to user if user is not None
+                    if user != None:
+                        await user.send(
+                            embed = embed
+                        )
+                
+                embed = discord.Embed(
+                    title = "Message Sent",
+                    description = "Your `{}` report was sent.\nMessage: {}\n".format(
+                        messageType, msg
+                    ),
+                    colour = color
                 )
 
         await sendMessage(
