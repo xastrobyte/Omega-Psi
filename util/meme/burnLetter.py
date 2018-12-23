@@ -1,9 +1,5 @@
 from util.image.image import MemeTemplate
 
-import pygame
-
-pygame.init()
-
 IMAGE = "https://tinyurl.com/burnLetter"
 
 burnLetter = MemeTemplate(
@@ -16,7 +12,7 @@ burnLetter = MemeTemplate(
             "centered": [False, False]
         },
         "spongebobText": {
-            "location": [180, 60],
+            "location": [180, 55],
             "size": 15, "max": 10
         }
     }
