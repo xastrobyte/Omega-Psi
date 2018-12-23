@@ -10,11 +10,11 @@ from util.utils.miscUtils import loadImageFromUrl, timestampToDatetime, datetime
 from datetime import datetime
 from functools import partial
 from supercog import Category, Command
-import discord, os, pygame, random, requests, time
+import discord, os, pygame, random, requests
 
 pygame.init()
 
-scrollEmbeds = {}
+reactions = ["⏪", "⬅", "➡", "⏩"]
 
 class Misc(Category):
 
@@ -35,9 +35,11 @@ class Misc(Category):
     COLOR_RGB_URL = "http://thecolorapi.com/id?rgb={},{},{}&format=json"
     COLOR_HSL_URL = "http://thecolorapi.com/id?hsl={},{}%,{}%&format=json"
     COLOR_CMYK_URL = "http://thecolorapi.com/id?cmyk={},{},{},{}&format=json"
-    NUMBER_FACT_URL = "http://numbersapi.com/random/year?json"
+    NUMBER_FACT_RANDOM_URL = "http://numbersapi.com/random/trivia?json"
+    NUMBER_FACT_NUMBER_URL = "http://numbersapi.com/{}?json"
     TRONALD_DUMP_QUOTE = "https://api.tronalddump.io/random/quote"
     TRONALD_DUMP_MEME = "https://api.tronalddump.io/random/meme"
+    LLAMAS_API = "https://www.fellowhashbrown.com/api/llamas?episode={}&fullScript={}"
 
     TWITTER_ICON = "http://pngimg.com/uploads/twitter/twitter_PNG29.png"
 
@@ -60,8 +62,10 @@ class Misc(Category):
     NO_ACCESS = "NO_ACCESS"
     TOO_LONG = "TOO_LONG"
 
+    INVALID_EPISODE = "INVALID_EPISODE"
     INVALID_MEMBER = "INVALID_MEMBER"
     INVALID_COLOR_TYPE = "INVALID_COLOR_TYPE"
+    INVALID_PARAMETER = "INVALID_PARAMETER"
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Constructor
@@ -212,13 +216,63 @@ class Misc(Category):
             "command": self.color
         })
 
-        self._numberFact = Command(commandDict = {
-            "alternatives": ["numberFact", "number"],
-            "info": "Gives you a fact about a number.",
+        self._llamas = Command(commandDict = {
+            "alternatives": ["llamas", "llamasWithHats", "llama"],
+            "info": "Gives you a random quote from Llamas With Hats. You can also get the full script of an episode.",
+            "parameters": {
+                "episode": {
+                    "info": "The episode to get the quote from. (This is required if you're getting a full script).",
+                    "optional": True
+                },
+                "fullScript": {
+                    "info": "Whether or not to get the full script of an episode.",
+                    "optional": True,
+                    "accepted": {
+                        "script": {
+                            "alternatives": ["fullScript", "full", "script"],
+                            "info": "Get the full script of an episode."
+                        }
+                    }
+                }
+            },
             "errors": {
                 Misc.TOO_MANY_PARAMETERS: {
                     "messages": [
-                        "In order to get a fact about a random number, you don't need any parameters."
+                        "You have too many parameters for this. You only need the episode and whether or not you want the script."
+                    ]
+                },
+                Misc.INVALID_EPISODE: {
+                    "messages": [
+                        "That is not a valid episode."
+                    ]
+                },
+                Misc.INVALID_PARAMETER: {
+                    "messages": [
+                        "That is not a valid parameter."
+                    ]
+                }
+            },
+            "command": self.llamas
+        })
+
+        self._numberFact = Command(commandDict = {
+            "alternatives": ["numberFact", "number"],
+            "info": "Gives you a fact about a number.",
+            "parameters": {
+                "number": {
+                    "info": "The number to get a fact about.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Misc.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get a fact about a random number, you only need one number."
+                    ]
+                },
+                Misc.INVALID_PARAMETER: {
+                    "messages": [
+                        "The number you entered is not a number."
                     ]
                 }
             },
@@ -284,19 +338,6 @@ class Misc(Category):
             "command": self.tronaldDumpMeme
         })
 
-        self._ping = Command(commandDict = {
-            "alternatives": ["ping"],
-            "info": "Pings the bot.",
-            "errors": {
-                Category.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "You don't need any parameters to ping the bot."
-                    ]
-                }
-            },
-            "command": self.ping
-        })
-
         self._nickname = Command(commandDict = {
             "alternatives": ["nickname", "nick"],
             "info": "Changes your nickname.",
@@ -356,68 +397,23 @@ class Misc(Category):
             "command": self.info
         })
 
-        self._sendBug = Command(commandDict = {
-            "alternatives": ["sendBug", "bug", "error", "feedback"],
-            "info": "Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.",
-            "parameters": {
-                "messageType": {
-                    "info": "The type of message this is.",
-                    "optional": False,
-                    "accepted_parameters": {
-                        "bug": {
-                            "alternatives": ["bug"],
-                            "info": "The type of message is a bug in Omega Psi."
-                        },
-                        "error": {
-                            "alternatives": ["error"],
-                            "info": "Something is going wrong but you don't know what."
-                        },
-                        "feedback": {
-                            "alternatives": ["feedback"],
-                            "info": "You want to provide feedback, suggest features, or anything else that doesn't fit into a message type."
-                        },
-                        "moderator": {
-                            "alternatives": ["moderator"],
-                            "info": "If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this."
-                        }
-                    }
-                },
-                "message": {
-                    "info": "The message to send to the developers of Omega Psi.",
-                    "optional": False
-                }
-            },
-            "errors": {
-                Category.NOT_ENOUGH_PARAMETERS: {
-                    "messages": [
-                        "In order to send a bug, error, or feedback to the developers of Omega Psi, you need to type in the message."
-                    ]
-                },
-                Misc.INVALID_PARAMETER: {
-                    "messages": [
-                        "That was an invalid message type."
-                    ]
-                }
-            },
-            "command": self.sendBug
-        })
-
         self.setCommands([
             self._advice,
             self._choice,
             self._chuckNorris,
             self._color,
+            self._llamas,
             self._numberFact,
             self._random,
             self._tronaldDumpMeme,
             self._tronaldDumpQuote,
 
-            self._ping,
             self._nickname,
             self._botInfo,
-            self._info,
-            self._sendBug
+            self._info
         ])
+
+        self._scrollEmbeds = {}
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Command Methods
@@ -654,6 +650,140 @@ class Misc(Category):
             )
         )
     
+    async def llamas(self, message, parameters):
+        """
+        """
+
+        script = None
+        # Check for too many parameters
+        if len(parameters) > self._llamas.getMaxParameters():
+            embed = getErrorMessage(self._llamas, Misc.TOO_MANY_PARAMETERS)
+        
+        # There were the proper amount of parameters
+        else:
+            episode = random.randint(1, 12) if len(parameters) < 1 else parameters[0]
+            script = False if len(parameters) < 2 else parameters[1]
+            valid = True
+
+            # Check if episode is valid
+            try:
+                episode = int(episode)
+                if not (episode >= 1 and episode <= 12):
+                    raise ValueError()
+            except:
+                embed = getErrorMessage(self._llamas, Misc.INVALID_EPISODE)
+                valid = False
+            
+            # Check if script is valid
+            if script != False:
+                if script in self._llamas.getAcceptedParameter("fullScript", "script").getAlternatives():
+                    script = True
+                else:
+                    embed = getErrorMessage(self._llamas, Misc.INVALID_PARAMETER)
+                    valid = False
+            
+            # Only run if valid
+            if valid:
+
+                # Make API call
+                response = await loop.run_in_executor(None,
+                    requests.get,
+                    Misc.LLAMAS_API.format(
+                        episode, script if script else ""
+                    )
+                )
+                response = response.json()
+
+                image = response["image"]
+
+                # Create embed
+                if script:
+                    fields = []
+                    fieldValue = ""
+                    for quote in response["quotes"]:
+                        line = "**{}** {}\n".format(
+                            (quote["author"] + ":") if len(quote["author"]) > 0 else "",
+                            quote["value"]
+                        )
+
+                        if len(fieldValue) + len(line) >= OmegaPsi.MESSAGE_THRESHOLD:
+                            fields.append(fieldValue)
+                            fieldValue = ""
+                        
+                        fieldValue += line
+                    
+                    if len(fieldValue) > 0:
+                        fields.append(fieldValue)
+
+                    self._scrollEmbeds[str(message.author.id)] = {
+                        "message": None,
+                        "embeds": [],
+                        "value": 0,
+                        "min": 0,
+                        "max": len(fields) - 1
+                    }
+
+                    count = 0
+                    for field in fields:
+                        count += 1
+                        embed = discord.Embed(
+                            title = "Episode {}{}".format(
+                                episode,
+                                " - Script {}".format(
+                                    "({} / {})".format(
+                                        count, len(fields)
+                                    ) if len(fields) > 1 else ""
+                                ) if script else ""
+                            ),
+                            description = field,
+                            colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+                        )
+
+                        if image != None:
+                            embed.set_thumbnail(
+                                url = image
+                            )
+
+                        self._scrollEmbeds[str(message.author.id)]["embeds"].append(embed)
+                    
+                    embed = self._scrollEmbeds[str(message.author.id)]["embeds"][0]
+                
+                else:
+                    description = "**{}** {}".format(
+                            (response["author"] + ":") if len(response["author"]) > 0 else "",
+                            response["value"]
+                        )
+
+                    embed = discord.Embed(
+                        title = "Episode {}{}".format(
+                            episode,
+                            " - Script" if script else ""
+                        ),
+                        description = description
+                    )
+
+                    if image != None:
+                        embed.set_thumbnail(
+                            url = image
+                        )
+        
+        msg = await sendMessage(
+            self.client,
+            message,
+            embed = embed.set_footer(
+                text = "Requested by {}#{}".format(
+                    message.author.name,
+                    message.author.discriminator
+                ),
+                icon_url = message.author.avatar_url
+            )
+        )
+
+        if script:
+            self._scrollEmbeds[str(message.author.id)]["message"] = msg
+            for reaction in reactions:
+                await msg.add_reaction(reaction)
+    
     async def numberFact(self, message, parameters):
         """Returns a fact about a random number.
 
@@ -667,22 +797,30 @@ class Misc(Category):
         
         # There were the proper amount of parameters
         else:
+            number = None if len(parameters) == 0 else parameters[0]
 
-            # Get the number fact
-            numberFactJson = await loop.run_in_executor(None,
-                requests.get,
-                Misc.NUMBER_FACT_URL
-            )
-            numberFactJson = numberFactJson.json()
+            # Make sure number is valid
+            try:
+                if number != None:
+                    number = int(number)
 
-            embed = discord.Embed(
-                title = "Fact about the number *{}*".format(numberFactJson["number"]),
-                description = numberFactJson["text"],
-                colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
-                timestamp = datetime.now()
-            ).set_footer(
-                text = "NumbersAPI"
-            )
+                # Get the number fact
+                numberFactJson = await loop.run_in_executor(None,
+                    requests.get,
+                    Misc.NUMBER_FACT_RANDOM_URL if number == None else Misc.NUMBER_FACT_NUMBER_URL.format(number)
+                )
+                numberFactJson = numberFactJson.json()
+
+                embed = discord.Embed(
+                    title = "Fact about the number *{}*".format(numberFactJson["number"]),
+                    description = numberFactJson["text"],
+                    colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color,
+                    timestamp = datetime.now()
+                ).set_footer(
+                    text = "NumbersAPI"
+                )
+            except:
+                embed = getErrorMessage(self._numberFact, Misc.INVALID_PARAMETER)
 
         await sendMessage(
             self.client,
@@ -847,44 +985,6 @@ class Misc(Category):
                 icon_url = message.author.avatar_url
             )
         )
-    
-    async def ping(self, message, parameters):
-        """Pings the bot
-        """
-
-        # Check for too many parameters
-        if len(parameters) > self._ping.getMaxParameters():
-            embed = getErrorMessage(self._ping, Misc.TOO_MANY_PARAMETERS)
-
-            await sendMessage(
-                self.client,
-                message,
-                embed = embed.set_footer(
-                    text = "Requested by {}#{}".format(
-                        message.author.name,
-                        message.author.discriminator
-                    ),
-                    icon_url = message.author.avatar_url
-                )
-            )
-        
-        # There were the proper amount of parameters
-        else:
-            start = datetime.now()
-
-            pingMessage = await message.channel.send(
-                "Ping :slight_smile:"
-            )
-
-            end = datetime.now()
-
-            diff = int((end - start).total_seconds() * 1000)
-
-            await pingMessage.edit(
-                content = "Ping :slight_smile: `{} ms`".format(
-                    diff
-                )
-            )
     
     async def nickname(self, message, parameters):
         """Changes the nickname of the specified member.
@@ -1056,9 +1156,20 @@ class Misc(Category):
         serverName = discordServer.name
         serverOwner = discordServer.owner
         serverCreate = datetimeToString(discordServer.created_at)
+
         serverRanking = server["ranking"]
+
         serverWelcomeMessage = server["welcome_message"]["active"]
         serverWelcomeMessageChannel = server["welcome_message"]["channel"]
+        serverDmOnWelcomeFail = server["welcome_message"]["dm_on_fail"]
+
+        serverProfanityFilter = server["profanity_filter"]["active"]
+        serverDmOnProfanityFail = server["profanity_filter"]["dm_on_fail"]
+
+        serverAutorole = server["autorole"]["active"]
+        serverAutoroleRole = server["autorole"]["role"]
+        serverDmOnAutoroleFail = server["autorole"]["dm_on_fail"]
+
         serverInactiveCommands = server["inactive_commands"]
 
         botInactiveCommands = omegaPsi["inactive_commands"]
@@ -1071,6 +1182,8 @@ class Misc(Category):
                 "Unknown" if serverOwner == None else (serverOwner.name + "#" + serverOwner.discriminator)
             ),
             colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
+        ).set_thumbnail(
+            url = discordServer.icon_url
         )
 
         # Add fields
@@ -1090,11 +1203,29 @@ class Misc(Category):
             "Created At": serverCreate,
             "Prefixes": ", ".join(serverPrefixes),
             "Ranking": "Yes" if serverRanking else "No",
-            "Welcome Message": "{}\n{}".format(
+            "Welcome Message": "{}\n{}\n{}".format(
                 "Active" if serverWelcomeMessage else "Inactive",
                 "<#{}>".format(
                     serverWelcomeMessageChannel
-                ) if serverWelcomeMessageChannel != None else ""
+                ) if serverWelcomeMessageChannel != None else "No Channel Set",
+                "{} on fail.".format(
+                    "Will DM" if serverDmOnWelcomeFail else "Will Not DM"
+                )
+            ),
+            "Profanity Filter": "{}\n{}".format(
+                "Active" if serverProfanityFilter else "Inactive",
+                "{} on fail.".format(
+                    "Will DM" if serverDmOnProfanityFail else "Will Not DM"
+                )
+            ),
+            "Autorole": "{}\n{}\n{}".format(
+                "Active" if serverAutorole else "Inactive",
+                "<@&{}>".format(
+                    serverAutoroleRole
+                ) if serverAutoroleRole != None else "No Role Set",
+                "{} on fail.".format(
+                    "Will DM" if serverDmOnAutoroleFail else "Will Not DM"
+                )
             ),
             "Locally Inactive Commands": serverCommands if len(serverCommands) > 0 else None,
             "Globally Inactive Commands": botCommands if len(botCommands) > 0 else None
@@ -1106,7 +1237,7 @@ class Misc(Category):
                 embed.add_field(
                     name = tag,
                     value = tags[tag],
-                    inline = False
+                    inline = tag not in ["Created At", "Locally Inactive Commands", "Globally Inactive Commands"]
                 )
 
         # Close server file
@@ -1169,111 +1300,6 @@ class Misc(Category):
 
         return embed
     
-    async def sendBug(self, message, parameters):
-        """Sends all bot moderators a message from the bot.\n
-
-        discordServer - The Discord Server that the message originated from.\n
-        discordMember - The Discord User/Member that wants to send the message.\n
-        messageType - The type of message being sent. (Bug, Error, Feedback).\n
-        message - The message to send.\n
-        """
-
-        # Check for not enough parameters
-        if len(parameters) < self._sendBug.getMinParameters():
-            embed = getErrorMessage(self._sendBug, Misc.NOT_ENOUGH_PARAMETERS)
-        
-        # There were the proper amount of parameters
-        else:
-
-            messageType = parameters[0]
-            msg = " ".join(parameters[1:])
-
-            # Get color and message type for Embed Title
-            messageTypeParameters = self._sendBug.getAcceptedParameters("messageType")
-            matched = False
-
-            # Iterate through accepted parameters
-            for accepted in messageTypeParameters:
-
-                # Message type was an alternative of the accepted parameter
-                if messageType in messageTypeParameters[accepted].getAlternatives():
-
-                    # Capitalize message type; Get the embed color; Parameter matched message type
-                    messageType = accepted.capitalize()
-                    color = Misc.BUG_EMBED_COLORS[messageType]
-                    matched = True
-                    
-                    # We don't need to continue looping
-                    break
-
-            # Invalid message type
-            if not matched:
-                embed = getErrorMessage(self._sendBug, Misc.INVALID_PARAMETER)
-
-            # Valid message type
-            else:
-
-                # Setup embed
-                embed = discord.Embed(
-                    title = messageType,
-                    description = "Author: {}#{}\n{}\n".format(
-                        message.author.name,
-                        message.author.discriminator,
-                        msg
-                    ),
-                    colour = color
-                )
-
-                # Server is not None
-                if message.guild != None:
-                    embed.add_field(
-                        name = "Server Information",
-                        value = "Name: {}\nID: {}\n".format(
-                            message.guild.name,
-                            message.guild.id
-                        ),
-                        inline = False
-                    )
-                
-                else:
-                    embed.add_field(
-                        name = "Did Not Originate From Server.",
-                        value = "Originated From User",
-                        inline = False
-                    )
-                
-                # Iterate through Omega Psi moderators
-                for moderator in await OmegaPsi.getModerators():
-
-                    # Get the user
-                    user = self.client.get_user(moderator)
-
-                    # Only send message to user if user is not None
-                    if user != None:
-                        await user.send(
-                            embed = embed
-                        )
-                
-                embed = discord.Embed(
-                    title = "Message Sent",
-                    description = "Your `{}` report was sent.\nMessage: {}\n".format(
-                        messageType, message
-                    ),
-                    colour = color
-                )
-
-        await sendMessage(
-            self.client,
-            message,
-            embed = embed.set_footer(
-                text = "Requested by {}#{}".format(
-                    message.author.name,
-                    message.author.discriminator
-                ),
-                icon_url = message.author.avatar_url
-            )
-        )
-    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Parsing
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1300,6 +1326,68 @@ class Misc(Category):
                         # Run the command but don't try running others
                         await self.run(message, cmd, cmd.getCommand(), message, parameters)
                     break
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Reactions
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def manage_scrolling(self, reaction, member):
+        """Manages the scrolling of any help embeds
+        """
+
+        # See if the member has a scrolling embed in the list
+        if str(member.id) in self._scrollEmbeds:
+
+            if self._scrollEmbeds[str(member.id)]["message"].id == reaction.message.id:
+                initial = self._scrollEmbeds[str(member.id)]["value"]
+
+                # User wants to go to the beginning
+                if str(reaction) == "⏪":
+                    self._scrollEmbeds[str(member.id)]["value"] = 0
+
+                # User wants to go to the end
+                elif str(reaction) == "⏩":
+                    self._scrollEmbeds[str(member.id)]["value"] = len(self._scrollEmbeds[str(member.id)]["embeds"]) - 1
+
+                # User wants to go left
+                elif str(reaction) == "⬅":
+                    self._scrollEmbeds[str(member.id)]["value"] -= 1
+                    if self._scrollEmbeds[str(member.id)]["value"] < 0:
+                        self._scrollEmbeds[str(member.id)]["value"] = 0
+
+                # User wants to go right
+                elif str(reaction) == "➡":
+                    self._scrollEmbeds[str(member.id)]["value"] += 1
+                    if self._scrollEmbeds[str(member.id)]["value"] > len(self._scrollEmbeds[str(member.id)]["embeds"]) - 1:
+                        self._scrollEmbeds[str(member.id)]["value"] = len(self._scrollEmbeds[str(member.id)]["embeds"]) - 1
+
+                # Update the embed if necessary
+                if self._scrollEmbeds[str(member.id)]["value"] != initial:
+                    value = self._scrollEmbeds[str(member.id)]["value"]
+
+                    await reaction.message.edit(
+                        embed = self._scrollEmbeds[str(member.id)]["embeds"][value]
+                    )
+
+    async def on_reaction_add(self, reaction, member):
+        """Determines which reaction was added to a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+        await self.manage_scrolling(reaction, member)
+    
+    async def on_reaction_remove(self, reaction, member):
+        """Determines which reaction was removed from a message. Only reactions right now are
+
+        :arrow_left: which tells the embed to scroll back a field.
+        :arrow_right: which tells the embed to scroll forward a field.
+        :rewind: which tells the embed to go back to the beginning.
+        :fast_forward: which tells the embed to go to the end.
+        """
+        await self.manage_scrolling(reaction, member)
 
 def setup(client):
     client.add_cog(Misc(client))
