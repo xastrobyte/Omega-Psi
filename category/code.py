@@ -3,10 +3,9 @@ from util.file.database import loop
 from util.file.server import Server
 from util.file.omegaPsi import OmegaPsi
 from util.utils.discordUtils import sendMessage, getErrorMessage
-from util.utils.miscUtils import timeout
 
 from supercog import Category, Command
-import base64, discord, requests
+import async_timeout, base64, discord, requests
 
 scrollEmbeds = {}
 
@@ -232,7 +231,78 @@ class Code(Category):
     # Command Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    @timeout()
+    def __brainfuck(self, code, parameters):
+
+        # Keep track of pointers and data
+        data = [0] * Code.MAX_BRAINFUCK_LENGTH
+        dataPointer = 0
+        paramPointer = 0
+        output = ""
+        loop = 0
+
+        # Iterate through code
+        char = 0
+        while char < len(code):
+
+            # char is > (move pointer right)
+            if code[char] == ">":
+                dataPointer = 0 if dataPointer == Code.MAX_BRAINFUCK_LENGTH - 1 else dataPointer + 1
+            
+            # char is < (move pointer left)
+            elif code[char] == "<":
+                dataPointer = Code.MAX_BRAINFUCK_LENGTH - 1 if dataPointer == 0 else dataPointer - 1
+            
+            # char is + (increase value at pointer)
+            elif code[char] == "+":
+                data[dataPointer] += 1
+                if data[dataPointer] > 255:
+                    data[dataPointer] -= 256
+            
+            # char is - (decrease value at pointer)
+            elif code[char] == "-":
+                data[dataPointer] -= 1
+                if data[dataPointer] < 0:
+                    data[dataPointer] += 256
+            
+            # char is . (add data to output)
+            elif code[char] == ".":
+                output += str(chr(data[dataPointer]))
+            
+            # char is , (add data to input)
+            elif code[char] == ",":
+                if paramPointer >= len(parameters):
+                    data[dataPointer] = 0
+                else:
+                    data[dataPointer] = ord(parameters[paramPointer])
+                paramPointer += 1
+            
+            # char is [ (open loop)
+            elif code[char] == "[":
+                if data[dataPointer] == 0:
+                    char += 1
+                    while loop > 0 or code[char] != "]":
+                        if code[char] == "[":
+                            loop += 1
+                        if code[char] == "]":
+                            loop -= 1
+                        char += 1
+            
+            # char is ] (close loop)
+            elif code[char] == "]":
+                if data[dataPointer] != 0:
+                    char -= 1
+                    while loop > 0 or code[char] != "[":
+                        if code[char] == "]":
+                            loop += 1
+                        if code[char] == "[":
+                            loop -= 1
+                        char -=1
+                    char -= 1
+            
+            char += 1
+        
+        return output
+
     async def brainfuck(self, message, parameters):
         """Runs brainfuck code and returns the result.\n
 
@@ -254,6 +324,8 @@ class Code(Category):
 
             code = parameters[0]
             if len(parameters) == 2:
+                parameters = parameters[1]
+            else:
                 parameters = []
 
             # Remove all invalid symbols
@@ -264,78 +336,18 @@ class Code(Category):
                     newCode += char
             code = newCode
 
-            # Keep track of pointers and data
-            data = [0] * Code.MAX_BRAINFUCK_LENGTH
-            dataPointer = 0
-            paramPointer = 0
-            output = ""
-            loop = 0
-
-            # Iterate through code
-            char = 0
-            while char < len(code):
-
-                # char is > (move pointer right)
-                if code[char] == ">":
-                    dataPointer = 0 if dataPointer == Code.MAX_BRAINFUCK_LENGTH - 1 else dataPointer + 1
-                
-                # char is < (move pointer left)
-                elif code[char] == "<":
-                    dataPointer = Code.MAX_BRAINFUCK_LENGTH - 1 if dataPointer == 0 else dataPointer - 1
-                
-                # char is + (increase value at pointer)
-                elif code[char] == "+":
-                    data[dataPointer] += 1
-                    if data[dataPointer] > 255:
-                        data[dataPointer] -= 256
-                
-                # char is - (decrease value at pointer)
-                elif code[char] == "-":
-                    data[dataPointer] -= 1
-                    if data[dataPointer] < 0:
-                        data[dataPointer] += 256
-                
-                # char is . (add data to output)
-                elif code[char] == ".":
-                    output += str(chr(data[dataPointer]))
-                
-                # char is , (add data to input)
-                elif code[char] == ",":
-                    if paramPointer >= len(parameters):
-                        data[dataPointer] = 0
-                    else:
-                        data[dataPointer] = ord(parameters[paramPointer])
-                    paramPointer += 1
-                
-                # char is [ (open loop)
-                elif code[char] == "[":
-                    if data[dataPointer] == 0:
-                        char += 1
-                        while loop > 0 or code[char] != "]":
-                            if code[char] == "[":
-                                loop += 1
-                            if code[char] == "]":
-                                loop -= 1
-                            char += 1
-                
-                # char is ] (close loop)
-                elif code[char] == "]":
-                    if data[dataPointer] != 0:
-                        char -= 1
-                        while loop > 0 or code[char] != "[":
-                            if code[char] == "]":
-                                loop += 1
-                            if code[char] == "[":
-                                loop -= 1
-                            char -=1
-                        char -= 1
-                
-                char += 1
+            try:
+                async with async_timeout.timeout(5):
+                    description = await loop.run_in_executor(None,
+                        self.__brainfuck, code, parameters
+                    )
+            except:
+                description = "Timed out"
             
             # Create and return embed for result
             embed = discord.Embed(
                 title = "Result",
-                description = output,
+                description = description,
                 colour = self.getEmbedColor() if message.guild == None else message.author.top_role.color
             )
         
