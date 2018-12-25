@@ -65,6 +65,8 @@ class Help(Category):
 
     VOTE_LINK = "https://discordbots.org/bot/503804826187071501/vote"
 
+    WEBSITE = "https://www.fellowhashbrown.com"
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Errors
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -160,6 +162,71 @@ class Help(Category):
                 }
             },
             "command": self.support
+        })
+
+        self._website = Command(commandDict = {
+            "alternatives": ["website", "web"],
+            "info": "Gives you the link to my developer website.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the link to my website, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.website
+        })
+
+        self._vote = Command(commandDict = {
+            "alternatives": ["vote"],
+            "info": "Allows you to get a link to vote for Omega Psi on discordbots.org",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the voting link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.vote
+        })
+
+        self._github = Command(commandDict = {
+            "alternatives": ["github"],
+            "info": "Sends you the Github link for the source code.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the Github link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.github
+        })
+
+        self._replit = Command(commandDict = {
+            "alternatives": ["replit", "repl.it", "repl"],
+            "info": "Sends you the Repl.it link for the bot.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the Repl.it link, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.replit
+        })
+
+        self._uptime = Command(commandDict = {
+            "alternatives": ["uptime"],
+            "info": "Sends a link to see the uptime of Omega Psi.",
+            "errors": {
+                Help.TOO_MANY_PARAMETERS: {
+                    "messages": [
+                        "In order to get the uptime of Omega Psi, you don't need any parameters."
+                    ]
+                }
+            },
+            "command": self.uptime
         })
 
         self._invite = Command(commandDict = {
@@ -298,58 +365,6 @@ class Help(Category):
             "command": self.invite
         })
 
-        self._vote = Command(commandDict = {
-            "alternatives": ["vote"],
-            "info": "Allows you to get a link to vote for Omega Psi on discordbots.org",
-            "errors": {
-                Help.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the voting link, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.vote
-        })
-
-        self._github = Command(commandDict = {
-            "alternatives": ["github"],
-            "info": "Sends you the Github link for the source code.",
-            "errors": {
-                Help.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the Github link, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.github
-        })
-
-        self._replit = Command(commandDict = {
-            "alternatives": ["replit", "repl.it", "repl"],
-            "info": "Sends you the Repl.it link for the bot.",
-            "errors": {
-                Help.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the Repl.it link, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.replit
-        })
-
-        self._uptime = Command(commandDict = {
-            "alternatives": ["uptime"],
-            "info": "Sends a link to see the uptime of Omega Psi.",
-            "errors": {
-                Help.TOO_MANY_PARAMETERS: {
-                    "messages": [
-                        "In order to get the uptime of Omega Psi, you don't need any parameters."
-                    ]
-                }
-            },
-            "command": self.uptime
-        })
-
         self._sendBug = Command(commandDict = {
             "alternatives": ["sendBug", "bug", "error", "feedback"],
             "info": "Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.",
@@ -414,11 +429,12 @@ class Help(Category):
             self._help,
             self._ping,
             self._support,
-            self._invite,
+            self._website,
             self._vote,
             self._github,
             self._replit,
             self._uptime,
+            self._invite,
             self._sendBug,
             self._markdown
         ])
@@ -531,6 +547,35 @@ class Help(Category):
         for category in self._categories:
             html += "  <!--{} Category-->\n".format(category)
             html += self._categories[category]["object"].getFancyHTML() + "\n"
+        
+        return html
+    
+    def getAllColumnHTML(self):
+        """Returns the Column HTML render text for all the categories in Omega Psi
+        """
+
+        # Setup HTML
+        html = ""
+
+        # Keep track of columns
+        columns = [[], [], []]
+
+        # Iterate through categories
+        count = 0
+        for category in self._categories:
+            text = "  <!--{} Category-->\n".format(category)
+            columns[count % 3].append(
+                text + self._categories[category]["object"].getColumnHTML() + "\n"
+            )
+            count += 1
+        
+        # Add to columns
+        for column in columns:
+
+            html += "      <div class=\"categories-column\">\n"
+            for category in column:
+                html += category
+            html += "      </div>\n"
         
         return html
 
@@ -730,7 +775,7 @@ class Help(Category):
                                 1, len(categoryHelp["fields"])
                             ) if len(categoryHelp["fields"]) > 1 else ""
                         ),
-                        value = categoryHelp["fields"][0],
+                        value = censor(categoryHelp["fields"][0]) if not isNSFW else categoryHelp["fields"][0],
                         inline = False
                     )
 
@@ -969,49 +1014,32 @@ class Help(Category):
                 message = Help.SUPPORT
             )
     
-    async def invite(self, message, parameters):
-        """Returns the link so someone can invite the bot to their own server.\n
-
-        permissions - The permissions that you want the bot to have.\n
+    async def website(self, message, parameters):
+        """Returns the link for the my developer website.
         """
 
-        permissions = parameters
+        # Check for too many parameters
+        if len(parameters) > self._website.getMaxParameters():
+            embed = getErrorMessage(self._website, Help.TOO_MANY_PARAMETERS)
+            await sendMessage(
+                self.client,
+                message,
+                embed = embed.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
 
-        # Set default permissions
-        permissionsInteger = 0
-
-        # Get permissions needed; If the admin permission is found, the integer will default to 8
-        adminFound = False
-
-        # Iterate through permissions
-        for permission in permissions:
-
-            # Iterate through accepted permissions
-            for acceptedPermission in self._invite.getAcceptedParameters("permissions..."):
-
-                # Permission is in the accepted permissions
-                if permission in self._invite.getAcceptedParameter("permissions...", acceptedPermission).getAlternatives():
-
-                    # Add the integer value to the permissions integer
-                    permissionsInteger += Server.PERMISSIONS[acceptedPermission]
-
-                    # Check if the accepted permission was administrator
-                    if acceptedPermission == "administrator":
-                        adminFound = True
-
-                    # Since it was found, we don't want to continue searching through the accepted permissions
-                    # We want to move to the next permission
-                    break
-
-        # The admin permission was found, default the integer to 8
-        if adminFound:
-            permissionsInteger = Server.PERMISSIONS["administrator"]
-
-        await sendMessage(
-            self.client,
-            message,
-            message = Server.BOT_INVITE.format(permissionsInteger)
-        )
+        # There were the proper amount of parameters
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = Help.WEBSITE
+            )
     
     async def vote(self, message, parameters):
         """Sends a link to discordbots.org to vote for the bot.
@@ -1205,6 +1233,50 @@ class Help(Category):
                 ),
                 icon_url = message.author.avatar_url
             )
+        )
+    
+    async def invite(self, message, parameters):
+        """Returns the link so someone can invite the bot to their own server.\n
+
+        permissions - The permissions that you want the bot to have.\n
+        """
+
+        permissions = parameters
+
+        # Set default permissions
+        permissionsInteger = 0
+
+        # Get permissions needed; If the admin permission is found, the integer will default to 8
+        adminFound = False
+
+        # Iterate through permissions
+        for permission in permissions:
+
+            # Iterate through accepted permissions
+            for acceptedPermission in self._invite.getAcceptedParameters("permissions..."):
+
+                # Permission is in the accepted permissions
+                if permission in self._invite.getAcceptedParameter("permissions...", acceptedPermission).getAlternatives():
+
+                    # Add the integer value to the permissions integer
+                    permissionsInteger += Server.PERMISSIONS[acceptedPermission]
+
+                    # Check if the accepted permission was administrator
+                    if acceptedPermission == "administrator":
+                        adminFound = True
+
+                    # Since it was found, we don't want to continue searching through the accepted permissions
+                    # We want to move to the next permission
+                    break
+
+        # The admin permission was found, default the integer to 8
+        if adminFound:
+            permissionsInteger = Server.PERMISSIONS["administrator"]
+
+        await sendMessage(
+            self.client,
+            message,
+            message = Server.BOT_INVITE.format(permissionsInteger)
         )
     
     async def sendBug(self, message, parameters):
