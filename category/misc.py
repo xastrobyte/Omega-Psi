@@ -216,6 +216,30 @@ class Misc(Category):
             "command": self.color
         })
 
+        self._emojify = Command(commandDict = {
+            "alternatives": ["emojify", "emoji", "emj"],
+            "info": "Gives you text in emojis.",
+            "parameters": {
+                "text": {
+                    "info": "The text to emojify.",
+                    "optional": False
+                }
+            },
+            "errors": {
+                Misc.NOT_ENOUGH_PARAMETERS: {
+                    "messages": [
+                        "In order to emojify text, you need text."
+                    ]
+                },
+                Misc.TOO_LONG: {
+                    "messages": [
+                        "The text you entered can be 87 characters maximum."
+                    ]
+                }
+            },
+            "command": self.emojify
+        })
+
         self._llamas = Command(commandDict = {
             "alternatives": ["llamas", "llamasWithHats", "llama"],
             "info": "Gives you a random quote from Llamas With Hats. You can also get the full script of an episode.",
@@ -402,6 +426,7 @@ class Misc(Category):
             self._choice,
             self._chuckNorris,
             self._color,
+            self._emojify,
             self._llamas,
             self._numberFact,
             self._random,
@@ -649,6 +674,51 @@ class Misc(Category):
                 icon_url = message.author.avatar_url
             )
         )
+    
+    async def emojify(self, message, parameters):
+        """
+        """
+
+        # Check for not enough parameters
+        if len(parameters) < self._emojify.getMinParameters():
+            result = getErrorMessage(self._emojify, Misc.NOT_ENOUGH_PARAMETERS)
+        
+        # Check for too long of text
+        elif len(" ".join(parameters)) > 87:
+            result = getErrorMessage(self._emojify, Misc.TOO_LONG)
+        
+        # There were the proper amount of parameters
+        else:
+            text = " ".join(parameters).lower()
+
+            result = ""
+            for char in text:
+                if char.isalpha():
+                    result += ":regional_indicator_{}: ".format(char)
+                else:
+                    result += char + " "
+            
+            result = result.strip()
+        
+        if type(result) == discord.Embed:
+            await sendMessage(
+                self.client,
+                message,
+                embed = result.set_footer(
+                    text = "Requested by {}#{}".format(
+                        message.author.name,
+                        message.author.discriminator
+                    ),
+                    icon_url = message.author.avatar_url
+                )
+            )
+        
+        else:
+            await sendMessage(
+                self.client,
+                message,
+                message = result
+            )
     
     async def llamas(self, message, parameters):
         """
