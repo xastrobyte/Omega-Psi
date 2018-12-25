@@ -345,14 +345,14 @@ class Math(Category):
 
         self.setCommands([
             # Math Commands
-            self._simplify,
-            self._expand,
-            self._factor,
+            # self._simplify,
+            # self._expand,
+            # self._factor,
             self._factorial,
-            self._solve,
-            self._substitute,
-            self._derivative,
-            self._integral,
+            # self._solve,
+            # self._substitute,
+            # self._derivative,
+            # self._integral,
             self._fibonacci,
 
             # Physics Commands
