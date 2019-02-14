@@ -1,14 +1,5 @@
-async-timeout
-bs4
-dblpy
 git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]
 Flask
 IMDbPY
-pillow
-pygame
 pymongo
 requests
-supercog
-sympy
-timchen
-wikipedia-api
