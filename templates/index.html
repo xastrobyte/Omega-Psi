@@ -1,8 +1,7 @@
 <head>
 
             <style>
-                @import url('https://fonts.googleapis.com/css?family=Cutive+Mono|Bungee+Shade|Carter+One|Righteous');
-
+                @import url('https://fonts.googleapis.com/css?family=Cutive+Mono|Bungee+Shade|Carter+One');
                 body {
                     background-color: #202020;
                     color: #EEEEEE;
@@ -13,29 +12,51 @@
                 a {
                     color: #BBBBBB;
                 }
-                .categoryName {
-                    font-weight: normal;
-                    font-family: 'Bungee Shade', cursive;
+
+                .commands-page {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: center;
                 }
 
-                .categoryInfo {
-                    font-family: 'Carter One', cursive;
+                .categories-column {
+                    display: flex;
+                    flex-direction: column;
                 }
 
-                .categoryRestriction {
-                    font-family: 'Carter One', cursive;
+                .category-block {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    max-width: 500px;
+                    margin: 12.5px;
+                }
+
+                .category-name {
+                    font-family: "Bungee Shade";
+                }
+
+                .category-info {
+                    font-family: "Carter One", cursive;
+                }
+
+                .category-restriction {
+                    font-family: "Carter One", cursive;
                     color: red;
                 }
 
-                .command {
-                    font-family: 'Cutive Mono', monospace;
+                .command-table {
+                    border: 1px solid white;
+                    border-radius: 5px;
+                    padding: 5px;
+                    font-family: "Thasadith"
                 }
 
-                .commandInfo {
-                    font-family: 'Righteous', cursive;
+                .command-tr td {
+                    padding: 5px;
                 }
 
-                .commandTags {
+                .command-tags {
                     font-family: 'Cutive Mono', monospace;
                     color: #EC7600;
                 }
@@ -95,6 +116,8 @@
                 }
             </style>
         
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
         <link rel="shortcut icon" href="{{ url_for('static', filename="/favicon.ico") }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename="/apple-touch-icon.png") }}">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename="/favicon-32x32.png") }}">
@@ -109,2011 +132,317 @@
         <meta property="theme-color" content="#EC7600" />
         <meta property="og:title" content="website.omegaPsi();" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.fellowhashbrown.com/projects/omegaPsi" />
+        <meta property="og:url" content="https://www.fellowhashbrown.com/projects#omegaPsi" />
         <meta property="og:image" content="{{url_for('static', filename="/android-chrome-512x512.png")}}" />
 
         <meta property="og:description" content="Omega Psi Commands" />
         <meta property="og:site_name" content="Omega Psi" />
         </head>
-  <!--Help Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Help</h1>
-        <p class="categoryInfo">Shows you the help menu.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">help | h | ? [command | category]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you help on all commands or a specific command in the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">ping </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Pings the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">support | supportServer </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you an invite to the support server for Omega Psi support.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">inviteBot | invite [permissions...]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a link so you can invite the bot to your own server.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">permissions...</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">administrator | admin</code> - Gives the bot administrator privileges.</li>
-            <li class="commandInfo"><code class="command">viewAuditLog | auditLog | audit</code> - Gives the bot access to the audit log.</li>
-            <li class="commandInfo"><code class="command">manageServer | mngSvr</code> - Gives the bot permission to manage the server.</li>
-            <li class="commandInfo"><code class="command">manageRoles | mngRoles</code> - Gives the bot permission to manage the roles.</li>
-            <li class="commandInfo"><code class="command">manageChannels | mngChnls</code> - Gives the bot permission to manage the channels.</li>
-            <li class="commandInfo"><code class="command">kickMembers | kickMbrs</code> - Gives the bot permission to kick members.</li>
-            <li class="commandInfo"><code class="command">banMembers | banMbrs</code> - Gives the bot permission to ban members.</li>
-            <li class="commandInfo"><code class="command">createInstantInvite | instantInvite | invite</code> - Gives the bot permission to create an instant invite for the server.</li>
-            <li class="commandInfo"><code class="command">changeNickname | chngNick</code> - Gives the bot permission to change their nickname.</li>
-            <li class="commandInfo"><code class="command">manageNicknames | mngNick</code> - Gives the bot permission to manage other people's nicknames.</li>
-            <li class="commandInfo"><code class="command">manageEmojis | mngEmojis</code> - Gives the bot permission to manage the server's emojis.</li>
-            <li class="commandInfo"><code class="command">manageWebhooks | mngWbhks</code> - Gives the bot permission to manage the server's webhooks.</li>
-            <li class="commandInfo"><code class="command">viewChannels | viewChnls</code> - Gives the bot permission to view the channels.</li>
-            <li class="commandInfo"><code class="command">sendMessages | message | msg</code> - Gives the bot permission to send messages.</li>
-            <li class="commandInfo"><code class="command">sendTtsMessages | ttsMessages</code> - Gives the bot permission to send TTS (text-to-speech) messages.</li>
-            <li class="commandInfo"><code class="command">manageMessages | mngMsgs</code> - Gives the bot permission to manage messages.</li>
-            <li class="commandInfo"><code class="command">embedLinks | links</code> - Gives the bot permission to embed links.</li>
-            <li class="commandInfo"><code class="command">attachFiles | files</code> - Gives the bot permission to attach files.</li>
-            <li class="commandInfo"><code class="command">readMessageHistory | messageHistory | msgHist</code> - Gives the bot permission to read the message history.</li>
-            <li class="commandInfo"><code class="command">mentionEveryone</code> - Gives the bot permission to mention everyone.</li>
-            <li class="commandInfo"><code class="command">useExternalEmojis | externalEmojis | emojis</code> - Gives the bot permission to use other server's emojis.</li>
-            <li class="commandInfo"><code class="command">addReactions | reactions</code> - Gives the bot permission to react to messages.</li>
-            <li class="commandInfo"><code class="command">connect</code> - Gives the bot permission to connect to a voice channel.</li>
-            <li class="commandInfo"><code class="command">speak</code> - Gives the bot permission to speak in a voice channel.</li>
-            <li class="commandInfo"><code class="command">muteMembers | mute</code> - Gives the bot permission to mute members in a voice channel.</li>
-            <li class="commandInfo"><code class="command">deafenMembers | deafen</code> - Gives the bot permission to deafen members in a voice channel.</li>
-            <li class="commandInfo"><code class="command">useMembers</code> - Gives the bot permission to move members to a different voice channel.</li>
-            <li class="commandInfo"><code class="command">useVoiceActivity | useVoice | voice</code> - Gives the bot permission to use voice activity in a voice channel.</li>
-            <li class="commandInfo"><code class="command">prioritySpeaker</code> - Gives the bot permission to the priority speaker.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">vote </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to get a link to vote for Omega Psi on discordbots.org</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">github </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends you the Github link for the source code.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">replit | repl.it | repl </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends you the Repl.it link for the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">uptime </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a link to see the uptime of Omega Psi.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">sendBug | bug | error | feedback &lt;messageType&gt; &lt;message&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to send any feedback, bugs, or errors directly to all developers of Omega Psi.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">messageType</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">bug</code> - The type of message is a bug in Omega Psi.</li>
-            <li class="commandInfo"><code class="command">error</code> - Something is going wrong but you don't know what.</li>
-            <li class="commandInfo"><code class="command">feedback</code> - You want to provide feedback, suggest features, or anything else that doesn't fit into a message type.</li>
-            <li class="commandInfo"><code class="command">moderator</code> - If you are the Server Owner and you do not have Server Moderator commands showing up in the help menu, use this.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">markdown | getMarkdown | md | getMd </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Creates and sends the markdown file for the commands.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Code Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Code</h1>
-        <p class="categoryInfo">Commands that have to do with coding!</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">brainf | bf &lt;code&gt; [parameters]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Runs brainfuck code. Kinda confusing stuff at first glance.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">convert | conversion | baseConversion | baseConverter [startBase] &lt;endBase&gt; &lt;number&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Converts a number from one base to another base.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">base64 | b64 &lt;conversion&gt; &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Encodes or decodes text to base64.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">conversion</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">encode | enc | e</code> - Encode text into base64.</li>
-            <li class="commandInfo"><code class="command">decode | dec | d</code> - Decode text from base64.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">morse | m &lt;conversion&gt; &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Encodes or decodes text to Morse code.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">conversion</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">encode | enc | e</code> - Encodes text into Morse Code.</li>
-            <li class="commandInfo"><code class="command">decode | dec | d</code> - Decodes text from Morse Code.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">qrCode | qr &lt;data&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Turns text into a QR code.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Game Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Game</h1>
-        <p class="categoryInfo">You can play games with these.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">connectFour | connect4 | cf [difficulty]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Play connect four with Omega Psi.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">difficulty</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">quit | q | exit</code> - Allows you to quit the Connect 4 game.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">hangman | playHangman [difficulty]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Let's you play hangman!</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">difficulty</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">easy | simple | e</code> - Play an easy game of Hangman.</li>
-            <li class="commandInfo"><code class="command">medium | m</code> - Play a medium game of Hangman.</li>
-            <li class="commandInfo"><code class="command">hard | difficult | h</code> - Play a hard game of Hangman.</li>
-            <li class="commandInfo"><code class="command">quit | q | exit</code> - Allows you to quit the hangman game.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">rockPaperScissors | rps &lt;action&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to play Rock Paper Scissors with me.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">action</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">rock | r</code> - Do a rock action.</li>
-            <li class="commandInfo"><code class="command">paper | p</code> - Do a paper action.</li>
-            <li class="commandInfo"><code class="command">scissors | s</code> - Do a scissor action.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">scramble [difficulty]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to guess an unscrambled word.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">difficulty</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">normal | n | easy | e</code> - Only each word is scrambled.</li>
-            <li class="commandInfo"><code class="command">expert | hard | difficult</code> - The entire phrase is scrambled.</li>
-            <li class="commandInfo"><code class="command">quit | q | exit</code> - Allows you to quit the scramble game.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">ticTacToe | ttt [difficulty]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Lets you play a Tic-Tac-Toe game against Omega Psi.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">difficulty</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">easy | simple | e</code> - Play an easy game of Tic-Tac-Toe.</li>
-            <li class="commandInfo"><code class="command">medium | m</code> - Play a medium game of Tic-Tac-Toe.</li>
-            <li class="commandInfo"><code class="command">hard | difficult | h</code> - Play a hard game of Tic-Tac-Toe.</li>
-            <li class="commandInfo"><code class="command">quit | q | exit</code> - Quit your game of Tic-Tac-Toe.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">stats | gameStats </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you stats on the games you've won/lost.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addHangman | hangmanAdd &lt;difficulty&gt; &lt;phrase&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Adds a hangman word/phrase to the database.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">difficulty</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">easy | e</code> - Add the phrase to the easy difficulty level.</li>
-            <li class="commandInfo"><code class="command">medium | m</code> - Add the phrase to the medium difficulty level.</li>
-            <li class="commandInfo"><code class="command">hard | h</code> - Add the phrase to the hard difficulty level.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addScramble | scrambleAdd &lt;hints&gt; &lt;phrase&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Adds a scramble word/phrase to the database.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">blackOps3 | blackops3 | bo3 &lt;platform&gt; &lt;username&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you stats on a specific player in Black Ops 3</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">platform</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">xbox | Xbox</code> - Get Black Ops 3 stats for Xbox.</li>
-            <li class="commandInfo"><code class="command">playstation | psn | PSN</code> - Get Black Ops 3 stats for Playstation Network (PSN).</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">blackOps4 | blackops4 | bo4 &lt;platform&gt; &lt;username&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you stats on a specific player in Black Ops 4</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">platform</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">xbox | Xbox</code> - Get Black Ops 4 stats for Xbox.</li>
-            <li class="commandInfo"><code class="command">playstation | psn | PSN</code> - Get Black Ops 4 stats for Playstation Network (PSN).</li>
-            <li class="commandInfo"><code class="command">battleNet</code> - Get Black Ops 4 stats for Battle.net.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">fortnite &lt;platform&gt; &lt;username&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you stats on a specific player in Fortnite.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">platform</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">playstation | psn | ps</code> - Get Fortnite stats for Playstation 4.</li>
-            <li class="commandInfo"><code class="command">xbox | Xbox</code> - Get Fortnite stats for Xbox.</li>
-            <li class="commandInfo"><code class="command">pc | PC</code> - Get Fortnite stats for PC.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">fortniteItemShop </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you the current items in the Fortnite Item Shop.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">league | leagueOfLegends | LoL &lt;username&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you stats on a specific Summoner in League of Legends.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Image Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Image</h1>
-        <p class="categoryInfo">Anything having to do with images is here.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">gif | giphy | g [keywords]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random gif from Giphy.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">dog | doggy | dogMe </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random picture of a random dog from the internet.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">cat | kitty | catMe </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random picture of a random cat from the internet.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">avatar | avatarMe </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random cute avatar.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">robohash | robo [content]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a robohash avatar based off the text you enter.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">content</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">random | surprise | surpriseMe</code> - Allows you to have a completely random robohash to be sent.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a href="https://repl.it/@mat1">
-        <span class="command">timchen | tim | chen | t </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random picture of Timchen (a Repl.it moderator) using an API made by mat#6207</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">nasa | NASA | nasaImage | NASAImage | nasaImg | NASAImg [term]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random NASA image given a search term or no search term.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Insult Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Insult</h1>
-        <p class="categoryInfo">If you feel in the mood to be insulted, here ya are.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">insult | i [insultLevel]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends you an insult.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">insultLevel</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">touchy | t</code> - Soft insults for a soft person.</li>
-            <li class="commandInfo"><code class="command">remorseful | remorse | r</code> - Harder insults. Might offend you.</li>
-            <li class="commandInfo"><code class="command">noRemorse | noremorse | nr</code> - Hardcore insults. And I mean it.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addInsult | addI &lt;insultLevel&gt; &lt;insult&gt; [tags]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to add your own insult.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">insultLevel</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">touchy | t</code> - Soft insults for a soft person.</li>
-            <li class="commandInfo"><code class="command">remorseful | remorse | r</code> - Harder insults. Might offend you.</li>
-            <li class="commandInfo"><code class="command">noRemorse | noremorse | nr</code> - Hardcore insults. And I mean it.</li>
-          </ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">tags</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">NSFW | nsfw | 18+</code> - Make the insult an NSFW insult.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">listInsults | list | l [insultLevel]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Lists the insults that can be sent.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">insultLevel</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">touchy | t</code> - Soft insults for a soft person.</li>
-            <li class="commandInfo"><code class="command">remorseful | remorse | r</code> - Harder insults. Might offend you.</li>
-            <li class="commandInfo"><code class="command">noRemorse | noremorse | nr</code> - Hardcore insults. And I mean it.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">approveInsult | approve &lt;value&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Approves an insult in the list of pending insults.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">denyInsult | deny &lt;value&gt; &lt;reason&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Denies an insult in the list of pending insults.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addInsultTag | addTag &lt;value&gt; &lt;tag&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Adds a tag to an insult if it is not already there.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">tag</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">NSFW | nsfw</code> - An NSFW tag for an insult.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">listPendingInsults | pendingInsults </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Lists the pending insults.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Internet Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Internet</h1>
-        <p class="categoryInfo">All commands that deal with the internet are here.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">movie | mv &lt;query&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you information about a Movie on IMDb.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">tvShow | tv | show &lt;query&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you information about a TV Show on IMDb.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">xkcd | XKCD [number]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends an XKCD comic with the specified number or sends a random one.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">number</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">recent | new | mostRecent</code> - Gets the most recent XKCD comic.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">dc | DC | dcComics &lt;name&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to search up and get info about a DC character.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">marvel | Marvel &lt;name&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to search up and get info about a Marvel character.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">translate &lt;to&gt; [from] &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you the translation of given text to and from a language.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">weather | forecast | getWeather &lt;location&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets the weather for a specified location.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">wikipedia | wiki &lt;term&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets a wikipedia entry you type in.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">shortenUrl | shorten | shortUrl | url &lt;url&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Shortens a URL given.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Math Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Math</h1>
-        <p class="categoryInfo">Need help with math? These commands got your back.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">simplify | simp | evaluate | eval &lt;expression&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Simplifies a mathematical expression.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">expand | exp | e &lt;expression&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Expands a mathematical expression.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">factor | f &lt;expression&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Factors a mathematical expression.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">factorial | ! &lt;number&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets the factorial of a number.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">solve | system &lt;equation(s)&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Solves an equation or a system of equations.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">substitute | subs &lt;expression&gt; &lt;variables&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Substitutes variables in an equation.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">derivative | derivate | dv &lt;expression&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets the derivative of an expression.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">integral | integrate &lt;expression&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets the integral of an expression.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">fibonacci | fib &lt;number&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets the fibonacci number of a number.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">solveKinematics | solveKine | kine | kinematics [X=] [Xo=] [Xf=] [V=] [Vo=] [Vf=] [a=] [t=]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Solves for Basic Linear Kinematic Physics. Can be used for Horizontal or Vertical motion. To clarify a variable, make sure you set the variable (Vf=5 a=9.6 etc.)</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Meme Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Meme</h1>
-        <p class="categoryInfo">Memes, memes, and more memes.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">meme </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random meme from Reddit.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/Tmasvyy.jpg">
-        <span class="command">areYouAwake &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/Y6p8GZw.jpg">
-        <span class="command">bikeCrash &lt;firstText&gt; &lt;crashText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/lIatply.jpg">
-        <span class="command">brainOf &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/burnLetter">
-        <span class="command">burnLetter &lt;letterText&gt; &lt;spongebobText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/GzRvZUx.png">
-        <span class="command">butILikeThis | thisIsBetter &lt;redCarText&gt; &lt;whiteCarText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/carSkidding">
-        <span class="command">carSkidding | carSkid &lt;carText&gt; &lt;straightText&gt; &lt;exitText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/GBMCNYM.jpg">
-        <span class="command">cardSlam &lt;cardText&gt; &lt;bodyText&gt; &lt;tableText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/3QVQ2V5.jpg">
-        <span class="command">classroomStares &lt;bubbleText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/Npr993s.jpg">
-        <span class="command">deerAboveWater | deerAbove &lt;deerText&gt; &lt;handText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/8GpQQun.png">
-        <span class="command">didYouMean [searchText] &lt;didYouMeanText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/lmZASmG.jpg">
-        <span class="command">executiveOrder | execOrder &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/JPdmXOY.png">
-        <span class="command">expandingBrain | expBrain &lt;firstText&gt; [secondText] [thirdText] [fourthText] [fifthText] [sixthText] [seventhText] [eighthText] [ninthText] [tenthText] [eleventhText]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/3aIi1fH.jpg">
-        <span class="command">fearNot &lt;speechText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/cGLvumT.jpg">
-        <span class="command">flexSeal &lt;holderText&gt; &lt;boxText&gt; &lt;receiverText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/wSQIQdC.png">
-        <span class="command">gangUp &lt;attackerOne&gt; &lt;attackerTwo&gt; &lt;attackerThree&gt; &lt;bodySlamAttacker&gt; &lt;personText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/rmUyMnP.jpg">
-        <span class="command">grusPlan &lt;firstPanelText&gt; &lt;secondPanelText&gt; &lt;lastPanelText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/AWl1ktB.jpg">
-        <span class="command">headacheTypes | headache &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/EzWiHEX.png">
-        <span class="command">holdUpEarth | holdUp &lt;earthText&gt; &lt;personText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/fAsM4Vb.jpg">
-        <span class="command">iCantRead | cantRead &lt;signText&gt; &lt;personText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/MSaTVD2.jpg">
-        <span class="command">icarlyStopSign | icarlyStop &lt;spencerText&gt; [stopText] &lt;gibbyText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/Tuh9AqB.png">
-        <span class="command">kevinHitDwight | kevinDwight | kevinPan &lt;kevinText&gt; &lt;dwightText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/mastersBlessing">
-        <span class="command">mastersBlessing &lt;masterText&gt; &lt;swordText&gt; &lt;apprenticeText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/twoArmHandshake">
-        <span class="command">armHandshake &lt;handsText&gt; &lt;firstArm&gt; &lt;secondArm&gt; [thirdArm] [fourthArm]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.kym-cdn.com/photos/images/original/001/374/087/be2.png">
-        <span class="command">pigeon | isThisAPigeon &lt;pigeonText&gt; &lt;personText&gt; &lt;questionText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/ic6R1lS.png">
-        <span class="command">playstation [triangleText] [squareText] &lt;xText&gt; &lt;circleText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/puppetMeme">
-        <span class="command">puppetMeme &lt;handText&gt; &lt;puppetText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/uQ9GZUS.png">
-        <span class="command">rewindTime &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/y9zqyq92">
-        <span class="command">runAway &lt;chaserText&gt; &lt;runnerText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/saveOneMeme">
-        <span class="command">saveOne &lt;personText&gt; &lt;leftBehindText&gt; &lt;savedText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgflip.com/16iyn1.jpg?a428353">
-        <span class="command">sayItAgain | dexterMeme &lt;topText&gt; &lt;bottomText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/91Orpkg.jpg">
-        <span class="command">soccerTongue | soccer &lt;tongueText&gt; &lt;personText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/o1NzXyW.jpg">
-        <span class="command">spontaneousAnger | angerMeme &lt;angerText&gt; &lt;questionText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/xnBcGn8.jpg">
-        <span class="command">startLearning | learnLanguage &lt;topText&gt; &lt;insteadOfOne&gt; &lt;sayOne&gt; [insteadOfTwo] [sayTwo] [insteadOfThree] [sayThree] [insteadOfFour] [sayFour] [insteadOfFive] [sayFive] [insteadOfSix] [saySix]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://tinyurl.com/surprisedDwight">
-        <span class="command">surprisedDwight &lt;dwightText&gt; &lt;angelaText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://imgflip.com/s/meme/Surprised-Pikachu.jpg">
-        <span class="command">surprisedPikachu &lt;firstLine&gt; &lt;secondLine&gt; &lt;thirdLine&gt; [fourthLine] [fifthLine]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/EyBqASK.png">
-        <span class="command">thanosStone &lt;stoneText&gt; &lt;thanosText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/rv80SIU.jpg">
-        <span class="command">threeDoors &lt;firstDoorText&gt; &lt;secondDoorText&gt; &lt;thirdDoorText&gt; [personText]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/pNR2At1.jpg">
-        <span class="command">trojanHorse &lt;hidersText&gt; &lt;horseText&gt; &lt;castleText&gt; &lt;welcomersText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgur.com/U2cudpx.png">
-        <span class="command">trump | trumpTweet &lt;tweetText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a href="https://i.imgflip.com/28s2gu.jpg">
-        <span class="command">whoKilledHannibal &lt;ericAndreText&gt; &lt;gunText&gt; &lt;hannibalText&gt; &lt;questionText&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a generated meme based off of this image.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Misc Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Miscellaneous</h1>
-        <p class="categoryInfo">Other commands that don't really fit into a category yet.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">advice </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random piece of advice.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">choose | choice &lt;choice(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random choice from a specified list.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">chuckNorris | chuck | norris </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random Chuck Norris joke.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">color [colorType] &lt;color&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you the information about a color given either the Hex, RGB, HSL, or CMYK.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">colorType</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">hex | HEX</code> - Get color information using a hex code.</li>
-            <li class="commandInfo"><code class="command">rgb | RGB</code> - Get color information using an RGB tuple.</li>
-            <li class="commandInfo"><code class="command">hsl | HSL</code> - Get color information using HSL.</li>
-            <li class="commandInfo"><code class="command">cmyk | CMYK</code> - Get color information using CMYK.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">llamas | llamasWithHats | llama [episode] [fullScript]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random quote from Llamas With Hats. You can also get the full script of an episode.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">fullScript</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">fullScript | full | script</code> - Get the full script of an episode.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">numberFact | number &lt;number&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a fact about a number.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">random | rand | randint &lt;start&gt; &lt;end&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random number between the specified range.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">tronaldDumpMeme | tronaldMeme | trumpMeme </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random meme from Donald Trump.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">tronaldDumpQuote | tronaldQuote | trumpQuote </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you a random quote from Donald Trump.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">nickname | nick [nickname]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Changes your nickname.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">botInfo | bi </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to get the info about the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">info | ?? [member]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you info on a member or the server as saved by the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--NSFW Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">NSFW</h1>
-        <p class="categoryInfo">An NSFW category for 18+</p>
-        <p class="categoryRestriction">You should be 18+ to run the commands in this category!</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction">This category is NSFW.</p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">boobs | boob </span> -
-        <span class="commandTags">NSFW</span>;
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random picture of boobs.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">booty | ass </span> -
-        <span class="commandTags">NSFW</span>;
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sends a random picture of some booty.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">urban | urbanDictionary | urbanDict &lt;term&gt;</span> -
-        <span class="commandTags">NSFW</span>;
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives you the top 5 urban dictionary entries for a term.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Rank Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Rank</h1>
-        <p class="categoryInfo">The ranking system is strong with this category.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction">This category contains commands that can only be run in a Server.</p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">levelUp [interaction]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Shows you how many profane words, reactions, or normal messages you need to send to level up.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">interaction</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">profanity | profane</code> - Check how many profane words you need to level up.</li>
-            <li class="commandInfo"><code class="command">reactions | reacts</code> - Check how many reactions you need to level up.</li>
-            <li class="commandInfo"><code class="command">normal | basic</code> - Check how many regular messages you need to send to level up.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">rank | r </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Shows you your current level and experience in this server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Updates Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Updates</h1>
-        <p class="categoryInfo">Anything having to do with updates goes here.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">update </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets information about the most recent update to the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">pendingUpdate | pendUpdate | pendingUpd | pendUpd </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gets information about the current pending update to the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">createUpdate </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Creates a pending update to the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">createFix &lt;fix&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Creates a fix to a pending update of the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">createFeature &lt;feature&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Creates a feature to a pending update of the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">commitUpdate | commit &lt;version&gt; &lt;description&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Commits the pending update to the bot as an update.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Moderator Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Server Moderator</h1>
-        <p class="categoryInfo">Moderate your server with this.</p>
-        <p class="categoryRestriction">In order to use these commands, you must have the Manage Server permissions.</p>
-        <p class="categoryRestriction">This category contains commands that can only be run in a Server.</p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">addMember | addM | am &lt;member(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to add a member, or members, to the server file manually.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">removeMember | removeM | rm &lt;member(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to remove a member, or members, from the server file manually.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">activate | enable &lt;command&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to activate a command, or commands, in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">deactivate | disable &lt;command&gt; [reason]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to deactivate a command in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleRanking | toggleLeveling | toggleRank | toggleLevel | togRank | togLevel </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to toggle the ranking system in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleWelcomeMessage | toggleWelcomeMsg | togWelcomeMessage | togWelcomeMsg </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to toggle the welcome message in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setWelcomeMessageChannel | setWelcomeMsgChannel | setWelcomeMsgChan &lt;channel&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to set the channel that the Join Messages are sent in.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleWelcomeFail | togWelcomeFail | togWelcFail </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Toggles whether or not you receive a message if the welcome message fails.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleProfanity | togProfanity | toggleProfane | togProfane </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Toggles the profanity filter.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleProfanityFail | togProfaneFail </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Toggles whether or not you receive a message if the profanity filter fails.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setAutorole | autorole &lt;role&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sets the role that will be given when someone joins the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleAutorole | togAutorole | toggleAuto | togAuto </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Toggles the autorole feature in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">toggleAutoroleFail | toggleAutoFail | togAutoroleFail | togAutoFail </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Toggles whether or not you receive a message if the autorole feature fails.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setLevel | setLvl &lt;level&gt; &lt;member...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to set the level of a member, or members, in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addPrefix | addPre &lt;prefix&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to add a prefix for this server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">removePrefix | removePre | remPre &lt;prefix&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to remove a prefix from this server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setServerName | setSvrName &lt;name&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to set the Server's name.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setChannelName | setChnlName &lt;name&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to set the current channel's name.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setChannelTopic | setChnlTopic [name]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to set the current Channel's topic.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">createInvite | createServerInvite | getInvite | getServerInvite [infinite]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Allows you to create an invite to this server.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">infinite</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">True | true | T | t | Yes | yes | Y | y</code> - Set the server invite to never expire.</li>
-            <li class="commandInfo"><code class="command">False | false | F | f | No | no | N | n</code> - Set the server invite to expire.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">purge &lt;amount&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Purges messages in a channel.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addRole &lt;name&gt; [colour]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Adds a role to the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">removeRole &lt;name&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Removes a role from the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">kickMember | kickMbr &lt;member&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Kicks a member from the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">banMember | banMbr | ban &lt;member&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Bans a member from the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">unbanMember | unbanMbr | unban &lt;member&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Unbans a member in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">muteMember | muteMbr | mute &lt;member&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Mutes a member in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">unmuteMember | unmuteMbr | unmute &lt;member&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Unmutes a member in the server.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">addMemberRole | addMbrRole | giveRole &lt;member&gt; &lt;role(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Gives a member the mentioned role(s).</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">removeMemberRole | removeMbrRole | takeRole &lt;member&gt; &lt;role(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Removes the mentioned role(s) from a member.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setMemberRoles | setMbrRoles | setRoles &lt;member&gt; &lt;role(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags">Server Mod</span>;
-        <span class="commandTags"></span>
-        <span class="commandInfo">Sets the roles for a member.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
-  <!--Owner Category-->
-    <div class="dropdown">
-      <button class="dropbtn">
-        <h1 class="categoryName">Bot Moderator</h1>
-        <p class="categoryInfo">Very private stuff.</p>
-        <p class="categoryRestriction">You must be a Bot Moderator to run these commands.</p>
-        <p class="categoryRestriction"></p>
-        <p class="categoryRestriction"></p>
-      </button>
-      <div class="dropdown-content">
-      <a >
-        <span class="command">addBotModerator | addBotMod | abm &lt;member(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Allows you to add a bot moderator to the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">removeBotModerator | removeBotMod | remBotMod | rbm &lt;member(s)...&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Allows you to remove a bot moderator from the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">activateGlobally | enableGlobally &lt;command(s)&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Allows you to activate a command, or commands, globally.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">deactivateGlobally | disableGlobally &lt;command&gt; [reason]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Allows you to deactivate a command globally.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">servers | botServers [markdown]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Allows you to get a list of servers the bot is in.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">setStatus | status &lt;activity&gt; &lt;text&gt;</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Allows you to change the presence of the bot.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">activity</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">playing | Playing</code> - The playing activity type.</li>
-            <li class="commandInfo"><code class="command">streaming | Streaming</code> - The streaming activity type.</li>
-            <li class="commandInfo"><code class="command">listening | Listening | listening to | Listening to</code> - The listening activity type.</li>
-            <li class="commandInfo"><code class="command">watching | Watching</code> - The watching activity type.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">todo [action] [item]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandInfo">Adds, removes, or lists things in the TODO list.</span>
-        <ul>
-          <li class="commandInfo">Accepted Parameters for <code class="command">action</code></li>
-          <ul>
-            <li class="commandInfo"><code class="command">add | a</code> - Adds something to the TODO list.</li>
-            <li class="commandInfo"><code class="command">remove | r</code> - Removes something from the TODO list.</li>
-          </ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">stop | quit | kill [process]</span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Kills the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      <a >
-        <span class="command">debug </span> -
-        <span class="commandTags"></span>
-        <span class="commandTags"></span>
-        <span class="commandTags">Bot Mod</span>;
-        <span class="commandInfo">Debugs the bot.</span>
-        <ul>
-        </ul>
-      </a>
-
-      </div>
-    </div>
-
+<div class="commands-page">
+            <div class="category-block">
+              <h2 class="category-name">Code</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>base64</code></td>
+                  <td>Allows you to encode/decode text into/from Base64 encoding.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>convert</code></td>
+                  <td>Allows you to convert numbers from one base to another.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>logic</code></td>
+                  <td>Allows you to get a truth table for a logical expression.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>morse</code></td>
+                  <td>Allows you to encode/decode text into/from Morse Code.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>qrCode</code></td>
+                  <td>Allows you to create a QR code out of text.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Game</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>addHangman</code></td>
+                  <td>Allows you to add a word/phrase to the Hangman list (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>addScramble</code></td>
+                  <td>Allows you to add a word/phrase to the Scramble list (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>cardsAgainstHumanity</code></td>
+                  <td>Allows you to play Cards Against Humanity with other people. (STILL IN DEVELOPMENT)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>connectFour</code></td>
+                  <td>Allows you to play a game of Connect Four with the AI or a person who reacts to it.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>gamestats</code></td>
+                  <td>Gets the stats of someone you specify, or yourself, of all mini-games in the bot.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>hangman</code></td>
+                  <td>Allows you to play a Hangman game.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>rps</code></td>
+                  <td>Allows you to play Rock Paper Scissors.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>scramble</code></td>
+                  <td>Allows you to play Scramble game.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>ticTacToe</code></td>
+                  <td>Allows you to play a game of Tic Tac Toe with the AI or a person who reacts to it.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Internet</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>dc</code></td>
+                  <td>Allows you to search up and get info about a DC character.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>marvel</code></td>
+                  <td>Allows you to search up and get info about a Marvel character.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>movie</code></td>
+                  <td>Gives you information about a Movie on IMDb.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>shortenUrl</code></td>
+                  <td>Shortens a URL given.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>tvShow</code></td>
+                  <td>Gives you information about a TV Show on IMDb.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>xkcd</code></td>
+                  <td>Sends an XKCD comic with the specified number or sends a random one.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Image</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>avatar</code></td>
+                  <td>Sends a random cute avatar.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>cat</code></td>
+                  <td>Sends a random picture of a random cat from the internet.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>dog</code></td>
+                  <td>Sends a random picture of a random dog from the internet.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>imgur</code></td>
+                  <td>Allows you to upload an image to an anonymous imgur album.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>meme</code></td>
+                  <td>Sends you a random meme from reddit.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>robohash</code></td>
+                  <td>Sends a robohash avatar based off the text you enter.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Misc</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>advice</code></td>
+                  <td>Gives you a random piece of advice.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>chuckNorris</code></td>
+                  <td>Gives you a random Chuck Norris joke.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>color</code></td>
+                  <td>Gives you the information about a color given either the HEX, RGB, HSL, or CMYK.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>emojify</code></td>
+                  <td>Gives you text but in Emoji style.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>guildInfo</code></td>
+                  <td>Gives you info about this guild.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>llamas</code></td>
+                  <td>Gives you a random quote from Llamas With Hats. You can also get the full script of an episode.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>numberFact</code></td>
+                  <td>Gives you a fact about a number.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>tronaldDumpQuote</code></td>
+                  <td>Gives you a random quote from Donald Trump.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>userInfo</code></td>
+                  <td>Gives you info about a member in this guild.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">NSFW</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>boobs</code></td>
+                  <td>Sends a random picture of a nice set of tits.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>booty</code></td>
+                  <td>Sends a random picture of a nice ass.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>goneWild</code></td>
+                  <td>Girls gone wild.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>lesbian</code></td>
+                  <td>Get some of that lesbian action.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>urban</code></td>
+                  <td>Gives you the top 5 urban dictionary entries for a term.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Stats</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>blackOps3</code></td>
+                  <td>Gives you stats on a specific player in Black Ops 3.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>blackOps4</code></td>
+                  <td>Gives you stats on a specific player in Black Ops 4.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>fortnite</code></td>
+                  <td>Gives you stats on a specific player in Fortnite.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>league</code></td>
+                  <td>Gives you stats on a specific Summoner in League of Legends.</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Bot</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>botTemplate</code></td>
+                  <td>Sends the template for submitting a bot in Fellow Hashbrown's private server. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>commitUpdate</code></td>
+                  <td>Commits the pending update as a new update. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>createFeature</code></td>
+                  <td>Adds a feature to the pending update. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>createFix</code></td>
+                  <td>Adds a fix to the pending update. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>createUpdate</code></td>
+                  <td>Creates a new pending update to the bot. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>kill</code></td>
+                  <td>Stops the bot and logs out. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>restart</code></td>
+                  <td>Allows you to restart the bot. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>rules</code></td>
+                  <td>Sends the rules for Fellow Hashbrown's private server. (DEV ONLY)</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>servers</code></td>
+                  <td>Shows you a list of servers that Omega Psi is in. (DEV ONLY)</td>
+                </tr>
+                </table>
+            </div><br>
+
+            <div class="category-block">
+              <h2 class="category-name">Info</h2>
+                <table class="command-table">
+                <tr class="command-tr">
+                  <td><code>botInfo</code></td>
+                  <td>Allows you to get info about the bot.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>bug</code></td>
+                  <td>Is there a bug or something in the bot? Use this! Give a decent description so I know what to look for!</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>invite</code></td>
+                  <td>Allows you to invite me to your own server!</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>ping</code></td>
+                  <td>Ping-Pong!</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>prefix</code></td>
+                  <td>Allows you to change the prefix for this server.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>replit</code></td>
+                  <td>Gives you a link so you can read my source code.</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>suggest</code></td>
+                  <td>If you feel like something could be improved on in this bot, please suggest it!</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>support</code></td>
+                  <td>Gives you the invite link to my discord server!</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>uptime</code></td>
+                  <td>Shows you my uptime!</td>
+                </tr>
+                <tr class="command-tr">
+                  <td><code>website</code></td>
+                  <td>Sends you a link to my website.</td>
+                </tr>
+                </table>
+            </div><br>
+
+</div>
