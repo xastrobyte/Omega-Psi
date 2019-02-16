@@ -1,13 +1,12 @@
 import asyncio, discord, requests, typing
 from datetime import datetime
 from discord.ext import commands
-from discord.ext.commands import guild_only
 from random import randint
 
 import database
-from database import database as db
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, FIELD_THRESHOLD
+from category.predicates import guild_only
 
 from util.string import timestamp_to_datetime, datetime_to_string
 
@@ -482,14 +481,13 @@ class Misc:
         description = "Gives you info about this guild.",
         cog_name = "Misc"
     )
-    @guild_only()
+    @commands.check(guild_only)
     async def guild_info(self, ctx):
         
         # Send the guild data
         fields = {
             "Owner": ctx.guild.owner.mention,
             "Created At": datetime_to_string(ctx.guild.created_at),
-            "Roles": ", ".join([role.mention for role in ctx.guild.roles][::-1]),
             "Members": "{} Members\n{} Online\n{} Bots\n{} People".format(
                 len(ctx.guild.members),
                 len([member for member in ctx.guild.members if member.status == discord.Status.online]),
@@ -515,6 +513,35 @@ class Misc:
                 value = fields[field]
             )
         
+        # Add roles field
+        role_fields = []
+        role_text = ""
+        for role in ctx.guild.roles[::-1]:
+
+            text = role.mention + " "
+
+            if len(role_text) + len(text) > FIELD_THRESHOLD:
+                role_fields.append(role_text)
+                role_text = ""
+            
+            role_text += text
+        
+        if len(role_text) > 0:
+            role_fields.append(role_text)
+        
+        count = 0
+        for field in role_fields:
+            count += 1
+            embed.add_field(
+                name = "Roles {}".format(
+                    "({} / {})".format(
+                        count, len(role_fields)
+                    ) if len(role_fields) > 1 else ""
+                ),
+                value = field,
+                inline = False
+            )
+        
         # Send message
         await ctx.send(
             embed = embed
@@ -526,7 +553,7 @@ class Misc:
         description = "Gives you info about a member in this guild.",
         cog_name = "Misc"
     )
-    @guild_only()
+    @commands.check(guild_only)
     async def user_info(self, ctx, *, user : typing.Union[discord.Member, str] = None):
 
         # Check if getting info for specific user
