@@ -4,8 +4,10 @@ from discord.ext.commands import AutoShardedBot
 from functools import partial
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, FIELD_THRESHOLD
-from category.predicates import get_prefix, is_developer_async, is_nsfw_or_private_async
+from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, FIELD_THRESHOLD
+from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import add_scroll_reactions
+from category.predicates import get_prefix, is_nsfw_or_private
 from database import database
 
 # Open Bot Client
@@ -22,7 +24,8 @@ exts = [
     "category.nsfw.nsfw",
     "category.stats.stats",
     "category.bot.bot",
-    "category.info.info"
+    "category.info.info",
+    "category.insults.insults"
 ]
 
 cogs = {
@@ -46,6 +49,11 @@ cogs = {
         "description": "Image commands are here! Hint: dog's and cat's are here too.",
         "check": None
     },
+    "Insults": {
+        "command": "help insults",
+        "description": "If you feel in the mood for insults, here you are!",
+        "check": None
+    },
     "Misc": {
         "command": "help misc",
         "description": "This category has commands that really don't fit anywhere.",
@@ -54,7 +62,7 @@ cogs = {
     "NSFW": {
         "command": "help nsfw",
         "description": "18+ ;)",
-        "check": is_nsfw_or_private_async
+        "check": is_nsfw_or_private
     },
     "Stats": {
         "command": "help stats",
@@ -63,8 +71,8 @@ cogs = {
     },
     "Bot": {
         "command": "help bot",
-        "description": "Only bot developers can run these commands.",
-        "check": is_developer_async
+        "description": "Primarily bot-related commands.",
+        "check": None
     },
     "Info": {
         "command": "help info",
@@ -78,6 +86,7 @@ cog_emojis = {
     "Game": ":video_game: ",
     "Internet": ":desktop: ",
     "Image": ":frame_photo: ",
+    "Insults": ":exclamation: ",
     "Misc": ":mag: ",
     "NSFW": ":underage: ",
     "Stats": ":clipboard: ",
@@ -95,6 +104,10 @@ async def on_ready():
     print("I'm ready to go.")
     activity_type = await database.get_activity_type()
     activity_name = await database.get_activity_name()
+    activity_name = "{} in {} Servers".format(
+        activity_name,
+        len(bot.guilds)
+    )
     
     # Set presence
     await bot.change_presence(
@@ -204,7 +217,7 @@ async def on_command_completion(ctx):
     embed = discord.Embed(
         title = "Command Success",
         description = ctx.message.content,
-        color = 0x800000
+        color = 0x008000
     )
 
     # Add fields
@@ -263,6 +276,23 @@ async def on_guild_join(guild):
         )
     )
 
+    # Update presence
+    activity_type = await database.get_activity_type()
+    activity_name = await database.get_activity_name()
+    activity_name = "{} | Currently in {} Servers".format(
+        activity_name,
+        len(bot.guilds)
+    )
+    
+    await bot.change_presence(
+        status = discord.Status.online,
+        activity = discord.Activity(
+            name = activity_name,
+            type = activity_type,
+            url = "https://twitch.tv/FellowHashbrown"
+        )
+    )
+
     try:
         await channel.send(
             embed = embed
@@ -274,7 +304,10 @@ async def on_guild_join(guild):
 # Global Commands
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-@bot.command(pass_context = True, name = "help", aliases = ["h", "?"])
+@bot.command(
+    name = "help", 
+    aliases = ["h", "?"]
+)
 async def help(ctx, specific = None):
 
     # Get prefix
@@ -299,7 +332,9 @@ async def help(ctx, specific = None):
             for command in commands:
 
                 # Filter based on author and channel
-                # if command.
+                if not await command.can_run(ctx):
+                    continue
+
                 name_descr = "`{}{}` - {}\n".format(
                     prefix,
                     command.name,
@@ -332,18 +367,7 @@ async def help(ctx, specific = None):
                 embed = embed
             )
 
-            if len(fields) > 1:
-
-                if len(fields) > 2:
-                    await msg.add_reaction(FIRST_PAGE)
-                
-                await msg.add_reaction(PREVIOUS_PAGE)
-                await msg.add_reaction(NEXT_PAGE)
-
-                if len(fields) > 2:
-                    await msg. add_reaction(LAST_PAGE)
-            
-            await msg.add_reaction(LEAVE)
+            await add_scroll_reactions(msg, fields)
             
             # Run a wait for reaction until the user presses leave
             current = 0
@@ -465,10 +489,11 @@ async def help(ctx, specific = None):
     # Specific does equal None; Just send a list of cogs and their descriptions (custom)
     else:
 
-        # Create embed; Get recent version
+        # Get recent version
         recent = await database.get_recent_update()
         recent = recent["version"]
 
+        # Create embed with all categories as fields
         embed = discord.Embed(
             title = "Omega Psi Commands",
             description = "Here's a list of categories in Omega Psi.",
