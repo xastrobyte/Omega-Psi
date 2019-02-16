@@ -938,6 +938,101 @@ class Bot:
             )
     
     @commands.command(
+        name = "addDeveloper",
+        aliases = ["addDev"],
+        description = "Allows you to add a developer to the bot.",
+        cog_name = "Bot"
+    )
+    @commands.check(is_developer)
+    async def add_developer(self, ctx, members: commands.Greedy[discord.Member] = []):
+
+        # Check if there are no members in the list
+        if len(members) == 0:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to mention members to add as a developer."
+                )
+            )
+        
+        # There are members
+        else:
+
+            # Keep track of whether or not the member was added
+            results = []
+            for member in members:
+                if not await database.is_developer(member):
+                    await database.add_developer(str(member.id))
+                    success = True
+                    reason = "{} ({}) was added as a developer.".format(member.mention, member)
+                else:
+                    success = False
+                    reason = "{} ({}) is already a developer.".format(member.mention, member)
+                
+                results.append({"success": success, "reason": reason})
+            
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Members Added" if len(results) > len([result for result in results if not result["success"]]) else "Members Not Added",
+                    description = "\n".join([result["reason"] for result in results]),
+                    colour = PRIMARY_EMBED_COLOR
+                )
+            )
+        
+    @commands.command(
+        name = "removeDeveloper",
+        aliases = ["removeDev", "remDeveloper", "remDev"],
+        description = "Allows you to remove a developer from the bot.",
+        cog_name = "Bot"
+    )
+    @commands.check(is_developer)
+    async def remove_developer(self, ctx, members: commands.Greedy[discord.Member] = []):
+        
+        # Check if there are no members in the list
+        if len(members) == 0:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to mention members to remove as a developer."
+                )
+            )
+        
+        # There are members
+        else:
+
+            # Keep track of whether or not the member was removed
+            results = []
+            for member in members:
+                if await database.is_developer(member):
+
+                    # Make sure it's not self
+                    if ctx.author == member:
+                        success = True
+                        reason = "You can't remove yourself as a developer."
+                    
+                    # Make sure it's not owner
+                    elif str(member.id) == await database.get_owner():
+                        success = True
+                        reason = "You can't remove the bot's owner as a developer."
+                    
+                    # Everything is good
+                    else:
+                        await database.remove_developer(str(member.id))
+                        success = True
+                        reason = "{} ({}) was removed as a developer.".format(member.mention, member)
+                else:
+                    success = False
+                    reason = "{} ({}) was not a developer.".format(member.mention, member)
+                
+                results.append({"success": success, "reason": reason})
+            
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Members Removed" if len(results) > len([result for result in results if not result["success"]]) else "Members Not Removed",
+                    description = "\n".join([result["reason"] for result in results]),
+                    colour = PRIMARY_EMBED_COLOR
+                )
+            )
+    
+    @commands.command(
         name = "rules",
         description = "Sends the rules for Fellow Hashbrown's private server.",
         cog_name = "Bot"
