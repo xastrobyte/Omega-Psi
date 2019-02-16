@@ -1,7 +1,11 @@
+import asyncio, os
+
+from datetime import datetime
 from functools import partial
 from pymongo import MongoClient
+from random import choice
 
-import asyncio, os
+from util.string import datetime_to_dict
 
 # Create new event loop
 loop = asyncio.get_event_loop()
@@ -24,6 +28,7 @@ class Database:
         self._guilds = self._omegaPsi.guilds
         self._users = self._omegaPsi.users
         self._data = self._omegaPsi.data
+        self._case_numbers = self._omegaPsi.case_numbers
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
@@ -49,7 +54,12 @@ class Database:
 
         # Guild data is None; Create guild data
         if guild_data == None:
-            self._guilds.insert_one({"_id": str(guild.id)})
+            await loop.run_in_executor(None,
+                partial(
+                    self._guilds.insert_one,
+                    {"_id": str(guild.id)}
+                )
+            )
             await self.set_guild(guild, data)
             guild_data = data
         
@@ -378,13 +388,6 @@ class Database:
     
     # # # # # Bot Getters # # # # # 
 
-    def get_html_style_sync(self):
-
-        # Get bot data
-        bot_data = self.get_bot_sync()
-
-        return bot_data["html_style"]
-
     async def get_restart(self):
 
         # Get bot data
@@ -457,16 +460,6 @@ class Database:
     
     # # # # # Bot Setters # # # # # 
 
-    async def set_html_style(self, html_style):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        bot_data["html_style"] = html_style
-
-        # Set bot data
-        await self.set_bot(bot_data)
-
     async def set_restart(self, restart_data):
 
         # Get bot_data
@@ -527,71 +520,27 @@ class Database:
         # Set bot data
         await self.set_bot(bot_data)
     
-    async def add_todo(self, todo, index = -1):
+    async def add_todo_item(self, item):
 
-        # Get bot data
-        bot_data = await self.get_bot()
+        # Get todo list
+        todo_list = await self.get_todo()
 
-        # Check if index is -1; Add to end
-        if index == -1:
-            bot_data["todo"].append(todo)
-            result = {
-                "success": True,
-                "reason": "`{}` was added to the todo list.".format(todo)
-            }
-        
-        # Index is greater than zero, less than length
-        elif index > 0 and index <= len(bot_data["todo"]):
-            bot_data["todo"].insert(index - 1, todo)
-            result = {
-                "success": True,
-                "reason": "`{}` was inserted into spot `{}` of the todo list.".format(todo, index)
-            }
-        
-        # Index is invalid
-        else:
-            result = {
-                "success": False,
-                "reason": "The index provided (`{}`) is out of range of the todo list."
-            }
+        todo_list.append(item)
 
-        # Set bot data
-        await self.set_todo(bot_data["todo"])
-
-        return result
+        # Set todo list
+        await self.set_todo(todo_list)
     
-    async def remove_todo(self, index):
+    async def remove_todo_item(self, index):
 
-        # Get bot data
-        bot_data = await self.get_bot()
+        # Get todo list
+        todo_list = await self.get_todo()
 
-        # Index is -1; Clear list
-        if index == -1:
-            bot_data["todo"] = []
-            result = {
-                "success": True,
-                "reason": "The todo list was cleared."
-            }
+        item = todo_list.pop(index)
 
-        # Check if index is greater than zero, less than length
-        elif index > 0 and index <= len(bot_data["todo"]):
-            removed = bot_data["todo"].pop(index - 1)
-            result = {
-                "success": True,
-                "reason": "`{}` was removed from the todo list.".format(removed)
-            }
-        
-        # Index is invalid
-        else:
-            result = {
-                "success": False,
-                "reason": "The index provided (`{}`) is out of range of the todo list.".format(index)
-            }
+        # Set todo list
+        await self.set_todo(todo_list)
 
-        # Set bot data
-        await self.set_todo(bot_data["todo"])
-
-        return result
+        return item
     
     async def set_pending_update(self, pending_update):
 
@@ -667,7 +616,7 @@ class Database:
         await self.set_bot(bot_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Methods for Games
+    # Data Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     async def get_hangman_words(self):
@@ -755,10 +704,331 @@ class Database:
         )
 
         return cah_data
+    
+    async def get_insult_data(self):
+
+        default = {
+            "pending_insults": [],
+            "insults": []
+        }
+
+        # Get insult data
+        insult_data = await loop.run_in_executor(None,
+            partial(
+                self._data.find_one,
+                {"_id": "insults"}
+            )
+        )
+
+        if insult_data == None:
+            await loop.run_in_executor(None,
+                partial(
+                    self._data.insert_one,
+                    {"_id": "insults"}
+                )
+            )
+            await self.set_insult_data(default)
+            insult_data = default
+        
+        return insult_data
+    
+    async def set_insult_data(self, insult_data):
+
+        # Set insult data
+        await loop.run_in_executor(None,
+            partial(
+                self._data.update_one,
+                {"_id": "insults"}, 
+                {"$set": insult_data}, 
+                upsert = False
+            )
+        )
+    
+    async def get_pending_insults(self):
+
+        # Get insult data
+        insult_data = await self.get_insult_data()
+
+        return insult_data["pending_insults"]
+    
+    async def set_pending_insults(self, pending_insults):
+
+        # Get insult data
+        insult_data = await self.get_insult_data()
+
+        insult_data["pending_insults"] = pending_insults
+
+        # Set insult data
+        await self.set_insult_data(insult_data)
+    
+    async def add_pending_insult(self, insult, author):
+
+        # Get pending insults
+        pending_insults = await self.get_pending_insults()
+
+        pending_insults.append({
+            "insult": insult,
+            "author": author,
+            "tags": []
+        })
+
+        # Set pending insults
+        await self.set_pending_insults(pending_insults)
+    
+    async def add_pending_insult_tags(self, index, tags = []):
+
+        # Get pending insults
+        pending_insults = await self.get_pending_insults()
+
+        for tag in tags:
+            if tag.lower() not in pending_insults[index]["tags"]:
+                pending_insults[index]["tags"].append(tag.lower())
+
+        # Set pending insults
+        await self.set_pending_insults(pending_insults)
+    
+    async def approve_pending_insult(self, index):
+
+        # Get pending insults
+        pending_insults = await self.get_pending_insults()
+
+        # Remove insult
+        insult = pending_insults.pop(index)
+
+        # Set pending insults
+        await self.set_pending_insults(pending_insults)
+
+        # Get insults
+        insults = await self.get_insults()
+
+        # Add insult
+        insults.append(insult)
+
+        # Set insults
+        await self.set_insults(insults)
+    
+    async def deny_pending_insult(self, index):
+
+        # Get pending insults
+        pending_insults = await self.get_pending_insults()
+
+        # Remove insult
+        pending_insults.pop(index)
+
+        # Set pending insults
+        await self.set_pending_insults(pending_insults)
+    
+    async def get_insults(self):
+
+        # Get insult data
+        insult_data = await self.get_insult_data()
+
+        return insult_data["insults"]
+    
+    async def set_insults(self, insults):
+
+        # Get insult data
+        insult_data = await self.get_insult_data()
+
+        insult_data["insults"] = insults
+
+        # Set insult data
+        await self.set_insult_data(insult_data)
+    
+    async def get_insult(self, nsfw = False):
+
+        # Get insults
+        insults = await self.get_insults()
+
+        while True:
+            insult = choice(insults)
+
+            if nsfw or "nsfw" not in insult["tags"]:
+                return insult
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # 
+    # Methods for Case Numbers
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_suggestion_cases(self):
+
+        default = {
+            "number": 1,
+            "cases": {}
+        }
+        
+        # Get suggestion data
+        case_data = await loop.run_in_executor(None,
+            self._case_numbers.find_one,
+            {"_id": "suggestions"}
+        )
+
+        if case_data == None:
+            await loop.run_in_executor(None,
+                self._case_numbers.insert_one,
+                {"_id": "suggestions"}
+            ),
+            await loop.run_in_executor(None,
+                partial(
+                    self._case_numbers.update_one,
+                    {"_id": "suggestions"},
+                    {"$set": default},
+                    upsert = False
+                )
+            )
+            case_data = default
+        
+        return case_data
+    
+    async def get_suggestion(self, number):
+        
+        # Get suggestion cases
+        suggestion_cases = await self.get_suggestion_cases()
+
+        if str(number) in suggestion_cases:
+            return suggestion_cases[str(number)]
+        return None
+    
+    async def get_suggestion_number(self):
+
+        suggestion_cases = await self.get_suggestion_cases()
+
+        return suggestion_cases["number"]
+    
+    async def mark_suggestion_seen(self, number):
+
+        # Get suggestions cases
+        suggestion_cases = await self.get_suggestion_cases()
+
+        suggestion_cases["cases"][str(number)]["seen"] = True
+
+        # Set suggestion cases
+        await loop.run_in_executor(None,
+            partial(
+                self._case_numbers.update_one,
+                {"_id": "suggestions"},
+                {"$set": suggestion_cases},
+                upsert = False
+            )
+        )
+    
+    async def add_suggestion(self, suggestion, author):
+        
+        # Get suggestion cases
+        suggestion_cases = await self.get_suggestion_cases()
+
+        # Get current number then update it
+        number = suggestion_cases["number"]
+        suggestion_cases["number"] += 1
+
+        # Add the suggestion
+        current_time = datetime_to_dict(datetime.now())
+        suggestion_cases["cases"][str(number)] = {
+            "suggestion": suggestion,
+            "author": author,
+            "time": current_time,
+            "seen": False
+        }
+
+        # Set suggestion cases
+        await loop.run_in_executor(None,
+            partial(
+                self._case_numbers.update_one,
+                {"_id": "suggestions"},
+                {"$set": suggestion_cases},
+                upsert = False
+            )
+        )
+    
+    async def get_bug_cases(self):
+        
+        default = {
+            "number": 1,
+            "cases": {}
+        }
+        
+        # Get bug data
+        case_data = await loop.run_in_executor(None,
+            self._case_numbers.find_one,
+            {"_id": "bugs"}
+        )
+
+        if case_data == None:
+            await loop.run_in_executor(None,
+                self._case_numbers.insert_one,
+                {"_id": "bugs"}
+            ),
+            await loop.run_in_executor(None,
+                partial(
+                    self._case_numbers.update_one,
+                    {"_id": "bugs"},
+                    {"$set": default},
+                    upsert = False
+                )
+            )
+            case_data = default
+        
+        return case_data
+    
+    async def get_bug(self, number):
+
+        # Get bug cases
+        bug_cases = await self.get_bug_cases()
+
+        if str(number) in bug_cases:
+            return bug_cases[str(number)]
+        return None
+    
+    async def get_bug_number(self):
+
+        bug_cases = await self.get_bug_cases()
+
+        return bug_cases["number"]
+    
+    async def mark_bug_seen(self, number):
+
+        # Get bug cases
+        bug_cases = await self.get_bug_cases()
+
+        bug_cases["cases"][str(number)]["seen"] = True
+
+        # Set bug cases
+        await loop.run_in_executor(None,
+            partial(
+                self._case_numbers.update_one,
+                {"_id": "bugs"},
+                {"$set": bug_cases},
+                upsert = False
+            )
+        )
+    
+    async def add_bug(self, bug, author):
+
+        # Get bug cases
+        bug_cases = await self.get_bug_cases()
+
+        # Get current number then update it
+        number = bug_cases["number"]
+        bug_cases["number"] += 1
+
+        # Add the bug
+        current_time = datetime_to_dict(datetime.now())
+        bug_cases["cases"][str(number)] = {
+            "bug": bug,
+            "author": author,
+            "time": current_time,
+            "seen": False
+        }
+
+        # Set bug cases
+        await loop.run_in_executor(None,
+            partial(
+                self._case_numbers.update_one,
+                {"_id": "bugs"},
+                {"$set": bug_cases},
+                upsert = False
+            )
+        )
 
 def set_default(default_dict, result_dict):
 
