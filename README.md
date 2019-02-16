@@ -8,6 +8,7 @@ Prefix: `o.`
 ## Highlights
 There are all sorts of things being added almost everyday.
 Each category is labeled properly and includes commands tailored to that category.
+For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a website where all the commands are listed.
   * Code
     * Base Conversion
     * Logic Parsing
