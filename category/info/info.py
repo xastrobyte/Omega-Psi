@@ -1,11 +1,11 @@
 import discord, json, os, requests, time
 from datetime import datetime
 from discord.ext import commands
-from discord.ext.commands import has_permissions, guild_only
 from functools import partial
 
 from category import errors
 from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD
+from category.predicates import can_manage_guild, guild_only
 from database import database as db
 from database import loop
 from util.string import datetime_to_string
@@ -136,7 +136,7 @@ class Info:
         
         # Send the link
         await ctx.send(
-            "https://repl.it/@FellowHashbrown/Omega-Psi-5"
+            "https://repl.it/@FellowHashbrown/Omega-Psi"
         )
     
     @commands.command(
@@ -274,112 +274,6 @@ class Info:
                 int((end - start).total_seconds() * 1000)
             )
         )
-    
-    @commands.command(
-        name = "suggest",
-        description = "If you feel like something could be improved on in this bot, please suggest it!",
-        cog_name = "Info"
-    )
-    async def suggest(self, ctx, *, suggestion = None):
-
-        # Check if there is no suggestion
-        if suggestion == None:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "In order to suggest something, you need to, ya know, **_suggest it_**."
-                )
-            )
-        
-        # There is a suggestion
-        else:
-
-            # Send message to all developers
-            for dev in await db.get_developers():
-
-                # Get the dev user object
-                user = self.bot.get_user(int(dev))
-
-                # Send the message
-                await user.send(
-                    embed = discord.Embed(
-                        title = "Suggestion",
-                        description = " ",
-                        colour = PRIMARY_EMBED_COLOR
-                    ).add_field(
-                        name = "User",
-                        value = ctx.author
-                    ).add_field(
-                        name = "Origin",
-                        value = ("Server: " + ctx.guild.name) if ctx.guild != None else "Private Message"
-                    ).add_field(
-                        name = "Suggestion",
-                        value = suggestion
-                    ).set_thumbnail(
-                        url = ctx.author.avatar_url
-                    )
-                )
-            
-            # Send message to user saying suggestion was sent
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "Suggestion Sent",
-                    description = suggestion,
-                    colour = PRIMARY_EMBED_COLOR
-                )
-            )
-    
-    @commands.command(
-        name = "bug",
-        description = "Is there a bug or something in the bot? Use this! Give a decent description so I know what to look for!",
-        cog_name = "Info"
-    )
-    async def bug(self, ctx, *, bug = None):
-
-        # Check if there is no bug
-        if bug == None:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "In order to report a bug, you need to give a description of it."
-                )
-            )
-        
-        # There is a bug
-        else:
-
-            # Send message to all developers
-            for dev in await db.get_developers():
-
-                # Get the dev user object
-                user = self.bot.get_user(int(dev))
-
-                # Send the message
-                await user.send(
-                    embed = discord.Embed(
-                        title = "Bug Reported",
-                        description = " ",
-                        colour = PRIMARY_EMBED_COLOR
-                    ).add_field(
-                        name = "User",
-                        value = ctx.author
-                    ).add_field(
-                        name = "Origin",
-                        value = ("Server: " + ctx.guild.name) if ctx.guild != None else "Private Message"
-                    ).add_field(
-                        name = "Bug",
-                        value = bug
-                    ).set_thumbnail(
-                        url = ctx.author.avatar_url
-                    )
-                )
-            
-            # Send message to user saying bug was sent
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "Bug Sent!",
-                    description = bug,
-                    colour = PRIMARY_EMBED_COLOR
-                )
-            )
 
     @commands.command(
         name = "prefix", 
@@ -387,8 +281,8 @@ class Info:
         description = "Allows you to change the prefix for this server.",
         cog_name = "Info"
     )
-    @has_permissions(manage_guild = True)
-    @guild_only()
+    @commands.check(can_manage_guild)
+    @commands.check(guild_only)
     async def prefix(self, ctx, prefix):
 
         # Change prefix for guild
