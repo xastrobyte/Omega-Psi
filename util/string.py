@@ -25,6 +25,24 @@ def timestamp_to_datetime(timestamp):
 
     return dateTime
 
+def datetime_to_dict(dateTime):
+
+    return {
+        "year": dateTime.year,
+        "month": dateTime.month,
+        "day": dateTime.day,
+        "hour": dateTime.hour,
+        "minute": dateTime.minute,
+        "second": dateTime.second
+    }
+
+def dict_to_datetime(ddict):
+    
+    return datetime(
+        ddict["year"], ddict["month"], ddict["day"],
+        ddict["hour"], ddict["minute"], ddict["second"]
+    )
+
 def datetime_to_string(dateTime):
     """Turns a datetime into a readable string.
 
