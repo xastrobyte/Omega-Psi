@@ -1,19 +1,145 @@
-import base64, discord, os, requests, typing
+import asyncio, base64, discord, os, requests
 from discord.ext import commands
+from functools import partial
 
 from category import errors
+from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD, did_author_vote
 from database import loop
 
 from .base_converter import convert
-from .logic_parser import LogicTree
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 CODE_EMBED_COLOR = 0xEC7600
 
+JUDGE_API_CALL = "https://api.judge0.com/submissions?wait=true"
 LOGIC_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true"
 MORSE_API_CALL = "https://www.fellowhashbrown.com/api/morse/{}?text={}"
 QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
+
+LANGUAGES = {
+    "Bash (4.4)": {
+        "shortcuts": ["bash"],
+        "id": 1,
+        "code_block": "bash"
+    },
+    "Basic (fbc 1.05.0)": {
+        "shortcuts": ["basic"],
+        "id": 3,
+        "code_block": "basic"
+    },
+    "C (gcc 7.2.0)": {
+        "shortcuts": ["c"],
+        "id": 4,
+        "code_block": "c"
+    },
+    "C++ (g++ 7.2.0)": {
+        "shortcuts": ["c++"],
+        "id": 10,
+        "code_block": "c"
+    },
+    "C# (mono 5.4.0.167)": {
+        "shortcuts": ["c#"],
+        "id": 16,
+        "code_block": "c"
+    },
+    "Clojure (1.8.0)": {
+        "shortcuts": ["clojure"],
+        "id": 18,
+        "code_block": "clojure"
+    },
+    "Crystal (0.23.1)": {
+        "shortcuts": ["crystal"],
+        "id": 19,
+        "code_block": "crystal"
+    },
+    "Elixir (1.5.1)": {
+        "shortcuts": ["elixir"],
+        "id": 20,
+        "code_block": "elixir"
+    },
+    "Erlang (OTP 20.0)": {
+        "shortcuts": ["erlang"],
+        "id": 21,
+        "code_block": "erlang"
+    },
+    "Go (1.9)": {
+        "shortcuts": ["go"],
+        "id": 22,
+        "code_block": "go"
+    },
+    "Haskell (ghc 8.2.1)": {
+        "shortcuts": ["haskell"],
+        "id": 23,
+        "code_block": "haskell"
+    },
+    "Insect (5.0.0)": {
+        "shortcuts": ["insect"],
+        "id": 25,
+        "code_block": ""
+    },
+    "Java (OpenJDK 9)": {
+        "shortcuts": ["java9"],
+        "id": 26,
+        "code_block": "java"
+    },
+    "Java (OpenJDK 8)": {
+        "shortcuts": ["java8"],
+        "id": 27,
+        "code_block": "java"
+    },
+    "Java (OpenJDK 7)": {
+        "shortcuts": ["java7"],
+        "id": 28,
+        "code_block": "java"
+    },
+    "JavaScript (nodejs 8.5.0)": {
+        "shortcuts": ["javascript", "js", "nodejs", "node"],
+        "id": 29,
+        "code_block": "javascript"
+    },
+    "OCaml (4.05.0)": {
+        "shortcuts": ["ocaml"],
+        "id": 31,
+        "code_block": "ocaml"
+    },
+    "Octave (4.2.0)": {
+        "shortcuts": ["octave"],
+        "id": 32,
+        "code_block": ""
+    },
+    "Pascal (fpc 3.0.0)": {
+        "shortcuts": ["pascal"],
+        "id": 33,
+        "code_block": ""
+    },
+    "Python (3.6.0)": {
+        "shortcuts": ["python", "python3"],
+        "id": 34,
+        "code_block": "python"
+    },
+    "Python (2.7.9)": {
+        "shortcuts": ["python2"],
+        "id": 36,
+        "code_block": "python"
+    },
+    "Ruby (2.4.0)": {
+        "shortcuts": ["ruby"],
+        "id": 38,
+        "code_block": "ruby"
+    },
+    "Rust (1.20.0)" :{
+        "shortcuts": ["rust"],
+        "id": 42,
+        "code_block": "rust"
+    }
+}
+
+SHORTCUTS = [
+    shortcut
+    for language in LANGUAGES
+    for shortcut in LANGUAGES[language]["shortcuts"]
+]
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 # Extension
@@ -21,9 +147,192 @@ QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}
 
 class Code:
     def __init__(self, bot):
-        self._bot = bot
+        self.bot = bot
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @commands.command(
+        name = "execute",
+        aliases = ["exec", "evaluate", "eval"],
+        description = "Allows you to run code from a slew of languages. There are no parameters. You just run the command.",
+        cog_name = "Code"
+    )
+    async def execute(self, ctx):
+
+        # Check if author voted first
+        if await did_author_vote(ctx.author.id):
+
+            # Ask which language the user wants to write code for
+            fields = []
+            field_text = ""
+            for language in LANGUAGES:
+
+                language = "{} (`{}`)\n".format(
+                    language,
+                    ", ".join(LANGUAGES[language]["shortcuts"])
+                )
+
+                if len(field_text) + len(language) > FIELD_THRESHOLD:
+                    fields.append(field_text)
+                    field_text = ""
+                
+                field_text += language
+            
+            if len(field_text) > 0:
+                fields.append(field_text)
+            
+            # Add fields to embed
+            embed = discord.Embed(
+                title = "Available Languages",
+                description = "Below is a list of available languages and their shortcuts.",
+                colour = PRIMARY_EMBED_COLOR
+            )
+
+            for field in fields:
+                embed.add_field(
+                    name = "_ _",
+                    value = field
+                )
+            
+            # Send message and ask user which language they want to evaluate
+            await ctx.send(
+                embed = embed
+            )
+
+            def check_language(message):
+                return message.channel.id == ctx.channel.id and message.author.id == ctx.author.id and message.content.lower() in SHORTCUTS
+            
+            try:
+                message = await self.bot.wait_for("message", check = check_language, timeout = 30)
+                language = message.content.lower()
+                code_block = ""
+
+                # Get language
+                for lang in LANGUAGES:
+                    if language in LANGUAGES[lang]["shortcuts"]:
+                        language = LANGUAGES[lang]["id"]
+                        code_block = LANGUAGES[lang]["code_block"]
+                        break
+                
+                # Tell user to write their source code
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Source Code!",
+                        description = "Now write your source code! There's a maximum of 10 minutes until it times out.",
+                        colour = PRIMARY_EMBED_COLOR
+                    )
+                )
+
+                def check_source(message):
+                    return message.channel.id == ctx.channel.id and message.author.id == ctx.author.id
+
+                message = await self.bot.wait_for("message", check = check_source, timeout = 600)
+                source_code = message.content
+
+                # Separate source code into lines
+                # If backticks are found at beginning and end, remove them
+                source_code = source_code.split("\n")
+                if source_code[0].find("`") != -1:
+                    source_code = source_code[1:]
+                if source_code[-1].find("`") != -1:
+                    source_code = source_code[:-1]
+                source_code = "\n".join(source_code)
+
+                # Call judge0 API
+                response = await loop.run_in_executor(None,
+                    partial(
+                        requests.post,
+                        JUDGE_API_CALL,
+                        json = {
+                            "source_code": source_code,
+                            "language_id": language,
+                            "cpu_time_limit": 10,
+                            "cpu_extra_time": 2
+                        },
+                        headers = {
+                            "Content-Type": "application/json"
+                        }
+                    )
+                )
+                response = response.json()
+
+                # Split up the stdout and stderr in multiple fields if necessary
+                out = response["stdout"]
+                err = response["stderr"]
+
+                # Only split if out is not None
+                out_threshold = False
+                if out != None:
+                    if len(out) > FIELD_THRESHOLD:
+                        out_threshold = True
+                        out = out[:FIELD_THRESHOLD]
+
+                # Only split if err is not None
+                err_threshold = False
+                if err != None:
+                    if len(err) > FIELD_THRESHOLD:
+                        err_threshold = True
+                        err = err[:FIELD_THRESHOLD]
+
+                # Give all the necessary information about the code compilation
+                embed = discord.Embed(
+                    title = "Compilation Results",
+                    description = "_ _",
+                    colour = PRIMARY_EMBED_COLOR
+                ).set_footer(
+                    text = "Ran in {}s".format(
+                        response["time"]
+                    )
+                )
+
+                # Add STDOUT field
+                embed.add_field(
+                    name = "STDOUT {}".format(
+                        "Output Exceeded Limit" if out_threshold else ""
+                    ),
+                    value = "```{}\n{}\n```".format(
+                        code_block,
+                        out
+                    ),
+                    inline = False
+                )
+
+                # Add STDERR field
+                embed.add_field(
+                    name = "STDERR {}".format(
+                        "Output Exceeded Limit" if err_threshold else ""
+                    ),
+                    value = "```{}\n{}\n```".format(
+                        code_block,
+                        err
+                    ),
+                    inline = False
+                )
+                
+                # Send message
+                await ctx.send(
+                    embed = embed
+                )
+
+            # User did not choose a language or write source code in time; Don't hang
+            except asyncio.TimeoutError:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "Oh no! It seems you've timed out."
+                    )
+                )
+        
+        # Author did not vote
+        else:
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Vote!",
+                    description = "In order to use this command, I ask that you vote real quick!\n{}".format(
+                        "https://discordbots.org/bot/535587516816949248/vote"
+                    ),
+                    colour = PRIMARY_EMBED_COLOR
+                )
+            )
 
     @commands.command(
         name = "convert", 
