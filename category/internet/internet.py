@@ -7,6 +7,8 @@ from random import randint
 import database
 from category import errors
 from category.globals import PRIMARY_EMBED_COLOR
+from category.globals import add_scroll_reactions, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
+from category.internet.weather import weather, forecast
 from util.string import minutes_to_runtime
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -17,18 +19,13 @@ IMDB_LINK = "https://www.imdb.com/title/tt{}/?ref_=nv_sr_1"
 
 SUPERHERO_API_CALL = "https://superheroapi.com/api.php/{}/search/{}"
 TINYURL_API_CALL = "http://tinyurl.com/api-create.php?url={}"
+WEATHER_API_CALL = "https://api.apixu.com/v1/current.json?key={}&q={}"
+FORECAST_API_CALL = "https://api.apixu.com/v1/current.json?key={}&q={}&days=7"
 XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"
 XKCD_RECENT_API_CALL = "https://xkcd.com/info.0.json"
 
 DC_ICON = "https://www.dccomics.com/sites/default/files/imce/DC_Logo_Blue_Final_573b356bd056a9.41641801.jpg"
 MARVEL_ICON = "http://thetechnews.com/wp-content/uploads/2018/03/2_The-latest-Marvel-logo.jpg"
-
-SCROLL_REACTIONS = ["⏪", "⬅", "➡", "⏩", "❌"]
-FIRST_PAGE = SCROLL_REACTIONS[0]
-LAST_PAGE = SCROLL_REACTIONS[3]
-PREVIOUS_PAGE = SCROLL_REACTIONS[1]
-NEXT_PAGE = SCROLL_REACTIONS[2]
-LEAVE = SCROLL_REACTIONS[4]
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -685,6 +682,189 @@ class Internet:
                         colour = PRIMARY_EMBED_COLOR
                     )
                 )
+
+    @commands.command(
+        name = "weather",
+        description = "Shows you the current weather for a specific place.",
+        cog_name = "Internet"
+    )
+    async def weather(self, ctx, *, location = None):
+
+        # Check if location is None
+        if location == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to specify a location to get the weather for."
+                )
+            )
+        
+        else:
+
+            # Call API
+            response = await database.loop.run_in_executor(None,
+                requests.get,
+                WEATHER_API_CALL.format(
+                    os.environ["WEATHER_API_KEY"],
+                    location.replace(" ", "+")
+                )
+            )
+            response = response.json()
+
+            # Check if there was an error
+            if "error" in response:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "There was an error: `{}`".format(
+                            response["error"]["message"]
+                        )
+                    )
+                )
+            
+            # There was no error
+            else:
+                await ctx.send(
+                    embed = weather(response)
+                )
+    
+    @commands.command(
+        name = "forecast",
+        description = "Shows you the forecaset for the next 7 days for a specific place.",
+        cog_name = "Internet"
+    )
+    async def forecast(self, ctx, *, location = None):
+
+        # Check if location is None
+        if location == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to specify a location to get the weather for."
+                )
+            )
+        
+        else:
+
+            # Call API
+            response = await database.loop.run_in_executor(None,
+                requests.get,
+                WEATHER_API_CALL.format(
+                    os.environ["WEATHER_API_KEY"],
+                    location.replace(" ", "+")
+                )
+            )
+            response = response.json()
+
+            # Check if there was an error
+            if "error" in response:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "There was an error: `{}`".format(
+                            response["error"]["message"]
+                        )
+                    )
+                )
+            
+            # There was no error
+            else:
+
+                # Get forecast
+                fore_cast = forecast(response)
+
+                # Create embed
+                current = 0
+                embed = discord.Embed(
+                    title = "Forecast for {}".format(
+                        fore_cast["location"]
+                    ),
+                    description = fore_cast["forecasts"][current].pop("date"),
+                    colour = PRIMARY_EMBED_COLOR
+                ).set_author(
+                    name = "Apixu",
+                    icon_url = "https://cdn.apixu.com/v4/images/logo.png",
+                    url = "https://www.apixu.com"
+                ).set_thumbnail(
+                    url = fore_cast["forecasts"][current].pop("condition_icon")
+                )
+
+                for field in fore_cast["forecasts"][current]:
+
+                    embed.add_field(
+                        name = field,
+                        value = fore_cast["forecasts"][current][field]
+                    )
+
+                # Send message and add reactions
+                msg = await ctx.send(
+                    embed = embed
+                )
+
+                await add_scroll_reactions(msg, fore_cast["forecasts"])
+
+                # Let user scroll through forecast
+                while True:
+
+                    def check_reaction(reaction, user):
+                        return reaction.message.id == msg.id and user.id == ctx.author.id and str(reaction) in SCROLL_REACTIONS
+                    
+                    done, pending = await asyncio.wait([
+                        self.bot.wait_for("reaction_add", check = check_reaction),
+                        self.bot.wait_for("reaction_remove", check = check_reaction)
+                    ], return_when = asyncio.FIRST_COMPLETED)
+                    reaction, user = done.pop().result()
+
+                    # Cancel all futures
+                    for future in pending:
+                        future.cancel()
+                    
+                    # Reaction is FIRST_PAGE
+                    if str(reaction) == FIRST_PAGE:
+                        current = 0
+                    
+                    # Reaction is LAST_PAGE
+                    elif str(reaction) == LAST_PAGE:
+                        current = len(fore_cast["forecasts"]) - 1
+                    
+                    # Reaction is PREVIOUS_PAGE
+                    elif str(reaction) == PREVIOUS_PAGE:
+                        current -= 1
+                        if current < 0:
+                            current = 0
+
+                    # Reaction is NEXT_PAGE
+                    elif str(reaction) == NEXT_PAGE:
+                        current += 1
+                        if current >= len(fore_cast["forecasts"]):
+                            current = len(fore_cast["forecasts"]) - 1
+
+                    # Reaction is LEAVE
+                    elif str(reaction) == LEAVE:
+                        await msg.delete()
+                        break
+                    
+                    # Update embed
+                    embed = discord.Embed(
+                        title = "Forecast for {}".format(
+                            fore_cast["location"]
+                        ),
+                        description = fore_cast["forecasts"][current].pop("date"),
+                        colour = PRIMARY_EMBED_COLOR
+                    ).set_author(
+                        name = "Apixu",
+                        icon_url = "https://cdn.apixu.com/v4/images/logo.png",
+                        url = "https://www.apixu.com"
+                    ).set_thumbnail(
+                        url = fore_cast["forecasts"][current].pop("condition_icon")
+                    )
+
+                    for field in fore_cast["forecasts"][current]:
+
+                        embed.add_field(
+                            name = field,
+                            value = fore_cast["forecasts"][current][field]
+                        )
+                    
+                    await msg.edit(
+                        embed = embed
+                    )
 
 def setup(bot):
     bot.add_cog(Internet(bot))
