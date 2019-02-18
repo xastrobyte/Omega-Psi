@@ -5,9 +5,11 @@ from functools import partial
 
 from category import errors
 from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, FIELD_THRESHOLD
+from category.globals import DBL_BOT_STAT_API_CALL
 from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
 from category.globals import add_scroll_reactions
 from category.predicates import get_prefix, is_nsfw_or_private
+from database import loop
 from database import database
 
 # Open Bot Client
@@ -17,6 +19,7 @@ bot.remove_command("help")
 # Keep track of extensions
 exts = [
     "category.code.code",
+    "category.math.math",
     "category.game.game",
     "category.internet.internet",
     "category.image.image",
@@ -32,6 +35,11 @@ cogs = {
     "Code": {
         "command": "help code",
         "description": "All things having to do with coding go here.",
+        "check": None
+    },
+    "Math": {
+        "command": "help math",
+        "description": "Mathematical stuff like calculus and basic algebra!",
         "check": None
     },
     "Game": {
@@ -83,6 +91,7 @@ cogs = {
 
 cog_emojis = {
     "Code": ":keyboard: ",
+    "Math": ":asterisk: ",
     "Game": ":video_game: ",
     "Internet": ":desktop: ",
     "Image": ":frame_photo: ",
@@ -100,10 +109,15 @@ cog_emojis = {
 
 @bot.event
 async def on_ready():
+    """Overrides discord.py's event for on_ready.
+    This will print out in the console when it is ready.
+    Then it will update the bot's presence.
+    If the bot was restarted using the `restart` command, it will send a message.
+    """
 
     print("I'm ready to go.")
-    activity_type = await database.get_activity_type()
-    activity_name = await database.get_activity_name()
+    activity_type = await database.bot.get_activity_type()
+    activity_name = await database.bot.get_activity_name()
     activity_name = "{} in {} Servers".format(
         activity_name,
         len(bot.guilds)
@@ -120,7 +134,7 @@ async def on_ready():
     )
 
     # Tell about the restarting
-    restart = await database.get_restart()
+    restart = await database.bot.get_restart()
 
     # Only send the message if the restart happened through the command
     if restart["send"]:
@@ -135,7 +149,7 @@ async def on_ready():
         restart["send"] = False
 
         # Update the restart data
-        await database.set_restart(restart)
+        await database.bot.set_restart(restart)
 
         # Send the message
         await channel.send(
@@ -144,11 +158,18 @@ async def on_ready():
 
 @bot.event
 async def on_command(ctx):
+    """Overrides discord.py's event for on_command.
+    This will just label the bot as typing.
+    """
     async with ctx.typing():
         pass
 
 @bot.event
 async def on_command_error(ctx, error):
+    """Overrides discord.py's event for on_command_error.
+    This will send a message to the COMMAND_ERROR_CHANNEL (environment variable.) 
+        with a traceback to easily locate the error.
+    """
     
     # Create embed
     embed = discord.Embed(
@@ -212,6 +233,10 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_command_completion(ctx):
+    """Overrides discord.py's event for on_command_completion.
+    This will send a message to the COMMAND_SUCCESS_CHANNEL (environment variable.) 
+        telling that the command was run properly.
+    """
 
     # Create embed
     embed = discord.Embed(
@@ -247,24 +272,13 @@ async def on_command_completion(ctx):
 
 @bot.event
 async def on_guild_join(guild):
-    
-    # Send message to primary channel channel in guild
-    channel = guild.system_channel
-
-    embed = discord.Embed(
-        title = "Hello!",
-        description = (
-            """
-            Greetings! I am Omega Psi. I was created by _**Fellow Hashbrown#4323**_
-            I used to be a moderation bot and an entertainment bot but I couldn't handle that.
-            So now I'm just an entertainment bot! Thanks!
-            """
-        ),
-        colour = PRIMARY_EMBED_COLOR
-    )
+    """Overrides discord.py's event for on_guild_join.
+    This will make use of IFTTT and send a push notification to my android device.
+    It will also make a POST request to DBL to update the amount of servers Omega Psi is in.
+    """
 
     # Send notification through IFTTT that Omega Psi has joined a new server
-    await database.loop.run_in_executor(None,
+    await loop.run_in_executor(None,
         partial(
             requests.post,
             "https://maker.ifttt.com/trigger/on_error/with/key/{}".format(os.environ["IFTTT_WEBHOOK_KEY"]),
@@ -277,8 +291,8 @@ async def on_guild_join(guild):
     )
 
     # Update presence
-    activity_type = await database.get_activity_type()
-    activity_name = await database.get_activity_name()
+    activity_type = await database.bot.get_activity_type()
+    activity_name = await database.bot.get_activity_name()
     activity_name = "{} | Currently in {} Servers".format(
         activity_name,
         len(bot.guilds)
@@ -293,12 +307,64 @@ async def on_guild_join(guild):
         )
     )
 
-    try:
-        await channel.send(
-            embed = embed
+    # Update server count on DBL
+    await loop.run_in_executor(None,
+        partial(
+            requests.post,
+            DBL_BOT_STAT_API_CALL,
+            json = {
+                "server_count": len(bot.guilds)
+            }
         )
-    except:
-        pass
+    )
+
+@bot.event
+async def on_guild_remove(guild):
+    """Overrides discord.py's event for on_guild_remove.
+    This will make use of IFTTT and send a push notification to my android device.
+    It will also make a POST request to DBL to update the amount of servers Omega Psi is in.
+    """
+
+    # Send notification through IFTTT that Omega Psi has left a server
+    await loop.run_in_executor(None,
+        partial(
+            requests.post,
+            "https://maker.ifttt.com/trigger/on_error/with/key/{}".format(os.environ["IFTTT_WEBHOOK_KEY"]),
+            json = {
+                "value1": "Omega Psi\n",
+                "value2": "Removed from Discord server.\n",
+                "value3": "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
+            }
+        )
+    )
+
+    # Update presence
+    activity_type = await database.bot.get_activity_type()
+    activity_name = await database.bot.get_activity_name()
+    activity_name = "{} | Currently in {} Servers".format(
+        activity_name,
+        len(bot.guilds)
+    )
+    
+    await bot.change_presence(
+        status = discord.Status.online,
+        activity = discord.Activity(
+            name = activity_name,
+            type = activity_type,
+            url = "https://twitch.tv/FellowHashbrown"
+        )
+    )
+
+    # Update server count on DBL
+    await loop.run_in_executor(None,
+        partial(
+            requests.post,
+            DBL_BOT_STAT_API_CALL,
+            json = {
+                "server_count": len(bot.guilds)
+            }
+        )
+    )
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Global Commands
@@ -312,7 +378,7 @@ async def help(ctx, specific = None):
 
     # Get prefix
     if ctx.guild != None:
-        prefix = await database.get_prefix(ctx.guild)
+        prefix = await database.guilds.get_prefix(ctx.guild)
     
     else:
         prefix = "o."
@@ -461,7 +527,7 @@ async def help(ctx, specific = None):
 
                         embed.add_field(
                             name = "Parameters",
-                            value = " ".join(params.keys()),
+                            value = " ".join(["`{}`".format(param) for param in params.keys()]),
                             inline = False
                         )
 
@@ -490,7 +556,7 @@ async def help(ctx, specific = None):
     else:
 
         # Get recent version
-        recent = await database.get_recent_update()
+        recent = await database.bot.get_recent_update()
         recent = recent["version"]
 
         # Create embed with all categories as fields
