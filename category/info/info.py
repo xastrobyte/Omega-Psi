@@ -30,16 +30,16 @@ class Info:
         bot_info = await self.bot.application_info()
         owner = bot_info.owner
 
-        recent_update = await db.get_recent_update()
-        pending_update = await db.get_pending_update()
-        developers = [self.bot.get_user(int(dev)) if self.bot.get_user(int(dev)) != None else dev for dev in await db.get_developers()]
+        recent_update = await db.bot.get_recent_update()
+        pending_update = await db.bot.get_pending_update()
+        developers = [self.bot.get_user(int(dev)) if self.bot.get_user(int(dev)) != None else dev for dev in await db.bot.get_developers()]
 
         fields = {
             "Owner": "{}#{}".format(owner.name, owner.discriminator),
-            "Developers": ", ".join([
-                dev if type(dev) == str else "{}#{}".format(
-                    dev.name,
-                    dev.discriminator
+            "Developers": "\n".join([
+                dev if type(dev) == str else "{} ({})".format(
+                    dev.mention,
+                    dev
                 )
                 for dev in developers
             ]),
@@ -60,6 +60,11 @@ class Info:
             title = "Omega Psi Info",
             description = "Here's some information about me!",
             colour = PRIMARY_EMBED_COLOR
+        ).set_image(
+            url = "https://discordbots.org/api/widget/535587516816949248.png?topcolor={0}&middlecolor={1}&usernamecolor={1}&avatarbg={0}&datacolor={2}".format(
+                "ec7600", "293134",
+                "678cb1"
+            )
         )
 
         for field in fields:
@@ -151,7 +156,9 @@ class Info:
             partial(
                 requests.post,
                 UPTIME_API_URL,
-                data = "api_key={}&format=json&logs=1".format(os.environ["UPTIME_API_KEY"]),
+                data = "api_key={}&format=json&logs=1".format(
+                    os.environ["UPTIME_API_KEY"]
+                ),
                 headers = {
                     "content-type": "application/x-www-form-urlencoded",
                     "cache-control": "no-cache"
@@ -183,7 +190,7 @@ class Info:
                         recentDowntime = {
                             "hours": hours,
                             "minutes": minutes,
-                            "last": datetime_to_string(datetime.fromtimestamp(log["datetime"]))
+                            "last": datetime.fromtimestamp(log["datetime"])
                         }
 
                     # Keep track of the last 24 hours
@@ -194,30 +201,29 @@ class Info:
                     if time.time() - log["datetime"] <= 60*60*24*7:
                         downtimeWeek += log["duration"]
                     
-                    # Keep track of the last 30 days
-                    if time.time() - log["datetime"] <= 60*60*24*30:
+                    # Keep track of the month
+                    if time.time() - log["datetime"] <= 60*60*24*datetime.now().day:
                         downtimeMonth += log["duration"]
             
             # Keep uptime in separate fields
             fields = {
                 "Last 24 Hours": round(100 - (downtimeDay / (60 * 60 * 24) * 100), 2),
                 "Last 7 Days": round(100 - (downtimeWeek / (60 * 60 * 24 * 7) * 100), 2),
-                "Last 30 Days": round(100 - (downtimeMonth / (60 * 60 * 25 * 30) * 100), 2)
+                "This Month": round(100 - (downtimeMonth / (60 * 60 * 24 * datetime.now().day) * 100), 2)
             }
-
-            # Put the text for the most recent downtime in its own text
-            recentDowntime = "The latest downtime happened on {} for {} hr{} {} min{}".format(
-                recentDowntime["last"],
-                recentDowntime["hours"], "s" if recentDowntime["hours"] != 1 else "",
-                recentDowntime["minutes"], "s" if recentDowntime["minutes"] != 1 else ""
-            )
             
             # Create the embed and add the fields
             embed = discord.Embed(
                 title = "Omega Psi Uptime",
-                description = recentDowntime,
+                description = " ",
                 colour = PRIMARY_EMBED_COLOR,
-                url = "https://status.omegapsi.fellowhashbrown.com"
+                url = "https://status.omegapsi.fellowhashbrown.com",
+                timestamp = recentDowntime["last"]
+            ).set_footer(
+                text ="Latest downtime ({} hrs {} min) ➡".format(
+                    recentDowntime["hours"],
+                    recentDowntime["minutes"]
+                )
             )
 
             for field in fields:
@@ -286,7 +292,7 @@ class Info:
     async def prefix(self, ctx, prefix):
 
         # Change prefix for guild
-        await db.set_prefix(ctx.guild, prefix)
+        await db.guilds.set_prefix(ctx.guild, prefix)
         
         # Send message
         await ctx.send(
