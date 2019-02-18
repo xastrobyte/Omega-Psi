@@ -10,305 +10,12 @@ from util.string import datetime_to_dict
 # Create new event loop
 loop = asyncio.get_event_loop()
 
-class Database:
+# Each collection has its own class
 
-    def __init__(self):
-
-        # Create the connection and get the database for Omega Psi
-        self._connection = MongoClient("ds115244.mlab.com", 15244, connect = False)
-        self._omegaPsi = self._connection["omegapsi"]
-
-        # Get the username and password to authenticate database access
-        username = os.environ["DATABASE_USERNAME"]
-        password = os.environ["DATABASE_PASSWORD"]
-        self._omegaPsi.authenticate(username, password)
-
-        # Keep track of different collections
-        self._bot = self._omegaPsi.bot
-        self._guilds = self._omegaPsi.guilds
-        self._users = self._omegaPsi.users
-        self._data = self._omegaPsi.data
-        self._case_numbers = self._omegaPsi.case_numbers
-
-        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+class Bot:
+    def __init__(self, bot):
+        self._bot = bot
     
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Methods for Guilds
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    async def get_guild(self, guild):
-
-        # Set defaults
-        data = {
-            "_id": str(guild.id),
-            "prefix": "o."
-        }
-
-        # Get guild data
-        guild_data = await loop.run_in_executor(None,
-            partial(
-                self._guilds.find_one,
-                {"_id": str(guild.id)}
-            )
-        )
-
-        # Guild data is None; Create guild data
-        if guild_data == None:
-            await loop.run_in_executor(None,
-                partial(
-                    self._guilds.insert_one,
-                    {"_id": str(guild.id)}
-                )
-            )
-            await self.set_guild(guild, data)
-            guild_data = data
-        
-        # set defaults
-        guild_data = set_default(data, guild_data)
-        return guild_data
-    
-    async def set_guild(self, guild, data):
-
-        # Set guild data
-        await loop.run_in_executor(None,
-            partial(
-                self._guilds.update_one,
-                {"_id": str(guild.id)}, 
-                {"$set": data}, 
-                upsert = False
-            )
-        )
-    
-    async def get_prefix(self, guild):
-
-        # Open guild information
-        guild_data = await self.get_guild(guild)
-
-        return guild_data["prefix"]
-    
-    async def set_prefix(self, guild, prefix):
-
-        # Open guild information
-        guild_data = await self.get_guild(guild)
-
-        guild_data["prefix"] = prefix
-
-        await self.set_guild(guild, guild_data)
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Methods for Users
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    async def get_user(self, user):
-
-        # Set defaults
-        data = {
-            "_id": str(user.id),
-            "imgur": {
-                "hash": None,
-                "id": None
-            },
-            "connect_four": {
-                "won": 0,
-                "lost": 0
-            },
-            "hangman": {
-                "won": 0,
-                "lost": 0
-            },
-            "rps": {
-                "won": 0,
-                "lost": 0
-            },
-            "scramble": {
-                "won": 0,
-                "lost": 0
-            },
-            "tic_tac_toe": {
-                "won": 0,
-                "lost": 0
-            },
-            "cards_against_humanity": {
-                "won": 0,
-                "lost": 0
-            }
-        }
-
-        # Get user data
-        user_data = await loop.run_in_executor(None,
-            partial(
-                self._users.find_one,
-                {"_id": str(user.id)}
-            )
-        )
-
-        # User data is None; Create user data
-        if user_data == None:
-            self._users.insert_one({"_id": str(user.id)})
-            await self.set_user(user, data)
-            user_data = data
-        
-        # set defaults
-        user_data = set_default(data, user_data)
-        return user_data
-    
-    async def set_user(self, user, data):
-
-        # Set user data
-        await loop.run_in_executor(None,
-            partial(
-                self._users.update_one,
-                {"_id": str(user.id)},
-                {"$set": data},
-                upsert = False
-            )
-        )
-
-    # # # # # User Getters # # # # # 
-
-    async def get_imgur(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["imgur"]
-    
-    async def get_connect_four(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["connect_four"]
-    
-    async def get_hangman(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["hangman"]
-    
-    async def get_rps(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["rps"]
-    
-    async def get_scramble(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["scramble"]
-    
-    async def get_tic_tac_toe(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["tic_tac_toe"]
-    
-    async def get_cards_against_humanity(self, user):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        return user_data["cards_against_humanity"]
-
-    # # # # # User Setters # # # # # 
-
-    async def set_imgur(self, user, imgur):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        user_data["imgur"] = imgur
-
-        # Set user data
-        await self.set_user(user, user_data)
-
-    async def update_hangman(self, user, won):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        if won:
-            user_data["hangman"]["won"] += 1
-        else:
-            user_data["hangman"]["lost"] += 1
-        
-        # Set user data
-        await self.set_user(user, user_data)
-    
-    async def update_connect_four(self, user, won):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        if won:
-            user_data["connect_four"]["won"] += 1
-        else:
-            user_data["connect_four"]["lost"] += 1
-        
-        # Set user data
-        await self.set_user(user, user_data)
-    
-    async def update_rps(self, user, won):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        if won:
-            user_data["rps"]["won"] += 1
-        else:
-            user_data["rps"]["lost"] += 1
-        
-        # Set user data
-        await self.set_user(user, user_data)
-    
-    async def update_scramble(self, user, won):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        if won:
-            user_data["scramble"]["won"] += 1
-        else:
-            user_data["scramble"]["lost"] += 1
-        
-        # Set user data
-        await self.set_user(user, user_data)
-    
-    async def update_tic_tac_toe(self, user, won):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        if won:
-            user_data["tic_tac_toe"]["won"] += 1
-        else:
-            user_data["tic_tac_toe"]["lost"] += 1
-        
-        # Set user data
-        await self.set_user(user, user_data)
-    
-    async def update_cards_against_humanity(self, user, won):
-
-        # Get user data
-        user_data = await self.get_user(user)
-
-        if won:
-            user_data["cards_against_humanity"]["won"] += 1
-        else:
-            user_data["cards_against_humanity"]["lost"] += 1
-        
-        # Set user data
-        await self.set_user(user, user_data)
-    
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Methods for Bot
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
     async def get_bot(self):
         
         # Set defaults
@@ -386,7 +93,7 @@ class Database:
     def set_bot_sync(self, bot_data):
         self._bot.update_one({"_id": "bot_information"}, {"$set": bot_data}, upsert = False)
     
-    # # # # # Bot Getters # # # # # 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     async def get_restart(self):
 
@@ -394,6 +101,18 @@ class Database:
         bot_data = await self.get_bot()
 
         return bot_data["restart"]
+    
+    async def set_restart(self, restart_data):
+
+        # Get bot_data
+        bot_data = await self.get_bot()
+
+        bot_data["restart"] = restart_data
+
+        # Set bot data
+        await self.set_bot(bot_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     async def get_activity_name(self):
         
@@ -402,12 +121,34 @@ class Database:
 
         return bot_data["activity_name"]
     
+    async def set_activity_name(self, activity_name):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        bot_data["activity_name"] = activity_name
+
+        # Set bot data
+        await self.set_bot(bot_data)
+    
     async def get_activity_type(self):
 
         # Get bot data
         bot_data = await self.get_bot()
 
         return bot_data["activity_type"]
+    
+    async def set_activity_type(self, activity_type):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        bot_data["activity_type"] = activity_type
+
+        # Set bot data
+        await self.set_bot(bot_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_developers(self):
 
@@ -423,73 +164,6 @@ class Database:
 
         return str(user.id) in bot_data["developers"]
     
-    async def get_owner(self):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        return bot_data["owner"]
-    
-    async def get_todo(self):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        return bot_data["todo"]
-    
-    async def get_pending_update(self):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        return bot_data["pending_update"]
-    
-    async def get_updates(self):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        return bot_data["updates"]
-    
-    async def get_recent_update(self):
-
-        # Get updates
-        updates = await self.get_updates()
-
-        return updates[0]
-    
-    # # # # # Bot Setters # # # # # 
-
-    async def set_restart(self, restart_data):
-
-        # Get bot_data
-        bot_data = await self.get_bot()
-
-        bot_data["restart"] = restart_data
-
-        # Set bot data
-        await self.set_bot(bot_data)
-
-    async def set_activity_name(self, activity_name):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        bot_data["activity_name"] = activity_name
-
-        # Set bot data
-        await self.set_bot(bot_data)
-    
-    async def set_activity_type(self, activity_type):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        bot_data["activity_type"] = activity_type
-
-        # Set bot data
-        await self.set_bot(bot_data)
-    
     async def set_developers(self, developers):
 
         # Get bot data
@@ -499,16 +173,44 @@ class Database:
 
         # Set bot data
         await self.set_bot(bot_data)
+
+    async def add_developer(self, developer):
+
+        # Get developers
+        dev_data = await self.get_developers()
+
+        dev_data.append(developer)
+
+        # Set developers
+        await self.set_developers(dev_data)
     
-    async def set_owner(self, owner):
+    async def remove_developer(self, developer):
+
+        # Get developers
+        dev_data = await self.get_developers()
+
+        dev_data.remove(developer)
+
+        # Set developers
+        await self.set_developers(dev_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_owner(self):
 
         # Get bot data
         bot_data = await self.get_bot()
 
-        bot_data["owner"] = owner
+        return bot_data["owner"]
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_todo(self):
 
-        # Set bot data
-        await self.set_bot(bot_data)
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        return bot_data["todo"]
     
     async def set_todo(self, todo):
 
@@ -541,6 +243,29 @@ class Database:
         await self.set_todo(todo_list)
 
         return item
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_pending_update(self):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        return bot_data["pending_update"]
+    
+    async def get_updates(self):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        return bot_data["updates"]
+    
+    async def get_recent_update(self):
+
+        # Get updates
+        updates = await self.get_updates()
+
+        return updates[0]
     
     async def set_pending_update(self, pending_update):
 
@@ -614,11 +339,326 @@ class Database:
 
         # Set bot data
         await self.set_bot(bot_data)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class Guild:
+    def __init__(self, guilds):
+        self._guilds = guilds
     
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Data Methods
+    async def get_guild(self, guild):
+
+        # Set defaults
+        data = {
+            "_id": str(guild.id),
+            "prefix": "o."
+        }
+
+        # Get guild data
+        guild_data = await loop.run_in_executor(None,
+            partial(
+                self._guilds.find_one,
+                {"_id": str(guild.id)}
+            )
+        )
+
+        # Guild data is None; Create guild data
+        if guild_data == None:
+            await loop.run_in_executor(None,
+                partial(
+                    self._guilds.insert_one,
+                    {"_id": str(guild.id)}
+                )
+            )
+            await self.set_guild(guild, data)
+            guild_data = data
+        
+        # set defaults
+        guild_data = set_default(data, guild_data)
+        return guild_data
+    
+    async def set_guild(self, guild, data):
+
+        # Set guild data
+        await loop.run_in_executor(None,
+            partial(
+                self._guilds.update_one,
+                {"_id": str(guild.id)}, 
+                {"$set": data}, 
+                upsert = False
+            )
+        )
+    
+    async def get_prefix(self, guild):
+
+        # Open guild information
+        guild_data = await self.get_guild(guild)
+
+        return guild_data["prefix"]
+    
+    async def set_prefix(self, guild, prefix):
+
+        # Open guild information
+        guild_data = await self.get_guild(guild)
+
+        guild_data["prefix"] = prefix
+
+        await self.set_guild(guild, guild_data)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class User:
+    def __init__(self, users):
+        self._users = users
+    
+    async def get_user(self, user):
+
+        # Set defaults
+        data = {
+            "_id": str(user.id),
+            "imgur": {
+                "hash": None,
+                "id": None
+            },
+            "connect_four": {
+                "won": 0,
+                "lost": 0
+            },
+            "hangman": {
+                "won": 0,
+                "lost": 0
+            },
+            "rps": {
+                "won": 0,
+                "lost": 0
+            },
+            "scramble": {
+                "won": 0,
+                "lost": 0
+            },
+            "tic_tac_toe": {
+                "won": 0,
+                "lost": 0
+            },
+            "cards_against_humanity": {
+                "won": 0,
+                "lost": 0
+            },
+            "trivia": {
+                "won": 0,
+                "lost": 0
+            }
+        }
+
+        # Get user data
+        user_data = await loop.run_in_executor(None,
+            partial(
+                self._users.find_one,
+                {"_id": str(user.id)}
+            )
+        )
+
+        # User data is None; Create user data
+        if user_data == None:
+            self._users.insert_one({"_id": str(user.id)})
+            await self.set_user(user, data)
+            user_data = data
+        
+        # set defaults
+        user_data = set_default(data, user_data)
+        return user_data
+    
+    async def set_user(self, user, data):
+
+        # Set user data
+        await loop.run_in_executor(None,
+            partial(
+                self._users.update_one,
+                {"_id": str(user.id)},
+                {"$set": data},
+                upsert = False
+            )
+        )
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    async def get_imgur(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["imgur"]
+    
+    async def set_imgur(self, user, imgur):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["imgur"] = imgur
+
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_connect_four(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["connect_four"]
+    
+    async def update_connect_four(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["connect_four"]["won"] += 1
+        else:
+            user_data["connect_four"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_hangman(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["hangman"]
+    
+    async def update_hangman(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["hangman"]["won"] += 1
+        else:
+            user_data["hangman"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_rps(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["rps"]
+    
+    async def update_rps(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["rps"]["won"] += 1
+        else:
+            user_data["rps"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_scramble(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["scramble"]
+    
+    async def update_scramble(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["scramble"]["won"] += 1
+        else:
+            user_data["scramble"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_tic_tac_toe(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["tic_tac_toe"]
+    
+    async def update_tic_tac_toe(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["tic_tac_toe"]["won"] += 1
+        else:
+            user_data["tic_tac_toe"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_cards_against_humanity(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["cards_against_humanity"]
+    
+    async def update_cards_against_humanity(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["cards_against_humanity"]["won"] += 1
+        else:
+            user_data["cards_against_humanity"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_trivia(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["trivia"]
+    
+    async def update_trivia(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["trivia"]["won"] += 1
+        else:
+            user_data["trivia"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class Data:
+    def __init__(self, data):
+        self._data = data
+    
     async def get_hangman_words(self):
 
         # Get hangman data
@@ -643,18 +683,20 @@ class Database:
             )
         )
     
-    async def add_hangman(self, difficulty, phrase):
+    async def add_hangman(self, phrase):
 
         # Get hangman data
         hangman_data = await self.get_hangman_words()
 
-        hangman_data[difficulty].append({
+        hangman_data["words"].append({
             "value": phrase,
-            "level": difficulty
+            "level": "None"
         })
 
         # Set hangman data
         await self.set_hangman_words(self, hangman_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_scramble_words(self):
 
@@ -680,7 +722,7 @@ class Database:
             )
         )
     
-    async def add_scramble(self, phrase, hints):
+    async def add_scramble_word(self, phrase, hints):
 
         # Get scramble data
         scramble_data = await self.get_scramble_words()
@@ -693,6 +735,8 @@ class Database:
         # Set scramble data
         await self.set_scramble_words(scramble_data)
     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
     async def get_cards_against_humanity_cards(self):
 
         # Get cards against humanity data
@@ -704,6 +748,8 @@ class Database:
         )
 
         return cah_data
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_insult_data(self):
 
@@ -846,10 +892,12 @@ class Database:
             if nsfw or "nsfw" not in insult["tags"]:
                 return insult
 
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Methods for Case Numbers
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+class CaseNumber:
+    def __init__(self, case_numbers):
+        self._case_numbers = case_numbers
+    
     async def get_suggestion_cases(self):
 
         default = {
@@ -864,21 +912,33 @@ class Database:
         )
 
         if case_data == None:
-            await loop.run_in_executor(None,
-                self._case_numbers.insert_one,
-                {"_id": "suggestions"}
-            ),
-            await loop.run_in_executor(None,
-                partial(
-                    self._case_numbers.update_one,
-                    {"_id": "suggestions"},
-                    {"$set": default},
-                    upsert = False
-                )
-            )
+            await self.set_suggestion_cases(default)
             case_data = default
         
         return case_data
+    
+    async def set_suggestion_cases(self, cases):
+
+        # Check if there is None; Create it
+        suggestion_data = await loop.run_in_executor(None,
+            self._case_numbers.find_one,
+            {"_id": "suggestions"}
+        )
+        if suggestion_data == None:
+            await loop.run_in_executor(None,
+                self._case_numbers.insert_one,
+                {"_id": "suggestions"}
+            )
+        
+        # Set data
+        await loop.run_in_executor(None,
+            partial(
+                self._case_numbers.update_one,
+                {"_id": "suggestions"},
+                {"$set": cases},
+                upsert = False
+            )
+        )
     
     async def get_suggestion(self, number):
         
@@ -903,14 +963,7 @@ class Database:
         suggestion_cases["cases"][str(number)]["seen"] = True
 
         # Set suggestion cases
-        await loop.run_in_executor(None,
-            partial(
-                self._case_numbers.update_one,
-                {"_id": "suggestions"},
-                {"$set": suggestion_cases},
-                upsert = False
-            )
-        )
+        await self.set_suggestion_cases(suggestion_cases)
     
     async def add_suggestion(self, suggestion, author):
         
@@ -931,14 +984,9 @@ class Database:
         }
 
         # Set suggestion cases
-        await loop.run_in_executor(None,
-            partial(
-                self._case_numbers.update_one,
-                {"_id": "suggestions"},
-                {"$set": suggestion_cases},
-                upsert = False
-            )
-        )
+        await self.set_suggestion_cases(suggestion_cases)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_bug_cases(self):
         
@@ -954,21 +1002,33 @@ class Database:
         )
 
         if case_data == None:
-            await loop.run_in_executor(None,
-                self._case_numbers.insert_one,
-                {"_id": "bugs"}
-            ),
-            await loop.run_in_executor(None,
-                partial(
-                    self._case_numbers.update_one,
-                    {"_id": "bugs"},
-                    {"$set": default},
-                    upsert = False
-                )
-            )
+            await self.set_bug_cases(default)
             case_data = default
         
         return case_data
+    
+    async def set_bug_cases(self, cases):
+
+        # Check if there is None; Create it
+        bug_data = await loop.run_in_executor(None,
+            self._case_numbers.find_one,
+            {"_id": "bugs"}
+        )
+        if bug_data == None:
+            await loop.run_in_executor(None,
+                self._case_numbers.insert_one,
+                {"_id": "bugs"}
+            )
+        
+        # Set data
+        await loop.run_in_executor(None,
+            partial(
+                self._case_numbers.update_one,
+                {"_id": "bugs"},
+                {"$set": cases},
+                upsert = False
+            )
+        )
     
     async def get_bug(self, number):
 
@@ -993,14 +1053,7 @@ class Database:
         bug_cases["cases"][str(number)]["seen"] = True
 
         # Set bug cases
-        await loop.run_in_executor(None,
-            partial(
-                self._case_numbers.update_one,
-                {"_id": "bugs"},
-                {"$set": bug_cases},
-                upsert = False
-            )
-        )
+        await self.set_bug_cases(bug_cases)
     
     async def add_bug(self, bug, author):
 
@@ -1021,14 +1074,37 @@ class Database:
         }
 
         # Set bug cases
-        await loop.run_in_executor(None,
-            partial(
-                self._case_numbers.update_one,
-                {"_id": "bugs"},
-                {"$set": bug_cases},
-                upsert = False
-            )
-        )
+        await self.set_bug_cases(bug_cases)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class Database:
+
+    def __init__(self):
+
+        # Create the connection and get the database for Omega Psi
+        self._connection = MongoClient("ds115244.mlab.com", 15244, connect = False)
+        self._omegaPsi = self._connection["omegapsi"]
+
+        # Get the username and password to authenticate database access
+        username = os.environ["DATABASE_USERNAME"]
+        password = os.environ["DATABASE_PASSWORD"]
+        self._omegaPsi.authenticate(username, password)
+
+        # Keep track of different collections
+        self._bot = self._omegaPsi.bot
+        self._guilds = self._omegaPsi.guilds
+        self._users = self._omegaPsi.users
+        self._data = self._omegaPsi.data
+        self._case_numbers = self._omegaPsi.case_numbers
+
+        self.bot = Bot(self._bot)
+        self.guilds = Guild(self._guilds)
+        self.users = User(self._users)
+        self.data = Data(self._data)
+        self.case_numbers = CaseNumber(self._case_numbers)
+
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def set_default(default_dict, result_dict):
 
