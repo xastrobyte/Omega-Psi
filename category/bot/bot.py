@@ -1,11 +1,13 @@
-import asyncio, discord, os, sys
+import asyncio, discord, os, requests, sys
 from datetime import datetime
 from discord.ext import commands
+from functools import partial
 
 from category import errors
 from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, CHECK_MARK, LEAVE
 from category.globals import add_scroll_reactions
 from category.predicates import is_developer, is_in_guild
+from database import loop
 from database import database
 from util.string import dict_to_datetime
 
@@ -24,7 +26,7 @@ class Bot:
     async def suggestion_reports(self, ctx, data = None):
 
         # Get all suggestions
-        suggestion_cases = await database.get_suggestion_cases()
+        suggestion_cases = await database.case_numbers.get_suggestion_cases()
         suggestion_cases = suggestion_cases["cases"]
 
         # Make sure suggestion exists or data is None
@@ -117,8 +119,8 @@ class Bot:
                                 )
 
                             # Make suggestion as seen
-                            await database.mark_suggestion_seen(str(current))
-                            suggestion_cases = await database.get_suggestion_cases()
+                            await database.case_numbers.mark_suggestion_seen(str(current))
+                            suggestion_cases = await database.case_numbers.get_suggestion_cases()
                             suggestion_cases = suggestion_cases["cases"]
 
                     # Reaction is leave
@@ -186,14 +188,14 @@ class Bot:
         else:
 
             # Get the current suggestion number and add the suggestion to the reports
-            suggestion_number = await database.get_suggestion_number()
-            await database.add_suggestion(
+            suggestion_number = await database.case_numbers.get_suggestion_number()
+            await database.case_numbers.add_suggestion(
                 suggestion,
                 str(ctx.author.id)
             )
 
             # Send message to all developers
-            for dev in await database.get_developers():
+            for dev in await database.bot.get_developers():
 
                 # Get the dev user object
                 user = self.bot.get_user(int(dev))
@@ -236,7 +238,7 @@ class Bot:
     async def bug_reports(self, ctx, data = None):
         
         # Get all bugs
-        bug_cases = await database.get_bug_cases()
+        bug_cases = await database.case_numbers.get_bug_cases()
         bug_cases = bug_cases["cases"]
 
         # Make sure bug exists or data is None
@@ -328,8 +330,8 @@ class Bot:
                                     )
                                 )
 
-                            await database.mark_bug_seen(str(current))
-                            bug_cases = await database.get_bug_cases()
+                            await database.case_numbers.mark_bug_seen(str(current))
+                            bug_cases = await database.case_numbers.get_bug_cases()
                             bug_cases = bug_cases["cases"]
 
                     # Reaction is leave
@@ -397,14 +399,14 @@ class Bot:
         else:
 
             # Get the current bug number and add the bug to the reports
-            bug_number = await database.get_bug_number()
-            await database.add_bug(
+            bug_number = await database.case_numbers.get_bug_number()
+            await database.case_numbers.add_bug(
                 bug,
                 str(ctx.author.id)
             )
 
             # Send message to all developers
-            for dev in await database.get_developers():
+            for dev in await database.bot.get_developers():
 
                 # Get the dev user object
                 user = self.bot.get_user(int(dev))
@@ -551,7 +553,7 @@ class Bot:
         cog_name = "Bot"
     )
     @commands.check(is_developer)
-    async def restart(self, ctx, html_style = None):
+    async def restart(self, ctx):
 
         # Change the bot presence to say "Reloading..."
         await self.bot.change_presence(
@@ -564,28 +566,11 @@ class Bot:
         )
 
         # Set the restart data in the database
-        await database.set_restart({
+        await database.bot.set_restart({
             "send": True,
             "channel_id": str(ctx.channel.id) if ctx.channel != None else None,
             "author_id": str(ctx.author.id)
         })
-
-        # Set the html style if applicable
-        if html_style != None:
-
-            # Validate html style
-            if html_style in ["normal", "n", "regular", "r"]:
-                html_style = "normal"
-            elif html_style in ["fancy", "f", "dropdown", "d"]:
-                html_style = "fancy"
-            elif html_style in ["column", "c", "section", "s"]:
-                html_style = "column"
-            
-            # No html styles fit; Default to normal
-            else:
-                html_style = "normal"
-
-            await database.set_html_style(html_style)
 
         # Actually restart
         await ctx.send(
@@ -620,9 +605,9 @@ class Bot:
     async def create_update(self, ctx):
         
         # Create the update; Send message to all other developers
-        await database.create_pending_update()
+        await database.bot.create_pending_update()
 
-        for dev in await database.get_developers():
+        for dev in await database.bot.get_developers():
 
             # Get the dev user object
             user = self.bot.get_user(int(dev))
@@ -666,10 +651,10 @@ class Bot:
         # Fix is not None; Add it
         else:
 
-            await database.add_pending_fix(fix)
+            await database.bot.add_pending_fix(fix)
 
             # Send to all other developers
-            for dev in await database.get_developers():
+            for dev in await database.bot.get_developers():
 
                 # Get the dev user object
                 user = self.bot.get_user(int(dev))
@@ -716,10 +701,10 @@ class Bot:
         # Feature is not None; Add it
         else:
 
-            await database.add_pending_feature(feature)
+            await database.bot.add_pending_feature(feature)
 
             # Send to all other developers
-            for dev in await database.get_developers():
+            for dev in await database.bot.get_developers():
 
                 # Get the dev user object
                 user = self.bot.get_user(int(dev))
@@ -767,10 +752,10 @@ class Bot:
         else:
 
             # Commit the update. Then get the update so we can inform all other developers
-            await database.commit_pending_update(version, description)
-            update = await database.get_recent_update()
+            await database.bot.commit_pending_update(version, description)
+            update = await database.bot.get_recent_update()
 
-            for dev in await database.get_developers():
+            for dev in await database.bot.get_developers():
 
                 # Get the dev user object
                 user = self.bot.get_user(int(dev))
@@ -795,6 +780,42 @@ class Bot:
                             inline = False
                         )
                     )
+                
+            # Send webhook to Integromat
+            # Split up features and fixes into platform-specific
+            #  Tumblr should be Markdown supported
+            #  Twitter, Facebook, and Push Notification should be regular
+            markdown = {
+                "description": description,
+                "features": "\n".join([
+                    " - {}".format(feature) for feature in update["features"]
+                ]) if len(update["features"]) > 0 else "No New Features.",
+                "fixes": "\n".join([
+                    " - {}".format(fix) for fix in update["fixes"]
+                ]) if len(update["fixes"]) > 0 else "No New Fixes."
+            }
+
+            regular = {
+                "description": description.replace("`", ""),
+                "features": "\n".join([
+                    " - {}".format(feature.replace("`", "")) for feature in update["features"]
+                ]) if len(update["features"]) > 0 else "No New Features.",
+                "fixes": "\n".join([
+                    " - {}".format(fix.replace("`", "")) for fix in update["fixes"]
+                ]) if len(update["fixes"]) > 0 else "No New Fixes."
+            }
+
+            await loop.run_in_executor(None,
+                partial(
+                    requests.post,
+                    os.environ["INTEGROMAT_WEBHOOK_CALL"],
+                    json = {
+                        "version": version,
+                        "markdown": markdown,
+                        "regular": regular
+                    }
+                )
+            )
 
             # Send to author
             await ctx.send(
@@ -820,7 +841,7 @@ class Bot:
     )
     async def todo(self, ctx, action = None, *, item = None):
 
-        todo_list = await database.get_todo()
+        todo_list = await database.bot.get_todo()
 
         # Check if action is going to add or remove
         if action in ["add", "a", "remove", "r"]:
@@ -829,11 +850,11 @@ class Bot:
             if item != None:
 
                 # Check if author is a developer
-                if str(ctx.author.id) in await database.get_developers():
+                if str(ctx.author.id) in await database.bot.get_developers():
                     
                     # Check if action is adding
                     if action in ["add", "a"]:
-                        await database.add_todo_item(item)
+                        await database.bot.add_todo_item(item)
                         await ctx.send(
                             embed = discord.Embed(
                                 title = "Added item to todo list.",
@@ -851,7 +872,7 @@ class Bot:
                             if item < 0 or item >= len(todo_list):
                                 raise ValueError()
 
-                            item = await database.remove_todo_item(item)
+                            item = await database.bot.remove_todo_item(item)
                             await ctx.send(
                                 embed = discord.Embed(
                                     title = "Removed item from todo list.",
@@ -960,8 +981,8 @@ class Bot:
             # Keep track of whether or not the member was added
             results = []
             for member in members:
-                if not await database.is_developer(member):
-                    await database.add_developer(str(member.id))
+                if not await database.bot.is_developer(member):
+                    await database.bot.add_developer(str(member.id))
                     success = True
                     reason = "{} ({}) was added as a developer.".format(member.mention, member)
                 else:
@@ -1001,7 +1022,7 @@ class Bot:
             # Keep track of whether or not the member was removed
             results = []
             for member in members:
-                if await database.is_developer(member):
+                if await database.bot.is_developer(member):
 
                     # Make sure it's not self
                     if ctx.author == member:
@@ -1009,13 +1030,13 @@ class Bot:
                         reason = "You can't remove yourself as a developer."
                     
                     # Make sure it's not owner
-                    elif str(member.id) == await database.get_owner():
+                    elif str(member.id) == await database.bot.get_owner():
                         success = True
                         reason = "You can't remove the bot's owner as a developer."
                     
                     # Everything is good
                     else:
-                        await database.remove_developer(str(member.id))
+                        await database.bot.remove_developer(str(member.id))
                         success = True
                         reason = "{} ({}) was removed as a developer.".format(member.mention, member)
                 else:
