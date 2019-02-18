@@ -2,10 +2,11 @@
 [![Discord Bots](https://discordbots.org/api/widget/status/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 [![Discord Bots](https://discordbots.org/api/widget/servers/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 [![Discord Bots](https://discordbots.org/api/widget/lib/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+
 Support Server: [![Discord Server](https://img.shields.io/discord/521185038969208850.svg)](https://discord.gg/W8yVrHt)
 
 # Omega Psi
-A Discord Bot, constantly being developed, that includes all sorts of commands.
+A Discord Bot, constantly being developed, that includes all sorts of commands from math commands to internet commands!.
 
 Prefix: `o.`
 
@@ -16,10 +17,12 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
   * Code
     * Base Conversion
     * Logic Parsing
+    * Write and execute code
   * Game
     * Connect Four
     * Hangman
     * Cards Against Humanity
+    * Trivia
   * Image
     * Gifs
     * Avatars
@@ -27,10 +30,18 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
   * Internet
     * Anything you can find on the internet, you can find here
     * IMDb
+    * Current Weather and the Forecast for the next 7 days!
+  * Math (*yes it's back*)
+    * Integrals
+    * Derivatives
+    * Area under a curve
+    * Factoring
+    * Zeroes of a function
   * Miscellaneous
     * Things that just don't quite fit into anything
     * Chuck Norris jokes
     * Find out what a color is from either HEX, HSL, RGB, or CMYK
+    * Dad Jokes
   * NSFW
     * Naughty commands (18+)
     * Can only be run in an NSFW channel (It just makes sense)
@@ -40,3 +51,10 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
 
 ## Add to Server
 If you don't already have Omega Psi in your server, [here](https://discordapp.com/oauth2/authorize?client_id=535587516816949248&scope=bot&permissions=519232).
+
+## Make Suggestion or Report a Bug
+The nice thing about Omega Psi is that there are two commands specifically for that!
+`o.suggest` will allow you to make a suggestion for Omega Psi!
+`o.bug` will let you report a bug in the bot as well!
+For both of these commands, as soon as developer marks it as seen, you will be able to be notified of it immediately
+ * As long as you allow messages from Omega Psi
