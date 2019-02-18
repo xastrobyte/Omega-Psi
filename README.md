@@ -54,7 +54,10 @@ If you don't already have Omega Psi in your server, [here](https://discordapp.co
 
 ## Make Suggestion or Report a Bug
 The nice thing about Omega Psi is that there are two commands specifically for that!
+
 `o.suggest` will allow you to make a suggestion for Omega Psi!
+
 `o.bug` will let you report a bug in the bot as well!
+
 For both of these commands, as soon as developer marks it as seen, you will be able to be notified of it immediately
  * As long as you allow messages from Omega Psi
