@@ -1,13 +1,13 @@
-import asyncio, discord
+import asyncio, base64, discord, random, requests
 
 from discord.ext import commands
-from discord.ext.commands import is_nsfw, guild_only
 from random import choice as choose
 
 from category import errors
 from category.globals import PRIMARY_EMBED_COLOR
-from category.predicates import is_developer
+from category.predicates import is_nsfw_and_guild
 
+from database import loop
 from database import database
 
 from .connect_four import ConnectFour
@@ -42,6 +42,49 @@ TIC_TAC_TOE_REACTIONS = [
     "❌"
 ]
 
+TRIVIA_REACTIONS = [
+    "1\u20e3",
+    "2\u20e3",
+    "3\u20e3",
+    "4\u20e3",
+    "❌"
+]
+
+TRIVIA_CATEGORIES = {
+    "Computers": {
+        "shortcuts": ["comp"],
+        "value": 18
+    },
+    "History": {
+        "shortcuts": ["hist"],
+        "value": 23
+    },
+    "Comics": {
+        "shortcuts": ["comic"],
+        "value": 29
+    },
+    "Video Games": {
+        "shortcuts": ["games"],
+        "value": 15
+    },
+    "Mathematics": {
+        "shortcuts": ["math"],
+        "value": 19
+    },
+    "Film": {
+        "shortcuts": ["film", "movies"],
+        "value": 11
+    },
+    "General": {
+        "shortcuts": ["general"],
+        "value": 9
+    },
+    "Any": {
+        "shortcuts": ["any"],
+        "value": 0
+    }
+}
+
 RED_PIECE = "🔴"
 X_PIECE = "❌"
 
@@ -53,6 +96,8 @@ REACT_100 = "💯"
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 RPS_ACTIONS = ["rock", "paper", "scissors"]
+
+TRIVIA_API_CALL = "https://opentdb.com/api.php?amount={}&encode=base64&category={}"
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -99,12 +144,13 @@ class Game:
         # Get member if it is not None
         if member != None:
             stats = {
-                ":skull_crossbones: Hangman": await database.get_hangman(member),
-                ":cyclone: Scramble": await database.get_scramble(member),
-                ":scissors: RPS": await database.get_rps(member),
-                ":x: Tic Tac Toe": await database.get_tic_tac_toe(member),
-                ":red_circle: Connect Four": await database.get_connect_four(member),
-                "<:cah:540281486633336862> CAH": await database.get_cards_against_humanity(member)
+                ":skull_crossbones: Hangman": await database.users.get_hangman(member),
+                ":cyclone: Scramble": await database.users.get_scramble(member),
+                ":scissors: RPS": await database.users.get_rps(member),
+                ":x: Tic Tac Toe": await database.users.get_tic_tac_toe(member),
+                ":red_circle: Connect Four": await database.users.get_connect_four(member),
+                "<:cah:540281486633336862> CAH": await database.users.get_cards_against_humanity(member),
+                ":question: Trivia": await database.users.get_trivia(member)
             }
 
             embed = discord.Embed(
@@ -122,7 +168,10 @@ class Game:
                         stat, 
                         0 if won == 0 else (won if lost == 0 else round(won / lost, 2))
                     ),
-                    value = "Won: {}\nLost: {}".format(won, lost)
+                    value = "{}: {}\n{}: {}".format(
+                        "Won" if stat.find("Trivia") == -1 else "Correct", won, 
+                        "Lost" if stat.find("Trivia") == -1 else "Incorrect", lost
+                    )
                 )
 
             await ctx.send(
@@ -205,7 +254,7 @@ class Game:
                         delete_after = 5
                     )
 
-                    await database.update_hangman(game.get_player(), True)
+                    await database.users.update_hangman(game.get_player(), True)
                     break
                 
                 # Guess was not a letter
@@ -239,7 +288,7 @@ class Game:
                         delete_after = 5
                     )
 
-                    await database.update_hangman(game.get_player(), False)
+                    await database.users.update_hangman(game.get_player(), False)
                     break
                 
                 # Guess was a win
@@ -257,7 +306,7 @@ class Game:
                         delete_after = 5
                     )
 
-                    await database.update_hangman(game.get_player(), True)
+                    await database.users.update_hangman(game.get_player(), True)
                     break
                 
                 # Guess was a correct/incorrect letter
@@ -346,7 +395,7 @@ class Game:
                         delete_after = 5
                     )
 
-                    await database.update_scramble(ctx.author, guess)
+                    await database.users.update_scramble(ctx.author, guess)
 
             except asyncio.TimeoutError:
 
@@ -362,7 +411,7 @@ class Game:
                     delete_after = 5
                 )
 
-                await database.update_scramble(ctx.author, False)
+                await database.users.update_scramble(ctx.author, False)
     
     @commands.command(
         name = "rps",
@@ -409,7 +458,7 @@ class Game:
                 (bot_action == "scissors" and user_action == "rock")
             ):
                 title = "You Won!"
-                await database.update_rps(ctx.author, True)
+                await database.users.update_rps(ctx.author, True)
             
             elif (
                 (bot_action == "rock" and user_action == "scissors") or 
@@ -417,7 +466,7 @@ class Game:
                 (bot_action == "scissors" and user_action == "paper")
             ):
                 title = "You Lost!"
-                await database.update_rps(ctx.author, True)
+                await database.users.update_rps(ctx.author, True)
             
             embed = discord.Embed(
                 title = title,
@@ -429,6 +478,221 @@ class Game:
             embed = embed,
             delete_after = 5
         )
+    
+    @commands.command(
+        name = "trivia",
+        aliases = ["triv"],
+        description = "Allows you to play a trivia game where you can decide how many questions to answer (Max 30. Default 10).",
+        cog_name = "Game"
+    )
+    async def trivia(self, ctx, amount : int = 10):
+
+        # Check if amount is greater than 30
+        if amount > 30:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You can answer no more than 30 trivia questions."
+                ),
+                delete_after = 5
+            )
+        
+        # Check if amount is less than 1
+        elif amount < 1:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to answer at least 1 trivia question."
+                ),
+                delete_after = 5
+            )
+        
+        else:
+
+            # Ask player which category they want
+            shortcuts = []
+            for category in TRIVIA_CATEGORIES:
+                shortcuts += TRIVIA_CATEGORIES[category]["shortcuts"]
+
+            embed = discord.Embed(
+                title = "Choose a Category",
+                description = "\n".join([
+                    "{} (`{}`)".format(
+                        category,
+                        ", ".join(TRIVIA_CATEGORIES[category]["shortcuts"])
+                    )
+                    for category in TRIVIA_CATEGORIES
+                ]),
+                colour = PRIMARY_EMBED_COLOR
+            )
+
+            await ctx.send(
+                embed = embed
+            )
+
+            # Wait for response
+            def check_message(message):
+                return ctx.author.id == message.author.id and message.channel.id == ctx.channel.id and (message.content.lower() in shortcuts or message.content.lower() in [category.lower() for category in list(TRIVIA_CATEGORIES.keys())])
+            
+            try:
+                message = await self.bot.wait_for("message", check = check_message, timeout = 30)
+                category = message.content.lower()
+                try: await message.delete()
+                except: pass
+
+                # Player responded in time
+                for target in TRIVIA_CATEGORIES:
+                    if category in TRIVIA_CATEGORIES[target]["shortcuts"] or category == target.lower():
+                        category = TRIVIA_CATEGORIES[target]["value"]
+                        break
+                
+                # Call Trivia API
+                response = await loop.run_in_executor(None,
+                    requests.get,
+                    TRIVIA_API_CALL.format(
+                        amount,
+                        category
+                    )
+                )
+                response = response.json()
+
+                # Turn each question into something readable
+                questions = []
+                for q in response["results"]:
+
+                    # Decode question
+                    question = base64.b64decode(q["question"].encode()).decode()
+
+                    # Decode correct answer
+                    correct_answer = base64.b64decode(q["correct_answer"].encode()).decode()
+
+                    # Decode incorrect answers
+                    incorrect_answers = []
+                    for incorrect in q["incorrect_answers"]:
+                        incorrect_answers.append(base64.b64decode(incorrect.encode()).decode())
+                    
+                    # Add all answers to single list and shuffle
+                    answers = incorrect_answers + [correct_answer]
+                    random.shuffle(answers)
+                    correct = answers.index(correct_answer)
+
+                    questions.append({
+                        "question": question,
+                        "answers": answers,
+                        "correct": correct
+                    })
+                
+                # Send initial message
+                current = 0
+                msg = await ctx.send(
+                    embed = discord.Embed(
+                        title = questions[current]["question"],
+                        description = "\n".join([
+                            "**{}.)** {}".format(
+                                index + 1,
+                                questions[current]["answers"][index]
+                            )
+                            for index in range(len(questions[current]["answers"]))
+                        ]),
+                        colour = PRIMARY_EMBED_COLOR
+                    )
+                )
+
+                for index in range(len(questions[current]["answers"])):
+                    await msg.add_reaction(TRIVIA_REACTIONS[index])
+                await msg.add_reaction(QUIT)
+
+                # Let player play until finished
+                amt_correct = 0
+                while True:
+                    question = questions[current]
+                    
+                    # Wait for reaction
+                    def check_reaction(reaction, user):
+                        return reaction.message.id == msg.id and user.id == ctx.author.id and str(reaction) in TRIVIA_REACTIONS
+                    
+                    done, pending = await asyncio.wait([
+                        self.bot.wait_for("reaction_add", check = check_reaction),
+                        self.bot.wait_for("reaction_remove", check = check_reaction)
+                    ], return_when = asyncio.FIRST_COMPLETED)
+                    reaction, user = done.pop().result()
+
+                    # Cancel all futures
+                    for future in pending:
+                        future.cancel()
+
+                    # Reaction is quit
+                    if str(reaction) == QUIT:
+                        await msg.delete()
+                        await ctx.send(
+                            embed = discord.Embed(
+                                title = "Game Quit",
+                                description = "The game was successfully quit.",
+                                colour = PRIMARY_EMBED_COLOR
+                            ),
+                            delete_after = 5
+                        )
+                        break
+                    
+                    # See if reaction was correct or incorrect
+                    correct = TRIVIA_REACTIONS.index(str(reaction)) == question["correct"]
+                    await msg.edit(
+                        embed = discord.Embed(
+                            title = "Incorrect." if not correct else "Correct!",
+                            description = "Nope! The correct answer was *{}*.".format(
+                                question["answers"][question["correct"]]
+                            ) if not correct else "You got that one right!",
+                            colour = 0x800000 if not correct else 0x008000
+                        )
+                    )
+
+                    # Update user trivia score
+                    await database.users.update_trivia(ctx.author, correct)
+                    amt_correct += 1 if correct else 0
+                    current += 1
+                    if current < amount:
+                        question = questions[current]
+
+                    # Wait 3 seconds before going to next question
+                    await asyncio.sleep(3)
+                    if current >= amount:
+                        await msg.delete()
+                        break
+
+                    # Update embed
+                    await msg.edit(
+                        embed = discord.Embed(
+                            title = question["question"],
+                            description = "\n".join([
+                                "**{}.)** {}".format(
+                                    index + 1,
+                                    question["answers"][index]
+                                )
+                                for index in range(len(question["answers"]))
+                            ]),
+                            colour = PRIMARY_EMBED_COLOR
+                        )
+                    )
+                
+                # Game is over; Show how many questions user got right
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Results",
+                        description = "You got {} correct ({}%)".format(
+                            amt_correct,
+                            round((amt_correct / amount) * 100, 2)
+                        ),
+                        colour = PRIMARY_EMBED_COLOR
+                    ),
+                    delete_after = 10
+                )
+
+            # Player took too long to choose a category
+            except asyncio.TimeoutError:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "You took too long to choose a category."
+                    ),
+                    delete_after = 5
+                )
     
     @commands.command(
         name = "ticTacToe", 
@@ -554,8 +818,8 @@ class Game:
 
                         # If the user was in a game with a real person, it counts as forfeiture
                         if game.get_opponent() != None:
-                            await database.update_tic_tac_toe(game.get_challenger(), False)
-                            await database.update_tic_tac_toe(game.get_opponent(), True)
+                            await database.users.update_tic_tac_toe(game.get_challenger(), False)
+                            await database.users.update_tic_tac_toe(game.get_opponent(), True)
 
                         await ctx.send(
                             embed = discord.Embed(
@@ -621,9 +885,9 @@ class Game:
                         elif result in [True, False]:
 
                             # Update wins/losses
-                            await database.update_tic_tac_toe(game.get_challenger(), result)
+                            await database.users.update_tic_tac_toe(game.get_challenger(), result)
                             if game.get_opponent() != None:
-                                await database.update_tic_tac_toe(game.get_challenger(), not result)
+                                await database.users.update_tic_tac_toe(game.get_challenger(), not result)
                             
                             # Edit embed
                             await game.get_message().edit(
@@ -821,8 +1085,8 @@ class Game:
 
                         # If the user was in a game with a real person, it counts as forfeiture
                         if game.get_opponent() != None:
-                            await database.update_connect_four(game.get_challenger(), False)
-                            await database.update_connect_four(game.get_opponent(), True)
+                            await database.users.update_connect_four(game.get_challenger(), False)
+                            await database.users.update_connect_four(game.get_opponent(), True)
 
                         await ctx.send(
                             embed = discord.Embed(
@@ -888,9 +1152,9 @@ class Game:
                         elif result in [True, False]:
 
                             # Update wins/losses
-                            await database.update_connect_four(game.get_challenger(), result)
+                            await database.users.update_connect_four(game.get_challenger(), result)
                             if game.get_opponent() != None:
-                                await database.update_connect_four(game.get_challenger(), not result)
+                                await database.users.update_connect_four(game.get_challenger(), not result)
                             
                             # Edit embed
                             await game.get_message().edit(
@@ -972,11 +1236,10 @@ class Game:
     @commands.command(
         name = "cardsAgainstHumanity",
         aliases = ["cah"],
-        description = "Allows you to play Cards Against Humanity with other people. (STILL IN DEVELOPMENT)",
+        description = "Allows you to play Cards Against Humanity with other people.",
         cog_name = "Game"
     )
-    @guild_only()
-    @is_nsfw()
+    @commands.check(is_nsfw_and_guild)
     async def cards_against_humanity(self, ctx):
 
         # Wait for players (max of 5)
@@ -1031,7 +1294,7 @@ class Game:
         if play_game:
             
             # Get a list of cards from database
-            cah_cards = await database.get_cards_against_humanity_cards()
+            cah_cards = await database.data.get_cards_against_humanity_cards()
             black_cards = cah_cards["blackCards"]
             white_cards = cah_cards["whiteCards"]
 
@@ -1064,7 +1327,7 @@ class Game:
                     # Update all scores
                     winner = None
                     for player in game.get_players():
-                        await database.update_cards_against_humanity(player.get_player(), player.get_wins() >= 7)
+                        await database.users.update_cards_against_humanity(player.get_player(), player.get_wins() >= 7)
                         if player.get_wins() >= 7:
                             winner = player.get_player()
                     
@@ -1118,26 +1381,6 @@ class Game:
                         "This command can only be run in guilds. Not in DMs."
                     )
                 )
-    
-    # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    @commands.command(
-        name = "addHangman",
-        description = "Allows you to add a word/phrase to the Hangman list (DEV ONLY)",
-        cog_name = "Game"
-    )
-    @commands.check(is_developer)
-    async def add_hangman(self, ctx):
-        pass
-    
-    @commands.command(
-        name = "addScramble",
-        description = "Allows you to add a word/phrase to the Scramble list (DEV ONLY)",
-        cog_name = "Game"
-    )
-    @commands.check(is_developer)
-    async def add_scramble(self, ctx):
-        pass
     
 def setup(bot):
     bot.add_cog(Game(bot))
