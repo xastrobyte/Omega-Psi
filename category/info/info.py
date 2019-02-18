@@ -8,7 +8,6 @@ from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD
 from category.predicates import can_manage_guild, guild_only
 from database import database as db
 from database import loop
-from util.string import datetime_to_string
 
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
 
