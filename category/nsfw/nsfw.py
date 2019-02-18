@@ -27,7 +27,7 @@ class NSFW:
         description = "Sends a random picture of a nice set of tits.",
         cog_name = "NSFW"
     )
-    @is_nsfw_or_private()
+    @commands.check(is_nsfw_or_private)
     async def boobs(self, ctx):
 
         await ctx.send(
@@ -40,7 +40,7 @@ class NSFW:
         description = "Sends a random picture of a nice ass.",
         cog_name = "NSFW"
     )
-    @is_nsfw_or_private()
+    @commands.check(is_nsfw_or_private)
     async def booty(self, ctx):
         
         await ctx.send(
@@ -53,7 +53,7 @@ class NSFW:
         description = "Get some of that lesbian action.",
         cog_name = "NSFW"
     )
-    @is_nsfw_or_private()
+    @commands.check(is_nsfw_or_private)
     async def lesbian(self, ctx):
         
         await ctx.send(
@@ -66,7 +66,7 @@ class NSFW:
         description = "Girls gone wild.",
         cog_name = "NSFW"
     )
-    @is_nsfw_or_private()
+    @commands.check(is_nsfw_or_private)
     async def gone_wild(self, ctx):
         
         await ctx.send(
@@ -78,7 +78,7 @@ class NSFW:
         description = "Gives you the top 5 urban dictionary entries for a term.",
         cog_name = "NSFW"
     )
-    @is_nsfw_or_private()
+    @commands.check(is_nsfw_or_private)
     async def urban(self, ctx, *, phrase = None):
         
         # Check if phrase is None; Throw error message
