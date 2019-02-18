@@ -1,6 +1,7 @@
 import asyncio, discord, requests, typing
 from datetime import datetime
 from discord.ext import commands
+from functools import partial
 from random import randint
 
 import database
@@ -20,6 +21,7 @@ COLOR_HEX_URL = "http://thecolorapi.com/id?hex={}&format=json"
 COLOR_RGB_URL = "http://thecolorapi.com/id?rgb={},{},{}&format=json"
 COLOR_HSL_URL = "http://thecolorapi.com/id?hsl={},{}%,{}%&format=json"
 COLOR_CMYK_URL = "http://thecolorapi.com/id?cmyk={},{},{},{}&format=json"
+DAD_JOKE_API = "https://icanhazdadjoke.com"
 NUMBER_FACT_RANDOM_URL = "http://numbersapi.com/random/trivia?json"
 NUMBER_FACT_NUMBER_URL = "http://numbersapi.com/{}?json"
 TRONALD_DUMP_QUOTE = "https://api.tronalddump.io/random/quote"
@@ -213,6 +215,35 @@ class Misc:
             await ctx.send(
                 embed = embed
             )
+        
+    @commands.command(
+        name = "dadJoke",
+        aliases = ["dad"],
+        description = "Gives you a random dad joke.",
+        cog_name = "Misc"
+    )
+    async def dad_joke(self, ctx):
+
+        # Call dad joke API
+        response = await database.loop.run_in_executor(None,
+            partial(
+                requests.get,
+                DAD_JOKE_API,
+                headers = {
+                    "User-Agent": "Omega Psi (https://repl.it/@FellowHashbrown/Omega-Psi)",
+                    "Accept": "application/json"
+                }
+            )
+        )
+        response = response.json()
+
+        await ctx.send(
+            embed = discord.Embed(
+                title = "Dad Joke",
+                description = response["joke"],
+                colour = PRIMARY_EMBED_COLOR
+            )
+        )
     
     @commands.command(
         name = "emojify",
