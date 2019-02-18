@@ -1,3 +1,7 @@
+[![Discord Bots](https://discordbots.org/api/widget/owner/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://discordbots.org/api/widget/status/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://discordbots.org/api/widget/servers/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://discordbots.org/api/widget/lib/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 Support Server: [![Discord Server](https://img.shields.io/discord/521185038969208850.svg)](https://discord.gg/W8yVrHt)
 
 # Omega Psi
