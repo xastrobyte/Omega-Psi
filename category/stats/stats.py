@@ -1,11 +1,12 @@
-import asyncio, discord, os, requests
+import asyncio, discord, os, requests, json
 from datetime import datetime
 from discord.ext import commands
 from functools import partial
 
 import database
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import get_embed_color
 
 from .call_of_duty import call_of_duty
 from .fortnite import add_fortnite_game_type
@@ -37,7 +38,7 @@ LEAGUE_ICON_URL = "http://ddragon.leagueoflegends.com/cdn/{}/img/profileicon/{}.
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Stats:
+class Stats(commands.Cog, name = "Stats"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -116,7 +117,7 @@ class Stats:
                             bo3["data"]["metadata"]["platformUserHandle"],
                             "Xbox" if bo3["data"]["metadata"]["platformId"] == 1 else "PSN"
                         ),
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         timestamp = datetime.now()
                     ).set_author(
                         name = bo3["data"]["metadata"]["platformUserHandle"],
@@ -207,7 +208,7 @@ class Stats:
                             bo4["data"]["metadata"]["platformUserHandle"],
                             "Xbox" if bo4["data"]["metadata"]["platformId"] == 1 else "PSN"
                         ),
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         timestamp = datetime.now()
                     ).set_author(
                         name = bo4["data"]["metadata"]["platformUserHandle"],
@@ -280,6 +281,7 @@ class Stats:
                     )
                 )
                 fortnite = fortnite.json()
+                print(json.dumps(fortnite, indent = 4))
 
                 # See if an error was given.
                 if "error" in fortnite:
@@ -335,7 +337,7 @@ class Stats:
                     embed = discord.Embed(
                         title = "Fortnite Stats",
                         description = fortnite["epicUserHandle"] + " - " + fortnite["platformNameLong"],
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         timestamp = datetime.now()
                     ).set_author(
                         name = fortnite["epicUserHandle"],
@@ -437,7 +439,7 @@ class Stats:
                 embed = discord.Embed(
                     title = "League of Legends Stats",
                     description = " ",
-                    colour = PRIMARY_EMBED_COLOR,
+                    colour = await get_embed_color(ctx.author),
                     timestamp = datetime.fromtimestamp(int(leagueMatchJson["gameCreation"]) / 1000)
                 ).set_author(
                     name = leagueJson["name"],
