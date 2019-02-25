@@ -1,29 +1,28 @@
-import asyncio, discord, requests, typing
+import asyncio, discord, pytz, requests, typing
 from datetime import datetime
 from discord.ext import commands
 from functools import partial
-from random import randint
+from random import randint, choice
 
-import database
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, FIELD_THRESHOLD
+from category.globals import MESSAGE_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, FIELD_THRESHOLD
+from category.globals import get_embed_color
 from category.predicates import guild_only
 
-from util.string import timestamp_to_datetime, datetime_to_string
+from database import loop
+from database import database
 
-from .color import process_color
+from util.string import timestamp_to_datetime, datetime_to_string
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ADVICE_URL = "https://api.adviceslip.com/advice"
 CHUCK_NORRIS_URL = "https://api.chucknorris.io/jokes/random"
-COLOR_HEX_URL = "http://thecolorapi.com/id?hex={}&format=json"
-COLOR_RGB_URL = "http://thecolorapi.com/id?rgb={},{},{}&format=json"
-COLOR_HSL_URL = "http://thecolorapi.com/id?hsl={},{}%,{}%&format=json"
-COLOR_CMYK_URL = "http://thecolorapi.com/id?cmyk={},{},{},{}&format=json"
+COIT_URL = "https://coit.pw/{}"
 DAD_JOKE_API = "https://icanhazdadjoke.com"
 NUMBER_FACT_RANDOM_URL = "http://numbersapi.com/random/trivia?json"
 NUMBER_FACT_NUMBER_URL = "http://numbersapi.com/{}?json"
+TODAY_HISTORY_URL = "https://history.muffinlabs.com/date/{}/{}"
 TRONALD_DUMP_QUOTE = "https://api.tronalddump.io/random/quote"
 LLAMAS_API = "https://www.fellowhashbrown.com/api/llamas?episode={}&fullScript={}"
 
@@ -54,7 +53,7 @@ SYMBOLS = {
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Misc:
+class Misc(commands.Cog, name = "Misc"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -68,7 +67,7 @@ class Misc:
     async def advice(self, ctx):
         
         # Get the advice
-        advice = await database.loop.run_in_executor(None,
+        advice = await loop.run_in_executor(None,
             requests.get,
             ADVICE_URL
         )
@@ -78,7 +77,7 @@ class Misc:
             embed = discord.Embed(
                 title = "Advice Number {}".format(advice["slip"]["slip_id"]),
                 description = advice["slip"]["advice"],
-                colour = PRIMARY_EMBED_COLOR,
+                colour = await get_embed_color(ctx.author),
                 timestamp = datetime.now()
             ).set_footer(
                 text = "Advice Slip API"
@@ -93,7 +92,7 @@ class Misc:
     async def chuck_norris(self, ctx):
         
         # Get the joke; and URL
-        chuckNorrisJson = await database.loop.run_in_executor(None,
+        chuckNorrisJson = await loop.run_in_executor(None,
             requests.get,
             CHUCK_NORRIS_URL
         )
@@ -103,7 +102,7 @@ class Misc:
             embed = discord.Embed(
                 name = "Chuck Norris",
                 description = chuckNorrisJson["value"],
-                colour = PRIMARY_EMBED_COLOR,
+                colour = await get_embed_color(ctx.author),
                 timestamp = datetime.now()
             ).set_author(
                 name = "Chuck Norris Joke",
@@ -115,102 +114,37 @@ class Misc:
     
     @commands.command(
         name = "color",
-        description = "Gives you the information about a color given either the HEX, RGB, HSL, or CMYK.",
+        description = "Gives you the information about a color given the HEX code.",
         cog_name = "Misc"
     )
-    async def color(self, ctx, color_type = None, data1 = None, data2 = None, data3 = None, data4 = None):
+    async def color(self, ctx, hex_code = None):
 
-        # Check if color type is not valid; Throw error message
-        if color_type.lower() not in ["hex", "rgb", "hsl", "cmyk"]:
+        # Check if hex_code is None; Throw error message
+        if hex_code == None:
             await ctx.send(
                 embed = errors.get_error_message(
-                    "The color type you gave was invalid."
+                    "You need to specify the hex code for the color."
                 ),
                 delete_after = 5
             )
+        
+        # Check if hex_code is not valid hex
+        elif len(hex_code) > 8 or len([char for char in hex_code if char not in "0123456789abcdef"]) > 0:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The hex code you gave is an invalid hex code."
+                )
+            )
 
-        # Color type is valid
+        # Color is valid
         else:
-            
-            # HEX Color Type
-            if color_type == "hex":
-
-                # HEX has only 1 parameter
-                if data1 == None:
-                    embed = errors.get_error_message(
-                        "You need the HEX code for this color."
-                    )
-
-                else:
-                    response = await database.loop.run_in_executor(None,
-                        requests.get,
-                        COLOR_HEX_URL.format(
-                            data1
-                        )
-                    )
-                    response = response.json()
-
-                    embed = process_color(response)
-
-            # RGB Color Type
-            elif color_type == "rgb":
-
-                # RGB has only 3 parameters
-                if data1 == data2 == data3 == None:
-                    embed = errors.get_error_message(
-                        "You need the rgb value for this color."
-                    )
-
-                else:
-                    response = await database.loop.run_in_executor(None,
-                        requests.get,
-                        COLOR_RGB_URL.format(
-                            data1, data2, data3
-                        )
-                    )
-                    response = response.json()
-
-                    embed = process_color(response)
-            
-            # HSL Color Type
-            elif color_type == "hsl":
-
-                # HSL has only 3 parameters
-                if data1 == data2 == data3 == None:
-                    embed = errors.get_error_message(
-                        "You need the hsl value for this color."
-                    )
-
-                else:
-                    response = await database.loop.run_in_executor(None,
-                        requests.get,
-                        COLOR_HSL_URL.format(
-                            data1, data2, data3
-                        )
-                    )
-                    response = response.json()
-
-                    embed = process_color(response)
-            
-            # CMYK Color Type
-            elif color_type == "cmyk":
-
-                # CMYK has only 4 parameters
-                if data1 == data2 == data3 == data4 == None:
-                    embed = errors.get_error_message(
-                        "You need the cmyk value for this color."
-                    )
-                
-                else:
-                    response = await database.loop.run_in_executor(None,
-                        requests.get,
-                        COLOR_CMYK_URL.format(
-                            data1, data2, data3, data4
-                        )
-                    )
-                    response = response.json()
-
-                    embed = process_color(response)
+            embed = discord.Embed(
+                title = "#{}".format(hex_code.upper()),
+                description = "_ _",
+                colour = eval("0x{}".format(hex_code[:6])) # only get first 6 hex digits for embed color
+            ).set_image(
+                url = COIT_URL.format(hex_code)
+            )
         
             await ctx.send(
                 embed = embed
@@ -225,7 +159,7 @@ class Misc:
     async def dad_joke(self, ctx):
 
         # Call dad joke API
-        response = await database.loop.run_in_executor(None,
+        response = await loop.run_in_executor(None,
             partial(
                 requests.get,
                 DAD_JOKE_API,
@@ -241,7 +175,7 @@ class Misc:
             embed = discord.Embed(
                 title = "Dad Joke",
                 description = response["joke"],
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
         )
     
@@ -279,8 +213,75 @@ class Misc:
             )
     
     @commands.command(
+        name = "todayInHistory",
+        aliases = ["todayHistory", "today"],
+        description = "Shows you a random fact about something that happened today in history.",
+        cog_name = "Misc"
+    )
+    async def today(self, ctx):
+
+        # Get today's date (Mountain Timezone)
+        today = datetime.now().astimezone(pytz.timezone("US/Mountain"))
+        month = today.month
+        day = today.day
+
+        # Call API
+        response = await loop.run_in_executor(None,
+            requests.get,
+            TODAY_HISTORY_URL.format(
+                month, day
+            )
+        )
+        response = response.json()
+
+        # Get wikipedia entry url
+        url = response["url"]
+        date = response["date"]
+
+        # Get a random death, random birth, and a random event
+        event = choice(response["data"]["Events"])
+        birth = choice(response["data"]["Births"])
+        death = choice(response["data"]["Deaths"])
+
+        fields = {
+            "Event": "[**{}**]({})\n{}".format(
+                event["year"],
+                event["links"][0]["link"],
+                event["text"]
+            ),
+            "Birth": "[**{}**]({})\n{}".format(
+                birth["year"],
+                birth["links"][0]["link"],
+                birth["text"]
+            ),
+            "Death": "[**{}**]({})\n{}".format(
+                death["year"],
+                death["links"][0]["link"],
+                death["text"]
+            )
+        }
+
+        # Add data to an embed
+        embed = discord.Embed(
+            title = date,
+            description = "_ _",
+            colour = await get_embed_color(ctx.author),
+            url = url
+        )
+
+        for field in fields:
+            embed.add_field(
+                name = field,
+                value = fields[field]
+            )
+        
+        await ctx.send(
+            embed = embed
+        )
+    
+    @commands.command(
         name = "llamas",
-        description = "Gives you a random quote from Llamas With Hats. You can also get the full script of an episode.",
+        description = "Gives you a random quote from Llamas With Hats. You can also get the full script of an episode by adding \"script\" to the end of the command.",
         cog_name = "Misc"
     )
     async def llamas(self, ctx, episode : int = None, script = None):
@@ -291,10 +292,10 @@ class Misc:
         
         # Check if episode is valid
         if episode >= 1 and episode <= 12:
-            script = False if script == None else (script in ["full", "script", "yes"])
+            script = False if script == None else (script in ["full", "script", "yes", "true", "t"])
 
             # Make API call
-            response = await database.loop.run_in_executor(None,
+            response = await loop.run_in_executor(None,
                 requests.get,
                 LLAMAS_API.format(
                     episode, script if script else ""
@@ -314,7 +315,7 @@ class Misc:
                 embed = discord.Embed(
                     title = "Episode {}".format(episode),
                     description = description,
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
 
                 if image != None:
@@ -352,7 +353,7 @@ class Misc:
                         ) if len(fields) > 1 else ""
                     ),
                     description = fields[0],
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
 
                 if image != None:
@@ -430,7 +431,7 @@ class Misc:
                             ) if len(fields) > 1 else ""
                         ),
                         description = fields[current],
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
 
                     if image != None:
@@ -460,7 +461,7 @@ class Misc:
             target_url = NUMBER_FACT_NUMBER_URL.format(number)
         
         # Get the number fact
-        number_fact = await database.loop.run_in_executor(None,
+        number_fact = await loop.run_in_executor(None,
             requests.get,
             target_url
         )
@@ -470,12 +471,55 @@ class Misc:
             embed = discord.Embed(
                 title = "Fact about the number *{}*".format(number_fact["number"]),
                 description = number_fact["text"],
-                colour = PRIMARY_EMBED_COLOR,
+                colour = await get_embed_color(ctx.author),
                 timestamp = datetime.now()
             ).set_footer(
                 text = "NumbersAPI"
             )
         )
+    
+    @commands.command(
+        name = "setEmbedColor",
+        aliases = ["setColor", "setEmbed", "embedColor", "embed"],
+        description = "Sets the color of the embed for all embeds that are sent. If you call the command with no HEX code, the color will be reset to the default.",
+        cog_name = "Misc"
+    )
+    async def set_embed_color(self, ctx, hex_code = None):
+
+        # Check if resetting
+        if hex_code == None:
+            await database.users.set_embed_color(ctx.author, None)
+
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Embed Color Reset!",
+                    description = "Your embed color was reset to the default.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+
+        # Not resetting, setting color
+        else:
+
+            # Check if color is a valid HEX color
+            if len(hex_code) == 6 and len([char for char in hex_code.lower() if char not in "0123456789abcdef"]) == 0:
+                await database.users.set_embed_color(ctx.author, eval("0x{}".format(hex_code)))
+
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Embed Color Set!",
+                        description = "Your embed color was set to #{}".format(hex_code),
+                        colour = await get_embed_color(ctx.author)
+                    )
+                )
+            
+            # Color is not valid
+            else:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "That is not a valid HEX color code."
+                    )
+                )
     
     @commands.command(
         name = "tronaldDumpQuote",
@@ -486,7 +530,7 @@ class Misc:
     async def tronald_dump_quote(self, ctx):
         
         # Get the quote
-        quote = await database.loop.run_in_executor(None,
+        quote = await loop.run_in_executor(None,
             requests.get,
             TRONALD_DUMP_QUOTE
         )
@@ -497,7 +541,7 @@ class Misc:
             embed = discord.Embed(
                 title = "Donald Trump Quote",
                 description = quote["value"],
-                colour = PRIMARY_EMBED_COLOR,
+                colour = await get_embed_color(ctx.author),
                 timestamp = timestamp_to_datetime(quote["appeared_at"]),
                 url = quote["_embedded"]["source"][0]["url"]
             ).set_author(
@@ -531,7 +575,7 @@ class Misc:
         embed = discord.Embed(
             name = "Guild Info",
             description = " ",
-            colour = PRIMARY_EMBED_COLOR
+            colour = await get_embed_color(ctx.author)
         ).set_footer(
             text = "Server Name: {} | Server ID: {}".format(ctx.guild.name, ctx.guild.id)
         ).set_thumbnail(
@@ -632,7 +676,7 @@ class Misc:
             embed = discord.Embed(
                 name = "User Info",
                 description = " ",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             ).set_thumbnail(
                 url = user.avatar_url
             ).set_footer(
