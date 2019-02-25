@@ -27,7 +27,7 @@ class Hangman:
         "https://i.imgur.com/KBMsCp9.png"
     ]
 
-    def __init__(self, player, difficulty):
+    def __init__(self, player):
         """Creates a Hangman game for the specified player.
 
         Parameters:
@@ -36,7 +36,6 @@ class Hangman:
         """
 
         self._player = player
-        self._difficulty = difficulty
 
         self._guesses = 0
         self._found = []
@@ -83,8 +82,8 @@ class Hangman:
                 \"ping pong\"   --> \"_ _ _ _  _ _ _ _\"\n
                 \"apple\"       --> \"_ _ _ _ _\"\n
         """
-        self._word = await database.get_hangman_words()
-        self._word = choose(self._word[self._difficulty])["value"]
+        self._word = await database.data.get_hangman_words()
+        self._word = choose(self._word["words"])["value"].lower()
 
     def get_hangman_word(self):
 
@@ -103,7 +102,7 @@ class Hangman:
             if char < len(self._word) - 1:
                 newWord += " "
         
-        return "`{}`".format(newWord)
+        return "```\n{}```".format(newWord)
 
     def get_hangman(self):
         """Returns the Hangman ascii text depending on how many guesses there are.\n
@@ -111,7 +110,7 @@ class Hangman:
         guesses - The amount of guesses a user has made.\n
         """
 
-        """
+        # """
         hangman = (
             "```css\n" +
             "+----+    \n" +
@@ -128,18 +127,18 @@ class Hangman:
         )
 
         return hangman.format(
-            "0" if self._guesses >= 1 else " ",
-            "|" if self._guesses >= 2 else " ",
-            "\\" if self._guesses >= 3 else " ",
-            "/" if self._guesses >= 4 else " ",
-            "|" if self._guesses >= 5 else " ",
-            "/" if self._guesses >= 6 else " ",
-            "\\" if self._guesses >= 7 else " ",
-            "DEAD" if self._guesses >= 7 else "    "
+            "0" if self._fails >= 1 else " ",
+            "|" if self._fails >= 2 else " ",
+            "\\" if self._fails >= 3 else " ",
+            "/" if self._fails >= 4 else " ",
+            "|" if self._fails >= 5 else " ",
+            "/" if self._fails >= 6 else " ",
+            "\\" if self._fails >= 7 else " ",
+            "DEAD" if self._fails >= 8 else "    "
         )
-        """
+        # """
 
-        return Hangman.STAGES[self._fails]
+        # return Hangman.STAGES[self._fails]
 
     # Other Methods
 
@@ -156,7 +155,7 @@ class Hangman:
             return Hangman.WORD
 
         # Check if guess is already in found
-        elif guess in self._found:
+        elif guess in self._guessed:
             return Hangman.GUESSED
         
         # Check if guess is not in word
@@ -166,7 +165,7 @@ class Hangman:
             self._guesses += 1
 
             # Check if fail limit was reached
-            if self._fails == 7:
+            if self._fails >= 8:
                 return Hangman.FAILED
 
             return False
