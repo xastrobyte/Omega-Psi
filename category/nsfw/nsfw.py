@@ -3,7 +3,8 @@ from discord.ext import commands
 
 import database
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD
+from category.globals import FIELD_THRESHOLD
+from category.globals import get_embed_color
 from category.predicates import is_nsfw_or_private
 from util.string import split_text
 from util.discord import get_reddit_post
@@ -15,7 +16,7 @@ URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dic
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class NSFW:
+class Nsfw(commands.Cog, name = "Nsfw"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -25,7 +26,7 @@ class NSFW:
         name = "boobs",
         aliases = ["tits", "boobies"],
         description = "Sends a random picture of a nice set of tits.",
-        cog_name = "NSFW"
+        cog_name = "Nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def boobs(self, ctx):
@@ -38,7 +39,7 @@ class NSFW:
         name = "booty",
         aliases= ["ass"],
         description = "Sends a random picture of a nice ass.",
-        cog_name = "NSFW"
+        cog_name = "Nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def booty(self, ctx):
@@ -51,7 +52,7 @@ class NSFW:
         name = "lesbian",
         aliases= ["lesbians"],
         description = "Get some of that lesbian action.",
-        cog_name = "NSFW"
+        cog_name = "Nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def lesbian(self, ctx):
@@ -64,7 +65,7 @@ class NSFW:
         name = "goneWild",
         aliases= ["wild"],
         description = "Girls gone wild.",
-        cog_name = "NSFW"
+        cog_name = "Nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def gone_wild(self, ctx):
@@ -76,7 +77,7 @@ class NSFW:
     @commands.command(
         name = "urban",
         description = "Gives you the top 5 urban dictionary entries for a term.",
-        cog_name = "NSFW"
+        cog_name = "Nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def urban(self, ctx, *, phrase = None):
@@ -110,7 +111,7 @@ class NSFW:
                 embed = discord.Embed(
                     title = "{} Results Of `{}`".format("Top 5" if len(definitions) > 5 else "", phrase),
                     description = " ",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
 
                 # Add definitions
@@ -139,7 +140,8 @@ class NSFW:
                     embed = embed
                 )
 
-            except:
+            except Exception as e:
+                print(e)
                 await ctx.send(
                     embed = errors.get_error_message(
                         "There were no entries found for that phrase."
@@ -160,4 +162,4 @@ class NSFW:
             )
 
 def setup(bot):
-    bot.add_cog(NSFW(bot))
+    bot.add_cog(Nsfw(bot))
