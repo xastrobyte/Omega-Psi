@@ -6,8 +6,8 @@ from random import randint
 
 import database
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR
 from category.globals import add_scroll_reactions, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
+from category.globals import get_embed_color
 from category.internet.weather import weather, forecast
 from util.string import minutes_to_runtime
 
@@ -20,7 +20,7 @@ IMDB_LINK = "https://www.imdb.com/title/tt{}/?ref_=nv_sr_1"
 SUPERHERO_API_CALL = "https://superheroapi.com/api.php/{}/search/{}"
 TINYURL_API_CALL = "http://tinyurl.com/api-create.php?url={}"
 WEATHER_API_CALL = "https://api.apixu.com/v1/current.json?key={}&q={}"
-FORECAST_API_CALL = "https://api.apixu.com/v1/current.json?key={}&q={}&days=7"
+FORECAST_API_CALL = "https://api.apixu.com/v1/forecast.json?key={}&q={}&days=7"
 XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"
 XKCD_RECENT_API_CALL = "https://xkcd.com/info.0.json"
 
@@ -29,7 +29,7 @@ MARVEL_ICON = "http://thetechnews.com/wp-content/uploads/2018/03/2_The-latest-Ma
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Internet:
+class Internet(commands.Cog, name = "Internet"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -128,7 +128,7 @@ class Internet:
                 embed = discord.Embed(
                     title = title,
                     description = plotOutline,
-                    colour = PRIMARY_EMBED_COLOR,
+                    colour = await get_embed_color(ctx.author),
                     timestamp = datetime.now(),
                     url = IMDB_LINK.format(movie.movieID)
                 ).set_footer(
@@ -241,7 +241,7 @@ class Internet:
                 embed = discord.Embed(
                     title = title,
                     description = plotOutline,
-                    colour = PRIMARY_EMBED_COLOR,
+                    colour = await get_embed_color(ctx.author),
                     timestamp = datetime.now(),
                     url = IMDB_LINK.format(show.movieID)
                 ).set_footer(
@@ -320,7 +320,7 @@ class Internet:
                     embed = discord.Embed(
                         title = comic["safe_title"],
                         description = " ",
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         timestamp = datetime(int(comic["year"]), int(comic["month"]), int(comic["day"]))
                     ).set_image(
                         url = comic["img"]
@@ -386,7 +386,7 @@ class Internet:
                         embed = discord.Embed(
                             title = comic["safe_title"],
                             description = " ",
-                            colour = PRIMARY_EMBED_COLOR,
+                            colour = await get_embed_color(ctx.author),
                             timestamp = datetime(int(comic["year"]), int(comic["month"]), int(comic["day"]))
                         ).set_image(
                             url = comic["img"]
@@ -489,7 +489,7 @@ class Internet:
                             ) if superhero["biography"]["alter-egos"] != "No alter egos found." else ""
                         ),
                         description = " ",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     ).set_image(
                         url = superhero["image"]["url"]
                     )
@@ -608,7 +608,7 @@ class Internet:
                             ) if superhero["biography"]["alter-egos"] != "No alter egos found." else ""
                         ),
                         description = " ",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     ).set_image(
                         url = superhero["image"]["url"]
                     )
@@ -679,7 +679,7 @@ class Internet:
                     embed = discord.Embed(
                         title = "Your TinyURL link was generated!",
                         description = tinyurl,
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
 
@@ -746,7 +746,7 @@ class Internet:
             # Call API
             response = await database.loop.run_in_executor(None,
                 requests.get,
-                WEATHER_API_CALL.format(
+                FORECAST_API_CALL.format(
                     os.environ["WEATHER_API_KEY"],
                     location.replace(" ", "+")
                 )
@@ -775,22 +775,22 @@ class Internet:
                     title = "Forecast for {}".format(
                         fore_cast["location"]
                     ),
-                    description = fore_cast["forecasts"][current].pop("date"),
-                    colour = PRIMARY_EMBED_COLOR
+                    description = fore_cast["forecasts"][current]["date"],
+                    colour = await get_embed_color(ctx.author)
                 ).set_author(
                     name = "Apixu",
                     icon_url = "https://cdn.apixu.com/v4/images/logo.png",
                     url = "https://www.apixu.com"
                 ).set_thumbnail(
-                    url = fore_cast["forecasts"][current].pop("condition_icon")
+                    url = fore_cast["forecasts"][current]["condition_icon"]
                 )
 
                 for field in fore_cast["forecasts"][current]:
-
-                    embed.add_field(
-                        name = field,
-                        value = fore_cast["forecasts"][current][field]
-                    )
+                    if field not in ["date", "condition_icon"]:
+                        embed.add_field(
+                            name = field,
+                            value = fore_cast["forecasts"][current][field]
+                        )
 
                 # Send message and add reactions
                 msg = await ctx.send(
@@ -845,22 +845,22 @@ class Internet:
                         title = "Forecast for {}".format(
                             fore_cast["location"]
                         ),
-                        description = fore_cast["forecasts"][current].pop("date"),
-                        colour = PRIMARY_EMBED_COLOR
+                        description = fore_cast["forecasts"][current]["date"],
+                        colour = await get_embed_color(ctx.author)
                     ).set_author(
                         name = "Apixu",
                         icon_url = "https://cdn.apixu.com/v4/images/logo.png",
                         url = "https://www.apixu.com"
                     ).set_thumbnail(
-                        url = fore_cast["forecasts"][current].pop("condition_icon")
+                        url = fore_cast["forecasts"][current]["condition_icon"]
                     )
 
                     for field in fore_cast["forecasts"][current]:
-
-                        embed.add_field(
-                            name = field,
-                            value = fore_cast["forecasts"][current][field]
-                        )
+                        if field not in ["date", "condition_icon"]:
+                            embed.add_field(
+                                name = field,
+                                value = fore_cast["forecasts"][current][field]
+                            )
                     
                     await msg.edit(
                         embed = embed
