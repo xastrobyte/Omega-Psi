@@ -1,14 +1,15 @@
 import app, asyncio, discord, os, requests, traceback
 
-from discord.ext.commands import AutoShardedBot
+from discord.ext.commands import AutoShardedBot, check
 from functools import partial
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, MESSAGE_THRESHOLD, FIELD_THRESHOLD
+from category.globals import MESSAGE_THRESHOLD, FIELD_THRESHOLD
 from category.globals import DBL_BOT_STAT_API_CALL
 from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
 from category.globals import add_scroll_reactions
-from category.predicates import get_prefix, is_nsfw_or_private
+from category.globals import get_embed_color
+from category.predicates import get_prefix, is_nsfw_or_private, is_developer
 from database import loop
 from database import database
 
@@ -67,7 +68,7 @@ cogs = {
         "description": "This category has commands that really don't fit anywhere.",
         "check": None
     },
-    "NSFW": {
+    "Nsfw": {
         "command": "help nsfw",
         "description": "18+ ;)",
         "check": is_nsfw_or_private
@@ -97,7 +98,7 @@ cog_emojis = {
     "Image": ":frame_photo: ",
     "Insults": ":exclamation: ",
     "Misc": ":mag: ",
-    "NSFW": ":underage: ",
+    "Nsfw": ":underage: ",
     "Stats": ":clipboard: ",
     "Bot": ":robot: ",
     "Info": ":question: "
@@ -277,23 +278,10 @@ async def on_guild_join(guild):
     It will also make a POST request to DBL to update the amount of servers Omega Psi is in.
     """
 
-    # Send notification through IFTTT that Omega Psi has joined a new server
-    await loop.run_in_executor(None,
-        partial(
-            requests.post,
-            "https://maker.ifttt.com/trigger/on_error/with/key/{}".format(os.environ["IFTTT_WEBHOOK_KEY"]),
-            json = {
-                "value1": "Omega Psi\n",
-                "value2": "Added to new Discord server.\n",
-                "value3": "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
-            }
-        )
-    )
-
     # Update presence
     activity_type = await database.bot.get_activity_type()
     activity_name = await database.bot.get_activity_name()
-    activity_name = "{} | Currently in {} Servers".format(
+    activity_name = "{} in {} servers.".format(
         activity_name,
         len(bot.guilds)
     )
@@ -308,15 +296,7 @@ async def on_guild_join(guild):
     )
 
     # Update server count on DBL
-    await loop.run_in_executor(None,
-        partial(
-            requests.post,
-            DBL_BOT_STAT_API_CALL,
-            json = {
-                "server_count": len(bot.guilds)
-            }
-        )
-    )
+    await update_dbl(True, guild)
 
 @bot.event
 async def on_guild_remove(guild):
@@ -325,23 +305,10 @@ async def on_guild_remove(guild):
     It will also make a POST request to DBL to update the amount of servers Omega Psi is in.
     """
 
-    # Send notification through IFTTT that Omega Psi has left a server
-    await loop.run_in_executor(None,
-        partial(
-            requests.post,
-            "https://maker.ifttt.com/trigger/on_error/with/key/{}".format(os.environ["IFTTT_WEBHOOK_KEY"]),
-            json = {
-                "value1": "Omega Psi\n",
-                "value2": "Removed from Discord server.\n",
-                "value3": "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
-            }
-        )
-    )
-
     # Update presence
     activity_type = await database.bot.get_activity_type()
     activity_name = await database.bot.get_activity_name()
-    activity_name = "{} | Currently in {} Servers".format(
+    activity_name = "{} in {} servers.".format(
         activity_name,
         len(bot.guilds)
     )
@@ -356,19 +323,76 @@ async def on_guild_remove(guild):
     )
 
     # Update server count on DBL
-    await loop.run_in_executor(None,
+    await update_dbl(False, guild)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Global Commands
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+async def update_dbl(joined_guild = None, guild = None, *, ctx = None):
+
+    # Update the dbl
+    response = await loop.run_in_executor(None,
         partial(
             requests.post,
             DBL_BOT_STAT_API_CALL,
             json = {
                 "server_count": len(bot.guilds)
+            },
+            headers = {
+                "Authorization": os.environ["DBL_API_KEY"]
             }
         )
     )
+    response = response.json()
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Global Commands
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Send message to all developers saying DBL update failed or succeeded
+    embed = discord.Embed(
+        title = "DBL Server Count Update {}".format(
+            "Successful" if "error" not in response else "Failed"
+        ),
+        description = "Omega Psi is now in {} servers".format(len(bot.guilds)) if "error" not in response else response["error"],
+        colour = 0x008000 if "error" not in response else 0x800000
+    )
+
+    for dev in await database.bot.get_developers():
+
+        # Get dev user object
+        user = bot.get_user(int(dev))
+
+        if user != None and (user.id != ctx.author.id if ctx != None else True):
+            await user.send(
+                embed = embed
+            )
+
+    if ctx != None:   
+        await ctx.send(
+            embed = embed
+        )
+
+    if joined_guild != None:
+
+        # Send notification through IFTTT that Omega Psi has left a server
+        await loop.run_in_executor(None,
+            partial(
+                requests.post,
+                "https://maker.ifttt.com/trigger/on_error/with/key/{}".format(os.environ["IFTTT_WEBHOOK_KEY"]),
+                json = {
+                    "value1": "Omega Psi\n",
+                    "value2": "Added to Discord Server.\n" if joined_guild else "Removed from Discord server.\n",
+                    "value3": "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
+                }
+            )
+        )
+
+@bot.command(
+    name = "updateDBL",
+    aliases = ["dbl"],
+    description = "Updates the server count on DBL for Omega Psi manually."
+)
+@check(is_developer)
+async def update_DBL(ctx):
+    await update_dbl(ctx = ctx)
 
 @bot.command(
     name = "help", 
@@ -383,6 +407,9 @@ async def help(ctx, specific = None):
     else:
         prefix = "o."
     
+    # Check if user is on mobile
+    on_mobile = ctx.message.content.startswith(prefix + ".") or ctx.message.content.startswith(".")
+    
     # See if getting help for a specific category or command
     if specific != None:
 
@@ -390,7 +417,7 @@ async def help(ctx, specific = None):
         if specific.title() in cogs and (await cogs[specific.title()]["check"](ctx) if cogs[specific.title()]["check"] != None else True):
 
             # Create fields for all commands
-            commands = bot.get_cog_commands(specific.title())
+            commands = bot.get_cog(specific.title()).get_commands()
             commands = sorted(commands, key = lambda k: k.name)
 
             fields = []
@@ -401,7 +428,7 @@ async def help(ctx, specific = None):
                 if not await command.can_run(ctx):
                     continue
 
-                name_descr = "`{}{}` - {}\n".format(
+                name_descr = "**`{}{}`** - {}\n".format(
                     prefix,
                     command.name,
                     command.description
@@ -425,7 +452,9 @@ async def help(ctx, specific = None):
                     ) if len(fields) > 1 else ""
                 ),
                 description = fields[0],
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
+            ).set_footer(
+                text = "❕❕❕ Add an extra . to any command for a mobile view!"
             )
             
             # Send message and add navigation reactions
@@ -489,7 +518,7 @@ async def help(ctx, specific = None):
                             ) if len(fields) > 1 else ""
                         ),
                         description = fields[current],
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
             
@@ -518,7 +547,9 @@ async def help(ctx, specific = None):
                     embed = discord.Embed(
                         title = command.name,
                         description = command.description,
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
+                    ).set_footer(
+                        text = "❕❕❕ Add an extra . to any command for a mobile view!"
                     )
 
                     # Only add parameters if it exists
@@ -559,28 +590,75 @@ async def help(ctx, specific = None):
         recent = await database.bot.get_recent_update()
         recent = recent["version"]
 
-        # Create embed with all categories as fields
-        embed = discord.Embed(
-            title = "Omega Psi Commands",
-            description = "Here's a list of categories in Omega Psi.",
-            colour = PRIMARY_EMBED_COLOR
-        ).set_author(
-            name = "Version " + recent
-        )
-
-        # Iterate through cogs
-        for cog in cogs:
+        # Check if on mobile
+        if on_mobile:
             
-            # Make sure user can see it
-            if (True if cogs[cog]["check"] == None else await cogs[cog]["check"](ctx)):
+            # Iterate through cogs
+            fields = []
+            field_text = ""
+            for cog in cogs:
+
+                # Make sure user can see it
+                if (True if cogs[cog]["check"] == None else await cogs[cog]["check"](ctx)):
+                    description = "{}{} - `{}`\n".format(
+                        cog_emojis[cog], cog,
+                        prefix + cogs[cog]["command"]
+                    )
+
+                    if len(field_text) + len(description) > FIELD_THRESHOLD:
+                        fields.append(field_text)
+                        field_text = ""
+                    
+                    field_text += description
+            
+            if len(field_text) > 0:
+                fields.append(field_text)
+            
+            # Create embed and add all categories
+            embed = discord.Embed(
+                title = "Omega Psi Commands",
+                description = "Here's a list of categories in Omega Psi.",
+                colour = await get_embed_color(ctx.author)
+            ).set_author(
+                name = "Version " + recent
+            ).set_footer(
+                text = "❕❕❕ Add an extra . to any command for a mobile view!"
+            )
+
+            for field in fields:
                 embed.add_field(
-                    name = cog_emojis[cog] + cog,
-                    value = "`{}`\n[Hover Me!](https://www.fellowhashbrown.com/projects#omegaPsi \"{}\")".format(
-                        prefix + cogs[cog]["command"],
-                        cogs[cog]["description"]
-                    ),
-                    inline = True
+                    name = "_ _",
+                    value = field,
+                    inline = False
                 )
+        
+        # Not on mobile
+        else:
+
+            # Create embed with all categories as fields
+            embed = discord.Embed(
+                title = "Omega Psi Commands",
+                description = "Here's a list of categories in Omega Psi.",
+                colour = await get_embed_color(ctx.author)
+            ).set_author(
+                name = "Version " + recent
+            ).set_footer(
+                text = "❕❕❕ Add an extra . to any command for a mobile view!"
+            )
+
+            # Iterate through cogs
+            for cog in cogs:
+                
+                # Make sure user can see it
+                if (True if cogs[cog]["check"] == None else await cogs[cog]["check"](ctx)):
+                    embed.add_field(
+                        name = cog_emojis[cog] + cog,
+                        value = "`{}`\n[Hover Me!](https://www.fellowhashbrown.com/projects#omegaPsi \"{}\")".format(
+                            prefix + cogs[cog]["command"],
+                            cogs[cog]["description"]
+                        ),
+                        inline = True
+                    )
         
         await ctx.send(
             embed = embed
