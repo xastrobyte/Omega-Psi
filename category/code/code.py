@@ -3,7 +3,8 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD, did_author_vote
+from category.globals import FIELD_THRESHOLD, did_author_vote
+from category.globals import get_embed_color, is_on_mobile
 from database import loop
 
 from .base_converter import convert
@@ -145,7 +146,7 @@ SHORTCUTS = [
 # Extension
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Code:
+class Code(commands.Cog, name = "Code"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -185,7 +186,7 @@ class Code:
             embed = discord.Embed(
                 title = "Available Languages",
                 description = "Below is a list of available languages and their shortcuts.",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             for field in fields:
@@ -219,7 +220,7 @@ class Code:
                     embed = discord.Embed(
                         title = "Source Code!",
                         description = "Now write your source code! There's a maximum of 10 minutes until it times out.",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
 
@@ -278,7 +279,7 @@ class Code:
                 embed = discord.Embed(
                     title = "Compilation Results",
                     description = "_ _",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 ).set_footer(
                     text = "Ran in {}s".format(
                         response["time"]
@@ -330,7 +331,7 @@ class Code:
                     description = "In order to use this command, I ask that you vote real quick!\n{}".format(
                         "https://discordbots.org/bot/535587516816949248/vote"
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
 
@@ -589,11 +590,15 @@ class Code:
     )
     async def logic(self, ctx, *, expression : str = None):
 
+        # Check if on mobile
+        on_mobile = await is_on_mobile(ctx)
+
         # Check if expression is None; Throw error message
         if expression == None:
-            content = None
-            embed = errors.get_error_message(
-                "You need the `expression` to parse."
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need the `expression` to parse."
+                )
             )
         
         else:
@@ -609,44 +614,68 @@ class Code:
 
             # See if an error existed
             if not response["success"]:
-                embed = errors.get_error_message(
-                    response["error"]
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        response["error"]
+                    )
                 )
-                content = None
             
             # No error existed; Get the value
             else:
+
                 truth_table = response["value"]
                 content = "```\n{}\n```".format("\n".join(truth_table))
-                embed = None
-        
-        # Check if the content is bigger than 2000
-        if len(content) > 2000 or len(truth_table[0]) >= 140:
 
-            # Remove backticks (`)
-            content = content.replace("```", "")
+                # Check if on mobile, send a file
+                if on_mobile:
 
-            # Create file and send to author
-            filename = "logic-{}-{}.txt".format(ctx.author.name, ctx.author.discriminator)
-            temp = open(filename, "w")
-            temp.write(content)
-            temp.close()
+                    # Remove backticks (`)
+                    content = content.replace("`", "")
 
-            content = "{}, I couldn't send raw text so I put it in a nice little file for you.".format(
-                ctx.author.mention
-            )
+                    # Create file and send to author
+                    filename = "logic-{}-{}.txt".format(ctx.author.name, ctx.author.discriminator)
+                    temp = open(filename, "w")
+                    temp.write(content)
+                    temp.close()
 
-            await ctx.send(
-                content,
-                file = discord.File(filename)
-            )
-            os.remove(filename)
-        
-        else:
-            await ctx.send(
-                content,
-                embed = embed
-            )
+                    content = "{}, here is a file for you!".format(
+                        ctx.author.mention
+                    )
+
+                    await ctx.send(
+                        content,
+                        file = discord.File(filename)
+                    )
+                    os.remove(filename)
+                
+                # Check if the content is bigger than 2000
+                elif len(content) > 2000 or len(truth_table[0]) >= 140:
+
+                    # Remove backticks (`)
+                    content = content.replace("```", "")
+
+                    # Create file and send to author
+                    filename = "logic-{}-{}.txt".format(ctx.author.name, ctx.author.discriminator)
+                    temp = open(filename, "w")
+                    temp.write(content)
+                    temp.close()
+
+                    content = "{}, I couldn't send raw text so I put it in a nice little file for you.".format(
+                        ctx.author.mention
+                    )
+
+                    await ctx.send(
+                        content,
+                        file = discord.File(filename)
+                    )
+                    os.remove(filename)
+                
+                # Content is good, send it
+                else:
+
+                    await ctx.send(
+                        content
+                    )
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 # Setup
