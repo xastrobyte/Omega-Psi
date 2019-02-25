@@ -1,4 +1,4 @@
-import asyncio, os
+import asyncio, os, pytz
 
 from datetime import datetime
 from functools import partial
@@ -25,12 +25,12 @@ class Bot:
             "developers": ["373317798430244864"],
             "owner": "373317798430244864",
             "todo": [],
-            "pending_update": [],
+            "pending_update": {},
             "updates": [],
-            "html_style": "normal",
             "restart": {
                 "send": False
-            }
+            },
+            "theme": {}
         }
 
         # Get bot data
@@ -75,7 +75,8 @@ class Bot:
             "updates": [],
             "restart": {
                 "send": False
-            }
+            },
+            "theme": {}
         }
 
         # Get bot data
@@ -203,6 +204,48 @@ class Bot:
 
         return bot_data["owner"]
     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_theme(self):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        # Check if theme of the day is empty
+        current = datetime.now().astimezone(pytz.timezone("US/Mountain"))
+        date = "{}-{}".format(
+            current.month,
+            current.day
+        )
+
+        # Return default if theme of day is empty
+        if date not in bot_data["theme"]:
+            return {
+                "date": date,
+                "dark": "293134",
+                "light": "ec7600",
+                "medium": "678cb1",
+                "description": "Nothing special happens on {}".format(date)
+            }
+
+        return bot_data["theme"][date]
+    
+    async def set_theme(self, date, dark, medium, light, description):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        bot_data["theme"][date] = {
+            "dark": dark,
+            "medium": medium,
+            "light": light,
+            "date": date,
+            "description": description
+        }
+
+        # Set bot data
+        await self.set_bot(bot_data)
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_todo(self):
@@ -416,6 +459,7 @@ class User:
         # Set defaults
         data = {
             "_id": str(user.id),
+            "embed_color": None,
             "imgur": {
                 "hash": None,
                 "id": None
@@ -445,6 +489,10 @@ class User:
                 "lost": 0
             },
             "trivia": {
+                "won": 0,
+                "lost": 0
+            },
+            "uno": {
                 "won": 0,
                 "lost": 0
             }
@@ -499,6 +547,25 @@ class User:
         # Set user data
         await self.set_user(user, user_data)
     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_embed_color(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["embed_color"]
+    
+    async def set_embed_color(self, user, color):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["embed_color"] = color
+
+        # Set user data
+        await self.set_user(user, user_data)
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_connect_four(self, user):
@@ -652,6 +719,28 @@ class User:
         
         # Set user data
         await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_uno(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["uno"]
+    
+    async def update_uno(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["uno"]["won"] += 1
+        else:
+            user_data["uno"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -659,7 +748,9 @@ class Data:
     def __init__(self, data):
         self._data = data
     
-    async def get_hangman_words(self):
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_hangman_data(self):
 
         # Get hangman data
         hangman_data = await loop.run_in_executor(None,
@@ -671,7 +762,7 @@ class Data:
 
         return hangman_data
     
-    async def set_hangman_words(self, hangman_data):
+    async def set_hangman_data(self, hangman_data):
 
         # Set hangman data
         await loop.run_in_executor(None,
@@ -683,7 +774,7 @@ class Data:
             )
         )
     
-    async def add_hangman(self, phrase):
+    async def add_hangman_word(self, phrase):
 
         # Get hangman data
         hangman_data = await self.get_hangman_words()
@@ -694,11 +785,71 @@ class Data:
         })
 
         # Set hangman data
-        await self.set_hangman_words(self, hangman_data)
+        await self.set_hangman_words(hangman_data)
+    
+    async def get_hangman_words(self):
+        return await self.get_hangman_data()
+    
+    async def set_hangman_words(self, hangman_words):
+        await self.set_hangman_data(hangman_words)
+    
+    async def add_pending_hangman(self, phrase, author):
+        
+        # Get pending hangman data
+        pending_hangman_data = await self.get_pending_hangman()
+
+        # Add the phrase to the pending hangmans
+        pending_hangman_data.append({
+            "phrase": phrase,
+            "author": author
+        })
+
+        # Set pending hangman data
+        await self.set_pending_hangman(pending_hangman_data)
+    
+    async def get_pending_hangman(self):
+        
+        # Get hangman data
+        hangman_data = await self.get_hangman_data()
+
+        return hangman_data["pending_hangman"]
+    
+    async def set_pending_hangman(self, pending_hangman_data):
+        
+        # Get hangman data
+        hangman_data = await self.get_hangman_data()
+
+        hangman_data["pending_hangman"] = pending_hangman_data
+
+        # Set hangman data
+        await self.set_hangman_data(hangman_data)
+    
+    async def approve_pending_hangman(self, index):
+        
+        # Get pending hangman data
+        pending_hangman_data = await self.get_pending_hangman()
+
+        pending_hangman = pending_hangman_data.pop(index)
+
+        # Set pending hangman data
+        await self.set_pending_hangman(pending_hangman_data)
+
+        # Add hangman phrase
+        await self.add_hangman_word(pending_hangman["phrase"])
+    
+    async def deny_pending_hangman(self, index):
+        
+        # Get pending hangman data
+        pending_hangman_data = await self.get_pending_hangman()
+
+        pending_hangman_data.pop(index)
+
+        # Set pending hangman data
+        await self.set_pending_hangman(pending_hangman_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
-    async def get_scramble_words(self):
+    async def get_scramble_data(self):
 
         # Get scramble data
         scramble_data = await loop.run_in_executor(None,
@@ -710,7 +861,7 @@ class Data:
 
         return scramble_data
     
-    async def set_scramble_words(self, scramble_data):
+    async def set_scramble_data(self, scramble_data):
 
         # Set scramble data
         await loop.run_in_executor(None,
@@ -734,6 +885,81 @@ class Data:
 
         # Set scramble data
         await self.set_scramble_words(scramble_data)
+    
+    async def get_scramble_words(self):
+        return await self.get_scramble_data()
+    
+    async def set_scramble_words(self, scramble_words):
+        await self.set_scramble_data(scramble_words)
+    
+    async def add_pending_scramble(self, phrase, author):
+        
+        # Get pending scramble data
+        pending_scramble_data = await self.get_pending_scramble()
+
+        # Add the phrase to the pending scrambles
+        pending_scramble_data.append({
+            "phrase": phrase,
+            "author": author,
+            "hints": []
+        })
+
+        # Set pending scramble data
+        await self.set_pending_scramble(pending_scramble_data)
+    
+    async def add_pending_scramble_hints(self, index, hints = []):
+
+        # Get pending scramble data
+        pending_scramble_data = await self.get_pending_scramble()
+
+        # Add the hints to the proper index
+        pending_scramble_data[index]["hints"] += hints
+
+        # Set pending scramble data
+        await self.set_pending_scramble(pending_scramble_data)
+    
+    async def get_pending_scramble(self):
+        
+        # Get scramble data
+        scramble_data = await self.get_scramble_data()
+
+        return scramble_data["pending_scramble"]
+    
+    async def set_pending_scramble(self, pending_scramble_data):
+        
+        # Get scramble data
+        scramble_data = await self.get_scramble_data()
+
+        scramble_data["pending_scramble"] = pending_scramble_data
+
+        # Set scramble data
+        await self.set_scramble_data(scramble_data)
+    
+    async def approve_pending_scramble(self, index):
+        
+        # Get pending scramble data
+        pending_scramble_data = await self.get_pending_scramble()
+
+        pending_scramble = pending_scramble_data.pop(index)
+
+        # Set pending scramble data
+        await self.set_pending_scramble(pending_scramble_data)
+
+        # Add scramble phrase
+        await self.add_scramble_word(
+            pending_scramble["phrase"],
+            pending_scramble["hints"]
+        )
+    
+    async def deny_pending_scramble(self, index):
+        
+        # Get pending scramble data
+        pending_scramble_data = await self.get_pending_scramble()
+
+        pending_scramble_data.pop(index)
+
+        # Set pending scramble data
+        await self.set_pending_scramble(pending_scramble_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
