@@ -1,7 +1,9 @@
-import os, requests
+import os, pytz, requests
+from datetime import datetime
 from functools import partial
 
 from database import loop
+from database import database
 
 PRIMARY_EMBED_COLOR = 0xEC7600
 
@@ -11,14 +13,15 @@ DBL_VOTE_API_CALL = "https://discordbots.org/api/bots/535587516816949248/votes"
 MESSAGE_THRESHOLD = 2000
 FIELD_THRESHOLD = 1000
 
-SCROLL_REACTIONS = ["⏪", "⬅", "➡", "⏩", "🚫", "✅", "❌"]
+SCROLL_REACTIONS = ["⏪", "⬅", "➡", "⏩", "🚫", "📤", "✅", "❌"]
 FIRST_PAGE = SCROLL_REACTIONS[0]
 LAST_PAGE = SCROLL_REACTIONS[3]
 PREVIOUS_PAGE = SCROLL_REACTIONS[1]
 NEXT_PAGE = SCROLL_REACTIONS[2]
 DELETE = SCROLL_REACTIONS[4]
-CHECK_MARK = SCROLL_REACTIONS[5]
-LEAVE = SCROLL_REACTIONS[6]
+OUTBOX = SCROLL_REACTIONS[5]
+CHECK_MARK = SCROLL_REACTIONS[6]
+LEAVE = SCROLL_REACTIONS[7]
 
 NUMBER_EMOJIS = [
     "1\u20e3",
@@ -40,6 +43,10 @@ LETTER_EMOJIS = [
     "🇵", "🇶", "🇷", "🇸", "🇹",
     "🇺", "🇻", "🇼", "🇽", "🇾",
     "🇿" 
+]
+
+UNO_CARDS = [
+    
 ]
 
 async def add_scroll_reactions(message, fields):
@@ -78,3 +85,26 @@ async def did_author_vote(author_id):
             return True
     
     return False
+
+async def get_color_scheme():
+    return await database.bot.get_theme()
+
+async def get_embed_color(user):
+    colour = await database.users.get_embed_color(user)
+
+    if colour == None:
+        return PRIMARY_EMBED_COLOR
+    
+    return colour
+
+async def is_on_mobile(ctx):
+
+    # Get prefix
+    if ctx.guild != None:
+        prefix = await database.guilds.get_prefix(ctx.guild)
+    
+    else:
+        prefix = "o."
+    
+    # Check if user is on mobile
+    return ctx.message.content.startswith(prefix + ".") or ctx.message.content.startswith(".")
