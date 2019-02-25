@@ -4,14 +4,15 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD
+from category.globals import FIELD_THRESHOLD, get_color_scheme
+from category.globals import get_embed_color
 from category.predicates import can_manage_guild, guild_only
 from database import database as db
 from database import loop
 
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
 
-class Info:
+class Info(commands.Cog, name = "Info"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -29,8 +30,6 @@ class Info:
         bot_info = await self.bot.application_info()
         owner = bot_info.owner
 
-        recent_update = await db.bot.get_recent_update()
-        pending_update = await db.bot.get_pending_update()
         developers = [self.bot.get_user(int(dev)) if self.bot.get_user(int(dev)) != None else dev for dev in await db.bot.get_developers()]
 
         fields = {
@@ -41,28 +40,21 @@ class Info:
                     dev
                 )
                 for dev in developers
-            ]),
-            "Recent Update": "**Version**: {}\n**Description**: {}\n**Features**: {}\n**Fixes**: {}".format(
-                recent_update["version"],
-                recent_update["description"],
-                "\n".join(recent_update["features"]) if len(recent_update["features"]) > 0 else "No Features Added.",
-                "\n".join(recent_update["fixes"]) if len(recent_update["fixes"]) > 0 else "No Fixes Made."
-            ),
-            "Pending Update": "**Features**: {}\n**Fixes**: {}\n".format(
-                "\n".join(pending_update["features"]) if len(pending_update["features"]) > 0 else "No Features Added Yet.",
-                "\n".join(pending_update["fixes"]) if len(pending_update["fixes"]) > 0 else "No Fixes Made Yet."
-            ) if pending_update != {} else "No Pending Update Yet"
+            ])
         }
 
         # Add to embed
+        #  Get the theme of the day
+        theme = await get_color_scheme()
         embed = discord.Embed(
             title = "Omega Psi Info",
             description = "Here's some information about me!",
-            colour = PRIMARY_EMBED_COLOR
+            colour = await get_embed_color(ctx.author)
         ).set_image(
-            url = "https://discordbots.org/api/widget/535587516816949248.png?topcolor={0}&middlecolor={1}&usernamecolor={1}&avatarbg={0}&datacolor={2}".format(
-                "ec7600", "293134",
-                "678cb1"
+            url = "https://discordbots.org/api/widget/535587516816949248.png?topcolor={1}&avatarbg={1}&datacolor={1}&highlightcolor={0}&middlecolor={0}&usernamecolor={0}&labelcolor={2}".format(
+                theme["dark"],
+                theme["light"],
+                theme["medium"]
             )
         )
 
@@ -100,6 +92,13 @@ class Info:
                     value = sub_field,
                     inline = False
                 )
+        
+        # Add theme of the day field
+        embed.add_field(
+            name = "Theme Of The Day ({})".format(theme["date"].replace("-", "/")),
+            value = theme["description"],
+            inline = False
+        )
 
         await ctx.send(
             embed = embed
@@ -215,7 +214,7 @@ class Info:
             embed = discord.Embed(
                 title = "Omega Psi Uptime",
                 description = " ",
-                colour = PRIMARY_EMBED_COLOR,
+                colour = await get_embed_color(ctx.author),
                 url = "https://status.omegapsi.fellowhashbrown.com",
                 timestamp = recentDowntime["last"]
             ).set_footer(
@@ -236,7 +235,7 @@ class Info:
             embed = discord.Embed(
                 title = "Error",
                 description = "```json\n{}\n```".format(json.dumps(downtime["error"], indent = 4)),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
         
         await ctx.send(
@@ -261,22 +260,11 @@ class Info:
         cog_name = "Info"
     )
     async def ping(self, ctx):
-        
-        # Get current time
-        start = datetime.now()
-
-        # Send message
-        ping_msg = await ctx.send(
-            "Pong..."
-        )
-
-        # Get end time
-        end = datetime.now()
 
         # Edit message
-        await ping_msg.edit(
-            content = "Pong! `{}ms`".format(
-                int((end - start).total_seconds() * 1000)
+        await ctx.send(
+            "Pong! `{}ms`".format(
+                int(self.bot.latency * 1000)
             )
         )
 
@@ -290,6 +278,10 @@ class Info:
     @commands.check(guild_only)
     async def prefix(self, ctx, prefix):
 
+        # Check if prefix ends with letter or digit
+        if prefix[-1].isdigit() or prefix[-1].isalpha():
+            prefix += " "
+
         # Change prefix for guild
         await db.guilds.set_prefix(ctx.guild, prefix)
         
@@ -298,7 +290,7 @@ class Info:
             embed = discord.Embed(
                 title = "Prefix Changed",
                 description = f"This server's prefix is now `{prefix}`",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
         )
     
