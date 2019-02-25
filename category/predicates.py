@@ -13,7 +13,7 @@ async def is_nsfw_and_guild(ctx):
     return ctx.guild and ctx.channel.is_nsfw()
 
 async def is_developer(ctx):
-    return await database.is_developer(ctx.author)
+    return await database.bot.is_developer(ctx.author)
 
 async def can_manage_guild(ctx):
     return ctx.author.permissions_in(ctx.channel).manage_guild
@@ -29,6 +29,7 @@ async def get_prefix(bot, message):
 
     # Check if message was sent in guild
     if message.guild == None:
-        return ["o.", ""]
+        return ["o..", "o.", ""]
     
-    return [await database.get_prefix(message.guild)]
+	guild_prefix = await database.guilds.get_prefix(message.guild)
+    return [guild_prefix.strip() + ".", guild_prefix]
