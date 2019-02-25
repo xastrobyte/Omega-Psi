@@ -23,6 +23,7 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
     * Hangman
     * Cards Against Humanity
     * Trivia
+    * Uno
   * Image
     * Gifs
     * Avatars
@@ -40,7 +41,7 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
   * Miscellaneous
     * Things that just don't quite fit into anything
     * Chuck Norris jokes
-    * Find out what a color is from either HEX, HSL, RGB, or CMYK
+    * Find out what a color is from a HEX code
     * Dad Jokes
   * NSFW
     * Naughty commands (18+)
