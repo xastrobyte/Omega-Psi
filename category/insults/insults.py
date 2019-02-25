@@ -2,12 +2,13 @@ import asyncio, discord
 from discord.ext import commands
 
 from category.errors import get_error_message
-from category.globals import PRIMARY_EMBED_COLOR, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
+from category.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
 from category.globals import add_scroll_reactions
+from category.globals import get_embed_color
 from category.predicates import is_developer
 from database import database
 
-class Insults:
+class Insults(commands.Cog, name = "Insults"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -22,7 +23,7 @@ class Insults:
     async def insult(self, ctx, member : discord.Member = None):
         
         # Generate random insult
-        insult = await database.get_insult(ctx.channel.is_nsfw())
+        insult = await database.data.get_insult(ctx.channel.is_nsfw())
 
         # Check if insulting self
         if member == None:
@@ -54,10 +55,10 @@ class Insults:
         else:
 
             # Add to pending insults
-            await database.add_pending_insult(insult, str(ctx.author.id))
+            await database.data.add_pending_insult(insult, str(ctx.author.id))
 
             # Notify all developers
-            for dev in await database.get_developers():
+            for dev in await database.bot.get_developers():
 
                 # Get dev user object
                 user = self.bot.get_user(int(dev))
@@ -68,7 +69,7 @@ class Insults:
                         embed = discord.Embed(
                             title = "New Pending Insult",
                             description = " ",
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         ).add_field(
                             name = "Author",
                             value = "{} ({})".format(
@@ -87,7 +88,7 @@ class Insults:
                 embed = discord.Embed(
                     title = "Insult Pending!",
                     description = "Your insult was added to be reviewed by an Omega Psi developer.\nYou will be notified if it is denied or approved.",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
         
@@ -101,7 +102,7 @@ class Insults:
     async def pending_insults(self, ctx):
         
         # Get list of pending insults
-        pending_insults = await database.get_pending_insults()
+        pending_insults = await database.data.get_pending_insults()
         
         # Check if there are any pending insults
         if len(pending_insults) > 0:
@@ -122,7 +123,7 @@ class Insults:
                     ),
                     ", ".join(pending_insults[current]["tags"]) if len(pending_insults[current]["tags"]) > 0 else "None"
                 ),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             msg = await ctx.send(
@@ -186,7 +187,7 @@ class Insults:
                         ),
                         ", ".join(pending_insults[current]["tags"]) if len(pending_insults[current]["tags"]) > 0 else "None"
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
 
                 await msg.edit(
@@ -200,7 +201,7 @@ class Insults:
                 embed = discord.Embed(
                     title = "No Pending Insults",
                     description = "There aren't currently any pending insults to review.",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -214,7 +215,7 @@ class Insults:
     async def add_insult_tag(self, ctx, index : int, *tags):
         
         # Get list of pending insults
-        pending_insults = await database.get_pending_insults()
+        pending_insults = await database.data.get_pending_insults()
 
         # Check if index is in range of list
         index -= 1
@@ -222,7 +223,7 @@ class Insults:
         if index >= 0 and index < len(pending_insults):
 
             # Add the tags to the insult
-            await database.add_pending_insult_tags(index, tags)
+            await database.data.add_pending_insult_tags(index, tags)
 
             await ctx.send(
                 embed = discord.Embed(
@@ -231,7 +232,7 @@ class Insults:
                         "s have" if len(tags) > 1 else " has",
                         ", ".join(tags)
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
         
@@ -253,7 +254,7 @@ class Insults:
     async def approve_insult(self, ctx, index : int):
         
         # Get list of pending insults
-        pending_insults = await database.get_pending_insults()
+        pending_insults = await database.data.get_pending_insults()
 
         # Check if index is in range of pending insults
         index -= 1
@@ -270,11 +271,11 @@ class Insults:
                         ", ".join(pending_insults[index]["tags"])
                     ) if len(pending_insults[index]["tags"]) > 0 else ""
                 ),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             # Only send message if author was found
-            await database.approve_pending_insult(index)
+            await database.data.approve_pending_insult(index)
             if author != None:
                 await author.send(
                     embed = embed
@@ -303,7 +304,7 @@ class Insults:
     async def deny_insult(self, ctx, index : int, *, reason = None):
         
         # Get list of pending insults
-        pending_insults = await database.get_pending_insults()
+        pending_insults = await database.data.get_pending_insults()
 
          # Check if index is in range of pending insults
         index -= 1
@@ -318,11 +319,11 @@ class Insults:
                     pending_insults[index]["insult"],
                     reason if reason != None else "No Reason Provided. DM a developer for the reason."
                 ),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             # Only send message if author was found
-            await database.deny_pending_insult(index)
+            await database.data.deny_pending_insult(index)
             if author != None:
                 await author.send(
                     embed = embed
