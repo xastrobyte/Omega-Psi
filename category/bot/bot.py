@@ -4,18 +4,96 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, CHECK_MARK, LEAVE
+from category.globals import FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, CHECK_MARK, OUTBOX, LEAVE
 from category.globals import add_scroll_reactions
+from category.globals import get_embed_color
 from category.predicates import is_developer, is_in_guild
 from database import loop
 from database import database
 from util.string import dict_to_datetime
 
-class Bot:
+class Bot(commands.Cog, name = "Bot"):
     def __init__(self, bot):
         self.bot = bot
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @commands.command(
+        name = "newTheme",
+        aliases = ["theme"],
+        description = "Adds a new theme of the day for the bot. Date is in MMDD format.",
+        cog_name = "Bot"
+    )
+    @commands.check(is_developer)
+    async def new_theme(self, ctx, date = None, dark = None, medium = None, light = None, *, description = None):
+
+        # Check if date is None
+        if date == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to specify the date this theme shows up in format MMDD"
+                )
+            )
+        
+        # Check if any of the colors are None
+        elif dark == medium == light == description == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to specify the dark, medium, and light colors of the theme along with the description of the theme of the day."
+                )
+            )
+        
+        # Every parameter exists; Validate parameters
+        else:
+
+            try:
+
+                # Make sure date is valid
+                month = int(date[:2])
+                day = int(date[2:])
+
+                # Get datetime int for date
+                date = "{}-{}".format(
+                    month, day
+                )
+
+                # Make sure colors are valid
+                for color in [dark, medium, light]:
+                    if len(color) > 6:
+                        raise SyntaxError()
+                    
+                    # Iterate through color string
+                    for digit in color.lower():
+                        if digit not in "0123456789abcdef":
+                            raise SyntaxError()
+                
+                # Everything is valid; Add theme
+                await database.bot.set_theme(date, dark, medium, light, description)
+
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Theme Added",
+                        description = "That theme has been added and set for {}!\n**Dark**: {}\n**Medium**: {}\n**Light**: {}".format(
+                            date.replace("-", "/"),
+                            dark, medium, light
+                        ),
+                        colour = await get_embed_color(ctx.author),
+                    )
+                )
+            
+            except SyntaxError:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "One of the colors you gave is invalid."
+                    )
+                )
+
+            except ValueError:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "The date you gave is invalid."
+                    )
+                )
 
     @commands.command(
         name = "suggestions",
@@ -47,7 +125,7 @@ class Bot:
                             author.mention, author
                         )
                     ),
-                    colour = PRIMARY_EMBED_COLOR,
+                    colour = await get_embed_color(ctx.author),
                     timestamp = dict_to_datetime(suggestion_cases[str(current)]["time"])
                 ).set_footer(
                     text = "Suggestion Seen? {}".format(
@@ -62,6 +140,10 @@ class Bot:
 
                 await add_scroll_reactions(msg, suggestion_cases)
                 await msg.add_reaction(CHECK_MARK)
+
+                # Only add outbox reaction if suggestion hasn't been marked as seen
+                if not suggestion_cases[str(current)]["seen"]:
+                    await msg.add_reaction(OUTBOX)
 
                 while True:
 
@@ -97,6 +179,28 @@ class Bot:
                         current += 1
                         if current > len(suggestion_cases):
                             current = len(suggestion_cases)
+                    
+                    # Reaction is outbox (send suggestion to suggestion channel)
+                    # Only test for reaction if suggestion hasn't been marked as seen
+                    elif str(reaction) == OUTBOX and not suggestion_cases[str(current)]["seen"]:
+
+                        # Get suggestion channel
+                        channel = self.bot.get_channel(int(os.environ["SUGGESTION_CHANNEL"]))
+                        user = self.bot.get_user(int(suggestion_cases[str(current)]["author"]))
+                        await channel.send(
+                            embed = discord.Embed(
+                                title = "Suggestion #{}".format(str(current)),
+                                description = suggestion_cases[str(current)]["suggestion"],
+                                colour = await get_embed_color(ctx.author),
+                                timestamp = datetime.now()
+                            ).add_field(
+                                name = "Submitted By",
+                                value = "Unknown" if user == None else "{} ({})".format(
+                                    user.mention, str(user)
+                                ),
+                                inline = False
+                            )
+                        )
                         
                     # Reaction is check mark (suggestion marked as seen)
                     elif str(reaction) == CHECK_MARK:
@@ -105,18 +209,28 @@ class Bot:
                             # Notify author that their suggestion was seen
                             user = self.bot.get_user(int(suggestion_cases[str(current)]["author"]))
                             if user != None:
-                                await user.send(
-                                    embed = discord.Embed(
-                                        title = "Suggestion Seen By Developer",
-                                        description = " ",
-                                        colour = PRIMARY_EMBED_COLOR,
-                                        timestamp = datetime.now()
-                                    ).add_field(
-                                        name = "Suggestion (#{})".format(str(current)),
-                                        value = suggestion_cases[str(current)]["suggestion"],
-                                        inline = False
+                                try:
+                                    await user.send(
+                                        embed = discord.Embed(
+                                            title = "Suggestion Seen By Developer",
+                                            description = " ",
+                                            colour = await get_embed_color(ctx.author),
+                                            timestamp = datetime.now()
+                                        ).add_field(
+                                            name = "Suggestion (#{})".format(str(current)),
+                                            value = suggestion_cases[str(current)]["suggestion"],
+                                            inline = False
+                                        )
                                     )
-                                )
+                                except:
+                                    await ctx.send(
+                                        embed = discord.Embed(
+                                            title = "Could Not Send Message",
+                                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.",
+                                            colour = 0x800000
+                                        ),
+                                        delete_after = 10
+                                    )
 
                             # Make suggestion as seen
                             await database.case_numbers.mark_suggestion_seen(str(current))
@@ -139,7 +253,7 @@ class Bot:
                                 author.mention, author
                             )
                         ),
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         timestamp = dict_to_datetime(suggestion_cases[str(current)]["time"])
                     ).set_footer(
                         text = "Suggestion Seen? {}".format(
@@ -157,7 +271,7 @@ class Bot:
                     embed = discord.Embed(
                         title = "No suggestions",
                         description = "There are currently no suggestions.",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
         
@@ -205,7 +319,7 @@ class Bot:
                     embed = discord.Embed(
                         title = "Suggestion Made (#{})".format(suggestion_number),
                         description = " ",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     ).add_field(
                         name = "User",
                         value = ctx.author
@@ -225,7 +339,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Suggestion Sent (Suggestion #{})".format(suggestion_number),
                     description = suggestion,
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
         
@@ -259,7 +373,7 @@ class Bot:
                             author.mention, author
                         )
                     ),
-                    colour = PRIMARY_EMBED_COLOR,
+                    colour = await get_embed_color(ctx.author),
                     timestamp = dict_to_datetime(bug_cases[str(current)]["time"])
                 ).set_footer(
                     text = "Bug Seen? {}".format(
@@ -274,6 +388,10 @@ class Bot:
 
                 await add_scroll_reactions(msg, bug_cases)
                 await msg.add_reaction(CHECK_MARK)
+
+                # Only add outbox reaction is bug hasn't been marked as seen
+                if not bug_cases[str(current)]["seen"]:
+                    await msg.add_reaction(OUTBOX)
 
                 while True:
 
@@ -309,6 +427,28 @@ class Bot:
                         current += 1
                         if current > len(bug_cases):
                             current = len(bug_cases)
+                    
+                    # Reaction is outbox (send bug to bug channel)
+                    # Only test for reaction if bug has not been marked as seen
+                    elif str(reaction) == OUTBOX and not bug_cases[str(current)]["seen"]:
+
+                        # Get bug channel
+                        channel = self.bot.get_channel(int(os.environ["BUG_CHANNEL"]))
+                        user = self.bot.get_user(int(bug_cases[str(current)]["author"]))
+                        await channel.send(
+                            embed = discord.Embed(
+                                title = "Bug #{}".format(str(current)),
+                                description = bug_cases[str(current)]["bug"],
+                                colour = await get_embed_color(ctx.author),
+                                timestamp = datetime.now()
+                            ).add_field(
+                                name = "Submitted By",
+                                value = "Unknown" if user == None else "{} ({})".format(
+                                    user.mention, str(user)
+                                ),
+                                inline = False
+                            )
+                        )
                         
                     # Reaction is check mark (bug marked as seen)
                     elif str(reaction) == CHECK_MARK:
@@ -321,7 +461,7 @@ class Bot:
                                     embed = discord.Embed(
                                         title = "Bug Report Seen By Developer",
                                         description = " ",
-                                        colour = PRIMARY_EMBED_COLOR,
+                                        colour = await get_embed_color(ctx.author),
                                         timestamp = datetime.now()
                                     ).add_field(
                                         name = "Bug Report (#{})".format(str(current)),
@@ -350,7 +490,7 @@ class Bot:
                                 author.mention, author
                             )
                         ),
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         timestamp = dict_to_datetime(bug_cases[str(current)]["time"])
                     ).set_footer(
                         text = "Bug Seen? {}".format(
@@ -368,7 +508,7 @@ class Bot:
                     embed = discord.Embed(
                         title = "No Bug Reports",
                         description = "There are currently no bug reports.",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
         
@@ -416,7 +556,7 @@ class Bot:
                     embed = discord.Embed(
                         title = "Bug Reported (#{})".format(bug_number),
                         description = " ",
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     ).add_field(
                         name = "User",
                         value = ctx.author
@@ -436,7 +576,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Bug Sent! (Bug #{})".format(bug_number),
                     description = bug,
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
 
@@ -475,7 +615,7 @@ class Bot:
             embed = discord.Embed(
                 title = "Server List",
                 description = "Here is a list of servers that Omega Psi is in.",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             ).add_field(
                 name = "Servers {}".format(
                     "({} / {})".format(
@@ -535,7 +675,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Server List",
                     description = "Here is a list of servers that Omega Psi is in.",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 ).add_field(
                     name = "Servers {}".format(
                         "({} / {})".format(
@@ -596,6 +736,137 @@ class Bot:
         await self.bot.logout()
     
     @commands.command(
+        name = "update",
+        description = "Shows you information about the most recent update to the bot and the pending update if any.",
+        cog_name = "Bot"
+    )
+    async def update(self, ctx):
+
+        # Get the recent update data
+        recent_update = await database.bot.get_recent_update()
+
+        # Create the embed
+        embed = discord.Embed(
+            title = "Updates",
+            description = "Here's the most recent update to Omega Psi.",
+            colour = await get_embed_color(ctx.author)
+        )
+
+        fields = {
+            "Recent Update": "**Version**: {}\n**Description**: {}\n**Features**: {}\n**Fixes**: {}".format(
+                recent_update["version"],
+                recent_update["description"],
+                "\n".join(recent_update["features"]) if len(recent_update["features"]) > 0 else "No Features Added.",
+                "\n".join(recent_update["fixes"]) if len(recent_update["fixes"]) > 0 else "No Fixes Made."
+            )
+        }
+
+        # Add all fields to embed
+        for field in fields:
+
+            # See if field extends past threshold
+            sub_fields = []
+            sub_field_text = ""
+
+            field_lines = fields[field].split("\n")
+
+            for line in field_lines:
+
+                line += "\n"
+
+                if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
+                    sub_fields.append(sub_field_text)
+                    sub_field_text = ""
+                
+                sub_field_text += line
+            
+            if len(sub_field_text) > 0:
+                sub_fields.append(sub_field_text)
+            
+            # Add each sub_field
+            count = 0
+            for sub_field in sub_fields:
+                count += 1
+                embed.add_field(
+                    name = field + "{}".format(
+                        "({} / {})".format(
+                            count, len(sub_fields)
+                        ) if len(sub_fields) > 1 else ""
+                    ),
+                    value = sub_field,
+                    inline = False
+                )
+
+        await ctx.send(
+            embed = embed
+        )
+    
+    @commands.command(
+        name = "pendingUpdate",
+        aliases = ["pending"],
+        description = "Shows you information about the current pending.",
+        cog_name = "Bot"
+    )
+    async def pending_update(self, ctx):
+
+        # Get the pending update data
+        pending_update = await database.bot.get_pending_update()
+
+        # Create the embed
+        embed = discord.Embed(
+            title = "Updates",
+            description = "Here's the current pending update to Omega Psi.",
+            colour = await get_embed_color(ctx.author)
+        )
+
+        fields = {
+            "Pending Update": "**Features**: {}\n**Fixes**: {}\n".format(
+                "\n".join(pending_update["features"]) if len(pending_update["features"]) > 0 else "No Features Added Yet.",
+                "\n".join(pending_update["fixes"]) if len(pending_update["fixes"]) > 0 else "No Fixes Made Yet."
+            ) if pending_update != {} else "No Pending Update Yet"
+        }
+
+        # Add all fields to embed
+        for field in fields:
+
+            # See if field extends past threshold
+            sub_fields = []
+            sub_field_text = ""
+
+            field_lines = fields[field].split("\n")
+
+            for line in field_lines:
+
+                line += "\n"
+
+                if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
+                    sub_fields.append(sub_field_text)
+                    sub_field_text = ""
+                
+                sub_field_text += line
+            
+            if len(sub_field_text) > 0:
+                sub_fields.append(sub_field_text)
+            
+            # Add each sub_field
+            count = 0
+            for sub_field in sub_fields:
+                count += 1
+                embed.add_field(
+                    name = field + "{}".format(
+                        "({} / {})".format(
+                            count, len(sub_fields)
+                        ) if len(sub_fields) > 1 else ""
+                    ),
+                    value = sub_field,
+                    inline = False
+                )
+
+        await ctx.send(
+            embed = embed
+        )
+    
+    @commands.command(
         name = "createUpdate",
         aliases = ["createUpd"],
         description = "Creates a new pending update to the bot.",
@@ -618,7 +889,7 @@ class Bot:
                     embed = discord.Embed(
                         title = "Pending Update Created",
                         description = "There was a pending update created by {}.".format(ctx.author),
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
             
@@ -627,7 +898,7 @@ class Bot:
             embed = discord.Embed(
                 title = "Pending Update Created!",
                 description = "Use `createFix` and `createFeature` to add fixes or features to this pending update.",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
         )
     
@@ -668,7 +939,7 @@ class Bot:
                                 ctx.author,
                                 fix
                             ),
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         )
                     )
             
@@ -677,7 +948,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Fix Created",
                     description = fix,
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -718,7 +989,7 @@ class Bot:
                                 ctx.author,
                                 feature
                             ),
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         )
                     )
             
@@ -727,7 +998,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Feature Created",
                     description = feature,
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -769,7 +1040,7 @@ class Bot:
                                 update["version"]
                             ),
                             description = update["description"],
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         ).add_field(
                             name = "Features",
                             value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
@@ -822,7 +1093,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Update Committed - (Version {})".format(update["version"]),
                     description = update["description"],
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 ).add_field(
                     name = "Features",
                     value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
@@ -859,7 +1130,7 @@ class Bot:
                             embed = discord.Embed(
                                 title = "Added item to todo list.",
                                 description = "*{}*".format(item),
-                                colour = PRIMARY_EMBED_COLOR
+                                colour = await get_embed_color(ctx.author)
                             )
                         )
                     
@@ -877,7 +1148,7 @@ class Bot:
                                 embed = discord.Embed(
                                     title = "Removed item from todo list.",
                                     description = "*{}*".format(item),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 )
                             )
                         
@@ -943,7 +1214,7 @@ class Bot:
             embed = discord.Embed(
                 title = "Todo List",
                 description = "There's nothing in your todo list." if len(fields) == 0 else fields[0],
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             for field in fields[1:]:
@@ -995,7 +1266,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Members Added" if len(results) > len([result for result in results if not result["success"]]) else "Members Not Added",
                     description = "\n".join([result["reason"] for result in results]),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
         
@@ -1049,7 +1320,7 @@ class Bot:
                 embed = discord.Embed(
                     title = "Members Removed" if len(results) > len([result for result in results if not result["success"]]) else "Members Not Removed",
                     description = "\n".join([result["reason"] for result in results]),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -1179,7 +1450,7 @@ class Bot:
         embed = discord.Embed(
             title = "Submit a Bot!",
             description = "Do you have a bot of your own you'd like on this server?\nDo you know of a bot (that may not be yours) and would like it here?\n**Submit It Then!**",
-            colour = PRIMARY_EMBED_COLOR
+            colour = await get_embed_color(ctx.author)
         ).add_field(
             name = "Template",
             value = (
