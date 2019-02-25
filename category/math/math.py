@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 import database
 from category.errors import get_error_message
-from category.globals import PRIMARY_EMBED_COLOR
+from category.globals import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -12,7 +12,7 @@ NEWTON_API_CALL = "https://newton.now.sh/{}/{}"
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Math:
+class Math(commands.Cog, name = "Math"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -44,7 +44,7 @@ class Math:
                 embed = discord.Embed(
                     title = operation,
                     description = "Result: `{}`".format(response["result"]),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
 
@@ -199,7 +199,7 @@ class Math:
                 embed = discord.Embed(
                     title = "Tangent Line",
                     description = "Result: `{}`".format(response["result"]),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -256,7 +256,7 @@ class Math:
                 embed = discord.Embed(
                     title = "Area under a curve",
                     description = "Result: `{}`".format(response["result"]),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
 
@@ -296,7 +296,7 @@ class Math:
                 embed = discord.Embed(
                     title = "Logarithm",
                     description = "Result: `{}`".format(response["result"]),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
 
