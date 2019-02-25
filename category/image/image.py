@@ -4,7 +4,9 @@ from functools import partial
 from random import choice, randint
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import FIELD_THRESHOLD
+from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import get_embed_color
 from category.predicates import is_nsfw_or_private
 from database import loop
 from database import database
@@ -37,7 +39,7 @@ MEME_SUBREDDITS = [
     "dankmemes"
 ]
 
-class Image:
+class Image(commands.Cog, name = "Image"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -48,7 +50,7 @@ class Image:
         description = "Sends you a random meme from reddit.",
         cog_name = "Image"
     )
-    @is_nsfw_or_private()
+    @commands.check(is_nsfw_or_private)
     async def meme(self, ctx):
 
         await ctx.send(
@@ -65,7 +67,7 @@ class Image:
         attachments = ctx.message.attachments
 
         # Get album for user
-        album = await database.get_imgur(ctx.author)
+        album = await database.users.get_imgur(ctx.author)
         album_hash = album["hash"]
         album_id = album["id"]
 
@@ -120,7 +122,7 @@ class Image:
                     # Set the user's imgur album
                     album_hash = result["data"]["deletehash"]
                     album_id = result["data"]["id"]
-                    await database.set_imgur(ctx.author, {"hash": album_hash, "id": album_id})
+                    await database.users.set_imgur(ctx.author, {"hash": album_hash, "id": album_id})
             
             # Not getting their album and images; Adding one
             else:
@@ -190,7 +192,7 @@ class Image:
                         ) if len(fields) > 1 else ""
                     ),
                     description = fields[0],
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
 
                 # Add all the fields to the embed
@@ -239,7 +241,7 @@ class Image:
                     ) if len(album["data"]["images"]) > 1 else ""
                 ),
                 description = album["data"]["description"] if len(album["data"]["images"]) > 0 else "You do not have any images in your album.",
-                colour = PRIMARY_EMBED_COLOR,
+                colour = await get_embed_color(ctx.author),
                 url = album["data"]["link"]
             ).set_author(
                 name = album["data"]["title"],
@@ -322,7 +324,7 @@ class Image:
                             ) if len(album["data"]["images"]) > 1 else ""
                         ),
                         description = album["data"]["description"],
-                        colour = PRIMARY_EMBED_COLOR,
+                        colour = await get_embed_color(ctx.author),
                         url = album["data"]["link"]
                     ).set_image(
                         url = None if len(album["data"]["images"]) == 0 else album["data"]["images"][count]["link"]
@@ -351,7 +353,7 @@ class Image:
             embed = discord.Embed(
                 title = "Dog from the internet",
                 description = " ",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             ).set_image(
                 url = result["message"]
             )
@@ -381,7 +383,7 @@ class Image:
             embed = discord.Embed(
                 title = "Cat from the internet",
                 description = " ",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             ).set_image(
                 url = result[0]["url"]
             )
@@ -412,7 +414,7 @@ class Image:
             embed = discord.Embed(
                 title = "Avatar!",
                 description = " ",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             ).set_image(
                 url = AVATAR_API.format(eyes, nose, mouth, color)
             )
@@ -438,7 +440,7 @@ class Image:
             embed = discord.Embed(
                 title = "Robohash!",
                 description = " ",
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             ).set_image(
                 url = ROBOHASH_API.format(text.replace(" ", "+"))
             )
