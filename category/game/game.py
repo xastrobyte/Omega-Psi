@@ -4,8 +4,9 @@ from discord.ext import commands
 from random import choice as choose
 
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR
-from category.predicates import is_nsfw_and_guild
+from category.globals import get_embed_color, add_scroll_reactions
+from category.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
+from category.predicates import is_nsfw_and_guild, is_developer, guild_only
 
 from database import loop
 from database import database
@@ -15,6 +16,7 @@ from .tic_tac_toe import TicTacToe
 from .scramble import Scramble
 from .hangman import Hangman
 from .cards_against_humanity import CardsAgainstHumanity
+from .uno import Uno
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -92,6 +94,7 @@ ROBOT = "🤖"
 QUIT = "❌"
 
 REACT_100 = "💯"
+REACT_UNO = ":WR:549407154118066189"
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -101,7 +104,7 @@ TRIVIA_API_CALL = "https://opentdb.com/api.php?amount={}&encode=base64&category=
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Game:
+class Game(commands.Cog, name = "Game"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -150,13 +153,14 @@ class Game:
                 ":x: Tic Tac Toe": await database.users.get_tic_tac_toe(member),
                 ":red_circle: Connect Four": await database.users.get_connect_four(member),
                 "<:cah:540281486633336862> CAH": await database.users.get_cards_against_humanity(member),
+                "<:WR:548419419647246337> Uno": await database.users.get_uno(member),
                 ":question: Trivia": await database.users.get_trivia(member)
             }
 
             embed = discord.Embed(
                 title = "Stats",
                 description = "Game Stats for {}".format(member.mention),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             for stat in stats:
@@ -183,144 +187,162 @@ class Game:
         description = "Allows you to play a Hangman game.",
         cog_name = "Game"
     )
-    async def hangman(self, ctx, *, difficulty : str = "easy"):
-        
-        # Validate difficulty
-        valid = True
-        if difficulty in ["easy", "e"]:
-            difficulty = "easy"
-        elif difficulty in ["medium", "m"]:
-            difficulty = "medium"
-        elif difficulty in ["hard", "h"]:
-            difficulty = "hard"
-        
-        # Difficulty was invalid
-        else:
-            valid = False
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "The difficulty you have was invalid."
-                )
+    async def hangman(self, ctx):
+    
+        try: await ctx.message.delete()
+        except: pass
+
+        # Create hangman game
+        game = Hangman(ctx.author)
+        await game.generate_word()
+
+        msg = await ctx.send(
+            embed = discord.Embed(
+                title = "Hangman",
+                description = "Guesses: {}".format(
+                    ", ".join(game.get_guessed()) if len(game.get_guessed()) > 0 else "No Guesses"
+                ),
+                colour = await get_embed_color(ctx.author)
+            ).add_field(
+                name = "_ _",
+                value = game.get_hangman(),
+                inline = False
+            ).add_field(
+                name = "_ _",
+                value = game.get_hangman_word(),
+                inline = False
             )
-        
-        if valid:
-            try: await ctx.message.delete()
+        )
+
+        # Wait until loss or win
+        count = 0 # Keep track of guesses made
+                    # Delete old message and send new message as to keep it as low as possible
+        while True:
+
+            # Get guess
+            def check_guess(message):
+                return message.author.id == game.get_player().id and (len(message.content) == 1 or message.content.lower() == game.get_word())
+            guess_message = await self.bot.wait_for("message", check = check_guess)
+            guess = guess_message.content.lower()
+            try: await guess_message.delete()
             except: pass
 
-            # Create hangman game
-            game = Hangman(ctx.author, difficulty)
-            await game.generate_word()
+            # Make the guess
+            guess = game.make_guess(guess)
 
-            msg = await ctx.send(
-                embed = discord.Embed(
-                    title = "Hangman",
-                    description = "{}\nGuesses: {}".format(
-                        game.get_hangman_word(),
-                        ", ".join(game.get_guessed()) if len(game.get_guessed()) > 0 else "No Guesses"
+            # Guess was the word
+            if guess == Hangman.WORD:
+                await msg.delete()
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Guessed",
+                        description = "You guessed correctly! The word was {}\nIt took you {} guess{}!".format(
+                            game.get_word(),
+                            game.get_guesses(),
+                            "es" if game.get_guesses() != 1 else ""
+                        ),
+                        colour = await get_embed_color(ctx.author)
                     ),
-                    colour = PRIMARY_EMBED_COLOR
-                ).set_image(
-                    url = game.get_hangman()
+                    delete_after = 10
                 )
-            )
 
-            # Wait until loss or win
-            while True:
+                await database.users.update_hangman(game.get_player(), True)
+                break
+            
+            # Guess was not a letter
+            elif guess == Hangman.NOT_ALPHA:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "That is not a letter."
+                    ),
+                    delete_after = 5
+                )
+            
+            # Guess was already guessed
+            elif guess == Hangman.GUESSED:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "You already guessed that letter."
+                    ),
+                    delete_after = 5
+                )
+            
+            # Guess was a fail
+            elif guess == Hangman.FAILED:
+                await msg.delete()
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Game Ended - Word: `{}`".format(game.get_word()),
+                        description = "You did not guess the word quick enough.",
+                        colour = await get_embed_color(ctx.author)
+                    ).add_field(
+                        name = "_ _",
+                        value = game.get_hangman()
+                    ),
+                    delete_after = 10
+                )
 
-                # Get guess
-                def check_guess(message):
-                    return message.author == game.get_player() and (len(message.content) == 1 or message.content == game.get_word())
-                guess_message = await self.bot.wait_for("message", check = check_guess)
-                guess = guess_message.content.lower()
-                try: await guess_message.delete()
-                except: pass
+                await database.users.update_hangman(game.get_player(), False)
+                break
+            
+            # Guess was a win
+            elif guess == Hangman.WON:
+                await msg.delete()
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Success!",
+                        description = "The word was `{}`\nYou guessed in {} guess{}.".format(
+                            game.get_word(),
+                            game.get_guesses(),
+                            "es" if len(game.get_guessed()) > 1 else ""
+                        ),
+                        colour = await get_embed_color(ctx.author)
+                    ),
+                    delete_after = 10
+                )
 
-                # Make the guess
-                guess = game.make_guess(guess)
-
-                # Guess was the word
-                if guess == Hangman.WORD:
-
-                    await msg.edit(
+                await database.users.update_hangman(game.get_player(), True)
+                break
+            
+            # Guess was a correct/incorrect letter
+            elif guess in [True, False]:
+                count += 1
+                if count % 5 == 0:
+                    await msg.delete()
+                    msg = await ctx.send(
                         embed = discord.Embed(
-                            title = "Guessed",
-                            description = "You guessed correctly! The word was {}\nIt took you {} guess{}!".format(
-                                game.get_word(),
-                                game.get_guesses(),
-                                "es" if game.get_guesses() != 1 else ""
+                            title = "Hangman",
+                            description = "Guesses: {}".format(
+                                ", ".join(game.get_guessed()) if len(game.get_guessed()) > 0 else "No Guesses"
                             ),
-                            colour = PRIMARY_EMBED_COLOR
-                        ),
-                        delete_after = 5
-                    )
-
-                    await database.users.update_hangman(game.get_player(), True)
-                    break
-                
-                # Guess was not a letter
-                elif guess == Hangman.NOT_ALPHA:
-                    await ctx.send(
-                        embed = errors.get_error_message(
-                            "That is not a letter."
-                        ),
-                        delete_after = 5
+                            colour = await get_embed_color(ctx.author)
+                        ).add_field(
+                            name = "_ _",
+                            value = game.get_hangman(),
+                            inline = False
+                        ).add_field(
+                            name = "_ _",
+                            value = game.get_hangman_word(),
+                            inline = False
+                        )
                     )
                 
-                # Guess was already guessed
-                elif guess == Hangman.GUESSED:
-                    await ctx.send(
-                        embed = errors.get_error_message(
-                            "You already guessed that letter."
-                        ),
-                        delete_after = 5
-                    )
-                
-                # Guess was a fail
-                elif guess == Hangman.FAILED:
-                    await msg.edit(
-                        embed = discord.Embed(
-                            title = "Game Ended - Word: `{}`".format(game.get_word()),
-                            description = "You did not guess the word quick enough.",
-                            colour = PRIMARY_EMBED_COLOR
-                        ).set_image(
-                            url = game.get_hangman()
-                        ),
-                        delete_after = 5
-                    )
-
-                    await database.users.update_hangman(game.get_player(), False)
-                    break
-                
-                # Guess was a win
-                elif guess == Hangman.WON:
-                    await msg.edit(
-                        embed = discord.Embed(
-                            title = "Success!",
-                            description = "The word was `{}`\nYou guessed in {} guess{}.".format(
-                                game.get_word(),
-                                game.get_guesses(),
-                                "es" if len(game.get_guessed()) > 1 else ""
-                            ),
-                            colour = PRIMARY_EMBED_COLOR
-                        ),
-                        delete_after = 5
-                    )
-
-                    await database.users.update_hangman(game.get_player(), True)
-                    break
-                
-                # Guess was a correct/incorrect letter
-                elif guess in [True, False]:
+                else:
                     await msg.edit(
                         embed = discord.Embed(
                             title = "Hangman",
-                            description = "{}\nGuesses: {}".format(
-                                game.get_hangman_word(),
+                            description = "Guesses: {}".format(
                                 ", ".join(game.get_guessed()) if len(game.get_guessed()) > 0 else "No Guesses"
                             ),
-                            colour = PRIMARY_EMBED_COLOR
-                        ).set_image(
-                            url = game.get_hangman()
+                            colour = await get_embed_color(ctx.author)
+                        ).add_field(
+                            name = "_ _",
+                            value = game.get_hangman(),
+                            inline = False
+                        ).add_field(
+                            name = "_ _",
+                            value = game.get_hangman_word(),
+                            inline = False
                         )
                     )
     
@@ -361,7 +383,7 @@ class Game:
                     description = "Unscramble this word/phrase. You have 15 seconds. Good luck.\n`{}`".format(
                         game.get_scrambled_word()
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 ).add_field(
                     name = "Hint",
                     value = game.get_hint()
@@ -390,7 +412,7 @@ class Game:
                                 "You guessed the word correctly! It was" if guess else "Unfortunately, you did not guess the word.\nThe word was",
                                 game.get_word()
                             ),
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         ),
                         delete_after = 5
                     )
@@ -406,7 +428,7 @@ class Game:
                         description = "Unfortunately, you did not guess the word in time.\nThe word was `{}`".format(
                             game.get_word()
                         ),
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     ),
                     delete_after = 5
                 )
@@ -471,7 +493,7 @@ class Game:
             embed = discord.Embed(
                 title = title,
                 description = result,
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
         await ctx.send(
@@ -521,7 +543,7 @@ class Game:
                     )
                     for category in TRIVIA_CATEGORIES
                 ]),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
 
             await ctx.send(
@@ -592,7 +614,7 @@ class Game:
                             )
                             for index in range(len(questions[current]["answers"]))
                         ]),
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
 
@@ -626,7 +648,7 @@ class Game:
                             embed = discord.Embed(
                                 title = "Game Quit",
                                 description = "The game was successfully quit.",
-                                colour = PRIMARY_EMBED_COLOR
+                                colour = await get_embed_color(ctx.author)
                             ),
                             delete_after = 5
                         )
@@ -668,7 +690,7 @@ class Game:
                                 )
                                 for index in range(len(question["answers"]))
                             ]),
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         )
                     )
                 
@@ -680,7 +702,7 @@ class Game:
                             amt_correct,
                             round((amt_correct / amount) * 100, 2)
                         ),
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     ),
                     delete_after = 10
                 )
@@ -708,10 +730,10 @@ class Game:
                 embed = discord.Embed(
                     title = "Waiting for Player",
                     description = "If you're going to play against {}, react with {}.\n{}, if you're playing alone, react with {}.".format(
-                        ctx.author.mention, RED_PIECE,
+                        ctx.author.mention, X_PIECE,
                         ctx.author.mention, ROBOT
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
             await msg.add_reaction(
@@ -769,7 +791,7 @@ class Game:
                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                         )
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
             for reaction in TIC_TAC_TOE_REACTIONS:
@@ -874,7 +896,7 @@ class Game:
                                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                                         )
                                     ),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 ),
                                 delete_after = 5
                             )
@@ -912,7 +934,7 @@ class Game:
                                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                                         )
                                     ),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 ),
                                 delete_after = 5
                             )
@@ -936,7 +958,7 @@ class Game:
                                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                                         )
                                     ),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 )
                             )
                 
@@ -961,7 +983,7 @@ class Game:
                 embed = discord.Embed(
                     title = "No responses :frowning2:",
                     description = "It seems like no one wanted to play with you.",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 ),
                 delete_after = 5
             )
@@ -984,7 +1006,7 @@ class Game:
                     ctx.author.mention, RED_PIECE,
                     ctx.author.mention, ROBOT
                 ),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
         )
         await msg.add_reaction(
@@ -1036,7 +1058,7 @@ class Game:
                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                         )
                     ),
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 )
             )
             for reaction in CONNECT_FOUR_REACTIONS:
@@ -1141,7 +1163,7 @@ class Game:
                                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                                         )
                                     ),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 ),
                                 delete_after = 5
                             )
@@ -1179,7 +1201,7 @@ class Game:
                                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                                         )
                                     ),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 ),
                                 delete_after = 5
                             )
@@ -1203,7 +1225,7 @@ class Game:
                                             "AI" if game.get_opponent() == None else game.get_opponent().mention
                                         )
                                     ),
-                                    colour = PRIMARY_EMBED_COLOR
+                                    colour = await get_embed_color(ctx.author)
                                 )
                             )
                 
@@ -1228,7 +1250,124 @@ class Game:
                 embed = discord.Embed(
                     title = "No responses :frowning2:",
                     description = "It seems like no one wanted to play with you.",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
+                ),
+                delete_after = 5
+            )
+    
+    @commands.command(
+        name = "uno",
+        description = "Allows you to play a game of Uno with other people.",
+        cog_name = "game"
+    )
+    @commands.check(guild_only)
+    async def uno(self, ctx):
+
+        # Wait for players (max of 5)
+        players = [ctx.author]
+
+        # Send join message
+        msg = await ctx.send(
+            embed = discord.Embed(
+                title = "Join Uno!",
+                description = "React with <{}> to join the game.\n**Players**\n{}".format(
+                    REACT_UNO,
+                    "\n".join([user.mention for user in players])
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+        )
+
+        await msg.add_reaction(REACT_UNO)
+
+        play_game = None
+        while play_game == None:
+
+            # Wait for player reactions
+            def check(reaction, user):
+                return str(reaction) == "<{}>".format(REACT_UNO) and reaction.message.id == msg.id and user not in players and not user.bot
+            
+            # Try waiting
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", check = check, timeout = 30)
+                players.append(user)
+
+                await msg.edit(
+                    embed = discord.Embed(
+                        title = "Join Uno!",
+                        description = "React with <{}> to join the game.\n**Players**\n{}".format(
+                            REACT_UNO,
+                            "\n".join([user.mention for user in players])
+                        ),
+                        colour = await get_embed_color(ctx.author)
+                    )
+                )
+
+                # See if there are 5 players
+                if len(players) == 5:
+                    play_game = True
+            
+            # No one responded for 30 seconds
+            except asyncio.TimeoutError:
+
+                # Check if there are enough players
+                play_game = len(players) >= 2
+            
+        # Check if game will be played
+        if play_game:
+            
+            # Create the game
+            game = Uno(players, ctx.channel, self.bot)
+            game.give_cards()
+
+            # Continue playing game until only 1 person left or someone wins
+
+            while True:
+
+                # Send cards to players
+                await game.show_turn()
+
+                # Wait for card response
+                winner = await game.wait_for_card()
+
+                # Check if game was ended
+                if winner == Uno.END_GAME:
+                    break
+
+                # Check if winner exists; Update wins and losses
+                if winner:
+
+                    # Send message to channel and all players
+                    await ctx.channel.send(
+                        embed = discord.Embed(
+                            title = "Game Over!",
+                            description = "{} won the game!".format(winner),
+                            colour = await get_embed_color(winner)
+                        )
+                    )
+                    
+                    for player in players:
+                        await player.send(
+                            embed = discord.Embed(
+                                title = "You Won!" if player == winner else "You Lost.",
+                                description = "{} won the game.".format(
+                                    winner.mention
+                                ) if player != winner else "_ _",
+                                colour = await get_embed_color(winner)
+                            )
+                        )
+                        await database.users.update_uno(player, player == winner)
+                
+                    break
+        
+        # Game will not be played
+        else:
+            await msg.delete()
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Not enough people :frowning2:",
+                    description = "There needs to be at least 2 people to play Uno.",
+                    colour = await get_embed_color(ctx.author)
                 ),
                 delete_after = 5
             )
@@ -1252,7 +1391,7 @@ class Game:
                 description = "React with :100: to join the game.\n**Players**\n{}".format(
                     "\n".join([user.mention for user in players])
                 ),
-                colour = PRIMARY_EMBED_COLOR
+                colour = await get_embed_color(ctx.author)
             )
         )
 
@@ -1276,7 +1415,7 @@ class Game:
                         description = "React with :100: to join the game.\n**Players**\n{}".format(
                             "\n".join([user.mention for user in players])
                         ),
-                        colour = PRIMARY_EMBED_COLOR
+                        colour = await get_embed_color(ctx.author)
                     )
                 )
 
@@ -1345,7 +1484,7 @@ class Game:
                             embed = discord.Embed(
                             title = "Game Over",
                             description = "{} won the Game!".format(winner.mention),
-                            colour = PRIMARY_EMBED_COLOR
+                            colour = await get_embed_color(ctx.author)
                         )
                     )
                     break
@@ -1357,9 +1496,602 @@ class Game:
                 embed = discord.Embed(
                     title = "Not enough people :frowning2:",
                     description = "There needs to be at least 3 people to play Cards Against Humanity.",
-                    colour = PRIMARY_EMBED_COLOR
+                    colour = await get_embed_color(ctx.author)
                 ),
                 delete_after = 5
+            )
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @commands.command(
+        name = "addHangman",
+        description = "Allows you to add a custom hangman phrase.",
+        cog_name = "Game"
+    )
+    async def add_hangman(self, ctx, *, phrase = None):
+
+        # Check if phrase is None; Send error
+        if phrase == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You can't add an empty phrase."
+                )
+            )
+        
+        # Phrase is not None; Add it, notify all developers, notify author
+        else:
+
+            # Add to pending hangman
+            await database.data.add_pending_hangman(phrase, str(ctx.author.id))
+
+            # Notify all developers
+            for dev in await database.bot.get_developers():
+
+                # Get dev user object
+                user = self.bot.get_user(int(dev))
+
+                # Only send if user is found
+                if user != None:
+                    await user.send(
+                        embed = discord.Embed(
+                            title = "New Pending Hangman Phrase",
+                            description = " ",
+                            colour = await get_embed_color(ctx.author)
+                        ).add_field(
+                            name = "Author",
+                            value = "{} ({})".format(
+                                ctx.author.mention, ctx.author
+                            ),
+                            inline = False
+                        ).add_field(
+                            name = "Phrase",
+                            value = phrase,
+                            inline = False
+                        )
+                    )
+            
+            # Notify author
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Phrase Pending!",
+                    description = "Your phrase was added to be reviewed by an Omega Psi developer.\nYou will be notified if it is denied or approved.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+    
+    @commands.command(
+        name = "pendingHangman",
+        aliases = ["pendingH", "pendHangman", "pendH"],
+        description = "Allows you to see the pending hangman phrases.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def pending_hangman(self, ctx):
+
+        # Get list of pending hangman
+        pending_hangmans = await database.data.get_pending_hangman()
+        
+        # Check if there are any pending hangmans
+        if len(pending_hangmans) > 0:
+
+            # Create Embed
+            current = 0
+            author = self.bot.get_user(int(pending_hangmans[current]["author"]))
+            embed = discord.Embed(
+                title = "Pending Hangman Phrases {}".format(
+                    "({} / {})".format(
+                        current + 1, len(pending_hangmans)
+                    ) if len(pending_hangmans) > 1 else ""
+                ),
+                description = "**Phrase**: {}\n**Author**: {}".format(
+                    pending_hangmans[current]["phrase"],
+                    "Unknown" if author == None else "{} ({})".format(
+                        author.mention, author
+                    )
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+
+            msg = await ctx.send(
+                embed = embed
+            )
+
+            await add_scroll_reactions(msg, pending_hangmans)
+
+            while True:
+
+                def check_reaction(reaction, user):
+                    return reaction.message.id == msg.id and ctx.author.id == user.id and str(reaction) in SCROLL_REACTIONS
+                
+                done, pending = await asyncio.wait([
+                    self.bot.wait_for("reaction_add", check = check_reaction),
+                    self.bot.wait_for("reaction_remove", check = check_reaction)
+                ], return_when = asyncio.FIRST_COMPLETED)
+                reaction, user = done.pop().result()
+
+                # Cancel all futures
+                for future in pending:
+                    future.cancel()
+                
+                # Reaction is first page
+                if str(reaction) == FIRST_PAGE:
+                    current = 0
+
+                # Reaction is last page
+                elif str(reaction) == LAST_PAGE:
+                    current = len(pending_hangmans) - 1
+
+                # Reaction is previous page
+                elif str(reaction) == PREVIOUS_PAGE:
+                    current -= 1
+                    if current < 0:
+                        current = 0
+
+                # Reaction is next page
+                elif str(reaction) == NEXT_PAGE:
+                    current += 1
+                    if current > len(pending_hangmans) - 1:
+                        current = len(pending_hangmans) - 1
+
+                # Reaction is leave
+                elif str(reaction) == LEAVE:
+                    await msg.delete()
+                    break
+
+                # Update embed
+                author = self.bot.get_user(int(pending_hangmans[current]["author"]))
+                embed = discord.Embed(
+                    title = "Pending Hangmans {}".format(
+                        "({} / {})".format(
+                            current + 1, len(pending_hangmans)
+                        ) if len(pending_hangmans) > 1 else ""
+                    ),
+                    description = "**Phrase**: {}\n**Author**: {}".format(
+                        pending_hangmans[current]["phrase"],
+                        "Unknown" if author == None else "{} ({})".format(
+                            author.mention, author
+                        )
+                    ),
+                    colour = await get_embed_color(ctx.author)
+                )
+
+                await msg.edit(
+                    embed = embed
+                )
+
+        # There are no pending insutls
+        else:
+
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "No Pending Hangman Phrases",
+                    description = "There aren't currently any pending hangman phrases to review.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+
+    @commands.command(
+        name = "approveHangman",
+        aliases = ["approveH"],
+        description = "Allows you to approve a pending hangman phrase.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def approve_hangman(self, ctx, index : int):
+
+        # Get list of pending hangmans
+        pending_hangmans = await database.data.get_pending_hangman()
+
+        # Check if index is in range of pending hangmans
+        index -= 1
+        if index >= 0 and index < len(pending_hangmans):
+
+            # Approve the hangman phrase and let the author know
+            author = self.bot.get_user(int(pending_hangmans[index]["author"]))
+
+            embed = discord.Embed(
+                title = "Hangman Phrase Approved!",
+                description = "Phrase: *{}*".format(
+                    pending_hangmans[index]["phrase"]
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+
+            # Only send message if author was found
+            await database.data.approve_pending_hangman(index)
+            if author != None:
+                await author.send(
+                    embed = embed
+                )
+            
+            # Let dev know
+            await ctx.send(
+                embed = embed
+            )
+        
+        # Index is out of range`
+        else:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The index you gave is out of range."
+                )
+            )
+    
+    @commands.command(
+        name = "denyHangman",
+        aliases = ["denyH"],
+        description = "Allows you to deny a pending hangman phrase.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def deny_hangman(self, ctx, index : int, *, reason = None):
+        
+        # Get list of pending hangmans
+        pending_hangmans = await database.data.get_pending_hangman()
+
+         # Check if index is in range of pending hangmans
+        index -= 1
+        if index >= 0 and index < len(pending_hangmans):
+            
+            # Deny the phrase and tell the author why
+            author = self.bot.get_user(int(pending_hangmans[index]["author"]))
+
+            embed = discord.Embed(
+                title = "Hangman Phrase Denied.",
+                description = "Phrase: *{}*\n\nReason: *{}*".format(
+                    pending_hangmans[index]["phrase"],
+                    reason if reason != None else "No Reason Provided. DM a developer for the reason."
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+
+            # Only send message if author was found
+            await database.data.deny_pending_hangman(index)
+            if author != None:
+                await author.send(
+                    embed = embed
+                )
+            
+            await ctx.send(
+                embed = embed
+            )
+        
+        # Index is out of range`
+        else:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The index you gave is out of range."
+                )
+            )
+    
+    @commands.command(
+        name = "addScramble",
+        description = "Allows you to add a custom scramble phrase.",
+        cog_name = "Game"
+    )
+    async def add_scramble(self, ctx, *, phrase = None):
+
+        # Check if phrase is None; Send error
+        if phrase == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You can't add an empty phrase."
+                )
+            )
+        
+        # Phrase is not None; Add it, notify all developers, notify author
+        else:
+
+            # Add to pending scramble
+            await database.data.add_pending_scramble(phrase, str(ctx.author.id))
+
+            # Notify all developers
+            for dev in await database.bot.get_developers():
+
+                # Get dev user object
+                user = self.bot.get_user(int(dev))
+
+                # Only send if user is found
+                if user != None:
+                    await user.send(
+                        embed = discord.Embed(
+                            title = "New Pending Scramble Phrase",
+                            description = " ",
+                            colour = await get_embed_color(ctx.author)
+                        ).add_field(
+                            name = "Author",
+                            value = "{} ({})".format(
+                                ctx.author.mention, ctx.author
+                            ),
+                            inline = False
+                        ).add_field(
+                            name = "Phrase",
+                            value = phrase,
+                            inline = False
+                        )
+                    )
+            
+            # Notify author
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Phrase Pending!",
+                    description = "Your phrase was added to be reviewed by an Omega Psi developer.\nYou will be notified if it is denied or approved.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+    
+    @commands.command(
+        name = "pendingScramble",
+        aliases = ["pendingS", "pendScramble", "pendS"],
+        description = "Allows you to see the pending scramble phrases.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def pending_scramble(self, ctx):
+
+        # Get list of pending scramble
+        pending_scrambles = await database.data.get_pending_scramble()
+        
+        # Check if there are any pending scrambles
+        if len(pending_scrambles) > 0:
+
+            # Create Embed
+            current = 0
+            author = self.bot.get_user(int(pending_scrambles[current]["author"]))
+            embed = discord.Embed(
+                title = "Pending Scramble Phrases {}".format(
+                    "({} / {})".format(
+                        current + 1, len(pending_scrambles)
+                    ) if len(pending_scrambles) > 1 else ""
+                ),
+                description = "**Phrase**: {}\n**Author**: {}\n**Hints**: `{}`".format(
+                    pending_scrambles[current]["phrase"],
+                    "Unknown" if author == None else "{} ({})".format(
+                        author.mention, author
+                    ),
+                    ", ".join(pending_scrambles[current]["hints"]) if len(pending_scrambles[current]["hints"]) > 0 else "None"
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+
+            msg = await ctx.send(
+                embed = embed
+            )
+
+            await add_scroll_reactions(msg, pending_scrambles)
+
+            while True:
+
+                def check_reaction(reaction, user):
+                    return reaction.message.id == msg.id and ctx.author.id == user.id and str(reaction) in SCROLL_REACTIONS
+                
+                done, pending = await asyncio.wait([
+                    self.bot.wait_for("reaction_add", check = check_reaction),
+                    self.bot.wait_for("reaction_remove", check = check_reaction)
+                ], return_when = asyncio.FIRST_COMPLETED)
+                reaction, user = done.pop().result()
+
+                # Cancel all futures
+                for future in pending:
+                    future.cancel()
+                
+                # Reaction is first page
+                if str(reaction) == FIRST_PAGE:
+                    current = 0
+
+                # Reaction is last page
+                elif str(reaction) == LAST_PAGE:
+                    current = len(pending_scrambles) - 1
+
+                # Reaction is previous page
+                elif str(reaction) == PREVIOUS_PAGE:
+                    current -= 1
+                    if current < 0:
+                        current = 0
+
+                # Reaction is next page
+                elif str(reaction) == NEXT_PAGE:
+                    current += 1
+                    if current > len(pending_scrambles) - 1:
+                        current = len(pending_scrambles) - 1
+
+                # Reaction is leave
+                elif str(reaction) == LEAVE:
+                    await msg.delete()
+                    break
+
+                # Update embed
+                author = self.bot.get_user(int(pending_scrambles[current]["author"]))
+                embed = discord.Embed(
+                    title = "Pending Scrambles {}".format(
+                        "({} / {})".format(
+                            current + 1, len(pending_scrambles)
+                        ) if len(pending_scrambles) > 1 else ""
+                    ),
+                    description = "**Phrase**: {}\n**Author**: {}\n**Tags**: `{}`".format(
+                        pending_scrambles[current]["phrase"],
+                        "Unknown" if author == None else "{} ({})".format(
+                            author.mention, author
+                        ),
+                        ", ".join(pending_scrambles[current]["tags"]) if len(pending_scrambles[current]["tags"]) > 0 else "None"
+                    ),
+                    colour = await get_embed_color(ctx.author)
+                )
+
+                await msg.edit(
+                    embed = embed
+                )
+
+        # There are no pending insutls
+        else:
+
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "No Pending Scramble Phrases",
+                    description = "There aren't currently any pending scramble phrases to review.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+    
+    @commands.command(
+        name = "addScrambleHint",
+        aliases = ["addSHint"],
+        description = "Allows you to add a hint for a scramble phrase.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def add_scramble_hint(self, ctx, index : int, *hints):
+
+        # Get list of pending scramble
+        pending_scrambles = await database.data.get_pending_scramble()
+
+        # Check if index is in range of list
+        index -= 1
+        hints = list(hints)
+        if index >= 0 and index < len(pending_scrambles):
+
+            # Add the tags to the insult
+            await database.data.add_pending_scramble_hints(index, hints)
+
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Hints Added" if len(hints) > 1 else "Hint Added",
+                    description = "The following hint{} been added: `{}`".format(
+                        "s have" if len(hints) > 1 else " has",
+                        ", ".join(hints)
+                    ),
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+        
+        # Index is out of range
+        else:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The index you gave is out of range."
+                )
+            )
+
+    @commands.command(
+        name = "approveScramble",
+        aliases = ["approveS"],
+        description = "Allows you to approve a pending scramble phrase.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def approve_scramble(self, ctx, index : int):
+
+        # Get list of pending scrambles
+        pending_scrambles = await database.data.get_pending_scramble()
+
+        # Check if index is in range of pending scrambles
+        index -= 1
+        if index >= 0 and index < len(pending_scrambles):
+
+            # Approve the scramble phrase and let the author know
+            author = self.bot.get_user(int(pending_scrambles[index]["author"]))
+
+            embed = discord.Embed(
+                title = "Scramble Phrase Approved!",
+                description = "Phrase: *{}*\n{}".format(
+                    pending_scrambles[index]["phrase"],
+                    "These hints were given to the phrase: `{}`".format(
+                        ", ".join(pending_scrambles[index]["hints"])
+                    ) if len(pending_scrambles[index]["hints"]) > 0 else ""
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+
+            # Only send message if author was found
+            await database.data.approve_pending_scramble(index)
+            if author != None:
+                await author.send(
+                    embed = embed
+                )
+            
+            # Let dev know
+            await ctx.send(
+                embed = embed
+            )
+        
+        # Index is out of range`
+        else:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The index you gave is out of range."
+                )
+            )
+    
+    @commands.command(
+        name = "denyScramble",
+        aliases = ["denyS"],
+        description = "Allows you to deny a pending scramble phrase.",
+        cog_name = "Game"
+    )
+    @commands.check(is_developer)
+    async def deny_scramble(self, ctx, index : int, *, reason = None):
+        
+        # Get list of pending scrambles
+        pending_scrambles = await database.data.get_pending_scramble()
+
+         # Check if index is in range of pending scrambles
+        index -= 1
+        if index >= 0 and index < len(pending_scrambles):
+            
+            # Deny the phrase and tell the author why
+            author = self.bot.get_user(int(pending_scrambles[index]["author"]))
+
+            embed = discord.Embed(
+                title = "Scramble Phrase Denied.",
+                description = "Phrase: *{}*\n\nReason: *{}*".format(
+                    pending_scrambles[index]["phrase"],
+                    reason if reason != None else "No Reason Provided. DM a developer for the reason."
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+
+            # Only send message if author was found
+            await database.data.deny_pending_scramble(index)
+            if author != None:
+                await author.send(
+                    embed = embed
+                )
+            
+            await ctx.send(
+                embed = embed
+            )
+        
+        # Index is out of range`
+        else:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The index you gave is out of range."
+                )
+            )
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @pending_hangman.error
+    @pending_scramble.error
+    @approve_hangman.error
+    @approve_scramble.error
+    @deny_hangman.error
+    @deny_scramble.error
+    async def developer_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You can't run this command."
+                )
+            )
+    
+    @uno.error
+    async def guild_only_error(self, ctx, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "This command can only be run in guilds. Not in DMs."
+                )
             )
     
     @cards_against_humanity.error
