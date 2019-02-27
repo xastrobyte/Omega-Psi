@@ -13,6 +13,8 @@ from category.predicates import get_prefix, is_nsfw_or_private, is_developer
 from database import loop
 from database import database
 
+from util.ifttt import ifttt_push
+
 # Open Bot Client
 bot = AutoShardedBot(command_prefix = get_prefix, case_insensitive = True)
 bot.remove_command("help")
@@ -373,16 +375,10 @@ async def update_dbl(joined_guild = None, guild = None, *, ctx = None):
     if joined_guild != None:
 
         # Send notification through IFTTT that Omega Psi has left a server
-        await loop.run_in_executor(None,
-            partial(
-                requests.post,
-                "https://maker.ifttt.com/trigger/on_error/with/key/{}".format(os.environ["IFTTT_WEBHOOK_KEY"]),
-                json = {
-                    "value1": "Omega Psi\n",
-                    "value2": "Added to Discord Server.\n" if joined_guild else "Removed from Discord server.\n",
-                    "value3": "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
-                }
-            )
+        await ifttt_push(
+            "Omega Psi\n",
+            "Added to Discord Server.\n" if joined_guild else "Removed from Discord Server.\n",
+            "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
         )
 
 @bot.command(
