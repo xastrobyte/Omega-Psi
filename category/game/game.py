@@ -11,6 +11,8 @@ from category.predicates import is_nsfw_and_guild, is_developer, guild_only
 from database import loop
 from database import database
 
+from util.email import send_email
+
 from .connect_four import ConnectFour
 from .tic_tac_toe import TicTacToe
 from .scramble import Scramble
@@ -1700,9 +1702,44 @@ class Game(commands.Cog, name = "Game"):
             # Only send message if author was found
             await database.data.approve_pending_hangman(index)
             if author != None:
-                await author.send(
-                    embed = embed
-                )
+
+                # Try sending author a message
+                try:
+                    await author.send(
+                        embed = embed
+                    )
+                except:
+
+                    # Send the person an email if it can
+                    sent_email = False
+                    if "email" in pending_hangmans[index]:
+
+                        try:
+                            await loop.run_in_executor(None,
+                                send_email,
+                                pending_hangmans[index]["email"],
+                                "Hangman Phrase".format(index),
+                                "Your hangman phrase was approved.\n{}".format(
+                                    pending_hangmans[index]["phrase"]
+                                ),
+                                "<p>Your hangman phrase was approved.</p><br><em>{}</em>".format(
+                                    pending_hangmans[index]["phrase"]
+                                )
+                            )
+                            sent_email = True
+                        except:
+                            pass
+
+                    await ctx.send(
+                        embed = discord.Embed(
+                            title = "Could Not Send Message",
+                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.\n{}".format(
+                                "I could not send them an email either." if not sent_email else "I did send them an email instead."
+                            ),
+                            colour = 0x800000
+                        ),
+                        delete_after = 10
+                    )
             
             # Let dev know
             await ctx.send(
@@ -1748,9 +1785,46 @@ class Game(commands.Cog, name = "Game"):
             # Only send message if author was found
             await database.data.deny_pending_hangman(index)
             if author != None:
-                await author.send(
-                    embed = embed
-                )
+                
+                # Try sending author a message
+                try:
+                    await author.send(
+                        embed = embed
+                    )
+                except:
+
+                    # Send the person an email if it can
+                    sent_email = False
+                    if "email" in pending_hangmans[index]:
+
+                        try:
+                            await loop.run_in_executor(None,
+                                send_email,
+                                pending_hangmans[index]["email"],
+                                "Hangman Phrase".format(index),
+                                "Your hangman phrase was denied.\n{}\nReason: {}".format(
+                                    pending_hangmans[index]["phrase"],
+                                    reason
+                                ),
+                                "<p>Your hangman phrase was approved.</p><br><em>{}</em><br><strong>Reason</strong>: <em>{}</em>".format(
+                                    pending_hangmans[index]["phrase"],
+                                    reason
+                                )
+                            )
+                            sent_email = True
+                        except:
+                            pass
+
+                    await ctx.send(
+                        embed = discord.Embed(
+                            title = "Could Not Send Message",
+                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.\n{}".format(
+                                "I could not send them an email either." if not sent_email else "I did send them an email instead."
+                            ),
+                            colour = 0x800000
+                        ),
+                        delete_after = 10
+                    )
             
             await ctx.send(
                 embed = embed
@@ -2005,9 +2079,50 @@ class Game(commands.Cog, name = "Game"):
             # Only send message if author was found
             await database.data.approve_pending_scramble(index)
             if author != None:
-                await author.send(
-                    embed = embed
-                )
+                
+                # Try sending author a message
+                try:
+                    await author.send(
+                        embed = embed
+                    )
+                except:
+
+                    # Send the person an email if it can
+                    sent_email = False
+                    if "email" in pending_scrambles[index]:
+
+                        try:
+                            await loop.run_in_executor(None,
+                                send_email,
+                                pending_scrambles[index]["email"],
+                                "Scramble Phrase".format(index),
+                                "Your scramble phrase was approved.\n{}\n{}".format(
+                                    pending_scrambles[index]["phrase"],
+                                    "These hints were given to the phrase: {}".format(
+                                        ", ".join(pending_scrambles[index]["hints"])
+                                    ) if len(pending_scrambles[index]["hints"]) > 0 else ""
+                                ),
+                                "<p>Your scramble phrase was approved.</p><br><em>{}</em><br>{}".format(
+                                    pending_scrambles[index]["phrase"],
+                                    "<strong>These hints were given to the phrase</strong>: <em>{}</em>".format(
+                                        ", ".join(pending_scrambles[index]["hints"])
+                                    ) if len(pending_scrambles[index]["hints"]) > 0 else ""
+                                )
+                            )
+                            sent_email = True
+                        except:
+                            pass
+
+                    await ctx.send(
+                        embed = discord.Embed(
+                            title = "Could Not Send Message",
+                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.\n{}".format(
+                                "I could not send them an email either." if not sent_email else "I did send them an email instead."
+                            ),
+                            colour = 0x800000
+                        ),
+                        delete_after = 10
+                    )
             
             # Let dev know
             await ctx.send(
@@ -2053,9 +2168,46 @@ class Game(commands.Cog, name = "Game"):
             # Only send message if author was found
             await database.data.deny_pending_scramble(index)
             if author != None:
-                await author.send(
-                    embed = embed
-                )
+                
+                # Try sending author a message
+                try:
+                    await author.send(
+                        embed = embed
+                    )
+                except:
+
+                    # Send the person an email if it can
+                    sent_email = False
+                    if "email" in pending_scrambles[index]:
+
+                        try:
+                            await loop.run_in_executor(None,
+                                send_email,
+                                pending_scrambles[index]["email"],
+                                "Scramble Phrase".format(index),
+                                "Your scramble phrase was denied.\n{}\nReason: {}".format(
+                                    pending_scrambles[index]["phrase"],
+                                    reason
+                                ),
+                                "<p>Your scramble phrase was denied.</p><br><em>{}</em><br><strong>Reason</strong>: <em>{}</em>".format(
+                                    pending_scrambles[index]["phrase"],
+                                    reason
+                                )
+                            )
+                            sent_email = True
+                        except:
+                            pass
+
+                    await ctx.send(
+                        embed = discord.Embed(
+                            title = "Could Not Send Message",
+                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.\n{}".format(
+                                "I could not send them an email either." if not sent_email else "I did send them an email instead."
+                            ),
+                            colour = 0x800000
+                        ),
+                        delete_after = 10
+                    )
             
             await ctx.send(
                 embed = embed
