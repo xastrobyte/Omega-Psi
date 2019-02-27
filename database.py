@@ -749,6 +749,101 @@ class Data:
         self._data = data
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_hangman_data_sync(self):
+        
+        # Get hangman data
+        return self._data.find_one({"_id": "hangman"})
+    
+    def set_hangman_data_sync(self, hangman_data):
+        
+        # Set hangman data
+        self._data.update_one(
+            {"_id": "hangman"},
+            {"$set": hangman_data},
+            upsert = False
+        )
+    
+    def add_pending_hangman_word_sync(self, phrase, author, email):
+        
+        # Get hangman data
+        hangman_data = self.get_hangman_data_sync()
+
+        # Add the phrase to the pending hangmans
+        hangman_data["pending_hangman"].append({
+            "phrase": phrase,
+            "author": author,
+            "email": email
+        })
+
+        # Set hangman data
+        self.set_hangman_data_sync(hangman_data)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_scramble_data_sync(self):
+        
+        # Get scramble data
+        return self._data.find_one({"_id": "scramble"})
+    
+    def set_scramble_data_sync(self, scramble_data):
+        
+        # Set scramble data
+        self._data.update_one(
+            {"_id": "scramble"},
+            {"$set": scramble_data},
+            upsert = False
+        )
+    
+    def add_pending_scramble_word_sync(self, phrase, author, email):
+        
+        # Get scramble data
+        scramble_data = self.get_scramble_data_sync()
+
+        # Add the phrase to the pending scrambles
+        scramble_data["pending_scramble"].append({
+            "phrase": phrase,
+            "author": author,
+            "email": email,
+            "hints": []
+        })
+
+        # Set scramble data
+        self.set_scramble_data_sync(scramble_data)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_insult_data_sync(self):
+        
+        # Get insult data
+        return self._data.find_one({"_id": "insults"})
+    
+    def set_insult_data_sync(self, insult_data):
+        
+        # Set insult data
+        self._data.update_one(
+            {"_id": "insults"},
+            {"$set": insult_data},
+            upsert = False
+        )
+    
+    def add_pending_insult_sync(self, insult, author, email):
+        
+        # Get insult data
+        insult_data = self.get_insult_data_sync()
+
+        # Add insult to pending insult
+        insult_data["pending_insults"].append({
+            "insult": insult,
+            "author": author,
+            "email": email,
+            "tags": []
+        })
+    
+        # Set insult data
+        self.set_insult_data_sync(insult_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_hangman_data(self):
 
@@ -1123,6 +1218,130 @@ class Data:
 class CaseNumber:
     def __init__(self, case_numbers):
         self._case_numbers = case_numbers
+    
+    def get_suggestion_cases_sync(self):
+
+        default = {
+            "number": 1,
+            "cases": {}
+        }
+
+        # Get suggestion data
+        case_data = self._case_numbers.find_one({"_id": "suggestions"})
+
+        if case_data == None:
+            self.set_suggestion_cases_sync(default)
+            case_data = default
+        
+        return case_data
+    
+    def set_suggestion_cases_sync(self, cases):
+
+        # Check if there is None; create it
+        suggestion_data = self._case_numbers.find_one({"_id": "suggestions"})
+
+        if suggestion_data == None:
+            self._case_numbers.insert_one({"_id": "suggestions"})
+        
+        # Set data
+        self._case_numbers.update_one(
+            {"_id": "suggestions"},
+            {"$set": cases},
+            upsert = False
+        )
+    
+    def get_suggestion_number_sync(self):
+        suggestion_cases = self.get_suggestion_cases_sync()
+
+        return suggestion_cases["number"]
+    
+    def add_suggestion_sync(self, suggestion, author, email):
+        
+        # Get suggestion cases
+        suggestion_cases = self.get_suggestion_cases_sync()
+
+        # Get current number then update it
+        number = suggestion_cases["number"]
+        suggestion_cases["number"] += 1
+
+        # Add the suggestion
+        current_time = datetime_to_dict(datetime.now())
+        suggestion_cases["cases"][str(number)] = {
+            "suggestion": suggestion,
+            "author": author,
+            "email": email,     # This is only set in the sync version of the function
+                                # because it is used for the website version of the command
+                                # that uses it
+            "time": current_time,
+            "seen": False
+        }
+
+        # Set suggestion cases
+        self.set_suggestion_cases_sync(suggestion_cases)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_bug_cases_sync(self):
+
+        default = {
+            "number": 1,
+            "cases": {}
+        }
+
+        # Get bug data
+        case_data = self._case_numbers.find_one({"_id": "bugs"})
+
+        if case_data == None:
+            self.set_bug_cases_sync(default)
+            case_data = default
+        
+        return case_data
+    
+    def set_bug_cases_sync(self, cases):
+
+        # Check if there is None; create it
+        bug_data = self._case_numbers.find_one({"_id": "bugs"})
+
+        if bug_data == None:
+            self._case_numbers.insert_one({"_id": "bugs"})
+        
+        # Set data
+        self._case_numbers.update_one(
+            {"_id": "bugs"},
+            {"$set": cases},
+            upsert = False
+        )
+    
+    def get_bug_number_sync(self):
+        bug_cases = self.get_bug_cases_sync()
+
+        return bug_cases["number"]
+    
+    def add_bug_sync(self, bug, author, email):
+        
+        # Get bug cases
+        bug_cases = self.get_bug_cases_sync()
+
+        # Get current number then update it
+        number = bug_cases["number"]
+        bug_cases["number"] += 1
+
+        # Add the bug
+        current_time = datetime_to_dict(datetime.now())
+        bug_cases["cases"][str(number)] = {
+            "bug": bug,
+            "author": author,
+            "email": email,     # This is only set in the sync version of the function
+                                # because it is used for the website version of the command
+                                # that uses it
+            "time": current_time,
+            "seen": False
+        }
+
+        # Set bug cases
+        self.set_bug_cases_sync(bug_cases)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_suggestion_cases(self):
 
