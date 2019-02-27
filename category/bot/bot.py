@@ -8,8 +8,11 @@ from category.globals import FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST
 from category.globals import add_scroll_reactions
 from category.globals import get_embed_color
 from category.predicates import is_developer, is_in_guild
+
 from database import loop
 from database import database
+
+from util.email import send_email
 from util.string import dict_to_datetime
 
 class Bot(commands.Cog, name = "Bot"):
@@ -223,10 +226,33 @@ class Bot(commands.Cog, name = "Bot"):
                                         )
                                     )
                                 except:
+
+                                    # Send the person an email if it can
+                                    sent_email = False
+                                    if "email" in suggestion_cases[str(current)]:
+
+                                        try:
+                                            await loop.run_in_executor(None,
+                                                send_email,
+                                                suggestion_cases[str(current)]["email"],
+                                                "Suggestion Case (#{})".format(str(current)),
+                                                "Your suggestion was seen by a developer.\n{}".format(
+                                                    suggestion_cases[str(current)]["suggestion"]
+                                                ),
+                                                "<p>Your suggestion was seen by a developer.</p><br><em>{}</em>".format(
+                                                    suggestion_cases[str(current)]["suggestion"]
+                                                )
+                                            )
+                                            sent_email = True
+                                        except:
+                                            pass
+
                                     await ctx.send(
                                         embed = discord.Embed(
                                             title = "Could Not Send Message",
-                                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.",
+                                            description = "I tried sending the message to the suggestor but they didn't allow me to send the message.\n{}".format(
+                                                "I could not send them an email either." if not sent_email else "I did send them an email."
+                                            ),
                                             colour = 0x800000
                                         ),
                                         delete_after = 10
