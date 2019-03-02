@@ -11,6 +11,8 @@ from category.globals import get_embed_color
 from category.internet.weather import weather, forecast
 from util.string import minutes_to_runtime
 
+from .ticketmaster import get_event_embed, get_attraction_embed
+
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 IMDB = IMDb()
@@ -23,6 +25,9 @@ WEATHER_API_CALL = "https://api.apixu.com/v1/current.json?key={}&q={}"
 FORECAST_API_CALL = "https://api.apixu.com/v1/forecast.json?key={}&q={}&days=7"
 XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"
 XKCD_RECENT_API_CALL = "https://xkcd.com/info.0.json"
+
+TICKETMASTER_EVENT_API_CALL = "https://app.ticketmaster.com/discovery/v2/events.json?keyword={}&apikey={}"
+TICKETMASTER_ATTRACTION_API_CALL = "https://app.ticketmaster.com/discovery/v2/attractions.json?keyword={}&apikey={}"
 
 DC_ICON = "https://www.dccomics.com/sites/default/files/imce/DC_Logo_Blue_Final_573b356bd056a9.41641801.jpg"
 MARVEL_ICON = "http://thetechnews.com/wp-content/uploads/2018/03/2_The-latest-Marvel-logo.jpg"
@@ -262,6 +267,155 @@ class Internet(commands.Cog, name = "Internet"):
                 
                 await ctx.send(
                     embed = embed
+                )
+    
+    @commands.command(
+        name = "searchConcert",
+        aliases = ["concert"],
+        description = "Let's you search up events pertaining to keywords to search by.",
+        cog_name = "Internet"
+    )
+    async def search_concert(self, ctx, *, keywords = None):
+
+        # Check if keywords is None; Send error message
+        if keywords == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need keywords to search up a concert/event by."
+                )
+            )
+        
+        # Keywords is not None
+        else:
+
+            # Request ticketmaster api
+            response = await database.loop.run_in_executor(None,
+                requests.get,
+                TICKETMASTER_EVENT_API_CALL.format(
+                    keywords.replace(" ", "+"),
+                    os.environ["TICKETMASTER_API_KEY"]
+                )
+            )
+            response = response.json()
+
+            # Make sure there exists at least 1 element
+            if response["page"]["totalElements"] > 0:
+
+                # Keep track of current events to show information about
+                # Multiple events will be put into a scrolling embed
+                current = 0
+                events = response["_embedded"]["events"]
+
+                embed = await get_event_embed(ctx, events[current])
+
+                # Send message
+                msg = await ctx.send(
+                    embed = embed
+                )
+
+                await add_scroll_reactions(msg, events)
+
+                while True:
+
+                    # Wait for next reaction from user
+                    def check(reaction, user):
+                        return str(reaction) in SCROLL_REACTIONS and reaction.message.id == msg.id and user == ctx.author
+
+                    done, pending = await asyncio.wait([
+                        self.bot.wait_for("reaction_add", check = check),
+                        self.bot.wait_for("reaction_remove", check = check)
+                    ], return_when = asyncio.FIRST_COMPLETED)
+
+                    reaction, user = done.pop().result()
+
+                    # Cancel any futures
+                    for future in pending:
+                        future.cancel()
+                    
+                    # Reaction is FIRST_PAGE
+                    if str(reaction) == FIRST_PAGE:
+                        current = 0
+                    
+                    # Reaction is LAST_PAGE
+                    elif str(reaction) == LAST_PAGE:
+                        current = len(events) - 1
+                    
+                    # Reaction is PREVIOUS_PAGE
+                    elif str(reaction) == PREVIOUS_PAGE:
+                        current -= 1
+                        if current < 0:
+                            current = 0
+                    
+                    # Reaction is NEXT_PAGE
+                    elif str(reaction) == NEXT_PAGE:
+                        current += 1
+                        if current > len(events) - 1:
+                            current = len(events) - 1
+                    
+                    # Reaction is LEAVE
+                    elif str(reaction) == LEAVE:
+                        await msg.delete()
+                        break
+                    
+                    # Update event
+                    await msg.edit(
+                        embed = await get_event_embed(ctx, events[current])
+                    )
+            
+            # There was nothing
+            else:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "Nothing was found for `{}`".format(keywords)
+                    )
+                )
+    
+    @commands.command(
+        name = "searchAttraction",
+        aliases = ["attraction", "searchPerformer", "performer"],
+        description = "Let's you search up attractions/performers pertaining to keywords to search by.",
+        cog_name = "Internet"
+    )
+    async def search_attraction(self, ctx, *, keywords = None):
+
+        # Check if keywords is None; Send error message
+        if keywords == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need keywords to search up an attraction/performer by."
+                )
+            )
+        
+        # Keywords is not None
+        else:
+
+            # Request ticketmaster api
+            response = await database.loop.run_in_executor(None,
+                requests.get,
+                TICKETMASTER_ATTRACTION_API_CALL.format(
+                    keywords.replace(" ", "+"),
+                    os.environ["TICKETMASTER_API_KEY"]
+                )
+            )
+            response = response.json()
+
+            # Make sure there exists at least 1 element
+            if response["page"]["totalElements"] > 0:
+
+                # Get the first attraction
+                attraction = response["_embedded"]["attractions"][0]
+
+                # Send message
+                await ctx.send(
+                    embed = await get_attraction_embed(ctx, attraction)
+                )
+            
+            # There was nothing
+            else:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "Nothing was found for `{}`".format(keywords)
+                    )
                 )
     
     @commands.command(
