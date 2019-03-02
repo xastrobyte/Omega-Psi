@@ -30,7 +30,8 @@ class Bot:
             "restart": {
                 "send": False
             },
-            "theme": {}
+            "theme": {},
+            "files": []
         }
 
         # Get bot data
@@ -76,7 +77,8 @@ class Bot:
             "restart": {
                 "send": False
             },
-            "theme": {}
+            "theme": {},
+            "files": []
         }
 
         # Get bot data
@@ -150,6 +152,13 @@ class Bot:
         await self.set_bot(bot_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_developers_sync(self):
+
+        # Get bot data
+        bot_data = self.get_bot_sync()
+
+        return bot_data["developers"]
     
     async def get_developers(self):
 
@@ -287,6 +296,38 @@ class Bot:
 
         return item
     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_changed_files(self):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        return bot_data["files"]
+    
+    async def set_changed_files(self, files):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        bot_data["files"] = files
+
+        # Set bot data
+        await self.set_bot(bot_data)
+    
+    async def add_changed_file(self, filename, reason):
+
+        # Get changed files
+        files = await self.get_changed_files()
+
+        files.append({
+            "file": filename,
+            "reason": reason
+        })
+
+        # Set changed files
+        await self.set_changed_files(files)
+
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def get_pending_update(self):
@@ -1212,6 +1253,149 @@ class Data:
 
             if nsfw or "nsfw" not in insult["tags"]:
                 return insult
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_compliment_data(self):
+
+        default = {
+            "pending_compliments": [],
+            "compliments": []
+        }
+
+        # Get compliment data
+        compliment_data = await loop.run_in_executor(None,
+            partial(
+                self._data.find_one,
+                {"_id": "compliments"}
+            )
+        )
+
+        if compliment_data == None:
+            await loop.run_in_executor(None,
+                partial(
+                    self._data.insert_one,
+                    {"_id": "compliments"}
+                )
+            )
+            await self.set_compliment_data(default)
+            compliment_data = default
+        
+        return compliment_data
+    
+    async def set_compliment_data(self, compliment_data):
+
+        # Set compliment data
+        await loop.run_in_executor(None,
+            partial(
+                self._data.update_one,
+                {"_id": "compliments"}, 
+                {"$set": compliment_data}, 
+                upsert = False
+            )
+        )
+    
+    async def get_pending_compliments(self):
+
+        # Get compliment data
+        compliment_data = await self.get_compliment_data()
+
+        return compliment_data["pending_compliments"]
+    
+    async def set_pending_compliments(self, pending_compliments):
+
+        # Get compliment data
+        compliment_data = await self.get_compliment_data()
+
+        compliment_data["pending_compliments"] = pending_compliments
+
+        # Set compliment data
+        await self.set_compliment_data(compliment_data)
+    
+    async def add_pending_compliment(self, compliment, author):
+
+        # Get pending compliments
+        pending_compliments = await self.get_pending_compliments()
+
+        pending_compliments.append({
+            "compliment": compliment,
+            "author": author,
+            "tags": []
+        })
+
+        # Set pending compliments
+        await self.set_pending_compliments(pending_compliments)
+    
+    async def add_pending_compliment_tags(self, index, tags = []):
+
+        # Get pending compliments
+        pending_compliments = await self.get_pending_compliments()
+
+        for tag in tags:
+            if tag.lower() not in pending_compliments[index]["tags"]:
+                pending_compliments[index]["tags"].append(tag.lower())
+
+        # Set pending compliments
+        await self.set_pending_compliments(pending_compliments)
+    
+    async def approve_pending_compliment(self, index):
+
+        # Get pending compliments
+        pending_compliments = await self.get_pending_compliments()
+
+        # Remove compliment
+        compliment = pending_compliments.pop(index)
+
+        # Set pending compliments
+        await self.set_pending_compliments(pending_compliments)
+
+        # Get compliments
+        compliments = await self.get_compliments()
+
+        # Add compliment
+        compliments.append(compliment)
+
+        # Set compliments
+        await self.set_compliments(compliments)
+    
+    async def deny_pending_compliment(self, index):
+
+        # Get pending compliments
+        pending_compliments = await self.get_pending_compliments()
+
+        # Remove compliment
+        pending_compliments.pop(index)
+
+        # Set pending compliments
+        await self.set_pending_compliments(pending_compliments)
+    
+    async def get_compliments(self):
+
+        # Get compliment data
+        compliment_data = await self.get_compliment_data()
+
+        return compliment_data["compliments"]
+    
+    async def set_compliments(self, compliments):
+
+        # Get compliment data
+        compliment_data = await self.get_compliment_data()
+
+        compliment_data["compliments"] = compliments
+
+        # Set compliment data
+        await self.set_compliment_data(compliment_data)
+    
+    async def get_compliment(self, nsfw = False):
+
+        # Get compliments
+        compliments = await self.get_compliments()
+
+        while True:
+            compliment = choice(compliments)
+
+            if nsfw or "nsfw" not in compliment["tags"]:
+                return compliment
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
