@@ -15,7 +15,7 @@ def timestamp_to_datetime(timestamp):
 
     # Get the date and time
     date = timestamp.split("T")[0].split("-")
-    time = timestamp.split("T")[1].split(":")
+    time = timestamp.split("T")[1].replace("Z", "").split(":")
 
     # Turn it into a datetime
     dateTime = datetime(
