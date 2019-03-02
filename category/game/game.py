@@ -1,4 +1,4 @@
-import asyncio, base64, discord, random, requests
+import asyncio, base64, discord, os, random, requests
 
 from discord.ext import commands
 from random import choice as choose
@@ -11,6 +11,7 @@ from category.predicates import is_nsfw_and_guild, is_developer, guild_only
 from database import loop
 from database import database
 
+from util.discord import send_webhook
 from util.email import send_email
 
 from .connect_four import ConnectFour
@@ -18,7 +19,7 @@ from .tic_tac_toe import TicTacToe
 from .scramble import Scramble
 from .hangman import Hangman
 from .cards_against_humanity import CardsAgainstHumanity
-from .uno import Uno
+from .uno import Uno, ADD_4_CARD
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -96,7 +97,7 @@ ROBOT = "🤖"
 QUIT = "❌"
 
 REACT_100 = "💯"
-REACT_UNO = ":WR:549407154118066189"
+REACT_UNO = ADD_4_CARD
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -155,7 +156,7 @@ class Game(commands.Cog, name = "Game"):
                 ":x: Tic Tac Toe": await database.users.get_tic_tac_toe(member),
                 ":red_circle: Connect Four": await database.users.get_connect_four(member),
                 "<:cah:540281486633336862> CAH": await database.users.get_cards_against_humanity(member),
-                "<:WR:548419419647246337> Uno": await database.users.get_uno(member),
+                "{} Uno".format(ADD_4_CARD): await database.users.get_uno(member),
                 ":question: Trivia": await database.users.get_trivia(member)
             }
 
@@ -1560,6 +1561,27 @@ class Game(commands.Cog, name = "Game"):
                     colour = await get_embed_color(ctx.author)
                 )
             )
+
+            # Send the bug to the discord channel dedicated to hangman phrases
+            await send_webhook(
+                os.environ["HANGMAN_WEBHOOK"],
+                discord.Embed(
+                    title = "Hangman Phrase Suggested",
+                    description = " ",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "User",
+                    value = ctx.author
+                ).add_field(
+                    name = "Origin",
+                    value = ("Server: " + ctx.guild.name) if ctx.guild != None else "Private Message"
+                ).add_field(
+                    name = "Phrase",
+                    value = phrase
+                ).set_thumbnail(
+                    url = ctx.author.avatar_url
+                )
+            )
     
     @commands.command(
         name = "pendingHangman",
@@ -1585,7 +1607,8 @@ class Game(commands.Cog, name = "Game"):
                         current + 1, len(pending_hangmans)
                     ) if len(pending_hangmans) > 1 else ""
                 ),
-                description = "**Phrase**: {}\n**Author**: {}".format(
+                description = "**Phrase (#{})**: {}\n**Author**: {}".format(
+                    pending_hangmans[current]["number"],
                     pending_hangmans[current]["phrase"],
                     "Unknown" if author == None else "{} ({})".format(
                         author.mention, author
@@ -1648,7 +1671,8 @@ class Game(commands.Cog, name = "Game"):
                             current + 1, len(pending_hangmans)
                         ) if len(pending_hangmans) > 1 else ""
                     ),
-                    description = "**Phrase**: {}\n**Author**: {}".format(
+                    description = "**Phrase (#{})**: {}\n**Author**: {}".format(
+                        pending_hangmans[current]["number"],
                         pending_hangmans[current]["phrase"],
                         "Unknown" if author == None else "{} ({})".format(
                             author.mention, author
@@ -1893,6 +1917,27 @@ class Game(commands.Cog, name = "Game"):
                     colour = await get_embed_color(ctx.author)
                 )
             )
+
+            # Send the bug to the discord channel dedicated to scramble
+            await send_webhook(
+                os.environ["SCRAMBLE_WEBHOOK"],
+                discord.Embed(
+                    title = "Scramble Phrase Suggested",
+                    description = " ",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "User",
+                    value = ctx.author
+                ).add_field(
+                    name = "Origin",
+                    value = ("Server: " + ctx.guild.name) if ctx.guild != None else "Private Message"
+                ).add_field(
+                    name = "Phrase",
+                    value = phrase
+                ).set_thumbnail(
+                    url = ctx.author.avatar_url
+                )
+            )
     
     @commands.command(
         name = "pendingScramble",
@@ -1982,12 +2027,12 @@ class Game(commands.Cog, name = "Game"):
                             current + 1, len(pending_scrambles)
                         ) if len(pending_scrambles) > 1 else ""
                     ),
-                    description = "**Phrase**: {}\n**Author**: {}\n**Tags**: `{}`".format(
+                    description = "**Phrase**: {}\n**Author**: {}\n**Hints**: `{}`".format(
                         pending_scrambles[current]["phrase"],
                         "Unknown" if author == None else "{} ({})".format(
                             author.mention, author
                         ),
-                        ", ".join(pending_scrambles[current]["tags"]) if len(pending_scrambles[current]["tags"]) > 0 else "None"
+                        ", ".join(pending_scrambles[current]["hints"]) if len(pending_scrambles[current]["hints"]) > 0 else "None"
                     ),
                     colour = await get_embed_color(ctx.author)
                 )
