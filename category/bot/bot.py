@@ -12,6 +12,7 @@ from category.predicates import is_developer, is_in_guild
 from database import loop
 from database import database
 
+from util.discord import send_webhook
 from util.email import send_email
 from util.string import dict_to_datetime
 
@@ -107,8 +108,33 @@ class Bot(commands.Cog, name = "Bot"):
     async def suggestion_reports(self, ctx, data = None):
 
         # Get all suggestions
+        # Check if getting all suggestion cases or just ones that have been seen
         suggestion_cases = await database.case_numbers.get_suggestion_cases()
-        suggestion_cases = suggestion_cases["cases"]
+        unseen = None
+
+        # Check if unseen suggestions
+        if data == "unseen":
+            data = None
+            unseen = True
+            temp = suggestion_cases["cases"]
+            suggestion_cases = {}
+            for case in temp:
+                if not temp[case]["seen"]:
+                    suggestion_cases[case] = temp[case]
+
+        # Check if seen suggestions
+        elif data == "seen":
+            data = None
+            unseen = False
+            temp = suggestion_cases["cases"]
+            suggestion_cases = {}
+            for case in temp:
+                if temp[case]["seen"]:
+                    suggestion_cases[case] = temp[case]
+        
+        # Check if getting all suggestions
+        else:
+            suggestion_cases = suggestion_cases["cases"]
 
         # Make sure suggestion exists or data is None
         if data == None or str(data) in suggestion_cases:
@@ -120,7 +146,11 @@ class Bot(commands.Cog, name = "Bot"):
                 current = 1 if data == None else int(data)
                 author = self.bot.get_user(int(suggestion_cases[str(current)]["author"]))
                 embed = discord.Embed(
-                    title = "Suggestions",
+                    title = "{}Suggestions".format(
+                        "Unseen " if unseen == True else (
+                            "Seen " if unseen == False else ""
+                        )
+                    ),
                     description = "**Suggestion #{}**: {}\n**Author**: {}".format(
                         str(current),
                         suggestion_cases[str(current)]["suggestion"],
@@ -271,7 +301,11 @@ class Bot(commands.Cog, name = "Bot"):
                     # Update embed
                     author = self.bot.get_user(int(suggestion_cases[str(current)]["author"]))
                     embed = discord.Embed(
-                        title = "Suggestions",
+                        title = "{}Suggestions".format(
+                            "Unseen " if unseen == True else (
+                                "Seen " if unseen == False else ""
+                            )
+                        ),
                         description = "**Suggestion #{}**: {}\n**Author**: {}".format(
                             str(current),
                             suggestion_cases[str(current)]["suggestion"],
@@ -296,7 +330,11 @@ class Bot(commands.Cog, name = "Bot"):
                 await ctx.send(
                     embed = discord.Embed(
                         title = "No suggestions",
-                        description = "There are currently no suggestions.",
+                        description = "There are currently no {}suggestions.".format(
+                            "unseen " if unseen == True else (
+                                "seen " if unseen == False else ""
+                            )
+                        ),
                         colour = await get_embed_color(ctx.author)
                     )
                 )
@@ -368,7 +406,28 @@ class Bot(commands.Cog, name = "Bot"):
                     colour = await get_embed_color(ctx.author)
                 )
             )
-        
+
+            # Send the bug to the discord channel dedicated to suggestions
+            await send_webhook(
+                os.environ["SUGGESTION_WEBHOOK"],
+                discord.Embed(
+                    title = "Suggestion (#{})".format(suggestion_number),
+                    description = " ",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "User",
+                    value = ctx.author
+                ).add_field(
+                    name = "Origin",
+                    value = ("Server: " + ctx.guild.name) if ctx.guild != None else "Private Message"
+                ).add_field(
+                    name = "Suggestion",
+                    value = suggestion
+                ).set_thumbnail(
+                    url = ctx.author.avatar_url
+                )
+            )
+    
     @commands.command(
         name = "bugs",
         description = "Shows all bug reports made or a specific bug report.",
@@ -379,7 +438,31 @@ class Bot(commands.Cog, name = "Bot"):
         
         # Get all bugs
         bug_cases = await database.case_numbers.get_bug_cases()
-        bug_cases = bug_cases["cases"]
+        unseen = None
+
+        # Check if getting unseen reports
+        if data == "unseen":
+            data = None
+            unseen = True
+            temp = bug_cases["cases"]
+            bug_cases = {}
+            for case in temp:
+                if not temp[case]["seen"]:
+                    bug_cases[case] = temp[case]
+        
+        # Check if getting seen reports
+        elif data == "seen":
+            data = None
+            unseen = False
+            temp = bug_cases["cases"]
+            bug_cases = {}
+            for case in temp:
+                if temp[case]["seen"]:
+                    bug_cases[case] = temp[case]
+        
+        # Check if getting all reports
+        else:
+            bug_cases = bug_cases["cases"]
 
         # Make sure bug exists or data is None
         if data == None or str(data) in bug_cases:
@@ -391,7 +474,11 @@ class Bot(commands.Cog, name = "Bot"):
                 current = 1 if data == None else int(data)
                 author = self.bot.get_user(int(bug_cases[str(current)]["author"]))
                 embed = discord.Embed(
-                    title = "Bugs",
+                    title = "{}Bugs".format(
+                        "Unseen " if unseen == True else (
+                            "Seen " if unseen == False else ""
+                        )
+                    ),
                     description = "**Bug #{}**: {}\n**Author**: {}".format(
                         str(current),
                         bug_cases[str(current)]["bug"],
@@ -508,7 +595,11 @@ class Bot(commands.Cog, name = "Bot"):
                     # Update embed
                     author = self.bot.get_user(int(bug_cases[str(current)]["author"]))
                     embed = discord.Embed(
-                        title = "Bugs",
+                        title = "{}Bugs".format(
+                            "Unseen " if unseen == True else (
+                                "Seen " if unseen == False else ""
+                            )
+                        ),
                         description = "**Bug #{}**: {}\n**Author**: {}".format(
                             str(current),
                             bug_cases[str(current)]["bug"],
@@ -533,7 +624,11 @@ class Bot(commands.Cog, name = "Bot"):
                 await ctx.send(
                     embed = discord.Embed(
                         title = "No Bug Reports",
-                        description = "There are currently no bug reports.",
+                        description = "There are currently no {}bug reports.".format(
+                            "unseen " if unseen == True else (
+                                "seen " if unseen == False else ""
+                            )
+                        ),
                         colour = await get_embed_color(ctx.author)
                     )
                 )
@@ -603,6 +698,27 @@ class Bot(commands.Cog, name = "Bot"):
                     title = "Bug Sent! (Bug #{})".format(bug_number),
                     description = bug,
                     colour = await get_embed_color(ctx.author)
+                )
+            )
+
+            # Send the bug to the discord channel dedicated to bugs
+            await send_webhook(
+                os.environ["BUG_WEBHOOK"],
+                discord.Embed(
+                    title = "Bug (#{})".format(bug_number),
+                    description = " ",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "User",
+                    value = ctx.author
+                ).add_field(
+                    name = "Origin",
+                    value = ("Server: " + ctx.guild.name) if ctx.guild != None else "Private Message"
+                ).add_field(
+                    name = "Bug",
+                    value = bug
+                ).set_thumbnail(
+                    url = ctx.author.avatar_url
                 )
             )
 
@@ -1050,6 +1166,9 @@ class Bot(commands.Cog, name = "Bot"):
 
             # Commit the update. Then get the update so we can inform all other developers
             await database.bot.commit_pending_update(version, description)
+
+            # Also clear the changed files
+            await database.bot.set_changed_files([])
             update = await database.bot.get_recent_update()
 
             for dev in await database.bot.get_developers():
@@ -1254,6 +1373,89 @@ class Bot(commands.Cog, name = "Bot"):
             await ctx.send(
                 embed = embed
             )
+    
+    @commands.command(
+        name = "rememberFile",
+        aliases = ["fileChange"],
+        description = "Adds a file change to the bot to remember which files to update when it comes time to update the bot.",
+        cog_name = "Bot"
+    )
+    @commands.check(is_developer)
+    async def remember_file(self, ctx, filename = None, *, reason = None):
+
+        # Check if filename is None; Show list of files to remember
+        if filename == None:
+
+            # Get files
+            files = await database.bot.get_changed_files()
+
+            # Add to fields
+            fields = []
+            field_text = ""
+            for f in files:
+
+                f = "`{}` - {}\n".format(
+                    f["file"],
+                    f["reason"]
+                )
+
+                if len(field_text) + len(f) > FIELD_THRESHOLD:
+                    fields.append(field_text)
+                    field_text = ""
+                
+                field_text += f
+            
+            if len(field_text) > 0:
+                fields.append(field_text)
+
+            # Create embed
+            embed = discord.Embed(
+                title = "Remembered Files",
+                description = "Here's a list of files you need to update.",
+                colour = await get_embed_color(ctx.author)
+            )
+
+            count = 0
+            for field in fields:
+                embed.add_field(
+                    name = "Files {}".format(
+                        "({} / {})".format(
+                            count + 1, len(fields)
+                        ) if len(fields) > 1 else ""
+                    ),
+                    value = field,
+                    inline = False
+                )
+                count += 1
+            
+            await ctx.send(
+                embed = embed
+            )
+        
+        # Filename is not None
+        else:
+
+            # Check if filename already exists
+            if filename in await database.bot.get_changed_files():
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        "You already have the file being remembered."
+                    )
+                )
+            
+            # Filename does not exist; Add it
+            else:
+                await database.bot.add_changed_file(filename, reason if reason else "No Reason Given")
+
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Remembered!",
+                        description = "The file `{}` has been remembered.".format(
+                            filename
+                        ),
+                        colour = await get_embed_color(ctx.author)
+                    )
+                )
     
     @commands.command(
         name = "addDeveloper",
