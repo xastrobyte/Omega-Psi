@@ -18,7 +18,7 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com/command
     * Base Conversion
     * Logic Parsing
     * Write and execute code
-  * Math (*yes it's back*)
+  * Math
     * Integrals
     * Derivatives
     * Area under a curve
