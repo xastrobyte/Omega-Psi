@@ -11,6 +11,7 @@ from database import database as db
 from database import loop
 
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
+DBL_VOTE_LINK = "https://discordbots.org/bot/535587516816949248/vote"
 
 class Info(commands.Cog, name = "Info"):
     def __init__(self, bot):
@@ -114,6 +115,17 @@ class Info(commands.Cog, name = "Info"):
         # Send the link
         await ctx.send(
             "discord.gg/W8yVrHt"
+        )
+    
+    @commands.command(
+        name = "vote",
+        description = "Gives you a link to vote for Omega Psi on DBL.",
+        cog_name = "Info"
+    )
+    async def vote(self, ctx):
+
+        await ctx.send(
+            DBL_VOTE_LINK
         )
     
     @commands.command(
