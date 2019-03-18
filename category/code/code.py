@@ -15,6 +15,7 @@ CODE_EMBED_COLOR = 0xEC7600
 
 JUDGE_API_CALL = "https://api.judge0.com/submissions?wait=true"
 LOGIC_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true"
+LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true"
 MORSE_API_CALL = "https://www.fellowhashbrown.com/api/morse/{}?text={}"
 QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
 
@@ -604,27 +605,51 @@ class Code(commands.Cog, name = "Code"):
         else:
 
             # Call the Logic API
-            response = await loop.run_in_executor(None,
+            response_table = await loop.run_in_executor(None,
                 requests.get,
                 LOGIC_API_CALL.format(
                     expression
                 )
             )
-            response = response.json()
+            table = response_table.json()
+
+            # Simplify the Expression
+            response_simplify = await loop.run_in_executor(None,
+                requests.get,
+                LOGIC_SIMPLIFY_API_CALL.format(
+                    expression
+                )
+            )
+            simplification = response_simplify.json()
 
             # See if an error existed
-            if not response["success"]:
+            if not table["success"]:
                 await ctx.send(
                     embed = errors.get_error_message(
-                        response["error"]
+                        table["error"]
+                    )
+                )
+            if not simplification["success"]:
+                await ctx.send(
+                    embed = errors.get_error_message(
+                        simplification["error"]
                     )
                 )
             
             # No error existed; Get the value
             else:
 
-                truth_table = response["value"]
+                truth_table = table["value"]
                 content = "```\n{}\n```".format("\n".join(truth_table))
+
+                # Send a message of the simplified expression too
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Expression Simplified",
+                        description = "**Note that this expression might be able to be simplified even more.**\n\n`{}`".format(simplification["value"]),
+                        colour = await get_embed_color(ctx.author)
+                    )
+                )
 
                 # Check if on mobile, send a file
                 if on_mobile:
