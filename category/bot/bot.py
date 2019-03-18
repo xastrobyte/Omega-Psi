@@ -121,6 +121,8 @@ class Bot(commands.Cog, name = "Bot"):
             for case in temp:
                 if not temp[case]["seen"]:
                     suggestion_cases[case] = temp[case]
+                    if data == None:
+                        data = case
 
         # Check if seen suggestions
         elif data == "seen":
@@ -131,6 +133,8 @@ class Bot(commands.Cog, name = "Bot"):
             for case in temp:
                 if temp[case]["seen"]:
                     suggestion_cases[case] = temp[case]
+                    if data == None:
+                        data = case
         
         # Check if getting all suggestions
         else:
@@ -197,19 +201,33 @@ class Bot(commands.Cog, name = "Bot"):
                     if str(reaction) == FIRST_PAGE:
                         current = 1
 
+                        while str(current) not in suggestion_cases and current < len(suggestion_cases):
+                            current += 1
+
                     # Reaction is last page
                     elif str(reaction) == LAST_PAGE:
                         current = len(suggestion_cases)
 
+                        while str(current) not in suggestion_cases and current > 1:
+                            current -= 1
+
                     # Reaction is previous page
                     elif str(reaction) == PREVIOUS_PAGE:
                         current -= 1
+
+                        while str(current) not in suggestion_cases and current > 1:
+                            current -= 1
+
                         if current < 1:
                             current = 1
 
                     # Reaction is next page
                     elif str(reaction) == NEXT_PAGE:
                         current += 1
+
+                        while str(current) not in suggestion_cases and current < len(suggestion_cases):
+                            current += 1
+
                         if current > len(suggestion_cases):
                             current = len(suggestion_cases)
                     
@@ -449,6 +467,8 @@ class Bot(commands.Cog, name = "Bot"):
             for case in temp:
                 if not temp[case]["seen"]:
                     bug_cases[case] = temp[case]
+                    if data == None:
+                        data = case
         
         # Check if getting seen reports
         elif data == "seen":
@@ -459,6 +479,8 @@ class Bot(commands.Cog, name = "Bot"):
             for case in temp:
                 if temp[case]["seen"]:
                     bug_cases[case] = temp[case]
+                    if data == None:
+                        data = case
         
         # Check if getting all reports
         else:
@@ -525,19 +547,33 @@ class Bot(commands.Cog, name = "Bot"):
                     if str(reaction) == FIRST_PAGE:
                         current = 1
 
+                        while str(current) not in bug_cases and current < len(bug_cases):
+                            current += 1
+
                     # Reaction is last page
                     elif str(reaction) == LAST_PAGE:
                         current = len(bug_cases)
 
+                        while str(current) not in bug_cases and current > 1:
+                            current -= 1
+
                     # Reaction is previous page
                     elif str(reaction) == PREVIOUS_PAGE:
                         current -= 1
+
+                        while str(current) not in bug_cases and current > 1:
+                            current -= 1
+
                         if current < 1:
                             current = 1
 
                     # Reaction is next page
                     elif str(reaction) == NEXT_PAGE:
                         current += 1
+
+                        while str(current) not in bug_cases and current < len(bug_cases):
+                            current += 1
+
                         if current > len(bug_cases):
                             current = len(bug_cases)
                     
@@ -882,66 +918,233 @@ class Bot(commands.Cog, name = "Bot"):
         description = "Shows you information about the most recent update to the bot and the pending update if any.",
         cog_name = "Bot"
     )
-    async def update(self, ctx):
+    async def update(self, ctx, *, get_all = None):
 
-        # Get the recent update data
-        recent_update = await database.bot.get_recent_update()
+        # Check if get_all is in the list to get all updates
+        get_all = get_all in ["all", "all updates"]
 
-        # Create the embed
-        embed = discord.Embed(
-            title = "Updates",
-            description = "Here's the most recent update to Omega Psi.",
-            colour = await get_embed_color(ctx.author)
-        )
+        # Check if getting all updates in a scrolling embed
+        if get_all:
+            
+            # Get all the updates
+            updates = await database.bot.get_updates()
 
-        fields = {
-            "Recent Update": "**Version**: {}\n**Description**: {}\n**Features**: {}\n**Fixes**: {}".format(
-                recent_update["version"],
-                recent_update["description"],
-                "\n".join(recent_update["features"]) if len(recent_update["features"]) > 0 else "No Features Added.",
-                "\n".join(recent_update["fixes"]) if len(recent_update["fixes"]) > 0 else "No Fixes Made."
+            # Create the embed
+            embed = discord.Embed(
+                title = "Updates",
+                description = "Here's a list of updates to Omega Psi in order of most recent to oldest.",
+                colour = await get_embed_color(ctx.author)
             )
-        }
 
-        # Add all fields to embed
-        for field in fields:
+            # Setup fields
+            current = 0
+            
+            fields = {
+                "Version": updates[current]["version"],
+                "Description": updates[current]["description"],
+                "Features": "\n".join(updates[current]["features"]) if len(updates[current]["features"]) > 0 else "No Features Added.",
+                "Fixes": "\n".join(updates[current]["fixes"]) if len(updates[current]["fixes"]) > 0 else "No Fixes Made."
+            }
 
-            # See if field extends past threshold
-            sub_fields = []
-            sub_field_text = ""
+            # Add all fields to embed
+            for field in fields:
 
-            field_lines = fields[field].split("\n")
+                # See if field extends past threshold
+                sub_fields = []
+                sub_field_text = ""
 
-            for line in field_lines:
+                field_lines = fields[field].split("\n")
 
-                line += "\n"
+                for line in field_lines:
 
-                if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
-                    sub_fields.append(sub_field_text)
-                    sub_field_text = ""
+                    line += "\n"
+
+                    if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
+                        sub_fields.append(sub_field_text)
+                        sub_field_text = ""
+                    
+                    sub_field_text += line
                 
-                sub_field_text += line
+                if len(sub_field_text) > 0:
+                    sub_fields.append(sub_field_text)
+                
+                # Add each sub_field
+                count = 0
+                for sub_field in sub_fields:
+                    count += 1
+                    embed.add_field(
+                        name = field + "{}".format(
+                            "({} / {})".format(
+                                count, len(sub_fields)
+                            ) if len(sub_fields) > 1 else ""
+                        ),
+                        value = sub_field,
+                        inline = False
+                    )
             
-            if len(sub_field_text) > 0:
-                sub_fields.append(sub_field_text)
+            # Send message
+            msg = await ctx.send(
+                embed = embed
+            )
             
-            # Add each sub_field
-            count = 0
-            for sub_field in sub_fields:
-                count += 1
-                embed.add_field(
-                    name = field + "{}".format(
-                        "({} / {})".format(
-                            count, len(sub_fields)
-                        ) if len(sub_fields) > 1 else ""
-                    ),
-                    value = sub_field,
-                    inline = False
+            # Add necessary scroll reactions
+            await add_scroll_reactions(msg, updates)
+
+            while True:
+
+                # Wait for reactions
+                def check(reaction, user):
+                    return reaction.message.id == msg.id and user.id == ctx.author.id and str(reaction) in SCROLL_REACTIONS
+                
+                done, pending = await asyncio.wait([
+                    self.bot.wait_for("reaction_add", check = check),
+                    self.bot.wait_for("reaction_remove", check = check)
+                ], return_when = asyncio.FIRST_COMPLETED)
+                reaction, user = done.pop().result()
+
+                # Cancel all futures
+                for future in pending:
+                    future.cancel()
+                
+                # Reaction is first page
+                if str(reaction) == FIRST_PAGE:
+                    current = 0
+                
+                # Reaction is last page
+                elif str(reaction) == LAST_PAGE:
+                    current = len(updates) - 1
+                
+                # Reaction is previous page
+                elif str(reaction) == PREVIOUS_PAGE:
+                    current -= 1
+                    if current < 0:
+                        current = 0
+                
+                # Reaction is next page
+                elif str(reaction) == NEXT_PAGE:
+                    current += 1
+                    if current > len(updates) - 1:
+                        current = len(updates) - 1
+                
+                # Reaction is leave
+                elif str(reaction) == LEAVE:
+                    await msg.delete()
+                    break
+                
+                # Update the fields and embeds
+                embed = discord.Embed(
+                    title = "Updates",
+                    description = "Here's a list of updates to Omega Psi in order of most recent to oldest.",
+                    colour = await get_embed_color(ctx.author)
                 )
 
-        await ctx.send(
-            embed = embed
-        )
+                # Setup fields
+                fields = {
+                    "Version": updates[current]["version"],
+                    "Description": updates[current]["description"],
+                    "Features": "\n".join(updates[current]["features"]) if len(updates[current]["features"]) > 0 else "No Features Added.",
+                    "Fixes": "\n".join(updates[current]["fixes"]) if len(updates[current]["fixes"]) > 0 else "No Fixes Made."
+                }
+
+                # Add all fields to embed
+                for field in fields:
+
+                    # See if field extends past threshold
+                    sub_fields = []
+                    sub_field_text = ""
+
+                    field_lines = fields[field].split("\n")
+
+                    for line in field_lines:
+
+                        line += "\n"
+
+                        if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
+                            sub_fields.append(sub_field_text)
+                            sub_field_text = ""
+                        
+                        sub_field_text += line
+                    
+                    if len(sub_field_text) > 0:
+                        sub_fields.append(sub_field_text)
+                    
+                    # Add each sub_field
+                    count = 0
+                    for sub_field in sub_fields:
+                        count += 1
+                        embed.add_field(
+                            name = field + "{}".format(
+                                "({} / {})".format(
+                                    count, len(sub_fields)
+                                ) if len(sub_fields) > 1 else ""
+                            ),
+                            value = sub_field,
+                            inline = False
+                        )
+                    
+                await msg.edit(
+                    embed = embed
+                )
+        
+        # Just getting the most recent
+        else:
+
+            # Get the recent update data
+            recent_update = await database.bot.get_recent_update()
+
+            # Create the embed
+            embed = discord.Embed(
+                title = "Updates",
+                description = "Here's the most recent update to Omega Psi.",
+                colour = await get_embed_color(ctx.author)
+            )
+
+            fields = {
+                "Version": recent_update["version"],
+                "Description": recent_update["description"],
+                "Features": "\n".join(recent_update["features"]) if len(recent_update["features"]) > 0 else "No Features Added.",
+                "Fixes": "\n".join(recent_update["fixes"]) if len(recent_update["fixes"]) > 0 else "No Fixes Made."
+            }
+
+            # Add all fields to embed
+            for field in fields:
+
+                # See if field extends past threshold
+                sub_fields = []
+                sub_field_text = ""
+
+                field_lines = fields[field].split("\n")
+
+                for line in field_lines:
+
+                    line += "\n"
+
+                    if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
+                        sub_fields.append(sub_field_text)
+                        sub_field_text = ""
+                    
+                    sub_field_text += line
+                
+                if len(sub_field_text) > 0:
+                    sub_fields.append(sub_field_text)
+                
+                # Add each sub_field
+                count = 0
+                for sub_field in sub_fields:
+                    count += 1
+                    embed.add_field(
+                        name = field + " {}".format(
+                            "({} / {})".format(
+                                count, len(sub_fields)
+                            ) if len(sub_fields) > 1 else ""
+                        ),
+                        value = sub_field,
+                        inline = False
+                    )
+
+            await ctx.send(
+                embed = embed
+            )
     
     @commands.command(
         name = "pendingUpdate",
@@ -1411,7 +1614,7 @@ class Bot(commands.Cog, name = "Bot"):
             # Create embed
             embed = discord.Embed(
                 title = "Remembered Files",
-                description = "Here's a list of files you need to update.",
+                description = "Here's a list of files you need to update." if len(files) > 0 else "There aren't any files to remember.",
                 colour = await get_embed_color(ctx.author)
             )
 
