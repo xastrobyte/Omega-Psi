@@ -61,11 +61,12 @@ NO_CHALLENGE = "❎"
 
 class Player:
 
-    def __init__(self, member):
+    def __init__(self, member, is_ai = False):
         self._member = member
 
         self._cards = []
         self._message = None
+        self._is_ai = is_ai
 
     def get_player(self):
         return self._member
@@ -73,64 +74,82 @@ class Player:
     def get_cards(self):
         return self._cards
     
+    def is_ai(self):
+        return self._is_ai
+    
 
     def add_card(self, card):
         self._cards.append(card)
 
     async def show_turn(self, game):
 
-        # Get current player
-        current_player = game.get_current_player().get_player()
+        # Only send if player is not an AI
+        if not self._is_ai:
 
-        # Only show cards and reactions if current player is this player
-        if current_player.id == self.get_player().id:
+            # Get current player
+            current_player = game.get_current_player().get_player()
+            current_player_ai = game.get_current_player().is_ai()
 
-            # Create embed and send message
-            self._message = await self.get_player().send(
-                embed = discord.Embed(
-                    title = "Current Card",
-                    description = "<{}>\nYour Cards: {}".format(
-                        game.get_current_card(),
-                        " ".join([
-                            "<{}>".format(
-                                card
-                            )
-                            for card in self._cards
-                        ])
-                    ),
-                    colour = PRIMARY_EMBED_COLOR
+            # Only show cards and reactions if current player is this player
+            if not current_player_ai and current_player.id == self.get_player().id:
+
+                # Create embed and send message
+                self._message = await self.get_player().send(
+                    embed = discord.Embed(
+                        title = "Current Card",
+                        description = "<{}>\nYour Cards: {}".format(
+                            game.get_current_card(),
+                            " ".join([
+                                "<{}>".format(
+                                    card
+                                )
+                                for card in self._cards
+                            ])
+                        ),
+                        colour = PRIMARY_EMBED_COLOR
+                    )
                 )
-            )
 
-            # Add card reactions if card is valid
-            for card in self.get_cards():
-                if valid_card(game.get_current_card(), card):
-                    await self._message.add_reaction(card)
-            
-            # Now add draw reaction
-            await self._message.add_reaction(DRAW_UNO)
-            await self._message.add_reaction(QUIT)
+                # Add card reactions if card is valid
+                for card in self.get_cards():
+                    if valid_card(game.get_current_card(), card):
+                        await self._message.add_reaction(card)
+                
+                # Now add draw reaction
+                await self._message.add_reaction(DRAW_UNO)
+                await self._message.add_reaction(QUIT)
 
-        # Current player is not this player, say whose turn it is
-        else:
-            
-            # Create embed and send message
-            self._message = await self.get_player().send(
-                embed = discord.Embed(
-                    title = "_ _",
-                    description = "It is {}'s turn.".format(
-                        game.get_current_player().get_player().mention
-                    ),
-                    colour = PRIMARY_EMBED_COLOR
+            # Current player is not this player, say whose turn it is
+            else:
+                
+                # Create embed and send message
+                if game.get_current_player().is_ai():
+                    player_mention = game.get_current_player().get_player()
+                else:
+                    player_mention = game.get_current_player().get_player().mention
+
+                self._message = await self.get_player().send(
+                    embed = discord.Embed(
+                        title = "_ _",
+                        description = "It is {}'s turn.".format(
+                            player_mention
+                        ),
+                        colour = PRIMARY_EMBED_COLOR
+                    )
                 )
-            )
 
 class Uno:
 
     END_GAME = "END_GAME"
 
-    def __init__(self, players, channel, bot):
+    def __init__(self, players, channel, bot, *, against_ais = False):
         self._players = [Player(player) for player in players]
+
+        # If player goes against AIs, keep the first player and make the rest AIs
+        if against_ais:
+            self._players = [self._players[0]]
+            for player in range(4):
+                self._players.append(Player("AI {}".format(player + 1), True))
 
         # Choose random starting player
         self._current = randint(0, len(players) - 1)
@@ -186,12 +205,17 @@ class Uno:
         
     async def show_turn(self):
 
+        if self.get_current_player().is_ai():
+            player_mention = self.get_current_player().get_player()
+        else:
+            player_mention = self.get_current_player().get_player().mention
+
         # Send message to channel saying whose turn
         self._message = await self._channel.send(
             embed = discord.Embed(
                 title = "Uno",
                 description = "It is {}'s turn".format(
-                    self.get_current_player().get_player().mention
+                    player_mention
                 ),
                 colour = PRIMARY_EMBED_COLOR
             )
@@ -205,20 +229,69 @@ class Uno:
 
         # Check for a valid card
         while True:
-            def check_reaction(reaction, user):
-                return reaction.message.id == self.get_current_player()._message.id and user.id == self.get_current_player().get_player().id and (str(reaction) in [DRAW_UNO, QUIT] or str(reaction).replace("<", "").replace(">", "") in UNO_CARDS)
             
-            reaction, user = await self.bot.wait_for("reaction_add", check = check_reaction)
-            reaction = str(reaction).replace("<", "").replace(">", "")
+            # Check if current player is not an AI
+            if not self.get_current_player().is_ai():
+                def check_reaction(reaction, user):
+                    return reaction.message.id == self.get_current_player()._message.id and user.id == self.get_current_player().get_player().id and (str(reaction) in [DRAW_UNO, QUIT] or str(reaction).replace("<", "").replace(">", "") in UNO_CARDS)
+
+                reaction, user = await self.bot.wait_for("reaction_add", check = check_reaction)
+                reaction = str(reaction).replace("<", "").replace(">", "")
+            
+            # Current player is an AI, choose random valid card
+            else:
+
+                # Sleep for 1 second to emulate choosing
+                await asyncio.sleep(1)
+
+                # Check if AI has any valid cards
+                valid_found = False
+                reaction = None
+                for card in self.get_current_player()._cards:
+
+                    # Check all valid cards
+                    if valid_card(self.get_current_card(), card.replace("<", "").replace(">", "")):
+                        valid_found = True
+
+                        # Check if AI card is a +4 card
+                        if card == ADD_4_CARD:
+                            reaction = card
+                            break
+                        
+                        # Check if AI card is a +2 card
+                        elif card in ADD_2_CARDS:
+                            reaction = card
+                            break
+                        
+                        # Check if AI card is a skip card
+                        elif card in SKIP_CARDS:
+                            reaction = card
+                            break
+                        
+                        # Check if AI card is a wild card
+                        elif card in WILD_CARDS:
+                            reaction = card
+                            break
+                
+                # Draw card; No valid cards found
+                if not valid_found:
+                    reaction = DRAW_UNO
+                
+                # Choose random card while card is invalid
+                if reaction == None:
+                    reaction = choice(self.get_current_player()._cards).replace("<", "").replace(">", "")
+                    while not valid_card(self.get_current_card(), reaction):
+                        reaction = choice(self.get_current_player()._cards).replace("<", "").replace(">", "")
 
             if str(reaction) == DRAW_UNO or str(reaction) == QUIT or valid_card(self.get_current_card(), str(reaction)):
                 break
             
             else:
-                await user.send(
-                    "You can't use that card yet!",
-                    delete_after = 5
-                )
+                if not self.get_current_player().is_ai():
+                    await user.send(
+                        "You can't use that card yet!",
+                        delete_after = 5
+                    )
         
         current_player = self.get_current_player()
     
@@ -257,18 +330,24 @@ class Uno:
 
         # Check how many cards current player has
         if len(current_player._cards) == 1:
+
+            if current_player.is_ai():
+                player_mention = current_player.get_player()
+            else:
+                player_mention = current_player.get_player().mention
+
             await notify(
                 self,
                 current_player,
                 "❗ ❗ UNO ❗ ❗",
                 "{} has Uno!".format(
-                    current_player.get_player().mention
+                    player_mention
                 )
             )
         
         # Check if player won
         elif (len(self.get_current_player()._cards)) == 0:
-            return current_player.get_player()
+            return current_player
 
         wild_select = None
 
@@ -286,23 +365,33 @@ class Uno:
                 self._inc = -self._inc
                 self.next_player()
             
+            if current_player.is_ai():
+                player_mention = current_player.get_player()
+            else:
+                player_mention = current_player.get_player().mention
+            
             await notify(
                 self, 
                 current_player,
                 "Reversed!", "{} used a reverse card!".format(
-                    current_player.get_player().mention
+                    player_mention
                 )
             )
 
         # Check if card is a skip card
         elif str(reaction) in SKIP_CARDS:
 
+            if self.get_next_player().is_ai():
+                player_mention = self.get_next_player().get_player()
+            else:
+                player_mention = self.get_next_player().get_player().mention
+
             await notify(
                 self, 
                 current_player,
                 "Skipped!", 
                 "{} was skipped!".format(
-                    self.get_next_player().get_player().mention
+                    player_mention
                 ),
                 special_next = "oooooofff. You were skipped."
             )
@@ -312,28 +401,35 @@ class Uno:
         # Check if card is a wild card
         elif str(reaction) in WILD_CARDS:
 
-            # Ask player to choose a color
-            msg = await current_player.get_player().send(
-                embed = discord.Embed(
-                    title = "Choose a Color",
-                    description = "Choose a new color",
-                    colour = PRIMARY_EMBED_COLOR
+            # Check if player is not AI
+            if not current_player.is_ai():
+
+                # Ask player to choose a color
+                msg = await current_player.get_player().send(
+                    embed = discord.Embed(
+                        title = "Choose a Color",
+                        description = "Choose a new color",
+                        colour = PRIMARY_EMBED_COLOR
+                    )
                 )
-            )
 
-            # Add color cards
-            for card in COLOR_CARDS:
-                await msg.add_reaction(card)
-            
-            # Wait for reaction
-            def check_color_reaction(reaction, user):
-                return reaction.message.id == msg.id and user.id == current_player.get_player().id and str(reaction).replace("<", "").replace(">", "") in COLOR_CARDS
+                # Add color cards
+                for card in COLOR_CARDS:
+                    await msg.add_reaction(card)
+                
+                # Wait for reaction
+                def check_color_reaction(reaction, user):
+                    return reaction.message.id == msg.id and user.id == current_player.get_player().id and str(reaction).replace("<", "").replace(">", "") in COLOR_CARDS
 
-            wild_reaction, user = await self.bot.wait_for("reaction_add", check = check_color_reaction)
-            wild_reaction = str(wild_reaction).replace("<", "").replace(">", "")
+                wild_reaction, user = await self.bot.wait_for("reaction_add", check = check_color_reaction)
+                wild_reaction = str(wild_reaction).replace("<", "").replace(">", "")
 
-            # Add card to top of pile
-            self.set_card(str(wild_reaction))
+                # Add card to top of pile
+                self.set_card(str(wild_reaction))
+
+            # Current player is AI, choose random color
+            else:
+                wild_reaction = choice([RED_CARD, BLUE_CARD, YELLOW_CARD, GREEN_CARD])
 
             # Check what color it is
             if str(wild_reaction) == RED_CARD:
@@ -350,11 +446,16 @@ class Uno:
             
             # Check if the card is also a +4 card
             if str(reaction) == ADD_4_CARD:
+                if self.get_next_player().is_ai():
+                    player_mention = self.get_next_player().get_player()
+                else:
+                    player_mention = self.get_next_player().get_player().mention
+
                 await notify(
                     self,
                     current_player,
                     "+4!",
-                    "{} was hit with +4 card. oof.".format(self.get_next_player().get_player().mention),
+                    "{} was hit with +4 card. oof.".format(player_mention),
                     special_next = "You were hit with a +4!\n¯\_(ツ)_/¯"
                 )
 
@@ -365,11 +466,16 @@ class Uno:
         
         # Check if the card adds 2 to the next player
         elif str(reaction) in ADD_2_CARDS:
+            if self.get_next_player().is_ai():
+                player_mention = self.get_next_player().get_player()
+            else:
+                player_mention = self.get_next_player().get_player().mention
+                
             await notify(
                 self,
                 current_player,
                 "+2!",
-                "{} was hit with a +2 card. oof.".format(self.get_next_player().get_player().mention),
+                "{} was hit with a +2 card. oof.".format(player_mention),
                 special_next = "You were hit with a +2!\n¯\_(ツ)_/¯"
             )
 
@@ -382,12 +488,17 @@ class Uno:
         else:
             self.next_player()
 
-        # Update channel message
+        # Update channel message; Make sure the AI's are treated as players too.
+        if not current_player.is_ai():
+            player_mention = current_player.get_player().mention
+        else:
+            player_mention = current_player.get_player()
+
         await self._message.edit(
             embed = discord.Embed(
                 title = "Uno",
                 description = "{} chose {}\n{}".format(
-                    current_player.get_player().mention,
+                    player_mention,
                     "<{}>".format(
                         str(reaction)
                     ) if str(reaction) not in [DRAW_UNO, QUIT] else str(reaction),
@@ -397,21 +508,29 @@ class Uno:
             )
         )
 
-        # Update everybody's message
+        # Update everybody's message; Only if they are not an AI
         for player in self._players:
-            await player._message.edit(
-                embed = discord.Embed(
-                    title = "Uno",
-                    description = "{} chose {}\n{}".format(
-                        current_player.get_player().mention if player != current_player else "You",
-                        "<{}>".format(
-                            str(reaction)
-                        ) if str(reaction) not in [QUIT, DRAW_UNO] else str(reaction),
-                        "" if wild_select == None else ("The new color is " + wild_select)
-                    ),
-                    colour = PRIMARY_EMBED_COLOR
+            
+            if not player.is_ai():
+
+                if not current_player.is_ai():
+                    player_mention = current_player.get_player().mention
+                else:
+                    player_mention = current_player.get_player()
+
+                await player._message.edit(
+                    embed = discord.Embed(
+                        title = "Uno",
+                        description = "{} chose {}\n{}".format(
+                            player_mention if player != current_player else "You",
+                            "<{}>".format(
+                                str(reaction)
+                            ) if str(reaction) not in [QUIT, DRAW_UNO] else str(reaction),
+                            "" if wild_select == None else ("The new color is " + wild_select)
+                        ),
+                        colour = PRIMARY_EMBED_COLOR
+                    )
                 )
-            )
 
 def valid_card(current_card, reaction):
     reaction = str(reaction)
@@ -438,25 +557,34 @@ async def notify(game, current_player, title, message, special_next = None):
         )
     )
 
-    # See if there is a special message for the next player
+    # See if there is a special message for the next player and if next player is not AI
     if special_next != None:
-        await game.get_next_player().get_player().send(
-            embed = discord.Embed(
-                title = title,
-                description = special_next,
-                colour = PRIMARY_EMBED_COLOR
-            )
-        )
-
-    # Send message to all players (except current)
-    for player in game.get_players():
-
-        if player.get_player().id != current_player.get_player().id or (special_next != None and game.get_next_player().get_player().id != player.get_player().id):
-
-            await player.get_player().send(
+        if not game.get_next_player().is_ai():
+            await game.get_next_player().get_player().send(
                 embed = discord.Embed(
                     title = title,
-                    description = message,
+                    description = special_next,
                     colour = PRIMARY_EMBED_COLOR
                 )
             )
+
+    # Send message to all players (except current or if not AI)
+    for player in game.get_players():
+
+        if not player.is_ai():
+
+            # Check if player is not current player
+            is_player_eq_current = current_player.is_ai() or player.get_player().id != current_player.get_player().id
+
+            # Check if special exists and player is not next player
+            is_player_eq_next = game.get_next_player().is_ai() or game.get_next_player().get_player().id != player.get_player().id
+            
+            if is_player_eq_current or (special_next != None and is_player_eq_next):
+
+                await player.get_player().send(
+                    embed = discord.Embed(
+                        title = title,
+                        description = message,
+                        colour = PRIMARY_EMBED_COLOR
+                    )
+                )
