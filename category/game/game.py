@@ -118,7 +118,7 @@ class Game(commands.Cog, name = "Game"):
         description = "Gets the stats of someone you specify, or yourself, of all mini-games in the bot.",
         cog_name = "Game"
     )
-    async def gamestats(self, ctx, member = None):
+    async def gamestats(self, ctx, *, member = None):
 
         # Member is none or in private message; Get self
         if member == None or ctx.guild == None:
@@ -156,7 +156,7 @@ class Game(commands.Cog, name = "Game"):
                 ":x: Tic Tac Toe": await database.users.get_tic_tac_toe(member),
                 ":red_circle: Connect Four": await database.users.get_connect_four(member),
                 "<:cah:540281486633336862> CAH": await database.users.get_cards_against_humanity(member),
-                "{} Uno".format(ADD_4_CARD): await database.users.get_uno(member),
+                "<{}> Uno".format(ADD_4_CARD): await database.users.get_uno(member),
                 ":question: Trivia": await database.users.get_trivia(member)
             }
 
@@ -1273,8 +1273,9 @@ class Game(commands.Cog, name = "Game"):
         msg = await ctx.send(
             embed = discord.Embed(
                 title = "Join Uno!",
-                description = "React with <{}> to join the game.\n**Players**\n{}".format(
+                description = "React with <{}> to join the game. {}, react with :robot: if you want to play against 4 other AIs\n**Players**\n{}".format(
                     REACT_UNO,
+                    ctx.author.mention,
                     "\n".join([user.mention for user in players])
                 ),
                 colour = await get_embed_color(ctx.author)
@@ -1282,24 +1283,34 @@ class Game(commands.Cog, name = "Game"):
         )
 
         await msg.add_reaction(REACT_UNO)
+        await msg.add_reaction(ROBOT)
 
         play_game = None
+        against_ais = False
         while play_game == None:
 
             # Wait for player reactions
             def check(reaction, user):
-                return str(reaction) == "<{}>".format(REACT_UNO) and reaction.message.id == msg.id and user not in players and not user.bot
+                return (str(reaction) == "<{}>".format(REACT_UNO) and reaction.message.id == msg.id and user not in players and not user.bot) or (str(reaction) == ROBOT and user.id == ctx.author.id and not user.bot)
             
             # Try waiting
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", check = check, timeout = 30)
+
+                # Check if the reaction is a robot reaction
+                if str(reaction) == ROBOT:
+                    play_game = True
+                    against_ais = True
+                    break
+
                 players.append(user)
 
                 await msg.edit(
                     embed = discord.Embed(
                         title = "Join Uno!",
-                        description = "React with <{}> to join the game.\n**Players**\n{}".format(
+                        description = "React with <{}> to join the game. {}, react with :robot: if you want to play against 4 other AIs\n**Players**\n{}".format(
                             REACT_UNO,
+                            ctx.author.mention,
                             "\n".join([user.mention for user in players])
                         ),
                         colour = await get_embed_color(ctx.author)
@@ -1307,7 +1318,7 @@ class Game(commands.Cog, name = "Game"):
                 )
 
                 # See if there are 5 players
-                if len(players) == 5:
+                if len(players) == 5 or against_ais:
                     play_game = True
             
             # No one responded for 30 seconds
@@ -1320,7 +1331,7 @@ class Game(commands.Cog, name = "Game"):
         if play_game:
             
             # Create the game
-            game = Uno(players, ctx.channel, self.bot)
+            game = Uno(players, ctx.channel, self.bot, against_ais = against_ais)
             game.give_cards()
 
             # Continue playing game until only 1 person left or someone wins
@@ -1340,26 +1351,35 @@ class Game(commands.Cog, name = "Game"):
                 # Check if winner exists; Update wins and losses
                 if winner:
 
+                    # Check if winner is not an AI
+                    if winner.is_ai():
+                        winner_mention = winner.get_player()
+                        winner_user = ctx.author
+                    else:
+                        winner_mention = winner.get_player().mention
+                        winner_user = winner.get_player()
+
                     # Send message to channel and all players
                     await ctx.channel.send(
                         embed = discord.Embed(
                             title = "Game Over!",
-                            description = "{} won the game!".format(winner),
-                            colour = await get_embed_color(winner)
+                            description = "{} won the game!".format(winner_mention),
+                            colour = await get_embed_color(winner_user)
                         )
                     )
                     
                     for player in players:
                         await player.send(
                             embed = discord.Embed(
-                                title = "You Won!" if player == winner else "You Lost.",
+                                title = "You Won!" if player == winner.get_player() else "You Lost.",
                                 description = "{} won the game.".format(
-                                    winner.mention
-                                ) if player != winner else "_ _",
-                                colour = await get_embed_color(winner)
+                                    winner_mention
+                                ) if player != winner.get_player() else "_ _",
+                                colour = await get_embed_color(winner_user)
                             )
                         )
-                        await database.users.update_uno(player, player == winner)
+                        if not winner.is_ai():
+                            await database.users.update_uno(player, player == winner)
                 
                     break
         
