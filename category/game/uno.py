@@ -424,9 +424,6 @@ class Uno:
                 wild_reaction, user = await self.bot.wait_for("reaction_add", check = check_color_reaction)
                 wild_reaction = str(wild_reaction).replace("<", "").replace(">", "")
 
-                # Add card to top of pile
-                self.set_card(str(wild_reaction))
-
             # Current player is AI, choose random color
             else:
                 wild_reaction = choice([RED_CARD, BLUE_CARD, YELLOW_CARD, GREEN_CARD])
@@ -443,6 +440,9 @@ class Uno:
             
             elif str(wild_reaction) == GREEN_CARD:
                 wild_select = "green"
+            
+            # Add card to top of pile
+            self.set_card(str(wild_reaction))
             
             # Check if the card is also a +4 card
             if str(reaction) == ADD_4_CARD:
