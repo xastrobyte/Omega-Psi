@@ -45,10 +45,6 @@ LETTER_EMOJIS = [
     "🇿" 
 ]
 
-UNO_CARDS = [
-    
-]
-
 async def add_scroll_reactions(message, fields):
     """Adds the scrolling reactions to a message based off how many fields there are."""
 
@@ -65,7 +61,7 @@ async def add_scroll_reactions(message, fields):
     
     await message.add_reaction(LEAVE)
 
-async def did_author_vote(author_id):
+async def did_author_vote(author):
 
     # Call DBL API
     response = await loop.run_in_executor(None,
@@ -81,10 +77,17 @@ async def did_author_vote(author_id):
 
     # Check if author id is in the votes
     for user in response:
-        if str(user["id"]) == str(author_id):
+        if str(user["id"]) == str(author.id):
+
+            # Update the previous vote for author in database
+            await database.users.set_previous_vote(author, int(datetime.now().timestamp()))
             return True
     
-    return False
+    # Check if author needs to vote
+    if await database.users.needs_to_vote(author):
+        return False
+        
+    return True
 
 async def get_color_scheme():
     return await database.bot.get_theme()
