@@ -757,6 +757,43 @@ class Bot(commands.Cog, name = "Bot"):
                     url = ctx.author.avatar_url
                 )
             )
+    
+    @commands.command(
+        name = "setRefresh",
+        aliases = ["setR"],
+        description = "Allows you to set a refresh time for members who vote for Omega Psi on DBL. The refresh time should be in days.",
+        cog_name = "Bot"
+    )
+    @commands.check(is_developer)
+    async def set_refresh(self, ctx, member : discord.Member = None, refresh_time : int = None):
+
+        # Check if member is None
+        if member == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to mention the person you want to set the vote refresh time for."
+                )
+            )
+        
+        # A member was mentioned
+        else:
+
+            # Check if refresh_time is None; Default back to 2 days
+            if refresh_time == None:
+                refresh_time = 2
+            
+            # Set the refresh time for the member
+            await database.users.set_refresh_vote(member, refresh_time)
+
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Refresh Time Updated",
+                    description = "The refresh time for {} has been updated to {} days".format(
+                        member.mention, refresh_time
+                    ),
+                    colour = await self.get_embed_color(ctx.author)
+                )
+            )
 
     @commands.command(
         name = "servers",
@@ -1803,6 +1840,8 @@ class Bot(commands.Cog, name = "Bot"):
                 `2054` --> **`!2054`**
                 `Element Generator` --> **`!elementgenerator`**
                 `Invasion` --> **`!invasion`**
+                `PyLogic` --> **`!pylogic`**
+                `JLogic` --> **`!jlogic`**
                 `Omega Psi` --> **`!omegapsi`**
                 `Website` --> **`!website`**
 
@@ -1875,7 +1914,7 @@ class Bot(commands.Cog, name = "Bot"):
     )
     @commands.check(is_developer)
     @is_in_guild(int(os.environ["DEVELOPER_SERVER"]))
-    async def bot_template(self, ctx):
+    async def template(self, ctx):
 
         # Create bot submission template
         embed = discord.Embed(
