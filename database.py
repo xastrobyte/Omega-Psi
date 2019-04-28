@@ -234,7 +234,7 @@ class Bot:
                 "dark": "293134",
                 "light": "ec7600",
                 "medium": "678cb1",
-                "description": "Nothing special happens on {}".format(date)
+                "description": "Nothing special happens on {}".format(date.replace("-", "/"))
             }
 
         return bot_data["theme"][date]
@@ -501,6 +501,12 @@ class User:
         data = {
             "_id": str(user.id),
             "embed_color": None,
+            "vote": {
+                "previous": 0,
+                "refresh": 2 * 24 * 60 * 60 # By default, user must vote once every 
+                                            # 2 days to use "premium" commands
+                                            # Can be set per user by bot moderators
+            },
             "imgur": {
                 "hash": None,
                 "id": None
@@ -568,6 +574,51 @@ class User:
                 upsert = False
             )
         )
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_previous_vote(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["vote"]["previous"]
+    
+    async def set_previous_vote(self, user, previous_vote):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["vote"]["previous"] = previous_vote
+
+        await self.set_user(user, user_data)
+    
+    async def get_refresh_vote(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["vote"]["refresh"]
+    
+    async def set_refresh_vote(self, user, refresh):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["vote"]["refresh"] = refresh * 24 * 60 * 60 # Refresh parameter should be in days
+
+        await self.set_user(user, user_data)
+    
+    async def needs_to_vote(self, user):
+
+        # Check if previous vote + refresh is less than current time
+        current = int(datetime.now().timestamp())
+        previous = await self.get_previous_vote(user)
+        refresh = await self.get_refresh_vote(user)
+        
+        return (previous + refresh) < current
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
