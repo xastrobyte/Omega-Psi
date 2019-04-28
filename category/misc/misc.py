@@ -29,6 +29,7 @@ LLAMAS_API = "https://www.fellowhashbrown.com/api/llamas?episode={}&fullScript={
 TWITTER_ICON = "http://pngimg.com/uploads/twitter/twitter_PNG29.png"
 
 EMOJI_DIGITS = [
+    ":zero:",
     "1\u20e3",
     "2\u20e3",
     "3\u20e3",
@@ -202,7 +203,7 @@ class Misc(commands.Cog, name = "Misc"):
                 if char.isalpha():
                     result += ":regional_indicator_{}:".format(char)
                 elif char.isdigit():
-                    result += EMOJI_DIGITS[int(char) - 1]
+                    result += EMOJI_DIGITS[int(char)]
                 elif char in SYMBOLS:
                     result += SYMBOLS[char]
                 else:
