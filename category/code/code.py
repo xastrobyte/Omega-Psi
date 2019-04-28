@@ -162,7 +162,7 @@ class Code(commands.Cog, name = "Code"):
     async def execute(self, ctx):
 
         # Check if author voted first
-        if await did_author_vote(ctx.author.id):
+        if await did_author_vote(ctx.author):
 
             # Ask which language the user wants to write code for
             fields = []
