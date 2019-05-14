@@ -4,11 +4,13 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
-from category.globals import FIELD_THRESHOLD, get_color_scheme
+from category.globals import FIELD_THRESHOLD
 from category.globals import get_embed_color
 from category.predicates import can_manage_guild, guild_only
 from database import database as db
 from database import loop
+
+from util.misc import get_theme
 
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
 DBL_VOTE_LINK = "https://discordbots.org/bot/535587516816949248/vote"
@@ -25,7 +27,7 @@ class Info(commands.Cog, name = "Info"):
         description = "Allows you to get info about the bot.",
         cog_name = "Info"
     )
-    async def bot_info(self, ctx):
+    async def info(self, ctx):
         
         # Send information about Omega Psi
         bot_info = await self.bot.application_info()
@@ -45,17 +47,17 @@ class Info(commands.Cog, name = "Info"):
         }
 
         # Add to embed
-        #  Get the theme of the day
-        theme = await get_color_scheme()
+        #   Get a random theme
+        theme = get_theme()
         embed = discord.Embed(
             title = "Omega Psi Info",
             description = "Here's some information about me!",
             colour = await get_embed_color(ctx.author)
         ).set_image(
             url = "https://discordbots.org/api/widget/535587516816949248.png?topcolor={1}&avatarbg={1}&datacolor={1}&highlightcolor={0}&middlecolor={0}&usernamecolor={0}&labelcolor={2}".format(
-                theme["dark"],
-                theme["light"],
-                theme["medium"]
+                theme[0],   # Dark
+                theme[2],   # Light
+                theme[1]    # Medium
             )
         )
 
@@ -93,14 +95,8 @@ class Info(commands.Cog, name = "Info"):
                     value = sub_field,
                     inline = False
                 )
-        
-        # Add theme of the day field
-        embed.add_field(
-            name = "Theme Of The Day ({})".format(theme["date"].replace("-", "/")),
-            value = theme["description"],
-            inline = False
-        )
 
+        # Send the embed
         await ctx.send(
             embed = embed
         )
