@@ -132,7 +132,7 @@ class Insults(commands.Cog, name = "Insults"):
     async def insult(self, ctx, member : discord.Member = None):
         
         # Generate random insult
-        insult = await database.data.get_insult(ctx.channel.is_nsfw())
+        insult = await database.data.get_insult(ctx.channel.is_nsfw() if not isinstance(ctx.channel, discord.DMChannel) else True)
 
         # Check if insulting self
         if member == None:
@@ -587,7 +587,7 @@ class Insults(commands.Cog, name = "Insults"):
     async def compliment(self, ctx, member : discord.Member = None):
         
         # Generate random compliment
-        compliment = await database.data.get_compliment(ctx.channel.is_nsfw())
+        compliment = await database.data.get_compliment(ctx.channel.is_nsfw() if not isinstance(ctx.channel, discord.DMChannel) else True)
 
         # Check if complimenting self
         if member == None:
