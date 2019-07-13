@@ -1,10 +1,9 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 from threading import Thread
 
 # Load website builder
 from website.website import Website
 from website.page import Page, KeySection, Section
-from website.page import HomeSection, Form
 
 # Open new web app
 app = Flask("Omega Psi")
@@ -12,6 +11,10 @@ app = Flask("Omega Psi")
 @app.route("/")
 def commands():
     return render_template("commands.html")
+
+@app.route("/commands")
+def commands2():
+    return redirect("/")
 
 @app.errorhandler(404)
 def page_not_found(error):
