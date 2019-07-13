@@ -1842,6 +1842,9 @@ class Bot(commands.Cog, name = "Bot"):
                 `Invasion` --> **`!invasion`**
                 `PyLogic` --> **`!pylogic`**
                 `JLogic` --> **`!jlogic`**
+                `PyQM` --> **`!pyqm`**
+                `JQM` --> **`!jqm`**
+                `QM.js` --> **`!qmjs`**
                 `Omega Psi` --> **`!omegapsi`**
                 `Website` --> **`!website`**
 
@@ -1898,7 +1901,7 @@ class Bot(commands.Cog, name = "Bot"):
                 Below are social media and coding links of mine and my website too! (Which you can also get to by clicking my name at the top of this embed)
                 Just click on the icons!
                 
-                [<:instagram:538799450693566494>](https://instagram.com/FellowHashbrown) [<:facebook:538799482880655383>](https://facebook.com/FellowHashbrown) [<:twitter:538799503457779713>](https://twitter.com/FellowHashbrown) [<:tumblr:538799532159270932>](https://fellowhashbrown.tumblr.com) [<:twitch:538799516850323497>](https://twitch.tv/FellowHashbrown) [<:github:538799471912419350>](https://github.com/FellowHashbrown) [<:repl_it:538799640263393281>](https://repl.it/@FellowHashbrown) [<:fellow_hashbrown:538800208008577074>](https://www.fellowhashbrown.com)
+                [<:instagram:538799450693566494>](https://instagram.com/FellowHashbrown) [<:facebook:538799482880655383>](https://facebook.com/FellowHashbrown) [<:twitter:538799503457779713>](https://twitter.com/FellowHashbrown) [<:tumblr:538799532159270932>](https://fellowhashbrown.tumblr.com) [<:steam:577748794855260171>](https://steamcommunity.com/id/FellowHashbrown) [<:twitch:538799516850323497>](https://twitch.tv/FellowHashbrown) [<:github:538799471912419350>](https://github.com/FellowHashbrown) [<:repl_it:538799640263393281>](https://repl.it/@FellowHashbrown) [<:fellow_hashbrown:538800208008577074>](https://www.fellowhashbrown.com) [<:npm:577742678813310986>](https://npmjs.com/~fellowhashbrown)
                 """
             )
         )
