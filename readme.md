@@ -49,6 +49,10 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
     * Dad Jokes
     * Today in History
       * Find out what happened today in history
+  * Notifications
+    * You can get notified about someone's online status
+      * Whenever someone goes offline or online, get notified!
+      * You must allow messages from Omega Psi for this to work.
   * NSFW
     * Naughty commands (18+)
     * Can only be run in an NSFW channel (It just makes sense)
