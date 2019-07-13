@@ -1,6 +1,7 @@
 import asyncio, base64, discord, os, requests
 from discord.ext import commands
 from functools import partial
+from urllib.parse import quote
 
 from category import errors
 from category.globals import FIELD_THRESHOLD, did_author_vote
@@ -608,7 +609,7 @@ class Code(commands.Cog, name = "Code"):
             response_table = await loop.run_in_executor(None,
                 requests.get,
                 LOGIC_API_CALL.format(
-                    expression
+                    quote(expression)
                 )
             )
             table = response_table.json()
@@ -617,7 +618,7 @@ class Code(commands.Cog, name = "Code"):
             response_simplify = await loop.run_in_executor(None,
                 requests.get,
                 LOGIC_SIMPLIFY_API_CALL.format(
-                    expression
+                    quote(expression)
                 )
             )
             simplification = response_simplify.json()
