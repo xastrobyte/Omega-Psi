@@ -76,6 +76,8 @@ def datetime_to_string(dateTime):
         hour -= 12
         am = False
     minute = dateTime.minute
+    if minute < 10:
+        minute = "0" + str(minute)
 
     return "{}, {} {}, {} {}:{} {}".format(
         weekdays[weekday], months[month], day, year, hour, minute, "AM" if am else "PM"
