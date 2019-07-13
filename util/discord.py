@@ -1,4 +1,4 @@
-import discord, requests
+import discord, json, requests
 from datetime import datetime
 from functools import partial
 from random import choice
@@ -79,4 +79,45 @@ async def get_reddit_post(subreddit, allow_nsfw = True, max_posts = 1):
         url = image_url
     ).set_footer(
         text = "⬆ {}".format(upvotes)
+    )
+
+async def send_webhook(webhook_url, embed):
+
+    # Create payload
+    payload = {
+        "embeds": [
+            embed.to_dict()
+        ]
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    await database.loop.run_in_executor(None,
+        partial(
+            requests.post,
+            webhook_url,
+            json = payload,
+            headers = headers
+        )
+    )
+
+def send_webhook_sync(webhook_url, embed):
+
+    # Create payload
+    payload = {
+        "embeds": [
+            embed.to_dict()
+        ]
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    requests.post(
+        webhook_url, 
+        json = payload,
+        headers = headers
     )
