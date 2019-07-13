@@ -31,7 +31,8 @@ exts = [
     "category.stats.stats",
     "category.bot.bot",
     "category.info.info",
-    "category.insults.insults"
+    "category.insults.insults",
+    "category.notifications.notifications"
 ]
 
 cogs = {
@@ -70,6 +71,11 @@ cogs = {
         "description": "This category has commands that really don't fit anywhere.",
         "check": None
     },
+    "Notifications": {
+        "command": "help notifications",
+        "description": "You can get notified about the online status of people here!",
+        "check": None
+    },
     "Nsfw": {
         "command": "help nsfw",
         "description": "18+ ;)",
@@ -100,6 +106,7 @@ cog_emojis = {
     "Image": ":frame_photo: ",
     "Insults": ":exclamation: ",
     "Misc": ":mag: ",
+    "Notifications": ":vibration_mode: ",
     "Nsfw": ":underage: ",
     "Stats": ":clipboard: ",
     "Bot": ":robot: ",
@@ -118,7 +125,15 @@ async def on_ready():
     If the bot was restarted using the `restart` command, it will send a message.
     """
 
-    print("I'm ready to go.")
+    # Send a push notification to IFTTT
+    await ifttt_push(
+        "Ready To Go",
+        "Omega Psi is online and ready to go.",
+        ""
+    )
+    print("I'm ready to go")
+    
+    # Retrieve the activity types
     activity_type = await database.bot.get_activity_type()
     activity_name = await database.bot.get_activity_name()
     activity_name = "{} in {} Servers".format(
@@ -237,7 +252,7 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_command_completion(ctx):
     """Overrides discord.py's event for on_command_completion.
-    This will send a message to the COMMAND_SUCCESS_CHANNEL (environment variable.) 
+    This will send a message to the COMMAND_SUCCESS_CHANNEL (environment variable.)
         telling that the command was run properly.
     """
 
@@ -326,6 +341,53 @@ async def on_guild_remove(guild):
 
     # Update server count on DBL
     await update_dbl(False, guild)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Member Events
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+@bot.event
+async def on_member_update(before, after):
+    
+    # Check if the before and after online status changed
+    if str(before.status) in ["online", "offline"] and str(after.status) in ["online", "offline"] and before.status != after.status:
+
+        # Load all the targets in the target collection
+        targets = await database.online_status.get_targets()
+
+        # Iterate through every target and notify anyone who wants to be notified
+        for target in targets:
+
+            # Only notify someone if the target matches the member
+            if str(after.id) == target["_id"]:
+
+                # Iterate through all of the users
+                for user in target["users"]:
+
+                    # Get the user object
+                    user_object = bot.get_user(int(user))
+
+                    # Check if the notification will be about someone coming online
+                    if str(after.status) == "online" and target["users"][user]:
+                        try:
+                            await user_object.send(
+                                "{}#{} is online!".format(
+                                    after.name, after.discriminator
+                                )
+                            )
+                        except:
+                            pass
+                    
+                    # Check if the notification will be about someone going offline
+                    elif str(after.status) == "offline" and target["users"][user]:
+                        try:
+                            await user_object.send(
+                                "{}#{} went offline.".format(
+                                    after.name, after.discriminator
+                                )
+                            )
+                        except:
+                            pass
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Global Commands
