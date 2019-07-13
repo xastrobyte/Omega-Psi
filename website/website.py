@@ -57,9 +57,16 @@ class Website:
             <!-- Navigation Bar -->
             <nav class="nav-bar">
                 <img src="https://i.imgur.com/Hy5Gyut.png" class="social-image" style="width: 50px; height: 50px;">
-                <ul class="nav-links">
-                    {}
-                </ul>
+                <div id="nav-toggle">
+                    <input type="checkbox">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    
+                    <ul class="nav-links">
+                        {}
+                    </ul>
+                </div>
             </nav>
 
             <!-- Content -->
@@ -68,6 +75,9 @@ class Website:
             </div>
         </div>
     </body>
+    <footer>
+        <small><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small>
+    </footer>
 </html>
 """
         )
