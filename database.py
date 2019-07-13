@@ -1758,18 +1758,214 @@ class CaseNumber:
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+class OnlineStatus:
+    def __init__(self, online_status):
+        self._online_status = online_status
+
+    # # # # # # # # # # # # # # # # # # # #
+
+    async def get_user(self, user):
+        
+        # Default user data
+        default = {
+            "_id": str(user.id),
+            "listeners": {}
+        }
+
+        # Try loading the user
+        user_data = await loop.run_in_executor(None,
+            partial(
+                self._online_status.users.find_one,
+                {"_id": str(user.id)}
+            )
+        )
+
+        # If user_data is None, there is no user saved
+        #   Create a new user
+        #   Then setup the user using set_user
+        if user_data == None:
+            await loop.run_in_executor(None,
+                partial(
+                    self._online_status.users.insert_one,
+                    {"_id": str(user.id)}
+                )
+            )
+            await self.set_user(user, default)
+            return default
+        
+        # user_Data is not None, return the data
+        return user_data
+    
+    async def set_user(self, user, data):
+        
+        # Set the user data
+        await loop.run_in_executor(None,
+            partial(
+                self._online_status.users.update_one,
+                {"_id": str(user.id)},
+                {"$set": data},
+                upsert = False
+            )
+        )
+    
+    # # # # # # # # # # # # # # # # # # # #
+
+    async def get_listener(self, target):
+        
+        # Default listener data
+        default = {
+            "_id": str(target.id),
+            "users": {}
+        }
+
+        # Try loading the listener data
+        listener_data = await loop.run_in_executor(None,
+            partial(
+                self._online_status.targets.find_one,
+                {"_id": str(target.id)}
+            )
+        )
+
+        # If listener_data is None, there is no listener saved
+        #   Create a new listener
+        #   Then setup the listener using set_listener
+        if listener_data == None:
+            await loop.run_in_executor(None,
+                partial(
+                    self._online_status.targets.insert_one,
+                    {"_id": str(target.id)}
+                )
+            )
+            await self.set_listener(target, default)
+            return default
+        
+        # listener_data is None, return the data
+        return listener_data
+    
+    async def set_listener(self, target, data):
+        
+        # Set the listener data
+        await loop.run_in_executor(None,
+            partial(
+                self._online_status.targets.update_one,
+                {"_id": str(target.id)},
+                {"$set": data},
+                upsert = False
+            )
+        )
+    
+    async def get_listeners(self, user):
+        
+        # Load the user's data
+        user_data = await self.get_user(user)
+
+        # Return the listeners underneath the user
+        return user_data["listeners"]
+    
+    async def set_listeners(self, user, data):
+        
+        # Load the user's data
+        user_data = await self.get_user(user)
+
+        # Update the listeners
+        user_data["listeners"] = data
+
+        # Set the user's data
+        await self.set_user(user, user_data)
+    
+    async def get_targets(self):
+
+        # Load the targets collection
+        targets = await loop.run_in_executor(None,
+            self._online_status.targets.find
+        )
+
+        return list(targets)
+    
+    # # # # # # # # # # # # # # # # # # # #
+
+    async def add_listener(self, user, target):
+        
+        # Load the user's data
+        user_data = await self.get_user(user)
+
+        # Load the target's data
+        target_data = await self.get_listener(target)
+
+        # Add the listener to the user's data
+        user_data["listeners"][str(target.id)] = True
+
+        # Add the listener to the target data
+        target_data["users"][str(user.id)] = True
+
+        # Set the user's data
+        await self.set_user(user, user_data)
+
+        # Set the target's data
+        await self.set_listener(target, target_data)
+    
+    async def delete_listener(self, user, target):
+        
+        # Check if the user has the listener
+        user_data = await self.get_user(user)
+        if str(target.id) in user_data["listeners"]:
+            user_data["listeners"].pop(str(target.id))
+        await self.set_user(user, user_data)
+        
+        # Check if the user is under the target listener
+        target_data = await self.get_listener(target)
+        if str(user.id) in target_data["users"]:
+            target_data["users"].pop(str(user.id))
+        await self.set_listener(target, target_data)
+
+    async def toggle_listener(self, user, target):
+        
+        # Toggle the user listening to the target
+        user_data = await self.get_user(user)
+        if str(target.id) in user_data["listeners"]:
+            user_data["listeners"][str(target.id)] = not user_data["listeners"][str(target.id)]
+        await self.set_user(user, user_data)
+        
+        # Toggle the target data listening to the user
+        target_data = await self.get_listener(target)
+        if str(user.id) in target_data["users"]:
+            target_data["users"][str(user.id)] = not target_data["users"][str(user.id)]
+        await self.set_listener(target, target_data)
+    
+    async def listener_status(self, user, target):
+
+        # Get the user data
+        user_data = await self.get_user(user)
+
+        # Check if the target exists as a listener
+        if str(target.id) in user_data["listeners"]:
+            return user_data["listeners"][str(target.id)]
+        
+        return False
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 class Database:
 
     def __init__(self):
 
         # Create the connection and get the database for Omega Psi
-        self._connection = MongoClient("ds115244.mlab.com", 15244, connect = False)
-        self._omegaPsi = self._connection["omegapsi"]
+        self._omega_psi_connection = MongoClient("ds115244.mlab.com", 15244, connect = False)
+        self._omegaPsi = self._omega_psi_connection["omegapsi"]
 
         # Get the username and password to authenticate database access
         username = os.environ["DATABASE_USERNAME"]
         password = os.environ["DATABASE_PASSWORD"]
         self._omegaPsi.authenticate(username, password)
+
+        # Create the connection and get the database for Online Status
+        self._online_status_connection = MongoClient("ds133762.mlab.com", 33762, connect = False)
+        self._onlineStatus = self._online_status_connection["onlinestatus"]
+
+        # Get the username and password to authenticate database access
+        username = os.environ["ONLINE_STATUS_DATABASE_USERNAME"]
+        password = os.environ["ONLINE_STATUS_DATABASE_PASSWORD"]
+        self._onlineStatus.authenticate(username, password)
 
         # Keep track of different collections
         self._bot = self._omegaPsi.bot
@@ -1777,12 +1973,14 @@ class Database:
         self._users = self._omegaPsi.users
         self._data = self._omegaPsi.data
         self._case_numbers = self._omegaPsi.case_numbers
+        self._online_status = self._onlineStatus.onlinestatus
 
         self.bot = Bot(self._bot)
         self.guilds = Guild(self._guilds)
         self.users = User(self._users)
         self.data = Data(self._data)
         self.case_numbers = CaseNumber(self._case_numbers)
+        self.online_status = OnlineStatus(self._online_status)
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
