@@ -50,7 +50,7 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
     * Today in History
       * Find out what happened today in history
   * Notifications
-    * You can get notified about someone's online status
+    * You can get notified about someone's online status\*
       * Whenever someone goes offline or online, get notified!
       * You must allow messages from Omega Psi for this to work.
   * NSFW
@@ -74,3 +74,6 @@ The nice thing about Omega Psi is that there are two commands specifically for t
 
 For both of these commands, as soon as developer marks it as seen, you will be able to be notified of it immediately
  * As long as you allow messages from Omega Psi
+ 
+
+\* - There is a limitation when it comes to creating notifications. Omega Psi can only read a member's presence if the member and Omega Psi have a common guild. Omega Psi will save the guild ID that you run the command in. If the member or Omega Psi leaves that guild, you will have to run the same command in another common server. This is a Discord API limitation and I do not have any control over it.
