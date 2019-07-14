@@ -1810,7 +1810,7 @@ class OnlineStatus:
     
     # # # # # # # # # # # # # # # # # # # #
 
-    async def get_listener(self, target):
+    async def get_listener(self, target, create = True):
         
         # Default listener data
         default = {
@@ -1829,7 +1829,7 @@ class OnlineStatus:
         # If listener_data is None, there is no listener saved
         #   Create a new listener
         #   Then setup the listener using set_listener
-        if listener_data == None:
+        if listener_data == None and create:
             await loop.run_in_executor(None,
                 partial(
                     self._online_status.targets.insert_one,
@@ -1896,7 +1896,10 @@ class OnlineStatus:
         user_data["listeners"][str(target.id)] = True
 
         # Add the listener to the target data
-        target_data["users"][str(user.id)] = True
+        target_data["users"][str(user.id)] = {
+            "active": True,
+            "guild_id": str(user.guild.id)
+        }
 
         # Set the user's data
         await self.set_user(user, user_data)
@@ -1929,7 +1932,7 @@ class OnlineStatus:
         # Toggle the target data listening to the user
         target_data = await self.get_listener(target)
         if str(user.id) in target_data["users"]:
-            target_data["users"][str(user.id)] = not target_data["users"][str(user.id)]
+            target_data["users"][str(user.id)]["active"] = not target_data["users"][str(user.id)]["active"]
         await self.set_listener(target, target_data)
     
     async def listener_status(self, user, target):
