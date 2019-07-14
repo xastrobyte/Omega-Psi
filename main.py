@@ -7,6 +7,7 @@ from category import errors
 from category.globals import MESSAGE_THRESHOLD, FIELD_THRESHOLD
 from category.globals import DBL_BOT_STAT_API_CALL
 from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
+from category.globals import VALID_STATUSES
 from category.globals import add_scroll_reactions
 from category.globals import get_embed_color
 from category.predicates import get_prefix, is_nsfw_or_private, is_developer
@@ -348,27 +349,25 @@ async def on_guild_remove(guild):
 
 @bot.event
 async def on_member_update(before, after):
-    
-    # Check if the before and after online status changed
-    if str(before.status) in ["online", "offline"] and str(after.status) in ["online", "offline"] and before.status != after.status:
 
-        # Load all the targets in the target collection
-        targets = await database.online_status.get_targets()
+    # Load the target of the member if they exist
+    target = await database.online_status.get_listener(after, False)
 
-        # Iterate through every target and notify anyone who wants to be notified
-        for target in targets:
+    # Only run if the target does exist (is not None)
+    if target != None:
 
-            # Only notify someone if the target matches the member
-            if str(after.id) == target["_id"]:
+        # Check if the member's online status changed
+        if before.status != after.status:
 
-                # Iterate through all of the users
-                for user in target["users"]:
+            # Iterate through all the users in the target
+            for user in target["users"]:
+                user_object = bot.get_user(int(user))
 
-                    # Get the user object
-                    user_object = bot.get_user(int(user))
-
-                    # Check if the notification will be about someone coming online
-                    if str(after.status) == "online" and target["users"][user]:
+                # Only send the message if the guild ID matches
+                if str(after.guild.id) == target["users"][user]["guild_id"] and target["users"][user]["active"]:
+                    
+                    # Check if the member came online
+                    if str(after.status) == "online":
                         try:
                             await user_object.send(
                                 "{}#{} is online!".format(
@@ -378,11 +377,33 @@ async def on_member_update(before, after):
                         except:
                             pass
                     
-                    # Check if the notification will be about someone going offline
-                    elif str(after.status) == "offline" and target["users"][user]:
+                    # Check if the member went offline
+                    elif str(after.status) == "offline":
                         try:
                             await user_object.send(
                                 "{}#{} went offline.".format(
+                                    after.name, after.discriminator
+                                )
+                            )
+                        except:
+                            pass
+                    
+                    # Check if the member went idle
+                    elif str(after.status) == "idle":
+                        try:
+                            await user_object.send(
+                                "{}#{} is now idle.".format(
+                                    after.name, after.discriminator
+                                )
+                            )
+                        except:
+                            pass
+                    
+                    # Check if the member turned on Do Not Disturb
+                    elif str(after.status) == "dnd":
+                        try:
+                            await user_object.send(
+                                "{}#{} turned on Do Not Disturb".format(
                                     after.name, after.discriminator
                                 )
                             )
