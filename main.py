@@ -350,14 +350,14 @@ async def on_guild_remove(guild):
 @bot.event
 async def on_member_update(before, after):
 
-    # Load the target of the member if they exist
-    target = await database.online_status.get_listener(after, False)
+    # Check if the member's online status changed
+    if str(before.status) != str(after.status) and str(before.status) in VALID_STATUSES and str(after.status) in VALID_STATUSES:
 
-    # Only run if the target does exist (is not None)
-    if target != None:
+        # Load the target of the member if they exist
+        target = await database.online_status.get_listener(after, False)
 
-        # Check if the member's online status changed
-        if before.status != after.status:
+        # Only run if the target does exist (is not None)
+        if target != None:
 
             # Iterate through all the users in the target
             for user in target["users"]:
