@@ -75,5 +75,5 @@ The nice thing about Omega Psi is that there are two commands specifically for t
 For both of these commands, as soon as developer marks it as seen, you will be able to be notified of it immediately
  * As long as you allow messages from Omega Psi
  
-
+___
 \* - There is a limitation when it comes to creating notifications. Omega Psi can only read a member's presence if the member and Omega Psi have a common guild. Omega Psi will save the guild ID that you run the command in. If the member or Omega Psi leaves that guild, you will have to run the same command in another common server. This is a Discord API limitation and I do not have any control over it.
