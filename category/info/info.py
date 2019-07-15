@@ -15,7 +15,7 @@ from util.misc import get_theme
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
 DBL_VOTE_LINK = "https://discordbots.org/bot/535587516816949248/vote"
 
-class Info(commands.Cog, name = "Info"):
+class Info(commands.Cog, name = "info"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -25,7 +25,7 @@ class Info(commands.Cog, name = "Info"):
         name = "botInfo",
         aliases = ["bi"],
         description = "Allows you to get info about the bot.",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def info(self, ctx):
         
@@ -104,7 +104,7 @@ class Info(commands.Cog, name = "Info"):
     @commands.command(
         name = "support",
         description = "Gives you the invite link to my discord server!",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def support(self, ctx):
         
@@ -116,7 +116,7 @@ class Info(commands.Cog, name = "Info"):
     @commands.command(
         name = "vote",
         description = "Gives you a link to vote for Omega Psi on DBL.",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def vote(self, ctx):
 
@@ -127,8 +127,8 @@ class Info(commands.Cog, name = "Info"):
     @commands.command(
         name = "website",
         aliases = ["web"],
-        description = "Sends you a link to my website.",
-        cog_name = "Info"
+        description = "Sends you a link to my personal website.",
+        cog_name = "info"
     )
     async def website(self, ctx):
         
@@ -138,10 +138,22 @@ class Info(commands.Cog, name = "Info"):
         )
     
     @commands.command(
+        name = "botSite",
+        description = "Sends you a link to Omega Psi's website.",
+        cog_name = "info"
+    )
+    async def botsite(self, ctx):
+
+        # Send the link
+        await ctx.send(
+            "https://omegapsi.fellowhashbrown.com"
+        )
+    
+    @commands.command(
         name = "replit",
         aliases = ["repl"],
         description = "Gives you a link so you can read my source code.",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def replit(self, ctx):
         
@@ -153,7 +165,7 @@ class Info(commands.Cog, name = "Info"):
     @commands.command(
         name = "uptime",
         description = "Shows you my uptime!",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def uptime(self, ctx):
         
@@ -253,7 +265,7 @@ class Info(commands.Cog, name = "Info"):
     @commands.command(
         name = "invite",
         description = "Allows you to invite me to your own server!",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def invite(self, ctx):
         
@@ -265,7 +277,7 @@ class Info(commands.Cog, name = "Info"):
     @commands.command(
         name = "ping",
         description = "Ping-Pong!",
-        cog_name = "Info"
+        cog_name = "info"
     )
     async def ping(self, ctx):
 
@@ -280,27 +292,38 @@ class Info(commands.Cog, name = "Info"):
         name = "prefix", 
         aliases = ["pre"],
         description = "Allows you to change the prefix for this server.",
-        cog_name = "Info"
+        cog_name = "info"
     )
     @commands.check(can_manage_guild)
     @commands.check(guild_only)
-    async def prefix(self, ctx, prefix):
+    async def prefix(self, ctx, prefix: str = None):
 
-        # Check if prefix ends with letter or digit
-        if prefix[-1].isdigit() or prefix[-1].isalpha():
-            prefix += " "
-
-        # Change prefix for guild
-        await db.guilds.set_prefix(ctx.guild, prefix)
-        
-        # Send message
-        await ctx.send(
-            embed = discord.Embed(
-                title = "Prefix Changed",
-                description = f"This server's prefix is now `{prefix}`",
-                colour = await get_embed_color(ctx.author)
+        # Check if prefix is None (didn't enter it in)
+        if prefix == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You must clarify the new prefix!"
+                )
             )
-        )
+        
+        # There is a prefix specified
+        else:
+
+            # Check if prefix ends with letter or digit
+            if prefix[-1].isdigit() or prefix[-1].isalpha():
+                prefix += " "
+
+            # Change prefix for guild
+            await db.guilds.set_prefix(ctx.guild, prefix)
+            
+            # Send message
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Prefix Changed",
+                    description = f"This server's prefix is now `{prefix}`",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
     
