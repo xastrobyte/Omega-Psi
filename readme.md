@@ -14,6 +14,9 @@ Prefix: `o.`
 There are all sorts of things being added almost everyday.
 Each category is labeled properly and includes commands tailored to that category.
 For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a website where all the commands are listed.
+  * API
+    * You can test my own APIs in this category!
+    * Hangman API, Scramble API, and a few more.
   * Code
     * Base Conversion
     * Logic Parsing
