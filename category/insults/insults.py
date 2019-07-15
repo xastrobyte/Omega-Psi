@@ -10,7 +10,7 @@ from database import database
 
 from util.discord import send_webhook
 
-class Insults(commands.Cog, name = "Insults"):
+class Insults(commands.Cog, name = "insults"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -20,7 +20,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "viewInsults",
         aliases = ["viewi"],
         description = "Let's you see a list of insults.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     async def view_insults(self, ctx):
 
@@ -127,7 +127,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "insult",
         aliases = ["i"],
         description = "Allows you to insult someone or be insulted.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     async def insult(self, ctx, member : discord.Member = None):
         
@@ -148,7 +148,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "addInsult",
         aliases = ["addI"],
         description = "Allows you to add an insult to the bot.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     async def add_insult(self, ctx, *, insult = None):
         
@@ -226,7 +226,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "pendingInsults",
         aliases = ["pendingI", "pendInsults", "pendI"],
         description = "Shows a list of pending insults.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def pending_insults(self, ctx):
@@ -339,7 +339,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "addInsultTag",
         aliases = ["addITag"],
         description = "Adds a tag, or tags, to an insult specified.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def add_insult_tag(self, ctx, index : int, *tags):
@@ -378,7 +378,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "approveInsult",
         aliases = ["approveI"],
         description = "Approves the specified insult.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def approve_insult(self, ctx, index : int):
@@ -428,7 +428,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "denyInsult",
         aliases = ["denyI"],
         description = "Denies the specified insult.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def deny_insult(self, ctx, index : int, *, reason = None):
@@ -582,7 +582,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "compliment",
         aliases = ["c"],
         description = "Allows you to compliment someone or be complimented.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     async def compliment(self, ctx, member : discord.Member = None):
         
@@ -603,7 +603,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "addCompliment",
         aliases = ["addC"],
         description = "Allows you to add a compliment to the bot.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     async def add_compliment(self, ctx, *, compliment = None):
         
@@ -681,7 +681,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "pendingCompliments",
         aliases = ["pendingC", "pendCompliments", "pendC"],
         description = "Shows a list of pending compliments.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def pending_compliments(self, ctx):
@@ -794,7 +794,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "addComplimentTag",
         aliases = ["addCTag"],
         description = "Adds a tag, or tags, to a compliment specified.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def add_compliment_tag(self, ctx, index : int, *tags):
@@ -833,7 +833,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "approveCompliment",
         aliases = ["approveC"],
         description = "Approves the specified compliment.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def approve_compliment(self, ctx, index : int):
@@ -883,7 +883,7 @@ class Insults(commands.Cog, name = "Insults"):
         name = "denyCompliment",
         aliases = ["denyC"],
         description = "Denies the specified compliment.",
-        cog_name = "Insults"
+        cog_name = "insults"
     )
     @commands.check(is_developer)
     async def deny_compliment(self, ctx, index : int, *, reason = None):
