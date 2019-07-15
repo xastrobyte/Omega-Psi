@@ -16,7 +16,7 @@ URBAN_ICON = "https://vignette.wikia.nocookie.net/creation/images/b/b7/Urban_dic
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Nsfw(commands.Cog, name = "Nsfw"):
+class NSFW(commands.Cog, name = "nsfw"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -26,7 +26,7 @@ class Nsfw(commands.Cog, name = "Nsfw"):
         name = "boobs",
         aliases = ["tits", "boobies"],
         description = "Sends a random picture of a nice set of tits.",
-        cog_name = "Nsfw"
+        cog_name = "nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def boobs(self, ctx):
@@ -39,7 +39,7 @@ class Nsfw(commands.Cog, name = "Nsfw"):
         name = "booty",
         aliases= ["ass"],
         description = "Sends a random picture of a nice ass.",
-        cog_name = "Nsfw"
+        cog_name = "nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def booty(self, ctx):
@@ -52,7 +52,7 @@ class Nsfw(commands.Cog, name = "Nsfw"):
         name = "lesbian",
         aliases= ["lesbians"],
         description = "Get some of that lesbian action.",
-        cog_name = "Nsfw"
+        cog_name = "nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def lesbian(self, ctx):
@@ -65,7 +65,7 @@ class Nsfw(commands.Cog, name = "Nsfw"):
         name = "goneWild",
         aliases= ["wild"],
         description = "Girls gone wild.",
-        cog_name = "Nsfw"
+        cog_name = "nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def gone_wild(self, ctx):
@@ -77,7 +77,7 @@ class Nsfw(commands.Cog, name = "Nsfw"):
     @commands.command(
         name = "urban",
         description = "Gives you the top 5 urban dictionary entries for a term.",
-        cog_name = "Nsfw"
+        cog_name = "nsfw"
     )
     @commands.check(is_nsfw_or_private)
     async def urban(self, ctx, *, phrase = None):
@@ -162,4 +162,4 @@ class Nsfw(commands.Cog, name = "Nsfw"):
             )
 
 def setup(bot):
-    bot.add_cog(Nsfw(bot))
+    bot.add_cog(NSFW(bot))
