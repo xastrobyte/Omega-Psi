@@ -39,7 +39,7 @@ MEME_SUBREDDITS = [
     "dankmemes"
 ]
 
-class Image(commands.Cog, name = "Image"):
+class Image(commands.Cog, name = "image"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -48,7 +48,7 @@ class Image(commands.Cog, name = "Image"):
     @commands.command(
         name = "meme",
         description = "Sends you a random meme from reddit.",
-        cog_name = "Image"
+        cog_name = "image"
     )
     @commands.check(is_nsfw_or_private)
     async def meme(self, ctx):
@@ -60,7 +60,7 @@ class Image(commands.Cog, name = "Image"):
     @commands.command(
         name = "imgur",
         description = "Allows you to upload an image to an anonymous imgur album.",
-        cog_name = "Image"
+        cog_name = "image"
     )
     async def imgur(self, ctx, *params):
         
@@ -338,7 +338,7 @@ class Image(commands.Cog, name = "Image"):
         name = "dog",
         aliases = ["doggy"],
         description = "Sends a random picture of a random dog from the internet.",
-        cog_name = "Image"
+        cog_name = "image"
     )
     async def dog(self, ctx):
         
@@ -363,7 +363,7 @@ class Image(commands.Cog, name = "Image"):
         name = "cat",
         aliases = ["kitty"],
         description = "Sends a random picture of a random cat from the internet.",
-        cog_name = "Image"
+        cog_name = "image"
     )
     async def cat(self, ctx):
         
@@ -392,7 +392,7 @@ class Image(commands.Cog, name = "Image"):
     @commands.command(
         name = "avatar",
         description = "Sends a random cute avatar.",
-        cog_name = "Image"
+        cog_name = "image"
     )
     async def avatar(self, ctx):
         
@@ -424,7 +424,7 @@ class Image(commands.Cog, name = "Image"):
         name = "robohash",
         aliases = ["robo"],
         description = "Sends a robohash avatar based off the text you enter.",
-        cog_name = "Image"
+        cog_name = "image"
     )
     async def robohash(self, ctx, *, text = None):
         
