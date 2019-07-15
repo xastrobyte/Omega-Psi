@@ -4,15 +4,15 @@ from discord.ext import commands
 
 from category import errors
 from category.globals import FIELD_THRESHOLD
+from category.predicates import guild_only
 
-from database import loop
 from database import database
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Notifications(commands.Cog, name = "Notifications"):
+class Notifications(commands.Cog, name = "notifications"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -21,8 +21,9 @@ class Notifications(commands.Cog, name = "Notifications"):
     @commands.command(
         name = "notify",
         description = "Notifies you about the online status of a user or a bot.",
-        cog_name = "Notifications"
+        cog_name = "notifications"
     )
+    @commands.check(guild_only)
     async def notify(self, ctx, member: discord.Member = None):
 
         # Check if no member was mentioned
@@ -52,8 +53,9 @@ class Notifications(commands.Cog, name = "Notifications"):
     @commands.command(
         name = "delete",
         description = "Stops notifying you about the online status of a user or a bot.",
-        cog_name = "Notifications"
+        cog_name = "notifications"
     )
+    @commands.check(guild_only)
     async def delete(self, ctx, member: discord.Member = None):
 
         # Check if there is no member mentioned
@@ -83,8 +85,9 @@ class Notifications(commands.Cog, name = "Notifications"):
     @commands.command(
         name = "toggle",
         description = "Toggles whether or not you receive the notifications for a user or a bot.",
-        cog_name = "Notifications"
+        cog_name = "notifications"
     )
+    @commands.check(guild_only)
     async def toggle(self, ctx, member: discord.Member = None):
 
         # Check if no member was mentioned
@@ -120,7 +123,7 @@ class Notifications(commands.Cog, name = "Notifications"):
     @commands.command(
         name = "list",
         description = "Lists all the notifications you receive and whether or not they are active.",
-        cog_name = "Notifications"
+        cog_name = "notifications"
     )
     async def notify_list(self, ctx):
 
@@ -192,6 +195,25 @@ class Notifications(commands.Cog, name = "Notifications"):
             )
         
         await ctx.send(embed = embed)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @notify.error
+    @delete.error
+    @toggle.error
+    async def notify_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "That member does not seem to be in this server :("
+                )
+            )
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You can only run this command in a guild."
+                )
+            )
 
 def setup(bot):
     bot.add_cog(Notifications(bot))
