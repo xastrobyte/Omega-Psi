@@ -34,7 +34,7 @@ MARVEL_ICON = "http://thetechnews.com/wp-content/uploads/2018/03/2_The-latest-Ma
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Internet(commands.Cog, name = "Internet"):
+class Internet(commands.Cog, name = "internet"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -43,7 +43,7 @@ class Internet(commands.Cog, name = "Internet"):
     @commands.command(
         name = "movie",
         description = "Gives you information about a Movie on IMDb.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def movie(self, ctx, *, movie = None):
 
@@ -160,7 +160,7 @@ class Internet(commands.Cog, name = "Internet"):
         name = "tvShow",
         aliases = ["tv", "show"],
         description = "Gives you information about a TV Show on IMDb.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def tv_show(self, ctx, show = None):
 
@@ -273,7 +273,7 @@ class Internet(commands.Cog, name = "Internet"):
         name = "searchConcert",
         aliases = ["concert"],
         description = "Let's you search up events pertaining to keywords to search by.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def search_concert(self, ctx, *, keywords = None):
 
@@ -374,7 +374,7 @@ class Internet(commands.Cog, name = "Internet"):
         name = "searchAttraction",
         aliases = ["attraction", "searchPerformer", "performer"],
         description = "Let's you search up attractions/performers pertaining to keywords to search by.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def search_attraction(self, ctx, *, keywords = None):
 
@@ -421,7 +421,7 @@ class Internet(commands.Cog, name = "Internet"):
     @commands.command(
         name = "xkcd",
         description = "Sends an XKCD comic with the specified number or sends a random one.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def xkcd(self, ctx, comic = None):
 
@@ -561,7 +561,7 @@ class Internet(commands.Cog, name = "Internet"):
     @commands.command(
         name = "dc",
         description = "Allows you to search up and get info about a DC character.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def dc(self, ctx, *, character = None):
         
@@ -678,7 +678,7 @@ class Internet(commands.Cog, name = "Internet"):
     @commands.command(
         name = "marvel",
         description = "Allows you to search up and get info about a Marvel character.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def marvel(self, ctx, *, character = None):
 
@@ -798,7 +798,7 @@ class Internet(commands.Cog, name = "Internet"):
         name = "shortenUrl",
         aliases = ["shorten", "shortUrl", "url"],
         description = "Shortens a URL given.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def shorten_url(self, ctx, *, url= None):
         
@@ -840,7 +840,7 @@ class Internet(commands.Cog, name = "Internet"):
     @commands.command(
         name = "weather",
         description = "Shows you the current weather for a specific place.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def weather(self, ctx, *, location = None):
 
@@ -883,7 +883,7 @@ class Internet(commands.Cog, name = "Internet"):
     @commands.command(
         name = "forecast",
         description = "Shows you the forecaset for the next 7 days for a specific place.",
-        cog_name = "Internet"
+        cog_name = "internet"
     )
     async def forecast(self, ctx, *, location = None):
 
