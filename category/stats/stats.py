@@ -38,17 +38,18 @@ LEAGUE_ICON_URL = "http://ddragon.leagueoflegends.com/cdn/{}/img/profileicon/{}.
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Stats(commands.Cog, name = "Stats"):
+class Stats(commands.Cog, name = "stats"):
     def __init__(self, bot):
         self.bot = bot
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    """
     @commands.command(
         name = "blackOps3", 
         aliases = ["bo3"],
         description = "Gives you stats on a specific player in Black Ops 3.",
-        cog_name = "Stats"
+        cog_name = "stats"
     )
     async def black_ops_3(self, ctx, platform = None, username = None):
         
@@ -137,7 +138,7 @@ class Stats(commands.Cog, name = "Stats"):
         name = "blackOps4", 
         aliases = ["bo4"],
         description = "Gives you stats on a specific player in Black Ops 4.",
-        cog_name = "Stats"
+        cog_name = "stats"
     )
     async def black_ops_4(self, ctx, platform = None, username = None):
         
@@ -223,11 +224,12 @@ class Stats(commands.Cog, name = "Stats"):
                     await ctx.send(
                         embed = embed
                     )
+    """
     
     @commands.command(
         name = "fortnite",
         description = "Gives you stats on a specific player in Fortnite.",
-        cog_name = "Stats"
+        cog_name = "stats"
     )
     async def fortnite(self, ctx, platform = None, username = None):
         
@@ -370,7 +372,7 @@ class Stats(commands.Cog, name = "Stats"):
         name = "league", 
         aliases = ["lol"],
         description = "Gives you stats on a specific Summoner in League of Legends.",
-        cog_name = "Stats"
+        cog_name = "stats"
     )
     async def league(self, ctx, username = None):
         
