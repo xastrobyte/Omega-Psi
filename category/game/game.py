@@ -107,7 +107,7 @@ TRIVIA_API_CALL = "https://opentdb.com/api.php?amount={}&encode=base64&category=
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Game(commands.Cog, name = "Game"):
+class Game(commands.Cog, name = "game"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -116,7 +116,7 @@ class Game(commands.Cog, name = "Game"):
     @commands.command(
         name = "gamestats",
         description = "Gets the stats of someone you specify, or yourself, of all mini-games in the bot.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def gamestats(self, ctx, *, member = None):
 
@@ -188,7 +188,7 @@ class Game(commands.Cog, name = "Game"):
     @commands.command(
         name = "hangman",
         description = "Allows you to play a Hangman game.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def hangman(self, ctx):
     
@@ -352,7 +352,7 @@ class Game(commands.Cog, name = "Game"):
     @commands.command(
         name = "scramble",
         description = "Allows you to play Scramble game.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def scramble(self, ctx, *, difficulty : str = "normal"):
         
@@ -441,7 +441,7 @@ class Game(commands.Cog, name = "Game"):
     @commands.command(
         name = "rps",
         description = "Allows you to play Rock Paper Scissors.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def rps(self, ctx, action = None):
         
@@ -508,7 +508,7 @@ class Game(commands.Cog, name = "Game"):
         name = "trivia",
         aliases = ["triv"],
         description = "Allows you to play a trivia game where you can decide how many questions to answer (Max 30. Default 10).",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def trivia(self, ctx, amount : int = 10):
 
@@ -723,7 +723,7 @@ class Game(commands.Cog, name = "Game"):
         name = "ticTacToe", 
         aliases = ["ttt"],
         description = "Allows you to play a game of Tic Tac Toe with the AI or a person who reacts to it.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def tic_tac_toe(self, ctx, *, difficulty : str = None):
 
@@ -995,7 +995,7 @@ class Game(commands.Cog, name = "Game"):
         name = "connectFour", 
         aliases = ["cf"],
         description = "Allows you to play a game of Connect Four with the AI or a person who reacts to it.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def connect_four(self, ctx):
         try: await ctx.message.delete() 
@@ -1399,7 +1399,7 @@ class Game(commands.Cog, name = "Game"):
         name = "cardsAgainstHumanity",
         aliases = ["cah"],
         description = "Allows you to play Cards Against Humanity with other people.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_nsfw_and_guild)
     async def cards_against_humanity(self, ctx):
@@ -1529,7 +1529,7 @@ class Game(commands.Cog, name = "Game"):
     @commands.command(
         name = "addHangman",
         description = "Allows you to add a custom hangman phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def add_hangman(self, ctx, *, phrase = None):
 
@@ -1607,7 +1607,7 @@ class Game(commands.Cog, name = "Game"):
         name = "pendingHangman",
         aliases = ["pendingH", "pendHangman", "pendH"],
         description = "Allows you to see the pending hangman phrases.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def pending_hangman(self, ctx):
@@ -1720,7 +1720,7 @@ class Game(commands.Cog, name = "Game"):
         name = "approveHangman",
         aliases = ["approveH"],
         description = "Allows you to approve a pending hangman phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def approve_hangman(self, ctx, index : int):
@@ -1802,7 +1802,7 @@ class Game(commands.Cog, name = "Game"):
         name = "denyHangman",
         aliases = ["denyH"],
         description = "Allows you to deny a pending hangman phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def deny_hangman(self, ctx, index : int, *, reason = None):
@@ -1885,7 +1885,7 @@ class Game(commands.Cog, name = "Game"):
     @commands.command(
         name = "addScramble",
         description = "Allows you to add a custom scramble phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     async def add_scramble(self, ctx, *, phrase = None):
 
@@ -1963,7 +1963,7 @@ class Game(commands.Cog, name = "Game"):
         name = "pendingScramble",
         aliases = ["pendingS", "pendScramble", "pendS"],
         description = "Allows you to see the pending scramble phrases.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def pending_scramble(self, ctx):
@@ -2076,7 +2076,7 @@ class Game(commands.Cog, name = "Game"):
         name = "addScrambleHint",
         aliases = ["addSHint"],
         description = "Allows you to add a hint for a scramble phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def add_scramble_hint(self, ctx, index : int, *hints):
@@ -2115,7 +2115,7 @@ class Game(commands.Cog, name = "Game"):
         name = "approveScramble",
         aliases = ["approveS"],
         description = "Allows you to approve a pending scramble phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def approve_scramble(self, ctx, index : int):
@@ -2206,7 +2206,7 @@ class Game(commands.Cog, name = "Game"):
         name = "denyScramble",
         aliases = ["denyS"],
         description = "Allows you to deny a pending scramble phrase.",
-        cog_name = "Game"
+        cog_name = "game"
     )
     @commands.check(is_developer)
     async def deny_scramble(self, ctx, index : int, *, reason = None):
