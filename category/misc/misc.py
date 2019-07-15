@@ -54,7 +54,7 @@ SYMBOLS = {
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Misc(commands.Cog, name = "Misc"):
+class Misc(commands.Cog, name = "misc"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -63,7 +63,7 @@ class Misc(commands.Cog, name = "Misc"):
     @commands.command(
         name = "advice",
         description = "Gives you a random piece of advice.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def advice(self, ctx):
         
@@ -88,7 +88,7 @@ class Misc(commands.Cog, name = "Misc"):
     @commands.command(
         name = "chuckNorris",
         description = "Gives you a random Chuck Norris joke.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def chuck_norris(self, ctx):
         
@@ -116,7 +116,7 @@ class Misc(commands.Cog, name = "Misc"):
     @commands.command(
         name = "color",
         description = "Gives you the information about a color given the HEX code.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def color(self, ctx, hex_code = None):
 
@@ -155,7 +155,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "dadJoke",
         aliases = ["dad"],
         description = "Gives you a random dad joke.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def dad_joke(self, ctx):
 
@@ -184,7 +184,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "emojify",
         aliases = ["emoji", "emj"],
         description = "Gives you text but in Emoji style.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def emojify(self, ctx, *, text = None):
         
@@ -217,7 +217,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "todayInHistory",
         aliases = ["todayHistory", "today"],
         description = "Shows you a random fact about something that happened today in history.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def today(self, ctx):
 
@@ -283,7 +283,7 @@ class Misc(commands.Cog, name = "Misc"):
     @commands.command(
         name = "llamas",
         description = "Gives you a random quote from Llamas With Hats. You can also get the full script of an episode by adding \"script\" to the end of the command.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def llamas(self, ctx, episode : int = None, script = None):
         
@@ -449,7 +449,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "numberFact",
         aliases = ["number"],
         description = "Gives you a fact about a number.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def number_fact(self, ctx, number : int = None):
         
@@ -483,7 +483,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "setEmbedColor",
         aliases = ["setColor", "setEmbed", "embedColor", "embed"],
         description = "Sets the color of the embed for all embeds that are sent. If you call the command with no HEX code, the color will be reset to the default.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def set_embed_color(self, ctx, hex_code = None):
 
@@ -526,7 +526,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "tronaldDumpQuote",
         aliases = ["tronaldQuote"],
         description = "Gives you a random quote from Donald Trump.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     async def tronald_dump_quote(self, ctx):
         
@@ -555,7 +555,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "guildInfo",
         aliases = ["gi"],
         description = "Gives you info about this guild.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     @commands.check(guild_only)
     async def guild_info(self, ctx):
@@ -627,7 +627,7 @@ class Misc(commands.Cog, name = "Misc"):
         name = "userInfo",
         aliases = ["ui"],
         description = "Gives you info about a member in this guild.",
-        cog_name = "Misc"
+        cog_name = "misc"
     )
     @commands.check(guild_only)
     async def user_info(self, ctx, *, user : typing.Union[discord.Member, str] = None):
