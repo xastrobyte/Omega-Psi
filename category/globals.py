@@ -6,6 +6,7 @@ from database import loop
 from database import database
 
 PRIMARY_EMBED_COLOR = 0xEC7600
+OMEGA_PSI_CHANNEL = 521186436519821352
 
 DBL_BOT_STAT_API_CALL = "https://discordbots.org/api/bots/535587516816949248/stats"
 DBL_VOTE_API_CALL = "https://discordbots.org/api/bots/535587516816949248/votes"
@@ -22,6 +23,8 @@ DELETE = SCROLL_REACTIONS[4]
 OUTBOX = SCROLL_REACTIONS[5]
 CHECK_MARK = SCROLL_REACTIONS[6]
 LEAVE = SCROLL_REACTIONS[7]
+
+VALID_STATUSES = ["offline", "online", "idle", "dnd"]
 
 NUMBER_EMOJIS = [
     "1\u20e3",
