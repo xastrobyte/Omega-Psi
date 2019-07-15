@@ -148,7 +148,7 @@ SHORTCUTS = [
 # Extension
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Code(commands.Cog, name = "Code"):
+class Code(commands.Cog, name = "code"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -158,7 +158,7 @@ class Code(commands.Cog, name = "Code"):
         name = "execute",
         aliases = ["exec", "evaluate", "eval"],
         description = "Allows you to run code from a slew of languages. There are no parameters. You just run the command.",
-        cog_name = "Code"
+        cog_name = "code"
     )
     async def execute(self, ctx):
 
@@ -340,7 +340,7 @@ class Code(commands.Cog, name = "Code"):
     @commands.command(
         name = "convert", 
         description = "Allows you to convert numbers from one base to another.",
-        cog_name = "Code"
+        cog_name = "code"
     )
     async def convert(self, ctx, start_base : int = None, end_base : int = None, number = None):
 
@@ -431,7 +431,7 @@ class Code(commands.Cog, name = "Code"):
         name = "base64", 
         aliases = ["b64"],
         description = "Allows you to encode/decode text into/from Base64 encoding.",
-        cog_name = "Code"
+        cog_name = "code"
     )
     async def base64(self, ctx, conversion = None, *, text : str = None):
 
@@ -488,7 +488,7 @@ class Code(commands.Cog, name = "Code"):
     @commands.command(
         name = "morse",
         description = "Allows you to encode/decode text into/from Morse Code.",
-        cog_name = "Code"
+        cog_name = "code"
     )
     async def morse(self, ctx, conversion = None, *, text : str = None):
 
@@ -556,7 +556,7 @@ class Code(commands.Cog, name = "Code"):
         name = "qrCode", 
         aliases = ["qr"],
         description = "Allows you to create a QR code out of text.",
-        cog_name = "Code"
+        cog_name = "code"
     )
     async def qr_code(self, ctx, *, text : str = None):
 
@@ -588,7 +588,7 @@ class Code(commands.Cog, name = "Code"):
     @commands.command(
         name = "logic",
         description = "Allows you to get a truth table for a logical expression.",
-        cog_name = "Code"
+        cog_name = "code"
     )
     async def logic(self, ctx, *, expression : str = None):
 
