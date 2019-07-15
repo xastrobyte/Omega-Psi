@@ -22,6 +22,7 @@ bot.remove_command("help")
 
 # Keep track of extensions
 exts = [
+    "category.api.api",
     "category.code.code",
     "category.math.math",
     "category.game.game",
@@ -33,85 +34,90 @@ exts = [
     "category.bot.bot",
     "category.info.info",
     "category.insults.insults",
-    "category.notifications.notifications"
+    "category.notifications.notifications",
 ]
 
 cogs = {
-    "Code": {
+    "api": {
+        "command": "help api",
+        "description": "Test out my own APIs here :)",
+        "check": None,
+        "caps": True,
+        "emoji": ":pager: "
+    },
+    "code": {
         "command": "help code",
         "description": "All things having to do with coding go here.",
-        "check": None
+        "check": None,
+        "emoji": ":keyboard: "
     },
-    "Math": {
+    "math": {
         "command": "help math",
         "description": "Mathematical stuff like calculus and basic algebra!",
-        "check": None
+        "check": None,
+        "emoji": ":asterisk: "
     },
-    "Game": {
+    "game": {
         "command": "help game",
         "description": "There are games in this category!",
-        "check": None
+        "check": None,
+        "emoji": ":video_game: "
     },
-    "Internet": {
+    "internet": {
         "command": "help internet",
         "description": "All internet-based commands go here.",
-        "check": None
+        "check": None,
+        "emoji": ":desktop: "
     },
-    "Image": {
+    "image": {
         "command": "help image",
         "description": "Image commands are here! Hint: dog's and cat's are here too.",
-        "check": None
+        "check": None,
+        "emoji": ":frame_photo: "
     },
-    "Insults": {
+    "insults": {
         "command": "help insults",
         "description": "If you feel in the mood for insults, here you are!",
-        "check": None
+        "check": None,
+        "emoji": ":exclamation: "
     },
-    "Misc": {
+    "misc": {
         "command": "help misc",
         "description": "This category has commands that really don't fit anywhere.",
-        "check": None
+        "check": None,
+        "emoji": ":mag: "
     },
-    "Notifications": {
+    "notifications": {
         "command": "help notifications",
         "description": "You can get notified about the online status of people here!",
-        "check": None
+        "check": None,
+        "emoji": ":vibration_mode: "
     },
-    "Nsfw": {
+    "nsfw": {
         "command": "help nsfw",
         "description": "18+ ;)",
-        "check": is_nsfw_or_private
+        "check": is_nsfw_or_private,
+        "caps": True,
+        "emoji": ":underage: "
     },
-    "Stats": {
+    "stats": {
         "command": "help stats",
         "description": "Video Game stats! For all sorts of games!",
-        "check": None
+        "check": None,
+        "emoji": ":clipboard: "
     },
-    "Bot": {
+    "bot": {
         "command": "help bot",
         "description": "Primarily bot-related commands.",
-        "check": None
+        "check": None,
+        "emoji": ":robot: "
     },
-    "Info": {
+    "info": {
         "command": "help info",
         "description": "Basic info stuff really.",
-        "check": None
+        "check": None,
+        "emoji": ":question: "
     }
-}
-
-cog_emojis = {
-    "Code": ":keyboard: ",
-    "Math": ":asterisk: ",
-    "Game": ":video_game: ",
-    "Internet": ":desktop: ",
-    "Image": ":frame_photo: ",
-    "Insults": ":exclamation: ",
-    "Misc": ":mag: ",
-    "Notifications": ":vibration_mode: ",
-    "Nsfw": ":underage: ",
-    "Stats": ":clipboard: ",
-    "Bot": ":robot: ",
-    "Info": ":question: "
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -245,41 +251,6 @@ async def on_command_error(ctx, error):
     
     # Get the error channel
     channel = bot.get_channel(int(os.environ["COMMAND_ERROR_CHANNEL"]))
-
-    await channel.send(
-        embed = embed
-    )
-
-@bot.event
-async def on_command_completion(ctx):
-    """Overrides discord.py's event for on_command_completion.
-    This will send a message to the COMMAND_SUCCESS_CHANNEL (environment variable.)
-        telling that the command was run properly.
-    """
-
-    # Create embed
-    embed = discord.Embed(
-        title = "Command Success",
-        description = ctx.message.content,
-        color = 0x008000
-    )
-
-    # Add fields
-    fields = {
-        "Command Author": ctx.author,
-        "Guild Name": ctx.guild.name if ctx.guild != None else "Private Message",
-        "Channel Name": ctx.channel.name if ctx.guild != None else "Private Message with {}#{}".format(ctx.author.name, ctx.author.discriminator)
-    }
-
-    for field in fields:
-        embed.add_field(
-            name = field,
-            value = fields[field],
-            inline = False
-        )
-    
-    # Get the error channel
-    channel = bot.get_channel(int(os.environ["COMMAND_SUCCESS_CHANNEL"]))
 
     await channel.send(
         embed = embed
@@ -493,10 +464,10 @@ async def help(ctx, specific = None):
     if specific != None:
 
         # Specific help is a Cog
-        if specific.title() in cogs and (await cogs[specific.title()]["check"](ctx) if cogs[specific.title()]["check"] != None else True):
+        if specific.lower() in cogs and (await cogs[specific.lower()]["check"](ctx) if cogs[specific.lower()]["check"] != None else True):
 
             # Create fields for all commands
-            commands = bot.get_cog(specific.title()).get_commands()
+            commands = bot.get_cog(specific.lower()).get_commands()
             commands = sorted(commands, key = lambda k: k.name)
 
             fields = []
@@ -525,7 +496,7 @@ async def help(ctx, specific = None):
             # Create embed for menu
             embed = discord.Embed(
                 title = "{} {}".format(
-                    cog_emojis[specific.title()] + specific.title(),
+                    cogs[specific.lower()]["emoji"] + specific.lower(),
                     "- Page ({} / {})".format(
                         1, len(fields)
                     ) if len(fields) > 1 else ""
@@ -591,7 +562,7 @@ async def help(ctx, specific = None):
                 await msg.edit(
                     embed = discord.Embed(
                         title = "{} {}".format(
-                            cog_emojis[specific.title()] + specific.title(),
+                            cogs[specific.lower()]["emoji"] + specific.lower(),
                             "- Page ({} / {})".format(
                                 current + 1, len(fields)
                             ) if len(fields) > 1 else ""
@@ -679,8 +650,16 @@ async def help(ctx, specific = None):
 
                 # Make sure user can see it
                 if (True if cogs[cog]["check"] == None else await cogs[cog]["check"](ctx)):
+
+                    # Get the cog text
+                    cog_text = cog.title()
+                    if "caps" in cogs[cog]:
+                        if cogs[cog]["caps"]:
+                            cog_text = cog.upper()
+
+                    # Get the description
                     description = "{}{} - `{}`\n".format(
-                        cog_emojis[cog], cog,
+                        cogs[cog]["emoji"], cog_text,
                         prefix + cogs[cog]["command"]
                     )
 
@@ -727,11 +706,17 @@ async def help(ctx, specific = None):
 
             # Iterate through cogs
             for cog in cogs:
+
+                # Get the cog text
+                cog_text = cog.title()
+                if "caps" in cogs[cog]:
+                    if cogs[cog]["caps"]:
+                        cog_text = cog.upper()
                 
                 # Make sure user can see it
                 if (True if cogs[cog]["check"] == None else await cogs[cog]["check"](ctx)):
                     embed.add_field(
-                        name = cog_emojis[cog] + cog,
+                        name = cogs[cog]["emoji"] + cog_text,
                         value = "`{}`\n[Hover Me!](https://www.fellowhashbrown.com/projects#omegaPsi \"{}\")".format(
                             prefix + cogs[cog]["command"],
                             cogs[cog]["description"]
