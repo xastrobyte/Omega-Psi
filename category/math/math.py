@@ -12,7 +12,7 @@ NEWTON_API_CALL = "https://newton.now.sh/{}/{}"
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class Math(commands.Cog, name = "Math"):
+class Math(commands.Cog, name = "math"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -51,7 +51,7 @@ class Math(commands.Cog, name = "Math"):
     @commands.command(
         name = "simplify",
         description = "Simplifies a mathematical expression.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def simplify(self, ctx, *, expression = None):
         await self.newton(ctx, "simplify", expression = expression)
@@ -59,7 +59,7 @@ class Math(commands.Cog, name = "Math"):
     @commands.command(
         name = "factor",
         description = "Attempts to factor a mathematical expression.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def factor(self, ctx, *, expression = None):
         await self.newton(ctx, "factor", expression = expression)
@@ -68,7 +68,7 @@ class Math(commands.Cog, name = "Math"):
         name = "derivative",
         aliases = ["derivate", "derive", "dv"],
         description = "Attempts to take the derivative of a mathematical expression.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def derivative(self, ctx, *, expression = None):
         await self.newton(ctx, "derive", expression = expression)
@@ -77,7 +77,7 @@ class Math(commands.Cog, name = "Math"):
         name = "integral",
         aliases = ["integrate"],
         description = "Attempts to integrate a mathematical expression.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def integral(self, ctx, *, expression = None):
         await self.newton(ctx, "integrate", expression = expression)
@@ -86,7 +86,7 @@ class Math(commands.Cog, name = "Math"):
         name = "zeroes",
         aliases = ["zero"],
         description = "Attempts to find the zeroes of a mathematical expression.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def zeroes(self, ctx, *, expression = None):
         await self.newton(ctx, "zeroes", expression = expression)
@@ -95,7 +95,7 @@ class Math(commands.Cog, name = "Math"):
         name = "cosine",
         aliases = ["cos"],
         description = "Attempts to get the cosine of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def cosine(self, ctx, *, value = None):
         await self.newton(ctx, "cos", expression = value)
@@ -104,7 +104,7 @@ class Math(commands.Cog, name = "Math"):
         name = "sine",
         aliases = ["sin"],
         description = "Attempts to get the sine of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def sine(self, ctx, *, value = None):
         await self.newton(ctx, "sin", expression = value)
@@ -113,7 +113,7 @@ class Math(commands.Cog, name = "Math"):
         name = "tangent",
         aliases = ["tan"],
         description = "Attempts to get the tangent of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def tangent(self, ctx, *, value = None):
         await self.newton(ctx, "tan", expression = value)
@@ -122,7 +122,7 @@ class Math(commands.Cog, name = "Math"):
         name = "arccosine",
         aliases = ["arccos"],
         description = "Attempts to get the inverse cosine of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def arccosine(self, ctx, *, value = None):
         await self.newton(ctx, "arccos", expression = value)
@@ -131,7 +131,7 @@ class Math(commands.Cog, name = "Math"):
         name = "arcsine",
         aliases = ["arcsin"],
         description = "Attempts to get the inverse sine of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def arcsine(self, ctx, *, value = None):
         await self.newton(ctx, "arcsin", expression = value)
@@ -140,7 +140,7 @@ class Math(commands.Cog, name = "Math"):
         name = "arctangent",
         aliases = ["arctan"],
         description = "Attempts to get the inverse tangent of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def arctangent(self, ctx, *, value = None):
         await self.newton(ctx, "arctan", expression = value)
@@ -149,7 +149,7 @@ class Math(commands.Cog, name = "Math"):
         name = "absolute",
         aliases = ["abs"],
         description = "Attempts to get the absolute value of a value.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def absolute(self, ctx, *, value = None):
         await self.newton(ctx, "abs", expression = value)
@@ -158,7 +158,7 @@ class Math(commands.Cog, name = "Math"):
         name = "tangentLine",
         aliases = ["tanLine"],
         description = "Attempts to find the tangent line of a function at a given value x.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def tangent_line(self, ctx, x = None, *, expression = None):
 
@@ -207,7 +207,7 @@ class Math(commands.Cog, name = "Math"):
         name = "areaUnderCurve",
         aliases = ["areaCurve", "area"],
         description = "Attempts to find the area underneath a curve.",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def area_under_curve(self, ctx, x_start = None, x_end = None, *, expression = None):
 
@@ -264,7 +264,7 @@ class Math(commands.Cog, name = "Math"):
         name = "logarithm",
         aliases = ["log"],
         description = "Finds the logarithm of a number. Default base is 10",
-        cog_name = "Math"
+        cog_name = "math"
     )
     async def log(self, ctx, value = None, base : int = 10):
 
