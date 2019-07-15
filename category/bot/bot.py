@@ -7,6 +7,7 @@ from category import errors
 from category.globals import FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, CHECK_MARK, OUTBOX, LEAVE
 from category.globals import add_scroll_reactions
 from category.globals import get_embed_color
+from category.globals import PRIMARY_EMBED_COLOR, OMEGA_PSI_CHANNEL
 from category.predicates import is_developer, is_in_guild
 
 from database import loop
@@ -16,7 +17,9 @@ from util.discord import send_webhook
 from util.email import send_email
 from util.string import dict_to_datetime
 
-class Bot(commands.Cog, name = "Bot"):
+# # # # # # # # # # # # # # # # # # # # # # # # #
+
+class Bot(commands.Cog, name = "bot"):
     def __init__(self, bot):
         self.bot = bot
     
@@ -26,7 +29,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "newTheme",
         aliases = ["theme"],
         description = "Adds a new theme of the day for the bot. Date is in MMDD format.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def new_theme(self, ctx, date = None, dark = None, medium = None, light = None, *, description = None):
@@ -102,7 +105,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "suggestions",
         description = "Shows all suggestions made or a specific suggestion.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def suggestion_reports(self, ctx, data = None):
@@ -368,7 +371,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "suggest",
         description = "If you feel like something could be improved on in this bot, please suggest it!",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     async def suggest(self, ctx, *, suggestion = None):
 
@@ -449,7 +452,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "bugs",
         description = "Shows all bug reports made or a specific bug report.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def bug_reports(self, ctx, data = None):
@@ -680,7 +683,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "bug",
         description = "Is there a bug or something in the bot? Use this! Give a decent description so I know what to look for!",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     async def bug(self, ctx, *, bug = None):
 
@@ -762,7 +765,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "setRefresh",
         aliases = ["setR"],
         description = "Allows you to set a refresh time for members who vote for Omega Psi on DBL. The refresh time should be in days.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def set_refresh(self, ctx, member : discord.Member = None, refresh_time : int = None):
@@ -799,7 +802,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "servers",
         aliases = ["serverList", "sl"],
         description = "Shows you a list of servers that Omega Psi is in.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def server_list(self, ctx):
@@ -905,7 +908,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "restart",
         description = "Allows you to restart the bot.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def restart(self, ctx):
@@ -939,7 +942,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "kill",
         description = "Stops the bot and logs out.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def kill(self, ctx):
@@ -953,7 +956,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "update",
         description = "Shows you information about the most recent update to the bot and the pending update if any.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     async def update(self, ctx, *, get_all = None):
 
@@ -1187,7 +1190,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "pendingUpdate",
         aliases = ["pending"],
         description = "Shows you information about the current pending.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     async def pending_update(self, ctx):
 
@@ -1252,7 +1255,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "createUpdate",
         aliases = ["createUpd"],
         description = "Creates a new pending update to the bot.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def create_update(self, ctx):
@@ -1288,7 +1291,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "createFix",
         aliases = ["addFix"],
         description = "Adds a fix to the pending update.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def create_fix(self, ctx, *, fix = None):
@@ -1338,7 +1341,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "createFeature",
         aliases = ["addFeature"],
         description = "Adds a feature to the pending update.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def create_feature(self, ctx, *, feature = None):
@@ -1388,7 +1391,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "commitUpdate",
         aliases = ["commit"],
         description = "Commits the pending update as a new update.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def commit_update(self, ctx, version = None, *, description = None):
@@ -1489,11 +1492,30 @@ class Bot(commands.Cog, name = "Bot"):
                     inline = False
                 )
             )
+
+            # Send to Omega Psi channel
+            channel = self.bot.get_channel(OMEGA_PSI_CHANNEL)
+            await channel.send(
+                "@everyone",
+                embed = discord.Embed(
+                    title = "New Update! Version {}".format(update["version"]),
+                    description = update["description"],
+                    colour = PRIMARY_EMBED_COLOR
+                ).add_field(
+                    name = "Features",
+                    value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
+                    inline = False
+                ).add_field(
+                    name = "Fixes",
+                    value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
+                    inline = False
+                )
+            )
     
     @commands.command(
         name = "todo",
         description = "Allows you to add, remove, or view the todo list.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     async def todo(self, ctx, action = None, *, item = None):
 
@@ -1618,7 +1640,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "rememberFile",
         aliases = ["fileChange"],
         description = "Adds a file change to the bot to remember which files to update when it comes time to update the bot.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def remember_file(self, ctx, filename = None, *, reason = None):
@@ -1701,7 +1723,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "addDeveloper",
         aliases = ["addDev"],
         description = "Allows you to add a developer to the bot.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def add_developer(self, ctx, members: commands.Greedy[discord.Member] = []):
@@ -1742,7 +1764,7 @@ class Bot(commands.Cog, name = "Bot"):
         name = "removeDeveloper",
         aliases = ["removeDev", "remDeveloper", "remDev"],
         description = "Allows you to remove a developer from the bot.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     async def remove_developer(self, ctx, members: commands.Greedy[discord.Member] = []):
@@ -1795,7 +1817,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "rules",
         description = "Sends the rules for Fellow Hashbrown's private server.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     @is_in_guild(int(os.environ["DEVELOPER_SERVER"]))
@@ -1913,7 +1935,7 @@ class Bot(commands.Cog, name = "Bot"):
     @commands.command(
         name = "botTemplate",
         description = "Sends the template for submitting a bot in Fellow Hashbrown's private server.",
-        cog_name = "Bot"
+        cog_name = "bot"
     )
     @commands.check(is_developer)
     @is_in_guild(int(os.environ["DEVELOPER_SERVER"]))
