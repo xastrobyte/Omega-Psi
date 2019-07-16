@@ -134,6 +134,7 @@ async def on_ready():
 
     # Send a push notification to IFTTT
     await ifttt_push(
+        "on_push",
         "Ready To Go",
         "Omega Psi is online and ready to go.",
         ""
@@ -325,7 +326,7 @@ async def on_member_update(before, after):
     if str(before.status) != str(after.status) and str(before.status) in VALID_STATUSES and str(after.status) in VALID_STATUSES:
 
         # Load the target of the member if they exist
-        target = await database.online_status.get_listener(after, False)
+        target = await database.online_status.get_listener(after, create = False)
 
         # Only run if the target does exist (is not None)
         if target != None:
@@ -339,45 +340,52 @@ async def on_member_update(before, after):
                     
                     # Check if the member came online
                     if str(after.status) == "online":
-                        try:
-                            await user_object.send(
-                                "{}#{} is online!".format(
-                                    after.name, after.discriminator
-                                )
-                            )
-                        except:
-                            pass
+                        title = "Online"
+                        message = "{}#{} is online!".format(
+                            after.name, after.discriminator
+                        )
                     
                     # Check if the member went offline
                     elif str(after.status) == "offline":
-                        try:
-                            await user_object.send(
-                                "{}#{} went offline.".format(
-                                    after.name, after.discriminator
-                                )
-                            )
-                        except:
-                            pass
+                        title = "Offline"
+                        message = "{}#{} went offline.".format(
+                            after.name, after.discriminator
+                        )
                     
                     # Check if the member went idle
                     elif str(after.status) == "idle":
-                        try:
-                            await user_object.send(
-                                "{}#{} is now idle.".format(
-                                    after.name, after.discriminator
-                                )
-                            )
-                        except:
-                            pass
+                        title = "Idle"
+                        message = "{}#{} went idle.".format(
+                            after.name, after.discriminator
+                        )
                     
                     # Check if the member turned on Do Not Disturb
                     elif str(after.status) == "dnd":
+                        title = "Do Not Disturb"
+                        message = "{}#{} turned on Do Not Disturb.".format(
+                            after.name, after.discriminator
+                        )
+                        
+                    # Check if the user has their IFTTT account connected
+                    ifttt_data = await database.users.get_ifttt(user_object)
+                    if ifttt_data["active"]:
+                        
+                        # Get the users webhook key and event name
+                        webhook_key = ifttt_data["webhook_key"]
+
+                        # Send a push notification to the user
+                        await ifttt_push(
+                            "omega_psi_push",
+                            title,
+                            message,
+                            "",
+                            key = webhook_key
+                        )
+                    
+                    # The user's IFTTT is not active
+                    else:
                         try:
-                            await user_object.send(
-                                "{}#{} turned on Do Not Disturb".format(
-                                    after.name, after.discriminator
-                                )
-                            )
+                            await user_object.send(message)
                         except:
                             pass
 
@@ -430,6 +438,7 @@ async def update_dbl(joined_guild = None, guild = None, *, ctx = None):
 
         # Send notification through IFTTT that Omega Psi has left a server
         await ifttt_push(
+            "on_push",
             "Omega Psi\n",
             "Added to Discord Server.\n" if joined_guild else "Removed from Discord Server.\n",
             "Guild: {}\nOwner: {}".format(guild.name, guild.owner)
