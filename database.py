@@ -511,6 +511,10 @@ class User:
                 "hash": None,
                 "id": None
             },
+            "ifttt": {
+                "active": False,
+                "webhook_key": None
+            },
             "connect_four": {
                 "won": 0,
                 "lost": 0
@@ -619,6 +623,40 @@ class User:
         return (previous + refresh) < current
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_ifttt(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["ifttt"]
+    
+    async def set_ifttt(self, user, ifttt):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["ifttt"] = ifttt
+
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    async def ifttt_active(self, user):
+
+        # Get IFTTT data
+        ifttt_data = await self.get_ifttt(user)
+
+        return ifttt_data["active"]
+    
+    async def toggle_ifttt(self, user):
+
+        # Get IFTTT data
+        ifttt_data = await self.get_ifttt(user)
+
+        ifttt_data["active"] = not ifttt_data["active"]
+
+        # Set IFTTT data
+        await self.set_ifttt(user, ifttt_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -1764,11 +1802,12 @@ class OnlineStatus:
 
     # # # # # # # # # # # # # # # # # # # #
 
-    async def get_user(self, user):
+    async def get_user(self, user = None, *, user_id = None):
         
         # Default user data
+        user_id = str(user.id) if user != None else str(user_id)
         default = {
-            "_id": str(user.id),
+            "_id": user_id,
             "listeners": {}
         }
 
@@ -1776,7 +1815,7 @@ class OnlineStatus:
         user_data = await loop.run_in_executor(None,
             partial(
                 self._online_status.users.find_one,
-                {"_id": str(user.id)}
+                {"_id": user_id}
             )
         )
 
@@ -1787,7 +1826,7 @@ class OnlineStatus:
             await loop.run_in_executor(None,
                 partial(
                     self._online_status.users.insert_one,
-                    {"_id": str(user.id)}
+                    {"_id": user_id}
                 )
             )
             await self.set_user(user, default)
@@ -1796,13 +1835,14 @@ class OnlineStatus:
         # user_Data is not None, return the data
         return user_data
     
-    async def set_user(self, user, data):
+    async def set_user(self, user, data, *, user_id = None):
         
         # Set the user data
+        user_id = str(user.id) if user != None else str(user_id)
         await loop.run_in_executor(None,
             partial(
                 self._online_status.users.update_one,
-                {"_id": str(user.id)},
+                {"_id": user_id},
                 {"$set": data},
                 upsert = False
             )
@@ -1810,11 +1850,12 @@ class OnlineStatus:
     
     # # # # # # # # # # # # # # # # # # # #
 
-    async def get_listener(self, target, create = True):
+    async def get_listener(self, target= None, *, create = True, target_id = None):
         
         # Default listener data
+        target_id = str(target.id) if target != None else str(target_id)
         default = {
-            "_id": str(target.id),
+            "_id": target_id,
             "users": {}
         }
 
@@ -1822,7 +1863,7 @@ class OnlineStatus:
         listener_data = await loop.run_in_executor(None,
             partial(
                 self._online_status.targets.find_one,
-                {"_id": str(target.id)}
+                {"_id": target_id}
             )
         )
 
@@ -1833,7 +1874,7 @@ class OnlineStatus:
             await loop.run_in_executor(None,
                 partial(
                     self._online_status.targets.insert_one,
-                    {"_id": str(target.id)}
+                    {"_id": target_id}
                 )
             )
             await self.set_listener(target, default)
@@ -1842,13 +1883,14 @@ class OnlineStatus:
         # listener_data is None, return the data
         return listener_data
     
-    async def set_listener(self, target, data):
+    async def set_listener(self, target, data, *, target_id = None):
         
         # Set the listener data
+        target_id = str(target.id) if target != None else str(target_id)
         await loop.run_in_executor(None,
             partial(
                 self._online_status.targets.update_one,
-                {"_id": str(target.id)},
+                {"_id": target_id},
                 {"$set": data},
                 upsert = False
             )
@@ -1934,6 +1976,52 @@ class OnlineStatus:
         if str(user.id) in target_data["users"]:
             target_data["users"][str(user.id)]["active"] = not target_data["users"][str(user.id)]["active"]
         await self.set_listener(target, target_data)
+    
+    async def clear_listeners(self, user):
+
+        # Get the user data
+        user_data = await self.get_user(user)
+
+        # Iterate through the listeners
+        for listener in user_data["listeners"]:
+
+            # Get the target data
+            target_data = await self.get_listener(create = False, target_id = listener)
+
+            # Remove the user if they are a listener of the target
+            if target_data != None:
+                if str(user.id) in target_data["users"]:
+                    target_data["users"].pop(str(user.id))
+            
+                # Set the target data
+                await self.set_listener(None, target_data, target_id = listener)
+        
+        # Clear the listeners dictionary
+        user_data["listeners"] = {}
+        
+        # Set the user data
+        await self.set_user(user, user_data)
+    
+    async def invalidate_listener(self, user, target_id):
+
+        # Get the user data
+        user_data = await self.get_user(user)
+
+        # Check if the target is in the listeners for the user
+        if str(target_id) in user_data["listeners"]:
+            user_data["listeners"].pop(str(target_id))
+
+            # Remove the user from the listeners users
+            target_data = await self.get_listener(create = False, target_id = target_id)
+            if target_data != None:
+                if str(user.id) in target_data["users"]:
+                    target_data["users"].pop(str(user.id))
+            
+                # Set the target data
+                await self.set_listener(None, target_data, target_id = target_id)
+        
+        # Set the user data
+        await self.set_user(user, user_data)
     
     async def listener_status(self, user, target):
 
