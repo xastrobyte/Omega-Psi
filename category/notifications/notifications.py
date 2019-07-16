@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 
 from category import errors
-from category.globals import FIELD_THRESHOLD
+from category.globals import FIELD_THRESHOLD, get_embed_color
 from category.predicates import guild_only
 
 from database import database
@@ -16,6 +16,159 @@ class Notifications(commands.Cog, name = "notifications"):
     def __init__(self, bot):
         self.bot = bot
     
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @commands.command(
+        name = "setIFTTTKey",
+        description = "Allows you to set the webhook key linked to your IFTTT account. This key remains private and will never be accessible by anyone.",
+        cog_name = "notifications"
+    )
+    async def set_ifttt_key(self, ctx, key = None):
+        
+        # Check if the key does not exist (is None)
+        if key == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to specify the webhook key connected to your IFTTT account."
+                )
+            )
+        
+        # The key exists, set the key for the user
+        else:
+
+            # Get the IFTTT data for the user
+            ifttt_data = await database.users.get_ifttt(ctx.author)
+            ifttt_data["webhook_key"] = key
+
+            # Activate IFTTT if webhook_key and event_name both exist (are not None)
+            if ifttt_data["webhook_key"] != None:
+                ifttt_data["active"] = True
+            
+            # Set the IFTTT data for the user
+            await database.users.set_ifttt(ctx.author, ifttt_data)
+
+            # Send a message to the user
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Webhook Key Set!",
+                    description = "You set your IFTTT webhook key. You will now receive notifications through IFTTT.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+
+    @commands.command(
+        name = "toggleIFTTT",
+        description = "Allows you to toggle whether or not you receive notifications through IFTTT.",
+        cog_name = "notifications"
+    )
+    async def toggle_ifttt(self, ctx):
+
+        # Get the IFTTT status from the database
+        ifttt_data = await database.users.get_ifttt(ctx.author)
+
+        # Check if the webhook key does not exist
+        if ifttt_data["webhook_key"] == None:
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "You need to set your IFTTT webhook key before you can get notifications through IFTTT."
+                )
+            )
+        
+        else:
+
+            # Toggle IFTTT in the database
+            await database.users.toggle_ifttt(ctx.author)
+            
+            # Send a message to the user
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "IFTTT {}".format(
+                        "Turned On" if ifttt_data["active"] else "Turned Off"
+                    ),
+                    description = "You will now receive notifications through {}.".format(
+                        "your IFTTT connected device" if ifttt_data["active"] else "discord"
+                    ),
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+    
+    @commands.command(
+        name = "helpIFTTT",
+        description = "Guides you on how to set up your IFTTT account to receive push notifications with a webhook key and an event name.",
+        cog_name = "notifications"
+    )
+    async def help_ifttt(self, ctx):
+        
+        # Step 1: Create an account (if you don't have one)
+        steps = [
+            "Go to https://ifttt.com. If you've already signed up, skip to step 5. If not, keep going.",
+            "Click **Sign Up** at the top right.",
+            "Either use a Google/Facebook account or sign up manually.",
+            "If you want to pick and select services at the screen after you sign up, go ahead. If not, click the `X` at the top right.",
+            "If you have already connected your webhooks service, skip to step 10.",
+            "Search `webhooks` in the search bar at the top of the page.",
+            "Click on **Services**. Then click on **Webhooks**. If you have already connected the webhooks service, skip the next step.",
+            "Click on **Connect** to connect the webhooks service.",
+            "Click on **Settings** at the top right of the webhooks service.",
+            "Copy the webhook key that is right after `maker.ifttt.com/use/`",
+            "On discord, run Omega Psi's command `o.setIFTTTKey` and add the your webhook key from the previous step to set it.",
+            "If you have already connected your notifications service, skip to step 16.",
+            "Go back to IFTTT.com and search `notifications` in the search bar at the top of the page.",
+            "Click on **Services**. Then click on the first notifications service that appears.",
+            "Click on **Connect** to connect the notifications service.",
+            "Now click on **My Applets** at the top left of the page.",
+            "Click on **New Applet** at the top right.",
+            "Click on where it says **this** and search `webhooks`.",
+            "Click on the webhooks service and then click on **Receive a web request**.",
+            "Where it says **Event Name**, type in `omega_psi_push` and click **Create Trigger**.",
+            "Click on where it says **that** and search `notifications`.",
+            "Click on the notifications service and the click on **Send a rich notification**.",
+            "Where it says **Title**, clear it and type in `{{Value1}}`",
+            "Where it says **Message**, clear it and type in `{{Value2}}`.",
+            "Press enter and type in `{{Value3}}`. Then click **Create Action**. Then click **Finish**.",
+            "Then you're done! You can toggle IFTTT through Omega Psi, or if your webhook key changes, set it through there."
+        ]
+
+        # Add the steps to fields
+        fields = []
+        field_text = ""
+        count = 1
+        for step in steps:
+
+            step = "{}.) {}\n".format(
+                count, step
+            )
+            count += 1
+
+            if len(field_text) + len(step) > FIELD_THRESHOLD:
+                fields.append(field_text)
+                field_text = ""
+            
+            field_text += step
+    
+        if len(field_text) > 0:
+            fields.append(field_text)
+        
+        # Create embed
+        embed = discord.Embed(
+            title = "IFTTT Steps",
+            description = "_ _",
+            colour = await get_embed_color(ctx.author)
+        )
+
+        # Add fields
+        for field in fields:
+            embed.add_field(
+                name = "Steps",
+                value = field,
+                inline = False
+            )
+        
+        # Send message
+        await ctx.send(
+            embed = embed
+        )
+
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
     @commands.command(
@@ -46,7 +199,7 @@ class Notifications(commands.Cog, name = "notifications"):
                     description = "You are now being notified about the online status of {}.".format(
                         member.mention
                     ),
-                    colour = 0x00FF00
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -78,7 +231,7 @@ class Notifications(commands.Cog, name = "notifications"):
                     description = "You are no longer being notified about the online status of {}.".format(
                         member.mention
                     ),
-                    colour = 0xFF0000
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -116,7 +269,7 @@ class Notifications(commands.Cog, name = "notifications"):
                         "being" if notifying else "temporarily not being",
                         member.mention
                     ),
-                    colour = 0xFFFF00
+                    colour = await get_embed_color(ctx.author)
                 )
             )
     
@@ -144,20 +297,29 @@ class Notifications(commands.Cog, name = "notifications"):
             # Iterate through the listeners
             count = 0
             for listener in listeners:
-                count += 1
 
                 # Get the target user
                 user = self.bot.get_user(int(listener))
 
-                # Add it to the text list
-                field_text += "{}#{} - {}\n".format(
-                    user.name, user.discriminator,
-                    "✔️" if listeners[listener] else "❌"
-                )
+                # Check if the user is invalid (user == None)
+                if user == None:
 
-                if len(field_text) > FIELD_THRESHOLD:
-                    fields.append(field_text)
-                    field_text = ""
+                    # Invalidate the listener and remove it from the user's listener
+                    await database.online_status.invalidate_listener(ctx.author, listener)
+                
+                # The user is not invalid
+                else:
+                    count += 1
+
+                    # Add it to the text list
+                    field_text += "{}#{} - {}\n".format(
+                        user.name if user != None else "Invalid User", user.discriminator if user != None else "0000",
+                        "✔️" if listeners[listener] else "❌"
+                    )
+
+                    if len(field_text) > FIELD_THRESHOLD:
+                        fields.append(field_text)
+                        field_text = ""
             
             if len(field_text) > 0:
                 fields.append(field_text)
@@ -170,7 +332,7 @@ class Notifications(commands.Cog, name = "notifications"):
                     ) if len(fields) > 1 else ""
                 ),
                 description = fields[0],
-                colour = 0x00FF00
+                colour = await get_embed_color(ctx.author)
             )
             
             count = 1
@@ -191,10 +353,30 @@ class Notifications(commands.Cog, name = "notifications"):
             embed = discord.Embed(
                 title = "No Notifications",
                 description = "You are not being notified of anybody's online status.",
-                colour = 0x0080FF
+                colour = await get_embed_color(ctx.author)
             )
         
         await ctx.send(embed = embed)
+    
+    @commands.command(
+        name = "clearNotifications",
+        aliases = ["clear"],
+        description = "Deletes all notifications you may have. Do NOT run this if you want to remove any invalid users. The o.list command does that automatically.",
+        cog_name = "notifications"
+    )
+    async def clear(self, ctx):
+
+        # Clear all listeners
+        await database.online_status.clear_listeners(ctx.author)
+
+        # Send a confirm message
+        await ctx.send(
+            embed = discord.Embed(
+                title = "All Notifications Deleted",
+                description = "You have deleted all of your notifications.",
+                colour = await get_embed_color(ctx.author)
+            )
+        )
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
