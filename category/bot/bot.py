@@ -1397,7 +1397,7 @@ class Bot(commands.Cog, name = "bot"):
     async def commit_update(self, ctx, version = None, *, description = None):
         
         # Check if version or description are None; Throw error message
-        if version == None or description == None:
+        if version == None or (description == None and version not in ["recent", "r"]):
             await ctx.send(
                 embed = errors.get_error_message(
                     "In order to commit the update, you need to establish the `version` and the `description` of this update."
@@ -1407,91 +1407,101 @@ class Bot(commands.Cog, name = "bot"):
         # Version and description are not None; Commit the update
         else:
 
-            # Commit the update. Then get the update so we can inform all other developers
-            await database.bot.commit_pending_update(version, description)
-
-            # Also clear the changed files
-            await database.bot.set_changed_files([])
-            update = await database.bot.get_recent_update()
-
-            for dev in await database.bot.get_developers():
-
-                # Get the dev user object
-                user = self.bot.get_user(int(dev))
-
-                # Send to everyon except author
-                if user.id != ctx.author.id:
-                    await user.send(
-                        embed = discord.Embed(
-                            title = "Update Committed by {} - (Version {})".format(
-                                ctx.author,
-                                update["version"]
-                            ),
-                            description = update["description"],
-                            colour = await get_embed_color(ctx.author)
-                        ).add_field(
-                            name = "Features",
-                            value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
-                            inline = False
-                        ).add_field(
-                            name = "Fixes",
-                            value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
-                            inline = False
-                        )
-                    )
+            # Check if the commit version is "recent" or "r"
+            # This means to just rerun the last commit command (last update)
+            # as if it's a new commit
+            if version in ["recent", "r"]:
                 
-            # Send webhook to Integromat
-            # Split up features and fixes into platform-specific
-            #  Tumblr should be Markdown supported
-            #  Twitter, Facebook, and Push Notification should be regular
-            markdown = {
-                "description": description,
-                "features": "\n".join([
-                    " - {}".format(feature) for feature in update["features"]
-                ]) if len(update["features"]) > 0 else "No New Features.",
-                "fixes": "\n".join([
-                    " - {}".format(fix) for fix in update["fixes"]
-                ]) if len(update["fixes"]) > 0 else "No New Fixes."
-            }
+                # Get the most recent update
+                update = await database.bot.get_recent_update()
 
-            regular = {
-                "description": description.replace("`", ""),
-                "features": "\n".join([
-                    " - {}".format(feature.replace("`", "")) for feature in update["features"]
-                ]) if len(update["features"]) > 0 else "No New Features.",
-                "fixes": "\n".join([
-                    " - {}".format(fix.replace("`", "")) for fix in update["fixes"]
-                ]) if len(update["fixes"]) > 0 else "No New Fixes."
-            }
+            else:
 
-            await loop.run_in_executor(None,
-                partial(
-                    requests.post,
-                    os.environ["INTEGROMAT_WEBHOOK_CALL"],
-                    json = {
-                        "version": version,
-                        "markdown": markdown,
-                        "regular": regular
-                    }
+                # Commit the update. Then get the update so we can inform all other developers
+                await database.bot.commit_pending_update(version, description)
+
+                # Also clear the changed files
+                await database.bot.set_changed_files([])
+                update = await database.bot.get_recent_update()
+
+                for dev in await database.bot.get_developers():
+
+                    # Get the dev user object
+                    user = self.bot.get_user(int(dev))
+
+                    # Send to everyon except author
+                    if user.id != ctx.author.id:
+                        await user.send(
+                            embed = discord.Embed(
+                                title = "Update Committed by {} - (Version {})".format(
+                                    ctx.author,
+                                    update["version"]
+                                ),
+                                description = update["description"],
+                                colour = await get_embed_color(ctx.author)
+                            ).add_field(
+                                name = "Features",
+                                value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
+                                inline = False
+                            ).add_field(
+                                name = "Fixes",
+                                value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
+                                inline = False
+                            )
+                        )
+                    
+                # Send webhook to Integromat
+                # Split up features and fixes into platform-specific
+                #  Tumblr should be Markdown supported
+                #  Twitter, Facebook, and Push Notification should be regular
+                markdown = {
+                    "description": description,
+                    "features": "\n".join([
+                        " - {}".format(feature) for feature in update["features"]
+                    ]) if len(update["features"]) > 0 else "No New Features.",
+                    "fixes": "\n".join([
+                        " - {}".format(fix) for fix in update["fixes"]
+                    ]) if len(update["fixes"]) > 0 else "No New Fixes."
+                }
+
+                regular = {
+                    "description": description.replace("`", ""),
+                    "features": "\n".join([
+                        " - {}".format(feature.replace("`", "")) for feature in update["features"]
+                    ]) if len(update["features"]) > 0 else "No New Features.",
+                    "fixes": "\n".join([
+                        " - {}".format(fix.replace("`", "")) for fix in update["fixes"]
+                    ]) if len(update["fixes"]) > 0 else "No New Fixes."
+                }
+
+                await loop.run_in_executor(None,
+                    partial(
+                        requests.post,
+                        os.environ["INTEGROMAT_WEBHOOK_CALL"],
+                        json = {
+                            "version": version,
+                            "markdown": markdown,
+                            "regular": regular
+                        }
+                    )
                 )
-            )
 
-            # Send to author
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "Update Committed - (Version {})".format(update["version"]),
-                    description = update["description"],
-                    colour = await get_embed_color(ctx.author)
-                ).add_field(
-                    name = "Features",
-                    value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
-                    inline = False
-                ).add_field(
-                    name = "Fixes",
-                    value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
-                    inline = False
+                # Send to author
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Update Committed - (Version {})".format(update["version"]),
+                        description = update["description"],
+                        colour = await get_embed_color(ctx.author)
+                    ).add_field(
+                        name = "Features",
+                        value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
+                        inline = False
+                    ).add_field(
+                        name = "Fixes",
+                        value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
+                        inline = False
+                    )
                 )
-            )
 
             # Send to Omega Psi channel
             channel = self.bot.get_channel(OMEGA_PSI_CHANNEL)
