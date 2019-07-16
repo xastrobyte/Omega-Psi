@@ -641,7 +641,14 @@ class Misc(commands.Cog, name = "misc"):
                 # Iterate through members
                 found = False
                 for member in ctx.guild.members:
-                    if user.lower() in [member.name.lower(), member.nick.lower(), member.display_name.lower()]:
+
+                    # Get a list of possible aliases
+                    check_list = [member.name.lower(), member.display_name.lower()]
+                    if member.nick != None:
+                        check_list.append(member.nick.lower())
+
+                    # See if the user is equivalent 
+                    if user.lower() in check_list:
                         user = member
                         found = True
                         break
@@ -658,6 +665,12 @@ class Misc(commands.Cog, name = "misc"):
         if user != None:
         
             # Send user data
+            permissions = ", ".join([
+                perm.replace("_", " ").title()
+                for perm, has_perm in list(ctx.channel.permissions_for(user))
+                if has_perm == True
+            ]) if not ctx.channel.permissions_for(user).administrator else "Administrator"
+
             fields = {
                 "Member": "{} ({}#{})".format(
                     user.mention, 
@@ -665,11 +678,7 @@ class Misc(commands.Cog, name = "misc"):
                 ),
                 "Created At": datetime_to_string(user.created_at),
                 "Joined At": datetime_to_string(user.joined_at),
-                "Permissions": ", ".join([
-                    perm.replace("_", " ").title()
-                    for perm, has_perm in list(ctx.channel.permissions_for(user))
-                    if has_perm == True
-                ]) if not ctx.channel.permissions_for(user).administrator else "Administrator",
+                "Permissions": permissions if len(permissions) > 0 else "None",
                 "Status": str(user.status)
             }
 
@@ -692,7 +701,8 @@ class Misc(commands.Cog, name = "misc"):
             for field in fields:
                 embed.add_field(
                     name = field,
-                    value = fields[field]
+                    value = fields[field],
+                    inline = False
                 )
             
             await ctx.send(
