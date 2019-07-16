@@ -1627,8 +1627,7 @@ class Game(commands.Cog, name = "game"):
                         current + 1, len(pending_hangmans)
                     ) if len(pending_hangmans) > 1 else ""
                 ),
-                description = "**Phrase (#{})**: {}\n**Author**: {}".format(
-                    pending_hangmans[current]["number"],
+                description = "**Phrase**: {}\n**Author**: {}".format(
                     pending_hangmans[current]["phrase"],
                     "Unknown" if author == None else "{} ({})".format(
                         author.mention, author
