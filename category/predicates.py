@@ -27,9 +27,10 @@ def is_in_guild(guild_id):
 
 async def get_prefix(bot, message):
 
-    # Check if message was sent in guild
+    # Check if message was not sent in guild
     if message.guild == None:
         return ["o..", "o.", ""]
     
-	guild_prefix = await database.guilds.get_prefix(message.guild)
-    return [guild_prefix.strip() + ".", guild_prefix]
+    guild_prefix = await database.guilds.get_prefix(message.guild)
+    valid_prefixes = [guild_prefix.strip() + ".", guild_prefix]
+    return commands.when_mentioned_or(*valid_prefixes)(bot, message)
