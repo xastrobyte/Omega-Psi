@@ -4,13 +4,15 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
-from category.globals import FIELD_THRESHOLD
+from category.globals import FIELD_THRESHOLD, OMEGA_PSI_CREATION
 from category.globals import get_embed_color
 from category.predicates import can_manage_guild, guild_only
+
 from database import database as db
 from database import loop
 
 from util.misc import get_theme
+from util.string import datetime_to_string, datetime_to_length
 
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
 DBL_VOTE_LINK = "https://discordbots.org/bot/535587516816949248/vote"
@@ -58,6 +60,11 @@ class Info(commands.Cog, name = "info"):
                 theme[0],   # Dark
                 theme[2],   # Light
                 theme[1]    # Medium
+            )
+        ).set_footer(
+            text = "Created on {}. Omega Psi is {} old.".format(
+                datetime_to_string(OMEGA_PSI_CREATION, short = True),
+                datetime_to_length(OMEGA_PSI_CREATION)
             )
         )
 
@@ -151,7 +158,7 @@ class Info(commands.Cog, name = "info"):
     
     @commands.command(
         name = "replit",
-        aliases = ["repl"],
+        aliases = ["repl", "source", "src"],
         description = "Gives you a link so you can read my source code.",
         cog_name = "info"
     )
@@ -159,7 +166,7 @@ class Info(commands.Cog, name = "info"):
         
         # Send the link
         await ctx.send(
-            "https://repl.it/@FellowHashbrown/Omega-Psi"
+            "https://repl.it/@FellowHashbrown/Omega-Psi\nhttps://github.com/FellowHashbrown/Omega-Psi"
         )
     
     @commands.command(
