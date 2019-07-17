@@ -37,12 +37,10 @@ class Notifications(commands.Cog, name = "notifications"):
         else:
 
             # Get the IFTTT data for the user
-            ifttt_data = await database.users.get_ifttt(ctx.author)
-            ifttt_data["webhook_key"] = key
-
-            # Activate IFTTT if webhook_key and event_name both exist (are not None)
-            if ifttt_data["webhook_key"] != None:
-                ifttt_data["active"] = True
+            ifttt_data = {
+                "webhook_key": key,
+                "active": True
+            }
             
             # Set the IFTTT data for the user
             await database.users.set_ifttt(ctx.author, ifttt_data)
@@ -78,6 +76,7 @@ class Notifications(commands.Cog, name = "notifications"):
 
             # Toggle IFTTT in the database
             await database.users.toggle_ifttt(ctx.author)
+            ifttt_data = await database.users.get_ifttt(ctx.author)
             
             # Send a message to the user
             await ctx.send(
@@ -111,7 +110,7 @@ class Notifications(commands.Cog, name = "notifications"):
             "Click on **Connect** to connect the webhooks service.",
             "Click on **Settings** at the top right of the webhooks service.",
             "Copy the webhook key that is right after `maker.ifttt.com/use/`",
-            "On discord, run Omega Psi's command `o.setIFTTTKey` and add the your webhook key from the previous step to set it.",
+            "On discord, run Omega Psi's command `o.setIFTTTKey` and add your webhook key from the previous step to set it.",
             "If you have already connected your notifications service, skip to step 16.",
             "Go back to IFTTT.com and search `notifications` in the search bar at the top of the page.",
             "Click on **Services**. Then click on the first notifications service that appears.",
