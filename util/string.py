@@ -43,45 +43,74 @@ def dict_to_datetime(ddict):
         ddict["hour"], ddict["minute"], ddict["second"]
     )
 
-def datetime_to_string(dateTime):
+def datetime_to_string(dateTime, *, short = False):
     """Turns a datetime into a readable string.
 
     Parameters:
         dateTime (datetime.datetime): The datetime object to convert.
     """
 
-    weekdays = [
-        "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday",
-        "Saturday", "Sunday"
-    ]
+    if short:
+        return "{}/{}/{}".format(
+            dateTime.month,
+            dateTime.day,
+            dateTime.year
+        )
+    
+    else:
 
-    months = [
-        "January", "February", "March", "April",
-        "May", "June", "July", "August",
-        "September", "October", "November", "December"
-    ]
+        weekdays = [
+            "Monday", "Tuesday", "Wednesday",
+            "Thursday", "Friday",
+            "Saturday", "Sunday"
+        ]
 
-    # Get the weekday, month, day, year, time (AM or PM)
-    weekday = dateTime.weekday()
-    month = dateTime.month - 1
-    day = dateTime.day
-    year = dateTime.year
-    hour = dateTime.hour
-    am = True
-    if hour == 0:
-        hour = 12
+        months = [
+            "January", "February", "March", "April",
+            "May", "June", "July", "August",
+            "September", "October", "November", "December"
+        ]
+
+        # Get the weekday, month, day, year, time (AM or PM)
+        weekday = dateTime.weekday()
+        month = dateTime.month - 1
+        day = dateTime.day
+        year = dateTime.year
+        hour = dateTime.hour
         am = True
-    elif hour > 12:
-        hour -= 12
-        am = False
-    minute = dateTime.minute
-    if minute < 10:
-        minute = "0" + str(minute)
+        if hour == 0:
+            hour = 12
+            am = True
+        elif hour > 12:
+            hour -= 12
+            am = False
+        minute = dateTime.minute
+        if minute < 10:
+            minute = "0" + str(minute)
 
-    return "{}, {} {}, {} {}:{} {}".format(
-        weekdays[weekday], months[month], day, year, hour, minute, "AM" if am else "PM"
-    )
+        return "{}, {} {}, {} {}:{} {}".format(
+            weekdays[weekday], months[month], day, year, hour, minute, "AM" if am else "PM"
+        )
+
+def datetime_to_length(dateTime):
+
+    # Get the difference of the current time and the datetime
+    diff = datetime.now() - dateTime
+
+    # Check if there is at least 1 day difference
+    if diff.days >= 1:
+        return str(diff.days) + " days"
+    
+    # Check if there is at least 1 hour difference
+    elif diff.seconds // 3600 >= 1:
+        return str(diff.seconds // 3600) + " hour{}".format("" if diff.seconds // 3600 == 1 else "s")
+    
+    # Check if there is at least 1 minute difference
+    elif diff.seconds // 60 >= 1:
+        return str(diff.seconds // 60) + " minute{}".format("" if diff.seconds // 60 == 1 else "s")
+    
+    # There is just seconds
+    return str(diff.seconds) + " second{}".format("" if diff.seconds == 1 else "s")
 
 def split_text(text, size, byWord = True):
     """Splits text up by size.\n
