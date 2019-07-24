@@ -980,6 +980,7 @@ class Bot(commands.Cog, name = "bot"):
             current = 0
             
             fields = {
+                "Release Date": updates[current]["date"],
                 "Version": updates[current]["version"],
                 "Description": updates[current]["description"],
                 "Features": "\n".join(updates[current]["features"]) if len(updates[current]["features"]) > 0 else "No Features Added.",
@@ -1080,6 +1081,7 @@ class Bot(commands.Cog, name = "bot"):
 
                 # Setup fields
                 fields = {
+                    "Release Date": updates[current]["date"],
                     "Version": updates[current]["version"],
                     "Description": updates[current]["description"],
                     "Features": "\n".join(updates[current]["features"]) if len(updates[current]["features"]) > 0 else "No Features Added.",
@@ -1140,6 +1142,7 @@ class Bot(commands.Cog, name = "bot"):
             )
 
             fields = {
+                "Release Date": recent_update["date"],
                 "Version": recent_update["version"],
                 "Description": recent_update["description"],
                 "Features": "\n".join(recent_update["features"]) if len(recent_update["features"]) > 0 else "No Features Added.",
@@ -1421,7 +1424,7 @@ class Bot(commands.Cog, name = "bot"):
                 await database.bot.commit_pending_update(version, description)
 
                 # Also clear the changed files
-                await database.bot.set_changed_files([])
+                await database.bot.set_changed_files({})
                 update = await database.bot.get_recent_update()
 
                 for dev in await database.bot.get_developers():
@@ -1429,7 +1432,7 @@ class Bot(commands.Cog, name = "bot"):
                     # Get the dev user object
                     user = self.bot.get_user(int(dev))
 
-                    # Send to everyon except author
+                    # Send to everyone except author
                     if user.id != ctx.author.id:
                         await user.send(
                             embed = discord.Embed(
@@ -1665,17 +1668,20 @@ class Bot(commands.Cog, name = "bot"):
             fields = []
             field_text = ""
             for f in files:
-
-                f = "`{}` - {}\n".format(
-                    f["file"],
-                    f["reason"]
+                
+                file_text = "`{}`\n{}\n".format(
+                    f,
+                    "\n".join([
+                        "--{}".format(reason)
+                        for reason in files[f]
+                    ])
                 )
 
-                if len(field_text) + len(f) > FIELD_THRESHOLD:
+                if len(field_text) + len(file_text) > FIELD_THRESHOLD:
                     fields.append(field_text)
                     field_text = ""
                 
-                field_text += f
+                field_text += file_text
             
             if len(field_text) > 0:
                 fields.append(field_text)
@@ -1707,27 +1713,18 @@ class Bot(commands.Cog, name = "bot"):
         # Filename is not None
         else:
 
-            # Check if filename already exists
-            if filename in await database.bot.get_changed_files():
-                await ctx.send(
-                    embed = errors.get_error_message(
-                        "You already have the file being remembered."
-                    )
-                )
-            
-            # Filename does not exist; Add it
-            else:
-                await database.bot.add_changed_file(filename, reason if reason else "No Reason Given")
+            # Add changed file to database
+            await database.bot.add_changed_file(filename, reason if reason else "No Reason Given")
 
-                await ctx.send(
-                    embed = discord.Embed(
-                        title = "Remembered!",
-                        description = "The file `{}` has been remembered.".format(
-                            filename
-                        ),
-                        colour = await get_embed_color(ctx.author)
-                    )
+            await ctx.send(
+                embed = discord.Embed(
+                    title = "Remembered!",
+                    description = "The file `{}` has been remembered.".format(
+                        filename
+                    ),
+                    colour = await get_embed_color(ctx.author)
                 )
+            )
     
     @commands.command(
         name = "addDeveloper",
