@@ -5,7 +5,7 @@ from functools import partial
 from pymongo import MongoClient
 from random import choice
 
-from util.string import datetime_to_dict
+from util.string import datetime_to_dict, datetime_to_string
 
 # Create new event loop
 loop = asyncio.get_event_loop()
@@ -77,8 +77,7 @@ class Bot:
             "restart": {
                 "send": False
             },
-            "theme": {},
-            "files": []
+            "files": {}
         }
 
         # Get bot data
@@ -212,48 +211,6 @@ class Bot:
         bot_data = await self.get_bot()
 
         return bot_data["owner"]
-    
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    async def get_theme(self):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        # Check if theme of the day is empty
-        current = datetime.now().astimezone(pytz.timezone("US/Mountain"))
-        date = "{}-{}".format(
-            current.month,
-            current.day
-        )
-
-        # Return default if theme of day is empty
-        if date not in bot_data["theme"]:
-            return {
-                "date": date,
-                "dark": "293134",
-                "light": "ec7600",
-                "medium": "678cb1",
-                "description": "Nothing special happens on {}".format(date.replace("-", "/"))
-            }
-
-        return bot_data["theme"][date]
-    
-    async def set_theme(self, date, dark, medium, light, description):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        bot_data["theme"][date] = {
-            "dark": dark,
-            "medium": medium,
-            "light": light,
-            "date": date,
-            "description": description
-        }
-
-        # Set bot data
-        await self.set_bot(bot_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
@@ -320,10 +277,13 @@ class Bot:
         # Get changed files
         files = await self.get_changed_files()
 
-        files.append({
-            "file": filename,
-            "reason": reason
-        })
+        # Check if the file already exists, add to the reasons
+        if filename in files:
+            files[filename].append(reason)
+
+        # The file does not exist, create it
+        else:
+            files[filename] = [reason]
 
         # Set changed files
         await self.set_changed_files(files)
@@ -403,8 +363,10 @@ class Bot:
         # Get updates
         updates = await self.get_updates()
 
-        # Add update to bot
+        # Add update to bot; Include the current date as well
+        current_date = datetime_to_string(datetime.now(), short = True)
         updates.insert(0, {
+            "date": current_date,
             "version": version,
             "description": description,
             "features": pending_update["features"],
@@ -494,6 +456,78 @@ class Guild:
 class User:
     def __init__(self, users):
         self._users = users
+    
+    def get_user_sync(self, user):
+
+        # Set defaults
+        data = {
+            "_id": str(user.id),
+            "embed_color": None,
+            "vote": {
+                "previous": 0,
+                "refresh": 2 * 24 * 60 * 60 # By default, user must vote once every 
+                                            # 2 days to use "premium" commands
+                                            # Can be set per user by bot moderators
+            },
+            "imgur": {
+                "hash": None,
+                "id": None
+            },
+            "ifttt": {
+                "active": False,
+                "webhook_key": None
+            },
+            "connect_four": {
+                "won": 0,
+                "lost": 0
+            },
+            "hangman": {
+                "won": 0,
+                "lost": 0
+            },
+            "rps": {
+                "won": 0,
+                "lost": 0
+            },
+            "scramble": {
+                "won": 0,
+                "lost": 0
+            },
+            "tic_tac_toe": {
+                "won": 0,
+                "lost": 0
+            },
+            "cards_against_humanity": {
+                "won": 0,
+                "lost": 0
+            },
+            "trivia": {
+                "won": 0,
+                "lost": 0
+            },
+            "uno": {
+                "won": 0,
+                "lost": 0
+            }
+        }
+
+        # Get user data
+        user_data = self._users.find_one({"_id": str(user.id)})
+
+        # User data is None; Create user data
+        if user_data == None:
+            self._users.insert_one({"_id": str(user.id)})
+            self.set_user(user, data)
+            user_data = data
+        
+        # set defaults
+        user_data = set_default(data, user_data)
+        return user_data
+
+    def set_user_sync(self, user, data):
+
+        # Set the user data
+        self._users.update_one({"_id": str(user.id)}, {"$set": data}, upsert = False)
     
     async def get_user(self, user):
 
