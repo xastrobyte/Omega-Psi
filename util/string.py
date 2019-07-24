@@ -3,7 +3,13 @@ from datetime import datetime
 from random import choice, randint
 
 def minutes_to_runtime(minutes):
+    """Turns an amount of minutes into a runtime as if for a movie or TV show
+    """
+
+    # Turn the minutes into hours
     hours = minutes // 60
+
+    # Return the result
     return "{}h {}m".format(hours, minutes - (hours * 60))
 
 def timestamp_to_datetime(timestamp):
@@ -26,6 +32,9 @@ def timestamp_to_datetime(timestamp):
     return dateTime
 
 def datetime_to_dict(dateTime):
+    """Turns a datetime.datetime object into a JSON object
+    that keeps track of the year, month, day, hour, minute, and second
+    """
 
     return {
         "year": dateTime.year,
@@ -37,6 +46,9 @@ def datetime_to_dict(dateTime):
     }
 
 def dict_to_datetime(ddict):
+    """Turns a JSON object that keeps track of a datetime's information
+    back into a datetime.datetime object
+    """
     
     return datetime(
         ddict["year"], ddict["month"], ddict["day"],
@@ -93,6 +105,9 @@ def datetime_to_string(dateTime, *, short = False):
         )
 
 def datetime_to_length(dateTime):
+    """Takes in a datetime.datetime object, compares it with the current time, and returns the difference
+    in ascending order starting with seconds, then minutes, then hours, and then days
+    """
 
     # Get the difference of the current time and the datetime
     diff = datetime.now() - dateTime
@@ -154,3 +169,75 @@ def generate_random_string():
     # Choose random length
     length = randint(10, 100)
     return "".join([choice(characters) for i in range(length)])
+
+def get_user_info_html():
+    """Returns the HTML text used to render user information using the Jinja syntax
+    """
+
+    return (
+        """
+
+                        <!--Game Stats Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">gameStats</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block">
+                            <table class="command-table" style="width: 100%;">
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;"><strong>game</strong></td>
+                                    <td style="width: 20%; text-align: center;"><strong>wins</strong></td>
+                                    <td style="width: 20%; text-align: center;"><strong>losses</strong></td>
+                                    <td style="width: 20%; text-align: center;"><strong>ratio</strong></td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">hangman</td>
+                                    <td style="width: 20%; text-align: center;">{{ hangman["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ hangman["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ hangman["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">scramble</td>
+                                    <td style="width: 20%; text-align: center;">{{ scramble["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ scramble["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ scramble["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">rock paper scissors</td>
+                                    <td style="width: 20%; text-align: center;">{{ rps["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ rps["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ rps["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">tic tac toe</td>
+                                    <td style="width: 20%; text-align: center;">{{ tic_tac_toe["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ tic_tac_toe["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ tic_tac_toe["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">connect four</td>
+                                    <td style="width: 20%; text-align: center;">{{ connect_four["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ connect_four["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ connect_four["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">cards against humanity</td>
+                                    <td style="width: 20%; text-align: center;">{{ cards_against_humanity["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ cards_against_humanity["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ cards_against_humanity["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">uno</td>
+                                    <td style="width: 20%; text-align: center;">{{ uno["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ uno["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ uno["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">trivia</td>
+                                    <td style="width: 20%; text-align: center;">{{ trivia["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ trivia["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ trivia["ratio"] }}</td>
+                                </tr>
+                            </table>
+                        </div>
+        """
+    )
