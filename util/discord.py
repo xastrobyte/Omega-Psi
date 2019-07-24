@@ -12,6 +12,9 @@ MAX_POST_INTERVAL = 1000
 REDDIT_API_URL = "https://www.reddit.com/r/{}/.json?sort=top&limit={}"
 
 async def get_reddit_post(subreddit, allow_nsfw = True, max_posts = 1):
+    """Retrieves a reddit post in a specified subreddit by scraping
+    a search term and getting the JSON equivalent data.
+    """
 
     # Generate post while any of the following are True
     #  the post is a video
@@ -82,6 +85,9 @@ async def get_reddit_post(subreddit, allow_nsfw = True, max_posts = 1):
     )
 
 async def send_webhook(webhook_url, embed):
+    """Asynchronously sends a webhook to the specified webhook URL.
+    This uses the embed given to send it to the proper channel in discord
+    """
 
     # Create payload
     payload = {
@@ -104,6 +110,9 @@ async def send_webhook(webhook_url, embed):
     )
 
 def send_webhook_sync(webhook_url, embed):
+    """Synchronously sends a webhook to the specified webhook URL.
+    This uses the embed given to send it to the proper channel in discord
+    """
 
     # Create payload
     payload = {

@@ -4,6 +4,10 @@ from functools import partial
 from database import loop
 
 def ifttt_push_sync(event_name, title, subject, text, *, key = None):
+    """Synchronously makes a POST request to an IFTTT webhook URL
+    given an event name, the title, subject, and text. The key should be specified
+    so that the POST request will be sent to the proper user.
+    """
 
     # Make a post request to IFTTT using the event specified
     requests.post(
@@ -19,6 +23,10 @@ def ifttt_push_sync(event_name, title, subject, text, *, key = None):
     )
 
 async def ifttt_push(event_name, title, subject, text, *, key = None):
+    """Asynchronously makes a POST request to an IFTTT webhook URL
+    given an event name, the title, subject, and text. The key should be specified
+    so that the POST request will be sent to the proper user.
+    """
 
     # Make a post request to IFTTT using the event specified
     await loop.run_in_executor(None,

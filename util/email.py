@@ -7,6 +7,9 @@ email = os.environ["USER_EMAIL"]
 password = os.environ["USER_PASSWORD"]
 
 def send_email(receiver, subject, plain_text, html_text):
+    """Sends an email from fellowhashbrown@gmail.com to the receiver
+    given the receiver's email, the subject of the email, the plain text, and HTML rendered text.
+    """
 
     # Make sure email can be sent to
     response = requests.get("https://api.trumail.io/v2/lookups/json?email={}".format(
