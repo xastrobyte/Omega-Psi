@@ -18,6 +18,9 @@ async def is_developer(ctx):
 async def can_manage_guild(ctx):
     return ctx.author.permissions_in(ctx.channel).manage_guild
 
+async def can_ban_members(ctx):
+    return ctx.author.permissions_in(ctx.channel).ban_members
+
 # Custom checks
 
 def is_in_guild(guild_id):
