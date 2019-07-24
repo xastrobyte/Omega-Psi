@@ -8,14 +8,18 @@ from category.globals import FIELD_THRESHOLD, OMEGA_PSI_CREATION
 from category.globals import get_embed_color
 from category.predicates import can_manage_guild, guild_only
 
-from database import database as db
+from database import database
 from database import loop
 
 from util.misc import get_theme
 from util.string import datetime_to_string, datetime_to_length
 
+# # # # # # # # # # # # # # # # # # # # # # # # #
+
 UPTIME_API_URL = "https://api.uptimerobot.com/v2/getMonitors"
 DBL_VOTE_LINK = "https://discordbots.org/bot/535587516816949248/vote"
+
+# # # # # # # # # # # # # # # # # # # # # # # # #
 
 class Info(commands.Cog, name = "info"):
     def __init__(self, bot):
@@ -35,7 +39,7 @@ class Info(commands.Cog, name = "info"):
         bot_info = await self.bot.application_info()
         owner = bot_info.owner
 
-        developers = [self.bot.get_user(int(dev)) if self.bot.get_user(int(dev)) != None else dev for dev in await db.bot.get_developers()]
+        developers = [self.bot.get_user(int(dev)) if self.bot.get_user(int(dev)) != None else dev for dev in await database.bot.get_developers()]
 
         fields = {
             "Owner": "{}#{}".format(owner.name, owner.discriminator),
@@ -294,7 +298,7 @@ class Info(commands.Cog, name = "info"):
                 int(self.bot.latency * 1000)
             )
         )
-
+    
     @commands.command(
         name = "prefix", 
         aliases = ["pre"],
@@ -321,7 +325,7 @@ class Info(commands.Cog, name = "info"):
                 prefix += " "
 
             # Change prefix for guild
-            await db.guilds.set_prefix(ctx.guild, prefix)
+            await database.guilds.set_prefix(ctx.guild, prefix)
             
             # Send message
             await ctx.send(
