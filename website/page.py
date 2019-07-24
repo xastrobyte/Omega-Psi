@@ -29,9 +29,14 @@ keys = {
 
 class Page:
 
-    def __init__(self, *, title = None, description = None, homepage = False, target = None, ignore = False, sections = []):
+    def __init__(self, *, title = None, description = None, homepage = False, target = None, ignore = False, sections = [], custom_html = None, custom_title = None, custom_description = None, custom_icon = None):
 
         self._sections = sections
+
+        self._custom_title = custom_title
+        self._custom_description = custom_description
+        self._custom_icon = custom_icon
+        self._custom_html = custom_html
 
         self._title = title
         self._description = description
@@ -55,6 +60,18 @@ class Page:
     
     def get_sections(self):
         return self._sections
+
+    def get_custom_title(self):
+        return self._custom_title
+    
+    def get_custom_description(self):
+        return self._custom_description
+    
+    def get_custom_icon(self):
+        return self._custom_icon
+    
+    def get_custom_html(self):
+        return self._custom_html
     
     def ignore(self):
         return self._ignore
@@ -76,18 +93,20 @@ class Page:
                 {}
 
                 <br>
+                <br>
                 """
         )
 
-        # Generate section html
+        # Generate section html if there is not a custom html
         sections = ""
-        for section in self.get_sections():
-            sections += section.generate_html() + "\n"
+        if self.get_custom_html() == None:
+            for section in self.get_sections():
+                sections += section.generate_html() + "\n"
         
         return html.format(
             self.get_title(),
             self.get_description(),
-            sections
+            sections if self.get_custom_html() == None else self.get_custom_html()
         )
 
 class KeySection:
@@ -144,12 +163,17 @@ class KeySection:
 
 class Section:
 
-    def __init__(self, *, title = None, commands = []):
+    def __init__(self, *, title = None, description = None, commands = []):
         self._title = title
         self._commands = commands
+
+        self._description = description
     
     def get_title(self):
         return self._title
+    
+    def get_description(self):
+        return self._description
     
     def get_commands(self):
         return self._commands
@@ -162,6 +186,9 @@ class Section:
                     <code class="field">page</code><code>.</code><code class="field">{}</code><code>();</code>
                 </h2>
                 <div class="page-section-block" style="text-align: center;">
+                    <p style="text-align: center;">
+                        {}
+                    </p>
                     {}
                 </div>
                 """
@@ -218,6 +245,7 @@ class Section:
         return html.format(
             self.get_title(),
             self.get_title(),
+            self.get_description(),
             command_html.format(commands)
         )
 
@@ -269,21 +297,21 @@ class HomeSection:
             forms
         )
 
-class Form:
+class UserInfoForm:
 
-    def __init__(self, *, form_name = None, placeholder = None, button_text = None, target = None):
+    def __init__(self, *, form_user_name = None, form_user_discriminator = None, button_text = None, target = None):
         
-        self._form_name = form_name
-        self._placeholder = placeholder if placeholder != None else "Type text here"
+        self._form_user_name = form_user_name
+        self._form_user_discriminator = form_user_discriminator
         self._button_text = button_text
 
         self._target = target
     
-    def get_form_name(self):
-        return self._form_name
+    def get_form_user_name(self):
+        return self._form_user_name
     
-    def get_placeholder(self):
-        return self._placeholder
+    def get_form_user_discriminator(self):
+        return self._form_user_discriminator
     
     def get_button_text(self):
         return self._button_text
@@ -295,14 +323,15 @@ class Form:
 
         return (
             """
-            <form action="{}" method="post">
-                <input type="text" class="page-form-input" name="{}">
-                <input type="submit" class="page-form-button" value="{}" placeholder="{}">
+            <form action="{}" method="POST">
+                <input type="text" class="page-form-input" name="{}" placeholder="enter username here">
+                <input type="text" class="page-form-input" name="{}" placeholder="enter discriminator here">
+                <input type="submit" class="page-form-button" value="{}">
             </form>
             """
         ).format(
             self.get_target(),
-            self.get_form_name(),
+            self.get_form_user_name(),
+            self.get_form_user_discriminator(),
             self.get_button_text(),
-            self.get_placeholder()
         )

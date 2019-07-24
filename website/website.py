@@ -27,6 +27,7 @@ class Website:
     <meta name="msapplication-TileImage" content="{{ url_for('static', filename='/mstile-144x144.png') }}">
     <meta name="theme-color" content="#202020">
     <meta name="msapplication-config" content="{{ url_for('static', filename='/browserconfig.xml') }}">
+
 </head>
 """
         )
@@ -37,11 +38,11 @@ class Website:
     <meta property="og:title" content="website.{}();" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://omegapsi.fellowhashbrown.com/{}" />
-    <meta property="og:image" content="https://i.imgur.com/Hy5Gyut.png" />
+    <meta property="og:image" content="{}" />
 
     <meta property="og:description" content="{}" />
-    <meta property="og:site_name" content="Omega Psi" />
-    <title>Omega Psi</title>
+    <meta property="og:site_name" content="{}" />
+    <title>{}</title>
     """
         )
 
@@ -114,7 +115,10 @@ class Website:
                     meta.format(
                         page.get_title().lower(),
                         page.get_title() if page.is_homepage() else "",
-                        page.get_description()
+                        "https://i.imgur.com/Hy5Gyut.png" if page.get_custom_icon() == None else page.get_custom_icon(),
+                        page.get_custom_description(),
+                        "Omega Psi" if page.get_custom_title() == None else page.get_custom_title(),
+                        "Omega Psi" if page.get_custom_title() == None else page.get_custom_title()
                     )
                 ),
                 navigation_bar[page.get_title()],
