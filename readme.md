@@ -38,10 +38,13 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
     * IMDb
     * Current Weather and the Forecast for the next 7 days!
     * Look up concerts/events and performers/attractions!
+  * Animal
+    * Dogs and Cats!
+    * Foxes too!
+    * Other animals coming soon ...
   * Image
     * Gifs
     * Avatars
-    * Dogs and Cats!
   * Insults
     * Insults and Compliments!
       * You can request your own too!
