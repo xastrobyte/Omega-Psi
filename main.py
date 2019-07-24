@@ -11,6 +11,7 @@ from category.globals import VALID_STATUSES
 from category.globals import add_scroll_reactions
 from category.globals import get_embed_color
 from category.predicates import get_prefix, is_nsfw_or_private, is_developer
+
 from database import loop
 from database import database
 
@@ -23,9 +24,11 @@ bot.remove_command("help")
 # Keep track of extensions
 exts = [
     "category.api.api",
+    "category.animal.animal",
     "category.code.code",
     "category.math.math",
     "category.game.game",
+    "category.food.food",
     "category.internet.internet",
     "category.image.image",
     "category.misc.misc",
@@ -37,6 +40,9 @@ exts = [
     "category.notifications.notifications",
 ]
 
+# Keep track of the separate cogs and their names and their emojis
+#   also keep track of any channel checks or user checks that need to be done 
+#   prior to showing the cog or the help menu
 cogs = {
     "api": {
         "command": "help api",
@@ -62,6 +68,18 @@ cogs = {
         "description": "There are games in this category!",
         "check": None,
         "emoji": ":video_game: "
+    },
+    "food": {
+        "command": "help food",
+        "description": "Food and drink stuff can be found here.",
+        "check": None,
+        "emoji": ":apple: "
+    },
+    "animal": {
+        "command": "help animal",
+        "description": "Animal pictures! and facts (soon).",
+        "check": None,
+        "emoji": ":unicorn: "
     },
     "internet": {
         "command": "help internet",
@@ -321,6 +339,10 @@ async def on_guild_remove(guild):
 
 @bot.event
 async def on_member_update(before, after):
+    """Overrides discord.py's on_member_update event
+    to provide users with notifications for any member updates that may be
+    made when users use the `o.notify` command.
+    """
 
     # Check if the member's online status changed
     if str(before.status) != str(after.status) and str(before.status) in VALID_STATUSES and str(after.status) in VALID_STATUSES:
@@ -394,6 +416,10 @@ async def on_member_update(before, after):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 async def update_dbl(joined_guild = None, guild = None, *, ctx = None):
+    """Updates the Discord Bots List server count for Omega Psi
+    and sends a message to all developers about how many servers
+    Omega Psi is in.
+    """
 
     # Update the dbl
     response = await loop.run_in_executor(None,
@@ -419,6 +445,7 @@ async def update_dbl(joined_guild = None, guild = None, *, ctx = None):
         colour = 0x008000 if "error" not in response else 0x800000
     )
 
+    # Iterate through all the devs and send a message
     for dev in await database.bot.get_developers():
 
         # Get dev user object
@@ -429,11 +456,13 @@ async def update_dbl(joined_guild = None, guild = None, *, ctx = None):
                 embed = embed
             )
 
+    # Send a current message if the update was made manually
     if ctx != None:   
         await ctx.send(
             embed = embed
         )
 
+    # Send a notification if Omega Psi was added to/removed from a server
     if joined_guild != None:
 
         # Send notification through IFTTT that Omega Psi has left a server
@@ -455,7 +484,8 @@ async def update_DBL(ctx):
 
 @bot.command(
     name = "help", 
-    aliases = ["h", "?"]
+    aliases = ["h", "?"],
+    description = "Shows help on a specific command, a category, or all the categories in Omega Psi."
 )
 async def help(ctx, specific = None):
 
@@ -501,11 +531,17 @@ async def help(ctx, specific = None):
             
             if len(fieldText) > 0:
                 fields.append(fieldText)
-            
+        
+            # Get the cog text
+            cog_text = specific.title()
+            if "caps" in cogs[specific.lower()]:
+                if cogs[specific.lower()]["caps"]:
+                    cog_text = specific.upper()
+
             # Create embed for menu
             embed = discord.Embed(
                 title = "{} {}".format(
-                    cogs[specific.lower()]["emoji"] + specific.lower(),
+                    cogs[specific.lower()]["emoji"] + cog_text,
                     "- Page ({} / {})".format(
                         1, len(fields)
                     ) if len(fields) > 1 else ""
@@ -748,6 +784,7 @@ if __name__ == "__main__":
             bot.load_extension(ext)
         except Exception as error:
             print("{} cannot be loaded.\n - {}".format(ext, error))
-        
+    
+    app.OMEGA_PSI_BOT = bot
     app.keep_alive(bot, cogs)
     bot.run(os.environ["BOT_TOKEN"])
