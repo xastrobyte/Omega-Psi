@@ -21,25 +21,6 @@ from util.ifttt import ifttt_push
 bot = AutoShardedBot(command_prefix = get_prefix, case_insensitive = True)
 bot.remove_command("help")
 
-# Keep track of extensions
-exts = [
-    "category.api.api",
-    "category.animal.animal",
-    "category.code.code",
-    "category.math.math",
-    "category.game.game",
-    "category.food.food",
-    "category.internet.internet",
-    "category.image.image",
-    "category.misc.misc",
-    "category.nsfw.nsfw",
-    "category.stats.stats",
-    "category.bot.bot",
-    "category.info.info",
-    "category.insults.insults",
-    "category.notifications.notifications",
-]
-
 # Keep track of the separate cogs and their names and their emojis
 #   also keep track of any channel checks or user checks that need to be done 
 #   prior to showing the cog or the help menu
@@ -49,92 +30,107 @@ cogs = {
         "description": "Test out my own APIs here :)",
         "check": None,
         "caps": True,
-        "emoji": ":pager: "
+        "emoji": ":pager: ",
+        "extension": "category.api.api"
     },
     "code": {
         "command": "help code",
         "description": "All things having to do with coding go here.",
         "check": None,
-        "emoji": ":keyboard: "
+        "emoji": ":keyboard: ",
+        "extension": "category.code.code"
     },
     "math": {
         "command": "help math",
         "description": "Mathematical stuff like calculus and basic algebra!",
         "check": None,
-        "emoji": ":asterisk: "
+        "emoji": ":asterisk: ",
+        "extension": "category.math.math"
     },
     "game": {
         "command": "help game",
         "description": "There are games in this category!",
         "check": None,
-        "emoji": ":video_game: "
+        "emoji": ":video_game: ",
+        "extension": "category.game.game"
     },
     "food": {
         "command": "help food",
         "description": "Food and drink stuff can be found here.",
         "check": None,
-        "emoji": ":apple: "
+        "emoji": ":apple: ",
+        "extension": "category.food.food"
     },
     "animal": {
         "command": "help animal",
         "description": "Animal pictures! and facts (soon).",
         "check": None,
-        "emoji": ":unicorn: "
+        "emoji": ":unicorn: ",
+        "extension": "category.animal.animal"
     },
     "internet": {
         "command": "help internet",
         "description": "All internet-based commands go here.",
         "check": None,
-        "emoji": ":desktop: "
+        "emoji": ":desktop: ",
+        "extension": "category.internet.internet"
     },
     "image": {
         "command": "help image",
         "description": "Image commands are here! Hint: dog's and cat's are here too.",
         "check": None,
-        "emoji": ":frame_photo: "
+        "emoji": ":frame_photo: ",
+        "extension": "category.image.image"
     },
     "insults": {
         "command": "help insults",
         "description": "If you feel in the mood for insults, here you are!",
         "check": None,
-        "emoji": ":exclamation: "
+        "emoji": ":exclamation: ",
+        "extension": "category.insults.insults"
     },
     "misc": {
         "command": "help misc",
         "description": "This category has commands that really don't fit anywhere.",
         "check": None,
-        "emoji": ":mag: "
+        "emoji": ":mag: ",
+        "extension": "category.misc.misc"
     },
     "notifications": {
         "command": "help notifications",
         "description": "You can get notified about the online status of people here!",
         "check": None,
-        "emoji": ":vibration_mode: "
+        "emoji": ":vibration_mode: ",
+        "extension": "category.notifications.notifications"
     },
     "nsfw": {
         "command": "help nsfw",
         "description": "18+ ;)",
         "check": is_nsfw_or_private,
         "caps": True,
-        "emoji": ":underage: "
+        "emoji": ":underage: ",
+        "extension": "category.nsfw.nsfw"
     },
     "stats": {
         "command": "help stats",
         "description": "Video Game stats! For all sorts of games!",
         "check": None,
-        "emoji": ":clipboard: "
+        "emoji": ":clipboard: ",
+        "extension": "category.stats.stats"
     },
     "bot": {
         "command": "help bot",
         "description": "Primarily bot-related commands.",
         "check": None,
-        "emoji": ":robot: "
+        "emoji": ":robot: ",
+        "extension": "category.bot.bot"
     },
     "info": {
         "command": "help info",
         "description": "Basic info stuff really.",
         "check": None,
-        "emoji": ":question: "
+        "emoji": ":question: ",
+        "extension": "category.info.info"
     }
 }
 
@@ -779,11 +775,11 @@ async def help(ctx, specific = None):
 
 if __name__ == "__main__":
 
-    for ext in exts:
+    for cog in cogs:
         try:
-            bot.load_extension(ext)
+            bot.load_extension(cogs[cog]["extension"])
         except Exception as error:
-            print("{} cannot be loaded.\n - {}".format(ext, error))
+            print("{} cannot be loaded.\n - {}".format(cog, error))
     
     app.OMEGA_PSI_BOT = bot
     app.keep_alive(bot, cogs)
