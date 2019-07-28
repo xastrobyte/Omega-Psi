@@ -4,17 +4,17 @@ from discord.ext.commands import AutoShardedBot, check
 from functools import partial
 
 from category import errors
-from category.globals import MESSAGE_THRESHOLD, FIELD_THRESHOLD
+
+from category.globals import MESSAGE_THRESHOLD, FIELD_THRESHOLD, loop
 from category.globals import DBL_BOT_STAT_API_CALL
 from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
 from category.globals import VALID_STATUSES
-from category.globals import add_scroll_reactions
-from category.globals import get_embed_color
+
 from category.predicates import get_prefix, is_nsfw_or_private, is_developer
 
-from database import loop
-from database import database
+from database.database import database
 
+from util.functions import add_scroll_reactions, get_embed_color
 from util.ifttt import ifttt_push
 
 # Open Bot Client
@@ -203,6 +203,14 @@ async def on_command(ctx):
     """
     async with ctx.typing():
         pass
+    
+@bot.event
+async def on_command_completion(ctx):
+    """Overrides discord.py's event for on_command_completion.
+    This will update the amount of commands that Omega Psi has run for users
+    across all the servers the bot is in.
+    """
+    await database.bot.run_command()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -779,6 +787,7 @@ if __name__ == "__main__":
         try:
             bot.load_extension(cogs[cog]["extension"])
         except Exception as error:
+            print(traceback.format_exception(type(error), error, error.__traceback__))
             print("{} cannot be loaded.\n - {}".format(cog, error))
     
     app.OMEGA_PSI_BOT = bot
