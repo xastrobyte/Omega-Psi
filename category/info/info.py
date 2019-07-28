@@ -4,13 +4,15 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
+
 from category.globals import FIELD_THRESHOLD, OMEGA_PSI_CREATION
-from category.globals import get_embed_color
+from category.globals import loop
+
 from category.predicates import can_manage_guild, guild_only
 
-from database import database
-from database import loop
+from database.database import database
 
+from util.functions import get_embed_color
 from util.misc import get_theme
 from util.string import datetime_to_string, datetime_to_length
 
@@ -49,7 +51,11 @@ class Info(commands.Cog, name = "info"):
                     dev
                 )
                 for dev in developers
-            ])
+            ]),
+            "Bot Stats": (
+                "**Server Count**: {}\n".format(len(self.bot.guilds)) + 
+                "**Commands Run**: {}\n".format(await database.bot.get_commands_run())
+            )
         }
 
         # Add to embed
