@@ -1,4 +1,4 @@
-from database import database
+from database.database import database
 
 from random import choice as choose
 

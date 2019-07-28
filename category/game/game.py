@@ -4,15 +4,17 @@ from discord.ext import commands
 from random import choice as choose
 
 from category import errors
-from category.globals import get_embed_color, add_scroll_reactions
+
 from category.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
+from category.globals import loop
+
 from category.predicates import is_nsfw_and_guild, is_developer, guild_only
 
-from database import loop
-from database import database
+from database.database import database
 
 from util.discord import send_webhook
 from util.email import send_email
+from util.functions import get_embed_color, add_scroll_reactions
 
 from .connect_four import ConnectFour
 from .tic_tac_toe import TicTacToe

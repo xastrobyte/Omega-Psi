@@ -1,7 +1,7 @@
 import os, requests
 from functools import partial
 
-from database import loop
+from category.globals import loop
 
 def ifttt_push_sync(event_name, title, subject, text, *, key = None):
     """Synchronously makes a POST request to an IFTTT webhook URL

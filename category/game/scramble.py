@@ -1,4 +1,4 @@
-from database import database
+from database.database import database
 
 from random import choice as choose
 
@@ -69,7 +69,7 @@ class Scramble:
     async def generate_word(self):
         """Returns a random word from the list of words in the database
         """
-        self._word = await database.get_scramble_words()
+        self._word = await database.data.get_scramble_words()
         self._word = choose(self._word["words"])
         self._hints = self._word["hints"]
         self._scramble = self.scramble_word(self._word["value"], self._difficulty)

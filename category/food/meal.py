@@ -1,6 +1,8 @@
 import discord
 
-from category.globals import get_embed_color, FIELD_THRESHOLD
+from category.globals import FIELD_THRESHOLD
+
+from util.functions import get_embed_color
 
 async def parse_meal(ctx, meal):
     """Parses the JSON object that holds the meal data

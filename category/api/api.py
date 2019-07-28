@@ -4,9 +4,9 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
-from category.globals import get_embed_color, FIELD_THRESHOLD
+from category.globals import FIELD_THRESHOLD, loop
 
-from database import loop
+from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

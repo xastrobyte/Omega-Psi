@@ -1,4 +1,4 @@
-import asyncio, discord, os, requests
+import asyncio, os, requests
 
 from discord.ext import commands
 
@@ -7,10 +7,10 @@ from category import errors
 from category.food.meal import parse_meal
 from category.food.drink import parse_drink
 
-from category.globals import add_scroll_reactions
 from category.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
+from category.globals import loop
 
-from database import loop
+from util.functions import add_scroll_reactions
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

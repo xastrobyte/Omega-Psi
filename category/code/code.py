@@ -1,12 +1,14 @@
 import asyncio, base64, discord, os, requests
+
 from discord.ext import commands
 from functools import partial
 from urllib.parse import quote
 
 from category import errors
-from category.globals import FIELD_THRESHOLD, did_author_vote
-from category.globals import get_embed_color, is_on_mobile
-from database import loop
+
+from category.globals import FIELD_THRESHOLD, loop
+
+from util.functions import get_embed_color, is_on_mobile, did_author_vote
 
 from .base_converter import convert
 

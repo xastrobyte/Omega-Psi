@@ -1,15 +1,18 @@
-import discord, json, requests
+import discord, requests
 from datetime import datetime
 from functools import partial
 from random import choice
 
-import database
 from category import errors
-from category.globals import PRIMARY_EMBED_COLOR
+from category.globals import PRIMARY_EMBED_COLOR, loop
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 MAX_POST_INTERVAL = 1000
 
 REDDIT_API_URL = "https://www.reddit.com/r/{}/.json?sort=top&limit={}"
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 async def get_reddit_post(subreddit, allow_nsfw = True, max_posts = 1):
     """Retrieves a reddit post in a specified subreddit by scraping
@@ -24,7 +27,7 @@ async def get_reddit_post(subreddit, allow_nsfw = True, max_posts = 1):
     while True:
 
         # Request subreddit
-        response = await database.loop.run_in_executor(None,
+        response = await loop.run_in_executor(None,
             partial(
                 requests.get,
                 REDDIT_API_URL.format(
@@ -100,7 +103,7 @@ async def send_webhook(webhook_url, embed):
         "Content-Type": "application/json"
     }
 
-    await database.loop.run_in_executor(None,
+    await loop.run_in_executor(None,
         partial(
             requests.post,
             webhook_url,

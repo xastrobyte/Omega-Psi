@@ -4,14 +4,18 @@ from functools import partial
 from random import choice, randint
 
 from category import errors
+
 from category.globals import FIELD_THRESHOLD
 from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
-from category.globals import get_embed_color
+from category.globals import loop
+
 from category.predicates import is_nsfw_or_private
-from database import loop
-from database import database
-from util.string import generate_random_string
+
+from database.database import database
+
 from util.discord import get_reddit_post
+from util.functions import get_embed_color
+from util.string import generate_random_string
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
