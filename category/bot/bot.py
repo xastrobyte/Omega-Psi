@@ -4,17 +4,18 @@ from discord.ext import commands
 from functools import partial
 
 from category import errors
+
 from category.globals import FIELD_THRESHOLD, SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, CHECK_MARK, OUTBOX, LEAVE
-from category.globals import add_scroll_reactions
-from category.globals import get_embed_color
+from category.globals import loop
 from category.globals import PRIMARY_EMBED_COLOR, OMEGA_PSI_CHANNEL
+
 from category.predicates import is_developer, is_in_guild
 
-from database import loop
-from database import database
+from database.database import database
 
 from util.discord import send_webhook
 from util.email import send_email
+from util.functions import add_scroll_reactions, get_embed_color
 from util.string import dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -24,83 +25,6 @@ class Bot(commands.Cog, name = "bot"):
         self.bot = bot
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    @commands.command(
-        name = "newTheme",
-        aliases = ["theme"],
-        description = "Adds a new theme of the day for the bot. Date is in MMDD format.",
-        cog_name = "bot"
-    )
-    @commands.check(is_developer)
-    async def new_theme(self, ctx, date = None, dark = None, medium = None, light = None, *, description = None):
-
-        # Check if date is None
-        if date == None:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "You need to specify the date this theme shows up in format MMDD"
-                )
-            )
-        
-        # Check if any of the colors are None
-        elif dark == medium == light == description == None:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "You need to specify the dark, medium, and light colors of the theme along with the description of the theme of the day."
-                )
-            )
-        
-        # Every parameter exists; Validate parameters
-        else:
-
-            try:
-
-                # Make sure date is valid
-                month = int(date[:2])
-                day = int(date[2:])
-
-                # Get datetime int for date
-                date = "{}-{}".format(
-                    month, day
-                )
-
-                # Make sure colors are valid
-                for color in [dark, medium, light]:
-                    if len(color) > 6:
-                        raise SyntaxError()
-                    
-                    # Iterate through color string
-                    for digit in color.lower():
-                        if digit not in "0123456789abcdef":
-                            raise SyntaxError()
-                
-                # Everything is valid; Add theme
-                await database.bot.set_theme(date, dark, medium, light, description)
-
-                await ctx.send(
-                    embed = discord.Embed(
-                        title = "Theme Added",
-                        description = "That theme has been added and set for {}!\n**Dark**: {}\n**Medium**: {}\n**Light**: {}".format(
-                            date.replace("-", "/"),
-                            dark, medium, light
-                        ),
-                        colour = await get_embed_color(ctx.author),
-                    )
-                )
-            
-            except SyntaxError:
-                await ctx.send(
-                    embed = errors.get_error_message(
-                        "One of the colors you gave is invalid."
-                    )
-                )
-
-            except ValueError:
-                await ctx.send(
-                    embed = errors.get_error_message(
-                        "The date you gave is invalid."
-                    )
-                )
 
     @commands.command(
         name = "suggestions",
