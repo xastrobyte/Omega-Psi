@@ -16,7 +16,8 @@ from .base_converter import convert
 
 CODE_EMBED_COLOR = 0xEC7600
 
-JUDGE_API_CALL = "https://api.judge0.com/submissions?wait=true"
+JUDGE_POST_API_CALL = "https://api.judge0.com/submissions/"
+JUDGE_GET_API_CALL = "https://api.judge0.com/submissions/{}?fields=stdout,stderr,time,status"
 LOGIC_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true"
 LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true"
 MORSE_API_CALL = "https://www.fellowhashbrown.com/api/morse/{}?text={}"
@@ -243,11 +244,11 @@ class Code(commands.Cog, name = "code"):
                     source_code = source_code[:-1]
                 source_code = "\n".join(source_code)
 
-                # Call judge0 API
+                # Call POST judge0 API
                 response = await loop.run_in_executor(None,
                     partial(
                         requests.post,
-                        JUDGE_API_CALL,
+                        JUDGE_POST_API_CALL,
                         json = {
                             "source_code": source_code,
                             "language_id": language,
@@ -260,6 +261,19 @@ class Code(commands.Cog, name = "code"):
                     )
                 )
                 response = response.json()
+                token = response["token"]
+
+                # Call GET judge0 API until the previous submission was finished
+                while True:
+                    response = await loop.run_in_executor(None,
+                        requests.get,
+                        JUDGE_GET_API_CALL.format(
+                            token
+                        )
+                    )
+                    response = response.json()
+                    if response["status"]["id"] != 2: # ID 2 is processing
+                        break
 
                 # Split up the stdout and stderr in multiple fields if necessary
                 out = response["stdout"]
