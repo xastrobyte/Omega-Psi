@@ -39,17 +39,10 @@ class Bot(commands.Cog, name = "bot"):
         suggestion_cases = await database.case_numbers.get_suggestion_cases()
         unseen = None
 
-        # Check if unseen suggestions
-        if data == "unseen":
+        # Check if all suggestions
+        if data == "all":
             data = None
-            unseen = True
-            temp = suggestion_cases["cases"]
-            suggestion_cases = {}
-            for case in temp:
-                if not temp[case]["seen"]:
-                    suggestion_cases[case] = temp[case]
-                    if data == None:
-                        data = case
+            suggestion_cases = suggestion_cases["cases"]
 
         # Check if seen suggestions
         elif data == "seen":
@@ -65,7 +58,15 @@ class Bot(commands.Cog, name = "bot"):
         
         # Check if getting all suggestions
         else:
-            suggestion_cases = suggestion_cases["cases"]
+            data = None
+            unseen = True
+            temp = suggestion_cases["cases"]
+            suggestion_cases = {}
+            for case in temp:
+                if not temp[case]["seen"]:
+                    suggestion_cases[case] = temp[case]
+                    if data == None:
+                        data = case
 
         # Make sure suggestion exists or data is None
         if data == None or str(data) in suggestion_cases:
@@ -386,16 +387,9 @@ class Bot(commands.Cog, name = "bot"):
         unseen = None
 
         # Check if getting unseen reports
-        if data == "unseen":
+        if data == "all":
             data = None
-            unseen = True
-            temp = bug_cases["cases"]
-            bug_cases = {}
-            for case in temp:
-                if not temp[case]["seen"]:
-                    bug_cases[case] = temp[case]
-                    if data == None:
-                        data = case
+            bug_cases = bug_cases["cases"]
         
         # Check if getting seen reports
         elif data == "seen":
@@ -411,7 +405,15 @@ class Bot(commands.Cog, name = "bot"):
         
         # Check if getting all reports
         else:
-            bug_cases = bug_cases["cases"]
+            data = None
+            unseen = True
+            temp = bug_cases["cases"]
+            bug_cases = {}
+            for case in temp:
+                if not temp[case]["seen"]:
+                    bug_cases[case] = temp[case]
+                    if data == None:
+                        data = case
 
         # Make sure bug exists or data is None
         if data == None or str(data) in bug_cases:
