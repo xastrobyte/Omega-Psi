@@ -71,7 +71,7 @@ class Food(commands.Cog, name = "food"):
             recipe = recipe.json()
 
             # Check if there are no meals
-            if len(recipe["meals"]) == 0:
+            if recipe["meals"] == None:
                 await ctx.send(
                     embed = errors.get_error_message(
                         "I couldn't find any meals with that ingredient."
