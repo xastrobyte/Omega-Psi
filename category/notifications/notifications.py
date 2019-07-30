@@ -3,10 +3,14 @@ import discord
 from discord.ext import commands
 
 from category import errors
-from category.globals import FIELD_THRESHOLD, get_embed_color
+
+from category.globals import FIELD_THRESHOLD
+
 from category.predicates import guild_only
 
-from database import database
+from database.database import database
+
+from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -377,6 +381,37 @@ class Notifications(commands.Cog, name = "notifications"):
             )
         )
     
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @commands.command(
+        name = "toggleUpdate",
+        aliases = ["toggleUpd", "togUpd"],
+        description = "Toggle the notification of updates to Omega Psi.",
+        cog_name = "notifications"
+    )
+    async def toggle_update_notifications(self, ctx):
+
+        # Toggle the user's update notification
+        await database.users.toggle_notify_update(ctx.author)
+
+        # Get the value of the user's update notification
+        notify_user = await database.users.get_notify_update(ctx.author)
+        if notify_user:
+            await database.bot.add_update_notification(ctx.author)
+        else:
+            await database.bot.remove_update_notification(ctx.author)
+
+        # Send a message to the user
+        await ctx.send(
+            embed = discord.Embed(
+                title = "Updates Turned {}".format("On" if notify_user else "Off"),
+                description = "You are {}getting notifications about updates to Omega Psi.".format(
+                    "" if notify_user else "no longer "
+                ),
+                colour = await get_embed_color(ctx.author)
+            )
+        )
+
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
     @notify.error
