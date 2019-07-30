@@ -5,7 +5,7 @@ from functools import partial
 
 from category import errors
 
-from category.globals import FIELD_THRESHOLD, OMEGA_PSI_CREATION
+from category.globals import FIELD_THRESHOLD, OMEGA_PSI_CREATION, PRIMARY_EMBED_COLOR
 from category.globals import loop
 
 from category.predicates import can_manage_guild, guild_only
@@ -167,8 +167,8 @@ class Info(commands.Cog, name = "info"):
         )
     
     @commands.command(
-        name = "replit",
-        aliases = ["repl", "source", "src"],
+        name = "source",
+        aliases = ["src", "replit", "repl"],
         description = "Gives you a link so you can read my source code.",
         cog_name = "info"
     )
@@ -341,6 +341,53 @@ class Info(commands.Cog, name = "info"):
                     colour = await get_embed_color(ctx.author)
                 )
             )
+    
+    @commands.command(
+        name = "settings",
+        description = "Shows you a list of settings for yourself in Omega Psi.",
+        cog_name = "info"
+    )
+    async def settings(self, ctx):
+
+        # Create the embed
+        embed = discord.Embed(
+            title = ":gear: Settings",
+            description = "Here's a list of your settings.",
+            colour = await get_embed_color(ctx.author)
+        )
+
+        # Setup the fields needed
+        imgur = await database.users.get_imgur(ctx.author)
+        ifttt = await database.users.get_ifttt(ctx.author)
+        colour = await database.users.get_embed_color(ctx.author)
+        update = await database.users.get_notify_update(ctx.author)
+
+        fields = {
+            "Imgur": "{}\n{}".format(
+                "Connected" if imgur["hash"] != None else "Not Connected",
+                "[Album](https://imgur.com/a/{})".format(imgur["id"]) if imgur["hash"] != None else ""
+            ),
+            "IFTTT": "{}\n{}".format(
+                "Connected" if ifttt["webhook_key"] != None else "Not Connected",
+                "Active" if ifttt["active"] else "Inactive"
+            ),
+            "Update Notifications": "Active" if update else "Inactive",
+            "Embed Color": "{} (Default)".format(
+                hex(PRIMARY_EMBED_COLOR).replace("0x", "#").upper()
+            ) if colour == None else hex(colour).replace("0x", "#").upper()
+        }
+
+        # Add fields to embed
+        for field in fields:
+            embed.add_field(
+                name = field,
+                value = fields[field]
+            )
+        
+        # Send message
+        await ctx.send(
+            embed = embed
+        )
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
     
