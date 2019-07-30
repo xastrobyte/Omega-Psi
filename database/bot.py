@@ -22,6 +22,7 @@ class Bot:
             "owner": "373317798430244864",
             "todo": [],
             "pending_update": {},
+            "update_notifications": [],
             "updates": [],
             "restart": {
                 "send": False
@@ -69,6 +70,7 @@ class Bot:
             "owner": "373317798430244864",
             "todo": [],
             "pending_update": {},
+            "update_notifications": [],
             "updates": [],
             "restart": {
                 "send": False
@@ -284,6 +286,49 @@ class Bot:
 
         # Set changed files
         await self.set_changed_files(files)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_update_notifications(self):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        return bot_data["update_notifications"]
+    
+    async def set_update_notifications(self, update_notifications):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        bot_data["update_notifications"] = update_notifications
+    
+        # Set bot data
+        await self.set_bot(bot_data)
+    
+    async def add_update_notification(self, user):
+
+        # Get update notifications
+        update_notifications = await self.get_update_notifications()
+
+        # Add the user's ID to the notifications if not already added
+        if str(user.id) not in update_notifications:
+            update_notifications.append(str(user.id))
+        
+        # Set update notifications
+        await self.set_update_notifications(update_notifications)
+    
+    async def remove_update_notification(self, user):
+
+        # Get update notifications
+        update_notifications = await self.get_update_notifications()
+
+        # Remove the user's ID from the notifications if in the list
+        if str(user.id) in update_notifications:
+            update_notifications.remove(str(user.id))
+        
+        # Set update notifications
+        await self.set_update_notifications(update_notifications)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
