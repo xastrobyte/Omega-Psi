@@ -15,7 +15,7 @@ from database.database import database
 
 from util.discord import send_webhook
 from util.email import send_email
-from util.functions import add_scroll_reactions, get_embed_color
+from util.functions import add_scroll_reactions, get_embed_color, add_fields, create_fields
 from util.ifttt import ifttt_push
 from util.string import dict_to_datetime
 
@@ -917,38 +917,11 @@ class Bot(commands.Cog, name = "bot"):
             # Add all fields to embed
             for field in fields:
 
-                # See if field extends past threshold
-                sub_fields = []
-                sub_field_text = ""
+                # Create sub fields
+                sub_fields = create_fields(fields[field])
 
-                field_lines = fields[field].split("\n")
-
-                for line in field_lines:
-
-                    line += "\n"
-
-                    if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
-                        sub_fields.append(sub_field_text)
-                        sub_field_text = ""
-                    
-                    sub_field_text += line
-                
-                if len(sub_field_text) > 0:
-                    sub_fields.append(sub_field_text)
-                
-                # Add each sub_field
-                count = 0
-                for sub_field in sub_fields:
-                    count += 1
-                    embed.add_field(
-                        name = field + "{}".format(
-                            "({} / {})".format(
-                                count, len(sub_fields)
-                            ) if len(sub_fields) > 1 else ""
-                        ),
-                        value = sub_field,
-                        inline = False
-                    )
+                # Add sub fields
+                add_fields(embed, field, sub_fields)
             
             # Send message
             msg = await ctx.send(
@@ -1018,39 +991,12 @@ class Bot(commands.Cog, name = "bot"):
                 # Add all fields to embed
                 for field in fields:
 
-                    # See if field extends past threshold
-                    sub_fields = []
-                    sub_field_text = ""
+                    # Create sub fields
+                    sub_fields = create_fields(fields[field])
 
-                    field_lines = fields[field].split("\n")
-
-                    for line in field_lines:
-
-                        line += "\n"
-
-                        if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
-                            sub_fields.append(sub_field_text)
-                            sub_field_text = ""
-                        
-                        sub_field_text += line
-                    
-                    if len(sub_field_text) > 0:
-                        sub_fields.append(sub_field_text)
-                    
-                    # Add each sub_field
-                    count = 0
-                    for sub_field in sub_fields:
-                        count += 1
-                        embed.add_field(
-                            name = field + "{}".format(
-                                "({} / {})".format(
-                                    count, len(sub_fields)
-                                ) if len(sub_fields) > 1 else ""
-                            ),
-                            value = sub_field,
-                            inline = False
-                        )
-                    
+                    # Add sub fields
+                    add_fields(embed, field, sub_fields)
+                
                 await msg.edit(
                     embed = embed
                 )
@@ -1079,38 +1025,11 @@ class Bot(commands.Cog, name = "bot"):
             # Add all fields to embed
             for field in fields:
 
-                # See if field extends past threshold
-                sub_fields = []
-                sub_field_text = ""
+                # Create sub fields
+                sub_fields = create_fields(fields[field])
 
-                field_lines = fields[field].split("\n")
-
-                for line in field_lines:
-
-                    line += "\n"
-
-                    if len(sub_field_text) + len(line) > FIELD_THRESHOLD:
-                        sub_fields.append(sub_field_text)
-                        sub_field_text = ""
-                    
-                    sub_field_text += line
-                
-                if len(sub_field_text) > 0:
-                    sub_fields.append(sub_field_text)
-                
-                # Add each sub_field
-                count = 0
-                for sub_field in sub_fields:
-                    count += 1
-                    embed.add_field(
-                        name = field + " {}".format(
-                            "({} / {})".format(
-                                count, len(sub_fields)
-                            ) if len(sub_fields) > 1 else ""
-                        ),
-                        value = sub_field,
-                        inline = False
-                    )
+                # Add sub fields
+                add_fields(embed, field, sub_fields)
 
             await ctx.send(
                 embed = embed
@@ -1354,6 +1273,10 @@ class Bot(commands.Cog, name = "bot"):
                 await database.bot.set_changed_files({})
                 update = await database.bot.get_recent_update()
 
+                # Setup fields for update features and fixes
+                feature_fields = create_fields(update["features"])
+                fix_fields = create_fields(update["fixes"])
+
                 # Notify devs
                 devs = await database.bot.get_developers()
                 for dev in devs:
@@ -1363,23 +1286,23 @@ class Bot(commands.Cog, name = "bot"):
 
                     # Send to everyone except author
                     if user.id != ctx.author.id:
+
+                        # Create embed
+                        embed = discord.Embed(
+                            title = "Update Committed by {} - (Version {})".format(
+                                ctx.author,
+                                update["version"]
+                            ),
+                            description = update["description"],
+                            colour = await get_embed_color(ctx.author)
+                        )
+
+                        # Add feature and fix fields
+                        add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
+                        add_fields(embed, "Fixes", fix_fields, empty_message = "No New Features Were Made.")
+
                         await user.send(
-                            embed = discord.Embed(
-                                title = "Update Committed by {} - (Version {})".format(
-                                    ctx.author,
-                                    update["version"]
-                                ),
-                                description = update["description"],
-                                colour = await get_embed_color(ctx.author)
-                            ).add_field(
-                                name = "Features",
-                                value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
-                                inline = False
-                            ).add_field(
-                                name = "Fixes",
-                                value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
-                                inline = False
-                            )
+                            embed = embed
                         )
                     
                 # Notify users who want to be notified
@@ -1410,12 +1333,20 @@ class Bot(commands.Cog, name = "bot"):
                         # They don't receive notifications throught IFTTT, try sending them a message instead
                         else:
                             try:
+
+                                # Create embed
+                                embed = discord.Embed(
+                                    title = "Omega Psi (Version {})".format(update["version"]),
+                                    description = update["description"],
+                                    colour = await get_embed_color(user)
+                                )
+
+                                # Add features and fixes fields
+                                add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
+                                add_fields(embed, "Fixes", fix_fields, empty_message = "No New Features Were Made.")
+
                                 await user.send(
-                                    embed = discord.Embed(
-                                        title = "Omega Psi (Version {})".format(update["version"]),
-                                        description = update["description"],
-                                        colour = await get_embed_color(user)
-                                    )
+                                    embed = embed
                                 )
                             except:
                                 pass
@@ -1457,39 +1388,33 @@ class Bot(commands.Cog, name = "bot"):
                 )
 
                 # Send to author
+                embed = discord.Embed(
+                    title = "Update Committed - (Version {})".format(update["Version"]),
+                    description = update["description"],
+                    colour = await get_embed_color(ctx.author)
+                )
+
+                add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
+                add_fields(embed, "Fixes", fix_fields, empty_message = "No New Fixes Were Made.")
+
                 await ctx.send(
-                    embed = discord.Embed(
-                        title = "Update Committed - (Version {})".format(update["version"]),
-                        description = update["description"],
-                        colour = await get_embed_color(ctx.author)
-                    ).add_field(
-                        name = "Features",
-                        value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
-                        inline = False
-                    ).add_field(
-                        name = "Fixes",
-                        value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
-                        inline = False
-                    )
+                    embed = embed
                 )
 
             # Send to Omega Psi channel
             channel = self.bot.get_channel(OMEGA_PSI_CHANNEL)
+            embed = discord.Embed(
+                title = "New Update! Version {}".format(update["Version"]),
+                description = update["description"],
+                colour = PRIMARY_EMBED_COLOR
+            )
+
+            add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
+            add_fields(embed, "Fixes", fix_fields, empty_message = "No New Features Were Made.")
+
             await channel.send(
                 "@everyone",
-                embed = discord.Embed(
-                    title = "New Update! Version {}".format(update["version"]),
-                    description = update["description"],
-                    colour = PRIMARY_EMBED_COLOR
-                ).add_field(
-                    name = "Features",
-                    value = "No New Features Were Made." if len(update["features"]) == 0 else "\n".join(update["features"]),
-                    inline = False
-                ).add_field(
-                    name = "Fixes",
-                    value = "No New Fixes Were Made." if len(update["fixes"]) == 0 else "\n".join(update["fixes"]),
-                    inline = False
-                )
+                embed = embed
             )
     
     @commands.command(
