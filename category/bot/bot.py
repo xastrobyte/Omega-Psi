@@ -16,6 +16,7 @@ from database.database import database
 from util.discord import send_webhook
 from util.email import send_email
 from util.functions import add_scroll_reactions, get_embed_color
+from util.ifttt import ifttt_push
 from util.string import dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1353,7 +1354,9 @@ class Bot(commands.Cog, name = "bot"):
                 await database.bot.set_changed_files({})
                 update = await database.bot.get_recent_update()
 
-                for dev in await database.bot.get_developers():
+                # Notify devs
+                devs = await database.bot.get_developers()
+                for dev in devs:
 
                     # Get the dev user object
                     user = self.bot.get_user(int(dev))
@@ -1378,6 +1381,44 @@ class Bot(commands.Cog, name = "bot"):
                                 inline = False
                             )
                         )
+                    
+                # Notify users who want to be notified
+                # and are not devs
+                users = await database.bot.get_update_notifications()
+                for user in users:
+
+                    # Try getting the user object
+                    user = self.bot.get_user(int(user))
+
+                    # Make sure Omega Psi can still reach them
+                    # and that they are not devs
+                    if user != None and str(user.id) not in devs:
+
+                        # Check if they receive notifications through IFTTT
+                        ifttt = await database.users.get_ifttt(user)
+                        if await database.users.ifttt_active(user):
+                            await ifttt_push(
+                                "omega_psi_push",
+                                "Omega Psi (Version {})".format(
+                                    update["version"]
+                                ),
+                                update["description"],
+                                "",
+                                key = ifttt["webhook_key"]
+                            )
+                        
+                        # They don't receive notifications throught IFTTT, try sending them a message instead
+                        else:
+                            try:
+                                await user.send(
+                                    embed = discord.Embed(
+                                        title = "Omega Psi (Version {})".format(update["version"]),
+                                        description = update["description"],
+                                        colour = await get_embed_color(user)
+                                    )
+                                )
+                            except:
+                                pass
                     
                 # Send webhook to Integromat
                 # Split up features and fixes into platform-specific
