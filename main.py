@@ -135,6 +135,10 @@ cogs = {
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+GITHUB_RELEASE = "https://github.com/FellowHashbrown/Omega-Psi/releases/tag/{}"
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Basic Events
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -748,7 +752,9 @@ async def help(ctx, specific = None):
                 description = "Here's a list of categories in Omega Psi.",
                 colour = await get_embed_color(ctx.author)
             ).set_author(
-                name = "Version " + recent
+                name = "Version " + recent,
+                url = GITHUB_RELEASE.format(recent),
+                icon_url = "https://i.imgur.com/Hy5Gyut.png"
             ).set_footer(
                 text = "❕❕❕ Add an extra . to any command for a mobile view!"
             )
