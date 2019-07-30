@@ -17,6 +17,7 @@ class User:
         data = {
             "_id": str(user.id),
             "embed_color": None,
+            "notify_update": False, 
             "vote": {
                 "previous": 0,
                 "refresh": 2 * 24 * 60 * 60 # By default, user must vote once every 
@@ -89,6 +90,7 @@ class User:
         data = {
             "_id": str(user.id),
             "embed_color": None,
+            "notify_update": False,
             "vote": {
                 "previous": 0,
                 "refresh": 2 * 24 * 60 * 60 # By default, user must vote once every 
@@ -280,6 +282,35 @@ class User:
         user_data = await self.get_user(user)
 
         user_data["embed_color"] = color
+
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_notify_update(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["notify_update"]
+    
+    async def set_notify_update(self, user, value):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["notify_update"] = value
+
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    async def toggle_notify_update(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["notify_update"] = not user_data["notify_update"]
 
         # Set user data
         await self.set_user(user, user_data)
