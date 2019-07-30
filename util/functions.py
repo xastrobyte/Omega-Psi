@@ -5,7 +5,7 @@ from functools import partial
 
 from category.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
 from category.globals import loop
-from category.globals import DBL_VOTE_API_CALL, PRIMARY_EMBED_COLOR
+from category.globals import DBL_VOTE_API_CALL, PRIMARY_EMBED_COLOR, FIELD_THRESHOLD
 
 from database.database import database
 
@@ -24,6 +24,56 @@ async def add_scroll_reactions(message, fields):
             await message.add_reaction(LAST_PAGE)
     
     await message.add_reaction(LEAVE)
+
+def add_fields(embed, field_name, fields, *, empty_message = None):
+
+    if len(fields) == 0:
+        embed.add_field(
+            name = field_name,
+            value = empty_message if empty_message else "",
+            inline = False
+        )
+
+    else:
+        count = 0
+        for field in fields:
+            count += 1
+            embed.add_field(
+                name = "{} {}".format(
+                    field_name,
+                    "({} / {})".format(
+                        count, len(fields)
+                    ) if len(fields) > 1 else ""
+                ),
+                value = field,
+                inline = False
+            )
+    
+def create_fields(data, *, by_word = False, threshold = FIELD_THRESHOLD):
+
+    # Check if the data is not a list; Make a list out of it
+    if type(data) != list:
+
+        # Split data up by word
+        if by_word:
+            data = data.split(" ")
+        
+        # Split data up by newline
+        else:
+            data = data.split("\n")
+    
+    fields = []
+    field_text = ""
+    for line in data:
+        line += "\n"
+        if len(line) + len(field_text) > threshold:
+            fields.append(field_text)
+            field_text = ""
+        field_text += line
+    if len(field_text) > 0:
+        fields.append(field_text)
+    
+    return fields
 
 async def did_author_vote(author):
 
