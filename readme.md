@@ -33,15 +33,21 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
     * Cards Against Humanity
     * Trivia
     * Uno
+  * Food
+    * Look up recipes for drinks or foods!
   * Internet
     * Anything you can find on the internet, you can find here
     * IMDb
     * Current Weather and the Forecast for the next 7 days!
     * Look up concerts/events and performers/attractions!
   * Animal
-    * Dogs and Cats!
-    * Foxes too!
-    * Other animals coming soon ...
+    * Dogs
+	* Cats
+	* Foxes
+	* Elephants
+	* Sloths
+	* Rabbits
+	* Penguins
   * Image
     * Gifs
     * Avatars
