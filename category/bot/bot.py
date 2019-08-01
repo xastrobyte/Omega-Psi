@@ -1264,6 +1264,10 @@ class Bot(commands.Cog, name = "bot"):
                 # Get the most recent update
                 update = await database.bot.get_recent_update()
 
+                # Setup fields for update features and fixes
+                feature_fields = create_fields(update["features"])
+                fix_fields = create_fields(update["fixes"])
+
             else:
 
                 # Commit the update. Then get the update so we can inform all other developers
@@ -1299,7 +1303,7 @@ class Bot(commands.Cog, name = "bot"):
 
                         # Add feature and fix fields
                         add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
-                        add_fields(embed, "Fixes", fix_fields, empty_message = "No New Features Were Made.")
+                        add_fields(embed, "Fixes", fix_fields, empty_message = "No New Fixes Were Made.")
 
                         await user.send(
                             embed = embed
@@ -1343,7 +1347,7 @@ class Bot(commands.Cog, name = "bot"):
 
                                 # Add features and fixes fields
                                 add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
-                                add_fields(embed, "Fixes", fix_fields, empty_message = "No New Features Were Made.")
+                                add_fields(embed, "Fixes", fix_fields, empty_message = "No New Fixes Were Made.")
 
                                 await user.send(
                                     embed = embed
@@ -1389,7 +1393,7 @@ class Bot(commands.Cog, name = "bot"):
 
                 # Send to author
                 embed = discord.Embed(
-                    title = "Update Committed - (Version {})".format(update["Version"]),
+                    title = "Update Committed - (Version {})".format(update["version"]),
                     description = update["description"],
                     colour = await get_embed_color(ctx.author)
                 )
@@ -1404,13 +1408,13 @@ class Bot(commands.Cog, name = "bot"):
             # Send to Omega Psi channel
             channel = self.bot.get_channel(OMEGA_PSI_CHANNEL)
             embed = discord.Embed(
-                title = "New Update! Version {}".format(update["Version"]),
+                title = "New Update! Version {}".format(update["version"]),
                 description = update["description"],
                 colour = PRIMARY_EMBED_COLOR
             )
 
             add_fields(embed, "Features", feature_fields, empty_message = "No New Features Were Made.")
-            add_fields(embed, "Fixes", fix_fields, empty_message = "No New Features Were Made.")
+            add_fields(embed, "Fixes", fix_fields, empty_message = "No New Fixes Were Made.")
 
             await channel.send(
                 "@everyone",
