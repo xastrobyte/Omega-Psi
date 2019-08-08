@@ -1805,21 +1805,6 @@ class Bot(commands.Cog, name = "bot"):
                 """
             )
         ).add_field(
-            name = ":bulb: Server Access",
-            value = (
-                """
-                This server doesn't just function as my developer server. I also have sections based around other things.
-                Here is a list of sections and their commands:
-                
-                `The Office` --> **`!office`**
-                `Parks and Rec` --> **`!pnr`**
-                `Brooklyn 99` --> **`!b99`**
-
-                To do the invert of each command, just add `stop` in front of it.
-                (i.e. `!stoppnr`)
-                """
-            )
-        ).add_field(
             name = ":desktop: Social Media",
             value = (
                 """
