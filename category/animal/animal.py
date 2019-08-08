@@ -27,40 +27,7 @@ class Animal(commands.Cog, name = "animal"):
         cog_name = "animal"
     )
     async def dog(self, ctx, data = None):
-        
-        # Check if the data is not getting a fact
-        if data != "fact":
-
-            # Call the animal API for dog
-            result = await loop.run_in_executor(None,
-                requests.get,
-                ANIMAL_API.format(
-                    "dog",
-                    "&baby=true" if data == "baby" else ""
-                )
-            )
-            result = result.json()
-
-            # Send the message with the dog
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "{} from the internet".format(
-                        "Baby dog" if data == "baby" else "Dog"
-                    ),
-                    description = " ",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = result["value"]
-                )
-            )
-        
-        # Check if getting a dog fact
-        else:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "This hasn't been implemented yet :("
-                )
-            )
+        await self.animal_command("dog", ctx, data)
     
     @commands.command(
         name = "cat",
@@ -69,40 +36,7 @@ class Animal(commands.Cog, name = "animal"):
         cog_name = "animal"
     )
     async def cat(self, ctx, data = None):
-        
-        # Check if the data is not getting a fact
-        if data != "fact":
-
-            # Call the animal API for cat
-            result = await loop.run_in_executor(None,
-                requests.get,
-                ANIMAL_API.format(
-                    "cat",
-                    "&baby=true" if data == "baby" else ""
-                )
-            )
-            result = result.json()
-
-            # Send the message with the cat
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "{} from the internet".format(
-                        "Baby cat" if data == "baby" else "Cat"
-                    ),
-                    description = " ",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = result["value"]
-                )
-            )
-        
-        # Check if getting a cat fact
-        else:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "This hasn't been implemented yet :("
-                )
-            )
+        await self.animal_command("cat", ctx, data)
     
     @commands.command(
         name = "fox",
@@ -110,189 +44,96 @@ class Animal(commands.Cog, name = "animal"):
         cog_name = "animal"
     )
     async def fox(self, ctx, data = None):
-        
-        # Check if the data is not getting a fact
-        if data != "fact":
-
-            # Call the animal API for fox
-            result = await loop.run_in_executor(None,
-                requests.get,
-                ANIMAL_API.format(
-                    "fox",
-                    "&baby=true" if data == "baby" else ""
-                )
-            )
-            result = result.json()
-
-            # Send the message with the fox
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "{} from the internet".format(
-                        "Baby fox" if data == "baby" else "Fox"
-                    ),
-                    description = " ",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = result["value"]
-                )
-            )
-        
-        # Check if getting a fox fact
-        else:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "This hasn't been implemented yet :("
-                )
-            )
+        await self.animal_command("fox", ctx, data)
     
     @commands.command(
         name = "penguin",
-        description = "Sends random picture of penguins from the internet.",
+        description = "Sends a random picture of a random penguin from the internet.",
         cog_name = "animal"
     )
     async def penguin(self, ctx, data = None):
-
-        # Check if the data is not getting a fact
-        if data != "fact":
-
-            # Call the animal API for penguin
-            result = await loop.run_in_executor(None,
-                requests.get,
-                ANIMAL_API.format(
-                    "penguin",
-                    "&baby=true" if data == "baby" else ""
-                )
-            )
-            result = result.json()
-
-            # Send the message with the penguin
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "{} from the internet".format(
-                        "Baby penguin" if data == "baby" else "Penguin"
-                    ),
-                    description = " ",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = result["value"]
-                )
-            )
-        
-        # Check if getting a penguin fact
-        else:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "This hasn't been implemented yet :("
-                )
-            )
+        await self.animal_command("penguin", ctx, data)
     
     @commands.command(
         name = "elephant",
-        description = "Sends random picture of elephants from the internet.",
+        description = "Sends a random picture of a random elephant from the internet.",
         cog_name = "animal"
     )
     async def elephant(self, ctx, data = None):
-
-        # Check if the data is not getting a fact
-        if data != "fact":
-
-            # Call the animal API for elephant
-            result = await loop.run_in_executor(None,
-                requests.get,
-                ANIMAL_API.format(
-                    "elephant",
-                    "&baby=true" if data == "baby" else ""
-                )
-            )
-            result = result.json()
-
-            # Send the message with the elephant
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "{} from the internet".format(
-                        "Baby elephant" if data == "baby" else "Elephant"
-                    ),
-                    description = " ",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = result["value"]
-                )
-            )
-        
-        # Check if getting a elephant fact
-        else:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "This hasn't been implemented yet :("
-                )
-            )
+        await self.animal_command("elephant", ctx, data)
     
     @commands.command(
         name = "sloth",
-        description = "Sends random picture of sloths from the internet.",
+        description = "Sends a random picture of a random sloth from the internet.",
         cog_name = "animal"
     )
     async def sloth(self, ctx, data = None):
-
-        # Check if the data is not getting a fact
-        if data != "fact":
-
-            # Call the animal API for sloth
-            result = await loop.run_in_executor(None,
-                requests.get,
-                ANIMAL_API.format(
-                    "sloth",
-                    "&baby=true" if data == "baby" else ""
-                )
-            )
-            result = result.json()
-
-            # Send the message with the sloth
-            await ctx.send(
-                embed = discord.Embed(
-                    title = "{} from the internet".format(
-                        "Baby sloth" if data == "baby" else "Sloth"
-                    ),
-                    description = " ",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = result["value"]
-                )
-            )
-        
-        # Check if getting a sloth fact
-        else:
-            await ctx.send(
-                embed = errors.get_error_message(
-                    "This hasn't been implemented yet :("
-                )
-            )
+        await self.animal_command("sloth", ctx, data)
     
     @commands.command(
         name = "rabbit",
-        description = "Sends random picture of rabbits from the internet.",
+        description = "Sends a random picture of a random rabbit from the internet.",
         cog_name = "animal"
     )
     async def rabbit(self, ctx, data = None):
+        await self.animal_command("rabbit", ctx, data)
+    
+    @commands.command(
+        name = "hedgehog",
+        description = "Sends a random picture of a random hedgehog from the internet.",
+        cog_name = "animal"
+    )
+    async def hedgehog(self, ctx, data = None):
+        await self.animal_command("hedgehog", ctx, data)
+
+    @commands.command(
+        name = "bat",
+        description = "Sends a random picture of a random bat from the internet.",
+        cog_name = "animal"
+    )
+    async def bat(self, ctx, data = None):
+        await self.animal_command("bat", ctx, data)
+    
+    @commands.command(
+        name = "squirrel",
+        description = "Sends a random picture of a random squirrel from the internet.",
+        cog_name = "animal"
+    )
+    async def squirrel(self, ctx, data = None):
+        await self.animal_command("squirrel", ctx, data)
+    
+    @commands.command(
+        name = "hamster",
+        description = "Sends a random picture of a random hamster from the internet.",
+        cog_name = "animal"
+    )
+    async def hamster(self, ctx, data = None):
+        await self.animal_command("hamster", ctx, data)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def animal_command(self, animal, ctx, data = None):
 
         # Check if the data is not getting a fact
         if data != "fact":
 
-            # Call the animal API for rabbit
+            # Call the animal API for the animal
             result = await loop.run_in_executor(None,
                 requests.get,
                 ANIMAL_API.format(
-                    "rabbit",
+                    animal,
                     "&baby=true" if data == "baby" else ""
                 )
             )
             result = result.json()
 
-            # Send the message with the rabbit
+            # Send the message with the animal
             await ctx.send(
                 embed = discord.Embed(
                     title = "{} from the internet".format(
-                        "Baby rabbit" if data == "baby" else "Rabbit"
+                        "Baby {}".format(
+                            animal.lower()
+                        ) if data == "baby" else animal.title()
                     ),
                     description = " ",
                     colour = await get_embed_color(ctx.author)
@@ -301,7 +142,7 @@ class Animal(commands.Cog, name = "animal"):
                 )
             )
         
-        # Check if getting a rabbit fact
+        # Check if getting an animal fact
         else:
             await ctx.send(
                 embed = errors.get_error_message(
