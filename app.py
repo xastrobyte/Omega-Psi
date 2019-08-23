@@ -1,7 +1,10 @@
-from flask import Flask, render_template, redirect, request, abort
+import flask, os
+
+from flask import Flask, render_template, redirect, request, abort, jsonify
+from random import randint
 from threading import Thread
 
-from database import database
+from database.database import database
 
 from util.string import get_user_info_html
 
@@ -103,6 +106,12 @@ def user_info(username, discriminator):
         else:
             uno["ratio"] = round(uno["won"] / uno["lost"], 2)
         
+        game_of_life = target_data["game_of_life"]
+        if game_of_life["lost"] == 0:
+            game_of_life["ratio"] = game_of_life["won"]
+        else:
+            game_of_life["ratio"] = round(game_of_life["won"] / game_of_life["lost"], 2)
+        
         trivia = target_data["trivia"]
         if trivia["lost"] == 0:
             trivia["ratio"] = trivia["won"]
@@ -122,6 +131,7 @@ def user_info(username, discriminator):
             connect_four = connect_four,
             cards_against_humanity = cards_against_humanity,
             uno = uno,
+            game_of_life = game_of_life,
             trivia = trivia
         )
     
@@ -141,11 +151,15 @@ def user_not_found(error):
     return render_template("userNotFound.html"), 400
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
+# IFTTT API Routes
+# # # # # # # # # # # # # # # # # # # # # # # # #
+
+# # # # # # # # # # # # # # # # # # # # # # # # #
 # Flask Setup
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def run():
-    app.run(host = "0.0.0.0", port = 5000) #randint(1000, 9999))
+    app.run(host = "0.0.0.0", port = randint(1000, 9999))
 
 def keep_alive(bot = None, cogs = None):
 

@@ -232,6 +232,12 @@ def get_user_info_html():
                                     <td style="width: 20%; text-align: center;">{{ uno["ratio"] }}</td>
                                 </tr>
                                 <tr style="width: 100%;">
+                                    <td style="width: 40%; text-align: center;">game of life</td>
+                                    <td style="width: 20%; text-align: center;">{{ game_of_life["won"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ game_of_life["lost"] }}</td>
+                                    <td style="width: 20%; text-align: center;">{{ game_of_life["ratio"] }}</td>
+                                </tr>
+                                <tr style="width: 100%;">
                                     <td style="width: 40%; text-align: center;">trivia</td>
                                     <td style="width: 20%; text-align: center;">{{ trivia["won"] }}</td>
                                     <td style="width: 20%; text-align: center;">{{ trivia["lost"] }}</td>

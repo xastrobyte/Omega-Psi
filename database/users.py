@@ -63,6 +63,10 @@ class User:
             "uno": {
                 "won": 0,
                 "lost": 0
+            },
+            "game_of_life": {
+                "won": 0,
+                "lost": 0
             }
         }
 
@@ -134,6 +138,10 @@ class User:
                 "lost": 0
             },
             "uno": {
+                "won": 0,
+                "lost": 0
+            },
+            "game_of_life": {
                 "won": 0,
                 "lost": 0
             }
@@ -487,6 +495,28 @@ class User:
             user_data["uno"]["won"] += 1
         else:
             user_data["uno"]["lost"] += 1
+        
+        # Set user data
+        await self.set_user(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_game_of_life(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["game_of_life"]
+    
+    async def update_game_of_life(self, user, won):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        if won:
+            user_data["game_of_life"]["won"] += 1
+        else:
+            user_data["game_of_life"]["lost"] += 1
         
         # Set user data
         await self.set_user(user, user_data)
