@@ -16,7 +16,7 @@ class Database:
     def __init__(self):
 
         # Create the connection and get the database for Omega Psi
-        self._omega_psi_connection = MongoClient("ds115244.mlab.com", 15244, connect = False)
+        self._omega_psi_connection = MongoClient("ds115244.mlab.com", 15244, connect = False, retryWrites = False)
         self._omegaPsi = self._omega_psi_connection["omegapsi"]
 
         # Get the username and password to authenticate database access
@@ -25,7 +25,7 @@ class Database:
         self._omegaPsi.authenticate(username, password)
 
         # Create the connection and get the database for Online Status
-        self._online_status_connection = MongoClient("ds133762.mlab.com", 33762, connect = False)
+        self._online_status_connection = MongoClient("ds133762.mlab.com", 33762, connect = False, retryWrites = False)
         self._onlineStatus = self._online_status_connection["onlinestatus"]
 
         # Get the username and password to authenticate database access
