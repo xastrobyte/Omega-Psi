@@ -6,7 +6,7 @@ from random import choice as choose
 from category import errors
 
 from category.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
-from category.globals import loop
+from category.globals import loop, SPIN, NUMBER_EMOJIS
 
 from category.predicates import is_nsfw_and_guild, is_developer, guild_only
 
@@ -22,6 +22,7 @@ from .scramble import Scramble
 from .hangman import Hangman
 from .cards_against_humanity import CardsAgainstHumanity
 from .uno import Uno, ADD_4_CARD
+from .game_of_life.game_of_life import GameOfLife
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -101,6 +102,8 @@ QUIT = "❌"
 REACT_100 = "💯"
 REACT_UNO = ADD_4_CARD
 
+PLAY_NOW = "▶"
+
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 RPS_ACTIONS = ["rock", "paper", "scissors"]
@@ -159,6 +162,7 @@ class Game(commands.Cog, name = "game"):
                 ":red_circle: Connect Four": await database.users.get_connect_four(member),
                 "<:cah:540281486633336862> CAH": await database.users.get_cards_against_humanity(member),
                 "<{}> Uno".format(ADD_4_CARD): await database.users.get_uno(member),
+                ":arrows_counterclockwise: Game of Life": await database.users.get_game_of_life(member),
                 ":question: Trivia": await database.users.get_trivia(member)
             }
 
@@ -1275,8 +1279,9 @@ class Game(commands.Cog, name = "game"):
         msg = await ctx.send(
             embed = discord.Embed(
                 title = "Join Uno!",
-                description = "React with <{}> to join the game. {}, react with :robot: if you want to play against 4 other AIs\n**Players**\n{}".format(
+                description = "React with <{}> to join the game.\nIf you'd like to start the game asap, react with {}.\n{}, react with :robot: if you want to play against AIs\n**Players**\n{}".format(
                     REACT_UNO,
+                    PLAY_NOW,
                     ctx.author.mention,
                     "\n".join([user.mention for user in players])
                 ),
@@ -1285,6 +1290,7 @@ class Game(commands.Cog, name = "game"):
         )
 
         await msg.add_reaction(REACT_UNO)
+        await msg.add_reaction(PLAY_NOW)
         await msg.add_reaction(ROBOT)
 
         play_game = None
@@ -1293,8 +1299,26 @@ class Game(commands.Cog, name = "game"):
 
             # Wait for player reactions
             def check(reaction, user):
-                return (str(reaction) == "<{}>".format(REACT_UNO) and reaction.message.id == msg.id and user not in players and not user.bot) or (str(reaction) == ROBOT and user.id == ctx.author.id and not user.bot)
-            
+                return (
+                    (
+                        str(reaction) == "<{}>".format(REACT_UNO) and 
+                        reaction.message.id == msg.id and
+                        user not in players and 
+                        not user.bot
+                    ) or 
+                    (
+                        str(reaction) == ROBOT and 
+                        user.id == ctx.author.id and 
+                        not user.bot
+                    ) or
+                    (
+                        str(reaction) == PLAY_NOW and
+                        reaction.message.id == msg.id and
+                        user.id == ctx.author.id and
+                        not user.bot
+                    )
+                )
+
             # Try waiting
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", check = check, timeout = 30)
@@ -1304,14 +1328,22 @@ class Game(commands.Cog, name = "game"):
                     play_game = True
                     against_ais = True
                     break
+                
+                # Check if the reaction is play now
+                elif str(reaction) == PLAY_NOW:
+
+                    # Check if there are enough players
+                    play_game = len(players) >= 2
+                    break
 
                 players.append(user)
 
                 await msg.edit(
                     embed = discord.Embed(
                         title = "Join Uno!",
-                        description = "React with <{}> to join the game. {}, react with :robot: if you want to play against 4 other AIs\n**Players**\n{}".format(
+                        description = "React with <{}> to join the game.\nIf you'd like to start the game asap, react with {}.\n{}, react with :robot: if you want to play against AIs\n**Players**\n{}".format(
                             REACT_UNO,
+                            PLAY_NOW,
                             ctx.author.mention,
                             "\n".join([user.mention for user in players])
                         ),
@@ -1413,7 +1445,8 @@ class Game(commands.Cog, name = "game"):
         msg = await ctx.send(
             embed = discord.Embed(
                 title = "Join Cards Against Humanity",
-                description = "React with :100: to join the game.\n**Players**\n{}".format(
+                description = "React with :100: to join the game.\nIf you'd like to start the game asap, react with {}.\n**Players**\n{}".format(
+                    PLAY_NOW,
                     "\n".join([user.mention for user in players])
                 ),
                 colour = await get_embed_color(ctx.author)
@@ -1421,23 +1454,45 @@ class Game(commands.Cog, name = "game"):
         )
 
         await msg.add_reaction(REACT_100)
+        await msg.add_reaction(PLAY_NOW)
 
         play_game = None
         while play_game == None:
 
-            # Wait for player reactions
+           # Wait for player reactions
             def check(reaction, user):
-                return str(reaction) == REACT_100 and reaction.message.id == msg.id and user not in players and not user.bot
-            
+                return (
+                    (
+                        str(reaction) == REACT_100 and 
+                        reaction.message.id == msg.id and
+                        user not in players and 
+                        not user.bot
+                    ) or 
+                    (
+                        str(reaction) == PLAY_NOW and
+                        reaction.message.id == msg.id and
+                        user.id == ctx.author.id and
+                        not user.bot
+                    )
+                )
             # Try waiting
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", check = check, timeout = 30) # wait for 30 seconds maximum per person
+
+                # Check if the reaction is to play now
+                if str(reaction) == PLAY_NOW:
+
+                    # Check if there are enough players
+                    play_game = len(players) >= 3
+                    break
+
                 players.append(user)
 
                 await msg.edit(
                     embed = discord.Embed(
                         title = "Join Cards Against Humanity",
-                        description = "React with :100: to join the game.\n**Players**\n{}".format(
+                        description = "React with :100: to join the game.\nIf you'd like to start the game asap, react with {}.\n**Players**\n{}".format(
+                            PLAY_NOW,
                             "\n".join([user.mention for user in players])
                         ),
                         colour = await get_embed_color(ctx.author)
@@ -1447,6 +1502,7 @@ class Game(commands.Cog, name = "game"):
                 # See if there are 5 players
                 if len(players) == 5:
                     play_game = True
+                    break
             
             # No one responded for 30 seconds
             except asyncio.TimeoutError:
@@ -1525,6 +1581,184 @@ class Game(commands.Cog, name = "game"):
                 ),
                 delete_after = 5
             )
+
+    @commands.command(
+        name = "gameOfLife",
+        aliases = ["gol"],
+        description = "Let's you play the Game of Life with AI's or against real people.",
+        cog_name = "game"
+    )
+    async def game_of_life(self, ctx):
+
+        # Send a message saying the command is not fully functional yet; Still a WIP
+        if not await database.bot.is_developer(ctx.author):
+            await ctx.send(
+                embed = errors.get_error_message(
+                    "The Game of Life is still being developed. Check back later (or check for a new update) to see if it is running yet."
+                )
+            )
+        
+        else:
+        
+            # Wait for players (max of 4)
+            players = [ctx.author]
+
+            # Send join message
+            msg = await ctx.send(
+                embed = discord.Embed(
+                    title = "Join the Game of Life",
+                    description = "React with {} to join the game.\nIf you'd like to start the game asap, react with {}.\n{}, react with :robot: if you want to play against AIs\n**Players**\n{}".format(
+                        SPIN,
+                        PLAY_NOW,
+                        ctx.author.mention,
+                        "\n".join([user.mention for user in players])
+                    ),
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+
+            await msg.add_reaction(SPIN)
+            await msg.add_reaction(PLAY_NOW)
+            await msg.add_reaction(ROBOT)
+
+            play_game = None
+            against_ais = False
+            ai_amount = 0
+            while play_game == None:
+
+                # Wait for player reactions
+                def check(reaction, user):
+                    return (
+                        (
+                            str(reaction) == SPIN and 
+                            reaction.message.id == msg.id and
+                            user not in players and 
+                            not user.bot
+                        ) or 
+                        (
+                            str(reaction) == ROBOT and 
+                            user.id == ctx.author.id and 
+                            not user.bot
+                        ) or
+                        (
+                            str(reaction) == PLAY_NOW and
+                            reaction.message.id == msg.id and
+                            user.id == ctx.author.id and
+                            not user.bot
+                        )
+                    )
+                
+                # Try waiting
+                try:
+                    reaction, user = await self.bot.wait_for("reaction_add", check = check, timeout = 30)
+
+                    # Check if the reaction is a robot reaction
+                    if str(reaction) == ROBOT:
+                        play_game = True
+                        against_ais = True
+                        break
+                    
+                    # Check if the reaction is play now
+                    elif str(reaction) == PLAY_NOW:
+                        
+                        # Check if there are enough players
+                        play_game = len(players) >= 2
+                        break
+
+                    players.append(user)
+
+                    await msg.edit(
+                        embed = discord.Embed(
+                            title = "Join the Game of Life",
+                            description = "React with {} to join the game.\n{}, react with :robot: if you want to play against AIs\n**Players**\n{}".format(
+                                SPIN,
+                                ctx.author.mention,
+                                "\n".join([user.mention for user in players])
+                            ),
+                            colour = await get_embed_color(ctx.author)
+                        )
+                    )
+
+                    # See if there are 4 players
+                    if len(players) == 4 or against_ais:
+                        play_game = True
+                
+                # No one responded for 30 seconds
+                except asyncio.TimeoutError:
+
+                    # Check if there are enough players
+                    play_game = len(players) >= 2
+                
+            # Check if game will be played
+            if play_game:
+                await msg.delete()
+
+                # If the author is playing against the AI's, ask how many AI's they want to play against
+                if against_ais:
+
+                    # Ask the player
+                    message = await ctx.send(
+                        embed = discord.Embed(
+                            title = "How many AI's?",
+                            description = "React with how many AI's you want to play against {}".format(ctx.author.mention),
+                            colour = await get_embed_color(ctx.author)
+                        )
+                    )
+
+                    # Add the emojis
+                    for emoji in NUMBER_EMOJIS[:3]:
+                        await message.add_reaction(emoji)
+                    
+                    # Wait for the player to react
+                    def check_reaction(reaction, user):
+                        return (
+                            reaction.message.id == message.id and
+                            str(reaction) in NUMBER_EMOJIS[:3] and
+                            user.id == ctx.author.id
+                        )
+                    reaction, user = await self.bot.wait_for("reaction_add", check = check_reaction)
+
+                    # Delete the message and specify how many AI's there will be
+                    ai_amount = NUMBER_EMOJIS.index(str(reaction)) + 1
+                    await message.delete()
+                
+                # Create the game
+                game = GameOfLife(players, self.bot, ctx.channel, against_ais = against_ais, ai_amount = ai_amount)
+                result = await game.play()
+
+                # Check if game was ended
+                if result == GameOfLife.END_GAME:
+                    await ctx.send(
+                        embed = discord.Embed(
+                            title = "Not enough people :frowning2:",
+                            description = "Too many people left the game.",
+                            colour = await get_embed_color(ctx.author)
+                        )
+                    )
+                
+                # The game was not ended, go through the winner(s)
+                else:
+
+                    # Iterate through players
+                    for player in game.get_players():
+                        if not player.is_ai():
+                            await database.users.update_game_of_life(
+                                player.get_member(),
+                                player.did_win()
+                            )
+
+            
+            # Game will not be played
+            else:
+                await msg.delete()
+                await ctx.send(
+                    embed = discord.Embed(
+                        title = "Not enough people :frowning2:",
+                        description = "There needs to be at least 2 people to play the Game of Life.",
+                        colour = await get_embed_color(ctx.author)
+                    ),
+                    delete_after = 5
+                )
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
