@@ -153,7 +153,7 @@ async def display_card(turn, card_type, card):
     # Sleep for 3 seconds so players can read the card
     await asyncio.sleep(3)
 
-async def ask_for_spin(game, turn = None, color = False, *, part_of_turn = True, spin_to_win = False, player = None, message = None, text = None, selling_house = False):
+async def ask_for_spin(game, turn = None, color = False, *, show_leave = False, part_of_turn = True, spin_to_win = False, player = None, message = None, text = None, selling_house = False):
 
     # Determine if the player is given or not
     if player == None:
@@ -170,8 +170,9 @@ async def ask_for_spin(game, turn = None, color = False, *, part_of_turn = True,
     
         # Send a message asking the player to spin
         spin_title = "{} is spinning!".format(player.get_name(title = True))
-        spin_description = "{}, react with {} when you're ready to spin!\nIf you'd like to leave, react with {}".format(
-            player.get_name(title = True), SPIN, LEAVE
+        spin_description = "{}, react with {} when you're ready to spin!{}".format(
+            player.get_name(title = True), SPIN, 
+            "\nIf you'd like to leave, react with {}".format(LEAVE) if show_leave else ""
         )
 
         # Update the turn message
@@ -181,7 +182,7 @@ async def ask_for_spin(game, turn = None, color = False, *, part_of_turn = True,
                     turn.get_message().id if part_of_turn else message.id
                 ) and
                 str(reaction) in (
-                    [SPIN, LEAVE] if part_of_turn else [SPIN]
+                    [SPIN, LEAVE] if (part_of_turn and show_leave) else [SPIN]
                 ) and
                 user.id == player.get_member().id
             )
@@ -194,7 +195,8 @@ async def ask_for_spin(game, turn = None, color = False, *, part_of_turn = True,
                 )
             )
             await turn.get_message().add_reaction(SPIN)
-            await turn.get_message().add_reaction(LEAVE)
+            if show_leave:
+                await turn.get_message().add_reaction(LEAVE)
         
         # The user is selling a house
         elif selling_house:

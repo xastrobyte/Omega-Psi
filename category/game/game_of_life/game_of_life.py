@@ -402,7 +402,7 @@ class Player:
         await turn.init()
 
         # Ask the player to spin
-        value = await ask_for_spin(game, turn)
+        value = await ask_for_spin(game, turn, show_leave = True)
 
         # Check if the player is leaving
         if value == LEAVE:
