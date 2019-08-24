@@ -33,8 +33,8 @@ class Page:
 
         self._sections = sections
 
-        self._custom_title = custom_title
-        self._custom_description = custom_description
+        self._custom_title = custom_title if custom_title != None else title
+        self._custom_description = custom_description if custom_description != None else description
         self._custom_icon = custom_icon
         self._custom_html = custom_html
 
