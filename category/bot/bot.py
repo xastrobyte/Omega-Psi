@@ -1760,6 +1760,9 @@ class Bot(commands.Cog, name = "bot"):
             value = (
                 """
                 I set up my server so that you can choose which projects, APIs, or other stuff to follow.
+
+                If you want to receive notifications about all my projects and APIs:
+                `Super Follower` --> **`!superfollower`**
                 
                 Projects (`!projects` to get access to all projects):
                 `2054` --> **`!2054`**
@@ -1789,6 +1792,7 @@ class Bot(commands.Cog, name = "bot"):
                 `Profanity API` --> **`!profanityapi`**
                 `Llamas API` --> **`!llamasapi`**
                 `Office API` --> **`!officeapi`**
+                `Game of Life API` --> **`!gameoflifeapi`**
 
                 To do the invert of each command, just add `stop` in front of it.
                 (i.e. `!stopmorseapi`)
