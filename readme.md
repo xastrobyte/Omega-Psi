@@ -33,6 +33,7 @@ For a full list of commands, [here](https://omegapsi.fellowhashbrown.com) is a w
     * Cards Against Humanity
     * Trivia
     * Uno
+    * Game of Life
   * Food
     * Look up recipes for drinks or foods!
   * Internet
