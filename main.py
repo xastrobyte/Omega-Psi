@@ -9,6 +9,7 @@ from category.globals import MESSAGE_THRESHOLD, FIELD_THRESHOLD, loop
 from category.globals import DBL_BOT_STAT_API_CALL
 from category.globals import SCROLL_REACTIONS, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
 from category.globals import VALID_STATUSES
+from category.globals import PROJECT_ROLES, API_ROLES, DEVELOPER_ROLES, SUPER_FOLLOWER, PROJECT_FOLLOWER, API_FOLLOWER, SUPER_DEVELOPER
 
 from category.predicates import get_prefix, is_nsfw_or_private, is_developer
 
@@ -98,7 +99,7 @@ cogs = {
     },
     "notifications": {
         "command": "help notifications",
-        "description": "You can get notified about the online status of people here!",
+        "description": "Control notifications you receive either through Omega Psi or IFTTT.",
         "check": None,
         "emoji": ":vibration_mode: ",
         "extension": "category.notifications.notifications"
@@ -351,6 +352,59 @@ async def on_member_update(before, after):
     to provide users with notifications for any member updates that may be
     made when users use the `o.notify` command.
     """
+
+    # Check the user's roles in Fellow Hashbrown's server
+    if after.guild.id == int(os.environ["DEVELOPER_SERVER"]):
+
+        #   if the user can be given a simplified role (project follower, API follower), give it to them
+        if before.roles != after.roles:
+
+            # Get a list of all the project, API, and developer roles the member has
+            project_roles = [
+                role
+                for role in after.roles
+                if role.id in PROJECT_ROLES
+            ]
+            api_roles = [
+                role
+                for role in after.roles
+                if role.id in API_ROLES
+            ]
+            developer_roles = [
+                role
+                for role in after.roles
+                if role.id in DEVELOPER_ROLES
+            ]
+            
+            # The member has the project roles
+            if len(project_roles) == len(PROJECT_ROLES):
+
+                # Take all the roles away from them and give them Project Follower
+                await after.add_roles(*[
+                    after.guild.get_role(PROJECT_FOLLOWER)
+                ])
+                
+            # The member has the API roles
+            if len(api_roles) == len(API_ROLES):
+
+                # Take all the roles away from them and give them API Follower
+                await after.add_roles(*[
+                    after.guild.get_role(API_FOLLOWER)
+                ])
+            
+            # The member has all the project and API roles
+            if after.guild.get_role(PROJECT_FOLLOWER) in after.roles and after.guild.get_role(API_FOLLOWER) in after.roles:
+                await after.add_roles(*[
+                    after.guild.get_role(SUPER_FOLLOWER)
+                ])
+            
+            # The member has all the developer roles
+            if len(developer_roles) == len(DEVELOPER_ROLES):
+
+                # Take all the roles away from them and give them Super Developer
+                await after.add_roles(*[
+                    after.guild.get_role(SUPER_DEVELOPER)
+                ])
 
     # Check if the member's online status changed
     if str(before.status) != str(after.status) and str(before.status) in VALID_STATUSES and str(after.status) in VALID_STATUSES:
@@ -793,7 +847,7 @@ if __name__ == "__main__":
         try:
             bot.load_extension(cogs[cog]["extension"])
         except Exception as error:
-            print(traceback.format_exception(type(error), error, error.__traceback__))
+            print("\n".join(traceback.format_exception(type(error), error, error.__traceback__)))
             print("{} cannot be loaded.\n - {}".format(cog, error))
     
     app.OMEGA_PSI_BOT = bot
