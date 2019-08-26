@@ -76,8 +76,8 @@ class Website:
             </div>
         </div>
     </body>
-    <footer>
-        <small><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small>
+    <footer class="footer">
+        <small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small>
     </footer>
 </html>
 """
