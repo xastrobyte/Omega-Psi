@@ -13,10 +13,11 @@ from .functions import *
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class Turn:
-    def __init__(self, game, player):
+    def __init__(self, game, player, *, title = "{}'s Turn!"):
         self._game = game
         self._player = player
         self._message = None
+        self._title = title.format(player.get_name(title = True))
         self._actions = []
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -29,6 +30,9 @@ class Turn:
     
     def get_message(self):
         return self._message
+    
+    def get_title(self):
+        return self._title
     
     def get_actions(self):
         return self._actions
@@ -67,11 +71,14 @@ class Turn:
 
         # Create the embed
         embed = discord.Embed(
-            title = "{}'s Turn!".format(self.get_player().get_name(title = True)),
+            title = self.get_title(),
             description = actions_text,
             colour = PRIMARY_EMBED_COLOR if self.get_player().is_ai() else await get_embed_color(self.get_player().get_member())
         ).set_footer(
-            text = "You have ${}".format(commafy(self.get_player().get_cash()))
+            text = "{} has ${}".format(
+                self.get_player().get_name(title = True), 
+                commafy(self.get_player().get_cash())
+            )
         )
 
         return embed
@@ -485,13 +492,16 @@ class Player:
                 )
             )
         
+        # Sleep for 2 seconds so everyone can read what happened
+        await asyncio.sleep(2)
+        
         return False
 
 class GameOfLife:
 
     END_GAME = "END_GAME"
 
-    def __init__(self, players, bot, channel, *, against_ais = False, ai_amount = 3):
+    def __init__(self, players, bot, channel, *, against_ais = False, ai_amount = 4):
         self._players = [Player(player) for player in players]
 
         # If player goes against AIs, keep the first player and make the rest AIs
@@ -528,7 +538,6 @@ class GameOfLife:
         self._pet_cards = game_of_life["pet_cards"]
         self._action_cards = game_of_life["action_cards"]
         self._board = game_of_life["board_spaces"]
-        self._rules = game_of_life["rules"]
     
     # # # # # # # # # # # # # # # # # # # #
     
@@ -610,9 +619,6 @@ class GameOfLife:
     def get_board(self):
         return self._board
     
-    def get_rules(self):
-        return self._rules
-    
     # # # # # # # # # # # # # # # # # # # #
 
     async def pay_bonus(self, turn, number):
@@ -629,15 +635,16 @@ class GameOfLife:
 
                     # Send a message to the channel that says who has to pay who
                     await turn.add_action(
-                        "{} {} had to pay {} $20,000 for spinning {}".format(
+                        "{} {} had to pay {} ${} for spinning {}".format(
                             PAY_MONEY,
                             source.get_name(),
                             player.get_name(),
+                            commafy(player.get_career()["salary"] // 10),
                             number
                         )
                     )
-                    source.take_cash(20000)
-                    player.give_cash(20000)
+                    source.take_cash(player.get_career()["salary"] // 10)
+                    player.give_cash(player.get_career()["salary"] // 10)
     
     async def play(self):
 
@@ -677,7 +684,7 @@ class GameOfLife:
     
     async def end_game(self):
 
-        # Keep track of everything in one single message
+        # Send a message saying everyone retired
         await self.get_channel().send(
             embed = discord.Embed(
                 title = "Everyone Retired!",
@@ -687,110 +694,90 @@ class GameOfLife:
         )
         
         # Go through each player and find the winning player
-        winners = [self.get_players()[0]]
-        winner = winners[0]
         for player in self.get_players():
 
             # Keep track of everything in one single message per player
-            text = ""
-            message = await self.get_channel().send(
-                embed = discord.Embed(
-                    title = player.get_name(title = True),
-                    description = text,
-                    colour = PRIMARY_EMBED_COLOR if player.is_ai() else await get_embed_color(player.get_member())
-                )
-            )
-
-            # For each action card, give the player 100,000
-            for i in range(player.get_action_cards()):
-                player.give_cash(100000)
-            
-            # Update the message and sleep for 2 seconds so players can read what happened
-            text = "{} {} had {} action card{} and collected ${} {}\n".format(
-                ACTION,
-                player.get_name(),
-                player.get_action_cards(),
-                "s" if player.get_action_cards() != 1 else "",
-                commafy(100000 * player.get_action_cards()),
-                "from them" if player.get_action_cards() > 1 else ""
-            )
-            await message.edit(
-                embed = discord.Embed(
-                    title = player.get_name(title = True),
-                    description = text,
-                    colour = PRIMARY_EMBED_COLOR if player.is_ai() else await get_embed_color(player.get_member())
-                )
-            )
-            await asyncio.sleep(2)
-
-            # For each pet card, give the player 100,000
-            for i in range(player.get_pet_cards()):
-                player.give_cash(100000)
-            
-            # Update the message and sleep for 2 seconds so players can read what happened
-            text += "{} {} had {} pet card{} and collected ${} {}\n".format(
-                PET,
-                player.get_name(),
-                player.get_pet_cards(),
-                "s" if player.get_pet_cards() != 1 else "",
-                commafy(100000 * player.get_pet_cards()),
-                "from them" if player.get_pet_cards() > 1 else ""
-            )
-            await message.edit(
-                embed = discord.Embed(
-                    title = player.get_name(title = True),
-                    description = text,
-                    colour = PRIMARY_EMBED_COLOR if player.is_ai() else await get_embed_color(player.get_member())
-                )
-            )
-            await asyncio.sleep(2)
-
-            # For each loan, take 60,000 from the player
-            for i in range(player.get_loans()):
-                player.take_cash(60000)
-            
-            # Update the message and sleep for 2 seconds so players can read what happened
-            text += "{} {} had {} loan{} and was deducted ${} {}\n".format(
-                LOAN,
-                player.get_name(),
-                player.get_loans(),
-                "s" if player.get_loans() != 1 else "",
-                commafy(60000 * player.get_loans()),
-                "from them" if player.get_loans() > 1 else ""
-            )
-            await message.edit(
-                embed = discord.Embed(
-                    title = player.get_name(title = True),
-                    description = text,
-                    colour = PRIMARY_EMBED_COLOR if player.is_ai() else await get_embed_color(player.get_member())
-                )
-            )
-            await asyncio.sleep(2)
+            turn = Turn(self, player, title = "{}")
+            await turn.init()
 
             # Have each player sell any houses they have
             for house in player.get_houses():
-                value = await sell_house(self, player, house)
+                value = await sell_house(self, turn, house)
                 player.give_cash(value)
 
                 # Update the message and sleep for 2 seconds so players can read what happened
-                text += "{} {} sold their house for ${}".format(
-                    HOUSE,
-                    player.get_name(), commafy(value)
-                )
-                await message.edit(
-                    embed = discord.Embed(
-                        title = player.get_name(title = True),
-                        description = text,
-                        colour = PRIMARY_EMBED_COLOR if player.is_ai() else await get_embed_color(player.get_member())
+                await turn.add_action(
+                    "{} {} sold their house for ${}\n".format(
+                        HOUSE,
+                        player.get_name(), commafy(value)
                     )
                 )
                 await asyncio.sleep(2)
             
-            # Update the winner (or winners)
+            # Update the message and sleep for 2 seconds so players can read what happened
+            player.give_cash(100000 * player.get_action_cards())
+            await turn.add_action(
+                "{} {} had {} action card{} and collected ${} {}\n".format(
+                    ACTION,
+                    player.get_name(),
+                    player.get_action_cards(),
+                    "s" if player.get_action_cards() != 1 else "",
+                    commafy(100000 * player.get_action_cards()),
+                    "from them" if player.get_action_cards() > 1 else ""
+                )
+            )
+            await asyncio.sleep(2)
+            
+            # Update the message and sleep for 2 seconds so players can read what happened
+            player.give_cash(100000 * player.get_pet_cards())
+            await turn.add_action(
+                "{} {} had {} pet card{} and collected ${} {}\n".format(
+                    PET,
+                    player.get_name(),
+                    player.get_pet_cards(),
+                    "s" if player.get_pet_cards() != 1 else "",
+                    commafy(100000 * player.get_pet_cards()),
+                    "from them" if player.get_pet_cards() > 1 else ""
+                )
+            )
+            await asyncio.sleep(2)
+            
+            # Update the message and sleep for 2 seconds so players can read what happened
+            player.give_cash(50000 * player.get_babies())
+            await turn.add_action(
+                "{} {} had {} bab{} and collected ${} {}\n".format(
+                    BABY,
+                    player.get_name(),
+                    player.get_babies(),
+                    "ies" if player.get_babies() != 1 else "y",
+                    commafy(50000 * player.get_babies()),
+                    "for them" if player.get_babies() > 1 else ""
+                )
+            )
+            await asyncio.sleep(2)
+            
+            # Update the message and sleep for 2 seconds so players can read what happened
+            player.take_cash(60000 * player.get_loans())
+            await turn.add_action(
+                "{} {} had {} loan{} and was deducted ${} {}\n".format(
+                    LOAN,
+                    player.get_name(),
+                    player.get_loans(),
+                    "s" if player.get_loans() != 1 else "",
+                    commafy(60000 * player.get_loans()),
+                    "from them" if player.get_loans() > 1 else ""
+                )
+            )
+            await asyncio.sleep(2)
+        
+        # Update the winner (or winners)
+        winners = [self.get_players()[0]]
+        winner = winners[0]
+        for player in self.get_players():
             if player.get_cash() > winner.get_cash():
                 winners = [player]
                 winner = player
-            elif player.get_cash() == winner.get_cash():
+            elif player.get_cash() == winner.get_cash() and player.get_id() != winner.get_id():
                 winners.append(player)
             
         # Setup the text displaying everyone's totals and who won
@@ -811,9 +798,9 @@ class GameOfLife:
         # Check if 2+ people tied but not everyone tied
         else:
             text += "{}{} and {} {} tied!".format(
-                ", ".join([winner.get_name() for winner in winners]) if len(winners) > 2 else winner[0],
+                ", ".join([winner.get_name() for winner in winners]) if len(winners) > 2 else winner.get_name(),
                 "," if len(winners) > 2 else "",
-                winner[len(winners) - 1],
+                winners[len(winners) - 1].get_name(),
                 "all" if len(winners) > 2 else "both"
             )
     
