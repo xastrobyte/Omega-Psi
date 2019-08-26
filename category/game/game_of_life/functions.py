@@ -153,7 +153,7 @@ async def display_card(turn, card_type, card):
     # Sleep for 3 seconds so players can read the card
     await asyncio.sleep(3)
 
-async def ask_for_spin(game, turn = None, color = False, *, show_leave = False, part_of_turn = True, spin_to_win = False, player = None, message = None, text = None, selling_house = False):
+async def ask_for_spin(game, turn = None, color = False, *, show_leave = False, part_of_turn = True, spin_to_win = False, player = None):
 
     # Determine if the player is given or not
     if player == None:
@@ -178,14 +178,13 @@ async def ask_for_spin(game, turn = None, color = False, *, show_leave = False, 
         # Update the turn message
         def check_reaction(reaction, user):
             return (
-                reaction.message.id == (
-                    turn.get_message().id if part_of_turn else message.id
-                ) and
+                reaction.message.id == turn.get_message().id and
                 str(reaction) in (
                     [SPIN, LEAVE] if (part_of_turn and show_leave) else [SPIN]
                 ) and
                 user.id == player.get_member().id
             )
+        
         if part_of_turn:
             await turn.add_action(
                 "```md\n{}\n{}\n<\n{}\n>\n```".format(
@@ -198,31 +197,11 @@ async def ask_for_spin(game, turn = None, color = False, *, show_leave = False, 
             if show_leave:
                 await turn.get_message().add_reaction(LEAVE)
         
-        # The user is selling a house
-        elif selling_house:
-            
-            # Update the text and the message
-            text += "```md\n{}\n{}\n<\n{}\n>\n```\n".format(
-                spin_title,
-                "=" * len(spin_title),
-                spin_description
-            )
-            await message.edit(
-                embed = discord.Embed(
-                    title = "Sell your house!",
-                    description = text,
-                    colour = await get_embed_color(player.get_member())
-                )
-            )
-            await message.add_reaction(SPIN)
-        
         reaction, user = await game.get_bot().wait_for("reaction_add", check = check_reaction)
 
         # Clear the reactions and check them
         if part_of_turn:
             await turn.get_message().clear_reactions()
-        elif selling_house:
-            await message.clear_reactions()
 
         # Check if the player is leaving
         if str(reaction) == LEAVE:
@@ -246,18 +225,6 @@ async def ask_for_spin(game, turn = None, color = False, *, show_leave = False, 
                     "a" if number != 8 else "an",
                     number
                 )
-            )
-        )
-    elif selling_house:
-        text += "{} spun {}".format(
-            player.get_name(),
-            "black" if is_black else "red"
-        )
-        await message.edit(
-            embed = discord.Embed(
-                title = "Sell your house!",
-                description = text,
-                colour = await get_embed_color(player.get_member())
             )
         )
 
@@ -304,7 +271,7 @@ async def ask_for_career(game, turn, college = False, *, change = False):
             # Send a message saying what career the AI chose
             await turn.add_action(
                 "{} {} career!\n{}".format(
-                    player.get_name(title = True),
+                    player.get_name(),
                     "chose a new" if chose_new else "kept their old",
                     display_career(player.get_career())
                 )
@@ -405,7 +372,7 @@ async def ask_for_career(game, turn, college = False, *, change = False):
                 "{} {}\n{}".format(
                     BRIEFCASE,
                     "{} {} career!".format(
-                        player.get_name(title = True),
+                        player.get_name(),
                         "chose a new" if chose_new else "kept their old"
                     ),
                     display_career(player.get_career())
@@ -465,7 +432,7 @@ async def ask_for_career(game, turn, college = False, *, change = False):
                 "{} {}\n{}".format(
                     BRIEFCASE,
                     "{} chose a career!".format(
-                        player.get_name(title = True),
+                        player.get_name(),
                     ),
                     display_career(player.get_career())
                 )
@@ -473,22 +440,19 @@ async def ask_for_career(game, turn, college = False, *, change = False):
 
     return True
 
-async def sell_house(game, player, house):
+async def sell_house(game, turn, house):
+    player = turn.get_player()
 
     # Show everyone what house the player is selling
-    text = "{} is selling the following house:\n{}\n".format(
-        display_house(house)
-    )
-    message = await game.get_channel().send(
-        embed = discord.Embed(
-            title = "Sell your house!",
-            description = text,
-            colour = PRIMARY_EMBED_COLOR if player.is_ai() else await get_embed_color(player.get_member())
+    await turn.add_action(
+        "{} is selling the following house:\n{}\n".format(
+            player.get_name(),
+            display_house(house)
         )
     )
     
     # Ask the player to spin
-    value = await ask_for_spin(game, selling_house = True, player = player, text = text, message = message)
+    value = await ask_for_spin(game, turn, color = True)
     is_black = value % 2 == 0
 
     # Update the message on how much the house was sold for
@@ -497,11 +461,8 @@ async def sell_house(game, player, house):
     # Return the amount
     return amount
         
-async def ask_for_house(game, turn):
+async def ask_for_house(game, turn, *, action = None):
     player = turn.get_player()
-
-    # Ask the player what they will do
-    action = None
 
     # Only ask for the action if no action exists
     if action == None:
@@ -634,6 +595,8 @@ async def ask_for_house(game, turn):
             elif str(reaction) == NUMBER_EMOJIS[1]:
                 chosen_house = house_two
             
+            await message.delete()
+            
             # Check if the player can buy the house without loans
             if chosen_house["purchase"] <= player.get_cash():
                 
@@ -765,6 +728,7 @@ async def ask_for_house(game, turn):
                     user.id == player.get_member().id
                 )
             reaction, user = await game.get_bot().wait_for("reaction_add", check = check_reaction)
+            await message.delete()
 
             # Get the house that the player wants to sell
             chosen_house = player.get_houses().pop(NUMBER_EMOJIS.index(str(reaction)))
@@ -1624,10 +1588,10 @@ async def process_family_path(game, turn):
 
     # Send a message to the channel about their decision
     await turn.add_action(
-        "{} {} is going down the {}".format(
+        "{} {} is{} going down the Family Path!".format(
             BABY if player._move_modify else ACTION,
             player.get_name(),
-            "Family Path!" if player._move_modify else "Normal Path!"
+            "" if player._move_modify else " not"
         )
     )
 
@@ -1695,10 +1659,10 @@ async def process_risky_road(game, turn):
 
     # Send a message to the channel about their decision
     await turn.add_action(
-        "{} {} is going down the {}".format(
+        "{} {} is{} going down the Risky Road!".format(
             RISKY_ROAD if player._move_modify else ACTION,
             player.get_name(),
-            "Risky Road!" if player._move_modify else "Normal Path!"
+            "" if player._move_modify else " not"
         )
     )
 
@@ -1733,7 +1697,7 @@ async def process_stop_space(game, turn, space_type, space):
     elif space_type == "retirement":
 
         # Give the player their retirement money
-        amount = 100000 * (4 - len(game.get_retired()))
+        amount = 100000 * (5 - len(game.get_retired()))
         player.give_cash(amount)
         player.retire()
 
