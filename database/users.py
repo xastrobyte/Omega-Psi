@@ -76,7 +76,7 @@ class User:
         # User data is None; Create user data
         if user_data == None:
             self._users.insert_one({"_id": str(user.id)})
-            self.set_user(user, data)
+            self.set_user_sync(user, data)
             user_data = data
         
         # set defaults
