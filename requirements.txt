@@ -1,5 +1,8 @@
-git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py[voice]
+discord.py
 Flask
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
 IMDbPY
 pymongo
 requests
