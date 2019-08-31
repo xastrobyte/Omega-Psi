@@ -16,6 +16,9 @@ from database.database import database
 from util.discord import send_webhook
 from util.email import send_email
 from util.functions import add_scroll_reactions, get_embed_color, add_fields, create_fields
+from util.google import get_tasks, add_task, remove_task
+from util.google import get_files, add_file, clear_files
+from util.google import create_pending_update, get_pending_update, commit_pending_update, get_features, get_fixes, add_feature, add_fix
 from util.ifttt import ifttt_push
 from util.string import dict_to_datetime
 
@@ -1043,8 +1046,21 @@ class Bot(commands.Cog, name = "bot"):
     )
     async def pending_update(self, ctx):
 
-        # Get the pending update data
-        pending_update = await database.bot.get_pending_update()
+        # Check if there is a pending update
+        items = await get_pending_update(ctx, self.bot)
+
+        # There is no pending update
+        if len(items) == 0:
+            pending_update = {}
+        
+        # There is a pending update
+        else:
+            
+            # Get the features and fixes
+            pending_update = {
+                "features": await get_features(ctx, self.bot),
+                "fixes": await get_fixes(ctx, self.bot)
+            }
 
         # Create the embed
         embed = discord.Embed(
@@ -1110,7 +1126,7 @@ class Bot(commands.Cog, name = "bot"):
     async def create_update(self, ctx):
         
         # Create the update; Send message to all other developers
-        await database.bot.create_pending_update()
+        await create_pending_update(ctx, self.bot)
 
         for dev in await database.bot.get_developers():
 
@@ -1156,7 +1172,7 @@ class Bot(commands.Cog, name = "bot"):
         # Fix is not None; Add it
         else:
 
-            await database.bot.add_pending_fix(fix)
+            await add_fix(ctx, self.bot, fix)
 
             # Send to all other developers
             for dev in await database.bot.get_developers():
@@ -1206,7 +1222,7 @@ class Bot(commands.Cog, name = "bot"):
         # Feature is not None; Add it
         else:
 
-            await database.bot.add_pending_feature(feature)
+            await add_feature(ctx, self.bot, feature)
 
             # Send to all other developers
             for dev in await database.bot.get_developers():
@@ -1271,10 +1287,10 @@ class Bot(commands.Cog, name = "bot"):
             else:
 
                 # Commit the update. Then get the update so we can inform all other developers
-                await database.bot.commit_pending_update(version, description)
+                await commit_pending_update(ctx, self.bot, version, description)
 
                 # Also clear the changed files
-                await database.bot.set_changed_files({})
+                await clear_files(ctx, self.bot)
                 update = await database.bot.get_recent_update()
 
                 # Setup fields for update features and fixes
@@ -1422,127 +1438,103 @@ class Bot(commands.Cog, name = "bot"):
             )
     
     @commands.command(
-        name = "todo",
-        description = "Allows you to add, remove, or view the todo list.",
+        name = "tasks",
+        description = "Allows you to add, remove, or view the tasks list.",
         cog_name = "bot"
     )
-    async def todo(self, ctx, action = None, *, item = None):
-
-        todo_list = await database.bot.get_todo()
+    async def tasks(self, ctx, action = None, *, item = None):
 
         # Check if action is going to add or remove
         if action in ["add", "a", "remove", "r"]:
 
-            # Check if item wasn't given (or index)
-            if item != None:
+            # Make sure the author has the proper permissions
+            if await is_developer(ctx):
 
-                # Check if author is a developer
-                if str(ctx.author.id) in await database.bot.get_developers():
+                # Check if the action is to add a task
+                if action in ["add", "a"]:
                     
-                    # Check if action is adding
-                    if action in ["add", "a"]:
-                        await database.bot.add_todo_item(item)
+                    # Add the task
+                    task_added = await add_task(ctx, self.bot, item)
+                    if task_added:
                         await ctx.send(
                             embed = discord.Embed(
-                                title = "Added item to todo list.",
-                                description = "*{}*".format(item),
+                                title = "Added!",
+                                description = "**_{}_** was added to the todo list".format(item),
                                 colour = await get_embed_color(ctx.author)
                             )
                         )
-                    
-                    # Action is remove
-                    elif action in ["remove", "r"]:
+                    else:
+                        await ctx.send(
+                            embed = errors.get_error_message(
+                                "There was an issue with adding the task!"
+                            )
+                        )
+                
+                # The action is to remove a task
+                else:
 
-                        # Check if index is in range
-                        try:
-                            item = int(item) - 1
-                            if item < 0 or item >= len(todo_list):
-                                raise ValueError()
+                    # Check that the item is a number
+                    try:
+                        item = int(item)
 
-                            item = await database.bot.remove_todo_item(item)
+                        # Remove the task
+                        task_removed = await remove_task(ctx, self.bot, item)
+                        if task_removed:
                             await ctx.send(
                                 embed = discord.Embed(
-                                    title = "Removed item from todo list.",
-                                    description = "*{}*".format(item),
+                                    title = "Removed!",
+                                    description = "**_{}_** was removed from the todo list".format(task_removed),
                                     colour = await get_embed_color(ctx.author)
                                 )
                             )
                         
-                        # Index is out of range
-                        except:
+                        else:
                             await ctx.send(
                                 embed = errors.get_error_message(
-                                    "That index is out of range."
+                                    "That task number does not exist!"
                                 )
                             )
                     
-                    # Action is invalid
-                    else:
+                    # The item is not a number
+                    except ValueError:
                         await ctx.send(
                             embed = errors.get_error_message(
-                                "That action is invalid."
+                                "The index you gave is not a number!"
                             )
                         )
-                
-                # Author is not a developer
-                else:
-                    await ctx.send(
-                        embed = errors.get_error_message(
-                            "You do not have access to this function."
-                        )
-                    )
             
-            # Item was None
+            # The author does not have the proper permissions
             else:
                 await ctx.send(
                     embed = errors.get_error_message(
-                        "You need the {} of the item to {}.".format(
-                            "description" if action in ["add", "a"] else "index",
-                            "add" if action in ["add", "a"] else "remove"
-                        )
+                        "You don't have permission to do this!"
                     )
                 )
         
         # Action is merely to view
         else:
 
-            # Add items to list
-            fields = []
-            field_text = ""
+            # Get the tasks
+            items = await get_tasks(ctx, self.bot)
+
+            # Build the tasks string
+            tasks = ""
             count = 0
-            for i in todo_list:
+            for item in items:
                 count += 1
-
-                i = "*{}.)* {}\n".format(
-                    count, i
+                tasks += "{0}.) {2}{1}{2}\n".format(
+                    count, 
+                    item["title"],
+                    "*" if item["status"] == "needsAction" else "~~"
                 )
 
-                if len(field_text) + len(i) > FIELD_THRESHOLD:
-                    fields.append(field_text)
-                    field_text = ""
-                
-                field_text += i
-            
-            if len(field_text) > 0:
-                fields.append(field_text)
-            
-            # Create embed
-            embed = discord.Embed(
-                title = "Todo List",
-                description = "There's nothing in your todo list." if len(fields) == 0 else fields[0],
-                colour = await get_embed_color(ctx.author)
-            )
-
-            for field in fields[1:]:
-                embed.add_field(
-                    name = "_ _",
-                    value = field,
-                    inline = False
-                )
-            
-            # Send message
+            # Send the message
             await ctx.send(
-                embed = embed
+                embed = discord.Embed(
+                    title = "Task List",
+                    description = tasks if len(tasks) > 0 else "There are no tasks!",
+                    colour = await get_embed_color(ctx.author)
+                )
             )
     
     @commands.command(
@@ -1558,26 +1550,31 @@ class Bot(commands.Cog, name = "bot"):
         if filename == None:
 
             # Get files
-            files = await database.bot.get_changed_files()
+            files = await get_files(ctx, self.bot)
 
             # Add to fields
             fields = []
             field_text = ""
             for f in files:
-                
-                file_text = "`{}`\n{}\n".format(
-                    f,
-                    "\n".join([
-                        "--{}".format(reason)
-                        for reason in files[f]
-                    ])
-                )
 
-                if len(field_text) + len(file_text) > FIELD_THRESHOLD:
+                # Get the reasons
+                reasons = ""
+                for r in f["items"]:
+                    r = "➡{}\n".format(
+                        r["title"]
+                    )
+                    reasons += r
+                
+                # Add to the file text
+                f = "**`{}`**\n{}\n".format(
+                    f["title"], reasons
+                )
+                
+                if len(field_text) + len(f) > FIELD_THRESHOLD:
                     fields.append(field_text)
                     field_text = ""
                 
-                field_text += file_text
+                field_text += f
             
             if len(field_text) > 0:
                 fields.append(field_text)
@@ -1610,7 +1607,7 @@ class Bot(commands.Cog, name = "bot"):
         else:
 
             # Add changed file to database
-            await database.bot.add_changed_file(filename, reason if reason else "No Reason Given")
+            await add_file(ctx, self.bot, filename, reason if reason else "No Reason Given")
 
             await ctx.send(
                 embed = discord.Embed(
