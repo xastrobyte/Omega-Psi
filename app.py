@@ -9,7 +9,7 @@ from database.database import database
 from util.string import get_user_info_html
 
 # Load website builder
-from website.website import Website
+from website.website import Website, Footer
 from website.page import Page, KeySection, Section
 from website.page import UserInfoForm, HomeSection
 
@@ -151,10 +151,6 @@ def user_not_found(error):
     return render_template("userNotFound.html"), 400
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
-# IFTTT API Routes
-# # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # # # # # # # # #
 # Flask Setup
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -185,16 +181,23 @@ def keep_alive(bot = None, cogs = None):
 
     # Create website object
     website = Website(
+        footer = Footer(
+            copyright_name = "Jonah Pierce",
+            copyright_year = 2018
+        ),
         pages = [
             Page(
                 title = "commands",
+                custom_title = "Omega Psi Commands",
                 description = "below is a list of commands in omega psi and what they do.",
                 sections = [
                     KeySection()
-                ] + command_sections
+                ] + command_sections,
+                homepage = True
             ),
             Page(
                 title = "user",
+                custom_title = "User",
                 description = "you can use this page to look up stats and info about a user in discord as long as they are in a server with omega psi.",
                 sections = [
                     HomeSection(
@@ -227,11 +230,13 @@ def keep_alive(bot = None, cogs = None):
             ),
             Page(
                 title = "pageNotFound",
-                description = "oooof. i think you took a wrong turn :\/",
+                custom_title = "Page Not Found",
+                description = "oooof. i think you took a wrong turn :\\",
                 ignore = True
             ),
             Page(
                 title = "userNotFound",
+                custom_title = "User Not Found",
                 description = "unfortunately, i can't find that user :(",
                 ignore = True
             )
