@@ -17,13 +17,14 @@ class User:
         data = {
             "_id": str(user.id),
             "embed_color": None,
-            "notify_update": False, 
+            "notify_update": False,
             "vote": {
                 "previous": 0,
                 "refresh": 2 * 24 * 60 * 60 # By default, user must vote once every 
                                             # 2 days to use "premium" commands
                                             # Can be set per user by bot moderators
             },
+            "google": {},
             "imgur": {
                 "hash": None,
                 "id": None
@@ -101,6 +102,7 @@ class User:
                                             # 2 days to use "premium" commands
                                             # Can be set per user by bot moderators
             },
+            "google": {},
             "imgur": {
                 "hash": None,
                 "id": None
@@ -255,6 +257,25 @@ class User:
 
         # Set IFTTT data
         await self.set_ifttt(user, ifttt_data)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_google(self, user):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        return user_data["google"]
+    
+    async def set_google(self, user, google_data):
+
+        # Get user data
+        user_data = await self.get_user(user)
+
+        user_data["google"] = google_data
+
+        # Set user data
+        await self.set_user(user, user_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
