@@ -16,11 +16,10 @@ class Bot:
         
         # Set defaults
         data = {
-            "activity_name": "o.help",
-            "activity_type": 2,
             "developers": ["373317798430244864"],
             "owner": "373317798430244864",
             "todo": [],
+            "google": {},
             "pending_update": {},
             "update_notifications": [],
             "updates": [],
@@ -64,11 +63,10 @@ class Bot:
 
         # Set defaults
         data = {
-            "activity_name": "o.help",
-            "activity_type": 2,
             "developers": ["373317798430244864"],
             "owner": "373317798430244864",
             "todo": [],
+            "google": {},
             "pending_update": {},
             "update_notifications": [],
             "updates": [],
@@ -109,42 +107,6 @@ class Bot:
         bot_data = await self.get_bot()
 
         bot_data["restart"] = restart_data
-
-        # Set bot data
-        await self.set_bot(bot_data)
-    
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    async def get_activity_name(self):
-        
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        return bot_data["activity_name"]
-    
-    async def set_activity_name(self, activity_name):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        bot_data["activity_name"] = activity_name
-
-        # Set bot data
-        await self.set_bot(bot_data)
-    
-    async def get_activity_type(self):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        return bot_data["activity_type"]
-    
-    async def set_activity_type(self, activity_type):
-
-        # Get bot data
-        bot_data = await self.get_bot()
-
-        bot_data["activity_type"] = activity_type
 
         # Set bot data
         await self.set_bot(bot_data)
@@ -210,6 +172,25 @@ class Bot:
         bot_data = await self.get_bot()
 
         return bot_data["owner"]
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_google(self):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        return bot_data["google"]
+    
+    async def set_google(self, google_data):
+
+        # Get bot data
+        bot_data = await self.get_bot()
+
+        bot_data["google"] = google_data
+
+        # Set bot data
+        await self.set_bot(bot_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
@@ -394,13 +375,7 @@ class Bot:
         # Set pending update
         await self.set_pending_update(pending_update)
     
-    async def commit_pending_update(self, version, description):
-
-        # Get pending update
-        pending_update = await self.get_pending_update()
-
-        # Reset pending update in bot
-        await self.set_pending_update({})
+    async def commit_pending_update(self, version, description, features, fixes):
 
         # Get updates
         updates = await self.get_updates()
@@ -411,8 +386,8 @@ class Bot:
             "date": current_date,
             "version": version,
             "description": description,
-            "features": pending_update["features"],
-            "fixes": pending_update["fixes"]
+            "features": features,
+            "fixes": fixes
         })
 
         # Set updates
