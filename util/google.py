@@ -205,7 +205,6 @@ async def add_file(ctx, bot, filename, reason):
     items = await get_files(ctx, bot)
     task = None
     for item in items:
-        print(item["title"], filename, item["title"] == filename)
         if item["title"] == filename:
             task = item
             break
@@ -261,15 +260,28 @@ async def add_file(ctx, bot, filename, reason):
 
 async def clear_files(ctx, bot):
 
+    # Get the files
+    items = await get_files(ctx, bot)
+
     # Authenticate if needed
     creds = await authenticate(ctx, bot)
 
-    # Call the tasks API
+    # Call the tasks API to "complete" each file
     service = build("tasks", "v1", credentials = creds)
-    api_call = service.tasks().clear(tasklist = OMEGA_PSI_FILE_CHANGE_TASKLIST)
-    await loop.run_in_executor(None,
-        api_call.execute
-    )
+    for item in items:
+
+        # Only clear the parent tasks; All subtasks will be completed as well
+        if "id" in item:
+            await loop.run_in_executor(None,
+                service.tasks().update(
+                    tasklist = OMEGA_PSI_FILE_CHANGE_TASKLIST,
+                    task = item["id"],
+                    body = {
+                        "id": item["id"],
+                        "deleted": True
+                    }
+                ).execute
+            )
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pending Update
@@ -320,10 +332,23 @@ async def commit_pending_update(ctx, bot, version, description):
 
     # Call the tasks API
     service = build("tasks", "v1", credentials = creds)
-    api_call = service.tasks().clear(tasklist = OMEGA_PSI_UPDATE)
-    await loop.run_in_executor(None,
-        api_call.execute
+    result = await loop.run_in_executor(None,
+        service.tasks().list(tasklist = OMEGA_PSI_UPDATE).execute
     )
+    items = result.get("items", [])
+
+    # Delete all items
+    for item in items:
+        await loop.run_in_executor(None,
+            service.tasks().update(
+                tasklist = OMEGA_PSI_UPDATE,
+                task = item["id"],
+                body = {
+                    "id": item["id"],
+                    "deleted": True
+                }
+            ).execute
+        )
 
 async def get_features(ctx, bot):
     items = await get_pending_update(ctx, bot)
