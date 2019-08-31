@@ -160,20 +160,12 @@ async def on_ready():
     )
     print("I'm ready to go")
     
-    # Retrieve the activity types
-    activity_type = await database.bot.get_activity_type()
-    activity_name = await database.bot.get_activity_name()
-    activity_name = "{} in {} Servers".format(
-        activity_name,
-        len(bot.guilds)
-    )
-    
     # Set presence
     await bot.change_presence(
         status = discord.Status.online,
         activity = discord.Activity(
-            name = activity_name,
-            type = activity_type,
+            name = "o.help in {} servers".format(len(bot.guilds)),
+            type = 2, # Listening to
             url = "https://twitch.tv/FellowHashbrown"
         )
     )
