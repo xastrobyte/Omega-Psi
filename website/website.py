@@ -1,11 +1,15 @@
 class Website:
 
-    def __init__(self, *, pages = []):
+    def __init__(self, *, pages = [], footer = None):
 
         self._pages = pages
+        self._footer = footer
 
     def get_pages(self):
         return self._pages
+    
+    def get_footer(self):
+        return self._footer
     
     def generate_html(self):
 
@@ -77,7 +81,7 @@ class Website:
         </div>
     </body>
     <footer class="footer">
-        <small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small>
+        {}
     </footer>
 </html>
 """
@@ -122,7 +126,8 @@ class Website:
                     )
                 ),
                 navigation_bar[page.get_title()],
-                page.generate_html()
+                page.generate_html(),
+                self.get_footer().generate_html()
             )
 
             f = open("templates/{}.html".format(
@@ -130,3 +135,47 @@ class Website:
             ), "w")
             f.write(htmlCopy)
             f.close()
+
+class Link:
+    def __init__(self, *, url = None, text = None):
+        self._url = url
+        self._text = text
+    
+    def get_text(self):
+        return self._text
+    
+    def get_url(self):
+        return self._url
+    
+    def generate_html(self):
+        return "<a href=\"{}\" class=\"link\" target=\"_blank\">{}</a>".format(
+            self.get_url(), self.get_text()
+        )
+
+class Footer:
+    def __init__(self, *, copyright_name = None, copyright_year = None, links = []):
+        self._copyright_name = copyright_name
+        self._copyright_year = copyright_year
+        self._links = links
+    
+    def get_copyright_name(self):
+        return self._copyright_name
+    
+    def get_copyright_year(self):
+        return self._copyright_year
+    
+    def get_links(self):
+        return self._links
+    
+    def generate_html(self):
+        html = "<p><small style=\"background: #202020;\"><code>Copyright &copy; {0}<script>new Date().getFullYear()>{0}&&document.write(\"-\"+new Date().getFullYear());</script>, {1}</code></small></p>\n".format(
+            self.get_copyright_year(),
+            self.get_copyright_name()
+        )
+
+        for link in self.get_links():
+            html += "<br><p>{}</p>".format(
+                link.generate_html()
+            )
+        
+        return html
