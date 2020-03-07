@@ -1,4 +1,5 @@
-from app import keep_alive, OMEGA_PSI
+import app
+from app import keep_alive
 from discord import Embed, Status, Activity
 from discord.ext.commands import AutoShardedBot
 from os import environ
@@ -144,6 +145,6 @@ if __name__ == "__main__":
             print("\n".join(format_exception(type(error), error, error.__traceback__)))
             print("{} cannot be loaded.\n - {}".format(cog, error))
     
-    OMEGA_PSI = bot
+    app.OMEGA_PSI = bot
     keep_alive(bot, cogs)
     bot.run(environ["BOT_TOKEN"])
