@@ -1,0 +1,20 @@
+{
+    "name": "Omega Psi",
+    "short_name": "Omega Psi",
+    "icons": [
+        {
+            "src": "/static/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#293134",
+    "background_color": "#293134",
+    "start_url": "https://www.fellowhashbrown.com/projects/omegaPsi",
+    "display": "standalone"
+}
