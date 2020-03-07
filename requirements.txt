@@ -1,0 +1,6 @@
+discord.py
+Flask
+IMDbPY
+pymongo
+requests
+imdb-cli-tool
