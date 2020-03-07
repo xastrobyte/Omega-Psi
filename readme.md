@@ -9,6 +9,8 @@ Omega Psi Discord Bot
 ===
 [Add Omega Psi to Your Own Server](https://discordapp.com/oauth2/authorize?client_id=535587516816949248&scope=bot&permissions=519232)
 
+The default prefix is `o.` or you can mention it (i.e. `@Omega Psi#0025`). A server manager can change the prefix in case `o.` conflicts with another bot in the server
+
 ## Features
 There are lots of features in Omega Psi that are useful or simple. Some useful ones are commands like
 mathematics commands and coding commands.
