@@ -1,8 +1,0 @@
-discord.py
-Flask
-google-api-python-client
-google-auth-httplib2
-google-auth-oauthlib
-IMDbPY
-pymongo
-requests
