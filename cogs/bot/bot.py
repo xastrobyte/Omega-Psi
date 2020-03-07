@@ -697,7 +697,7 @@ class Bot(Cog, name = "bot"):
     )
     async def invite(self, ctx):
         await ctx.send(
-            "https://discordapp.com/oauth2/authorize?client_id=524318904638767114&scope=bot&permissions=519232"
+            "https://discordapp.com/oauth2/authorize?client_id=535587516816949248&scope=bot&permissions=519232"
         )
     
     @command(
