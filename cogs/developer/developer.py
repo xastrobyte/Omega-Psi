@@ -254,20 +254,20 @@ class Developer(Cog, name="developer"):
                     add_fields(embed, "Changes", change_fields, empty_message="No Changes Made")
                     await dev.send(embed=embed)
 
-            # (future update) Notify users who want to be notified about the update
-            # Send an embed to the announcements channel
-            announcements_embed = Embed(
-                title="New Update! Version {}".format(version),
-                description=description,
-                colour=PRIMARY_EMBED_COLOR
-            )
-            fields = create_fields(update["features"], key=lambda feature: (
-                "`{}` | {}".format(feature["type"], feature["feature"])
-            ))
-            add_fields(announcements_embed, "Changes", fields, empty_message="No Changes Made")
-            await self.bot.get_channel(environ["ANNOUNCEMENTS_OMEGA_PSI"]).send(
-                "@everyone", embed=announcements_embed
-            )
+                # (future update) Notify users who want to be notified about the update
+                # Send an embed to the announcements channel
+                announcements_embed = embed = Embed(
+                    title="New Update! Version {}".format(version),
+                    description=description,
+                    colour=PRIMARY_EMBED_COLOR
+                )
+                fields = create_fields(update["features"], key=lambda feature: (
+                    "`{}` | {}".format(feature["type"], feature["feature"])
+                ))
+                add_fields(announcements_embed, "Changes", fields, empty_message="No Changes Made")
+                await self.bot.get_channel(int(environ["ANNOUNCEMENTS_OMEGA_PSI"])).send(
+                    "@everyone", embed=announcements_embed
+                )
 
             # Send a webhook to integromat to update Facebook, Twitter, GitHub, etc.
             markdown = {
