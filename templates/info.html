@@ -1,0 +1,172 @@
+
+<html>
+
+    
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/styles.css" rel="stylesheet" type="text/css">
+
+    
+    <meta property="theme-color" content="#EC7600" />
+    <meta property="og:title" content="website.info();" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://omegapsi.fellowhashbrown.com/" />
+    <meta property="og:image" content="https://i.imgur.com/Hy5Gyut.png" />
+
+    <meta property="og:description" content="information about the bot goes here including the current pending update or current tasks. you can also report a bug or make a suggestion in the feedback section!" />
+    <meta property="og:site_name" content="Info" />
+    <title>Info</title>
+    
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='/site.webmanifest') }}">
+    <link rel="mask-icon" href="{{ url_for('static', filename='/safari-pinned-tab.svg') }}" color="#202020">
+    <meta name="msapplication-TileColor" content="#202020">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='/mstile-144x144.png') }}">
+    <meta name="theme-color" content="#202020">
+    <meta name="msapplication-config" content="{{ url_for('static', filename='/browserconfig.xml') }}">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="/static/js/bugs.js"></script>
+    <script src="/static/js/suggestions.js"></script>
+    <script src="/static/js/pendingUpdate.js"></script>
+    <script src="/static/js/fileChanges.js"></script>
+    <script src="/static/js/tasks.js"></script>
+
+</head>
+
+
+    <body>
+        <div class="page-body">
+
+            <!-- Navigation Bar -->
+            <nav class="nav-bar">
+                <img src="https://i.imgur.com/Hy5Gyut.png" class="social-image" style="width: 50px; height: 50px;">
+                <div id="nav-toggle">
+                    <input type="checkbox">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    
+                    <ul class="nav-links">
+                        
+                <li class="nav-item">
+                    <a class="nav-link" href="/">commands</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link active" href="/info">info</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/roadmap">roadmap</a>
+                </li>
+
+                
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div class="content">
+                
+                <h1 class="page-title">
+                    <code class="field">website</code><code>.</code><code class="field">info</code><code>();</code>
+                </h1>
+
+                <div class="page-title-block" style="max-width: 75%;">
+                    <p style="text-align: center;">
+                        information about the bot goes here including the current pending update or current tasks. you can also report a bug or make a suggestion in the feedback section!
+                    </p>
+                </div>
+
+                
+                        <!--Tasklist Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">tasks</code><code>();</code>
+                        </h2>
+                        <div id="tasklistDiv" class="page-section-block" style="text-align: center;">
+                            <p>below is the current tasklist that developers intend to complete</p>
+                            {% if tasks == None %}
+                                <p id="noTasks">The Tasklist Is Empty</p>
+                            {% else %}
+                                <table id="tasksTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Task</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tasks">
+                                        {% for taskID in tasks -%}
+                                            <tr id ="task{{ taskID }}">
+                                                <td>{{ tasks[taskID] }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                        </div>
+        
+
+                        <!--Pending Update Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">pendingUpdate</code><code>();</code>
+                        </h2>
+                        <div id="pendingUpdateDiv" class="page-section-block" style="text-align: center;">
+                            {% if pending_update == None %}
+                                <p>No Pending Update</p>
+                            {% else %}
+                                {% if pending_update["features"]|length == 0 %}
+                                    <p id="noFeatures">No Features</p>
+                                {% else %}
+                                    <table id="featuresTable" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="92%">Feature</th>
+                                                <th width="8%">Type</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="features">
+                                            {% for feature in pending_update["features"] -%}
+                                                <tr id="feature{{ feature }}">
+                                                    <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
+                                                    <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
+                                                    <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+        
+
+                        <!--Feedback Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">feedback</code><code>();</code>
+                        </h2>
+                        <div id="feedbackDiv" class="page-section-block" style="text-align: center;">
+                            <p>if you found a bug, you can <button class="page-form-button" onclick="reportBug()">report</button> it.</p>
+                            <p>if you'd like to make a suggestion, you can <button class="page-form-button" onclick="suggest()">suggest</button> something!</p>
+                        </div>
+        
+
+
+                <br>
+                <br>
+                
+            </div>
+        </div>
+    </body>
+    <footer class="footer">
+        <p><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
+
+    </footer>
+</html>
