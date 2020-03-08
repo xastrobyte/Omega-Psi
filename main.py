@@ -11,6 +11,8 @@ from cogs.help_command import Help, cogs
 from cogs.predicates import get_prefix, is_command_enabled_predicate
 
 from util.database.database import database
+from util.discord import update_top_gg
+from util.ifttt import IFTTT
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -53,6 +55,14 @@ async def on_ready():
         restart["send"] = False
         await database.bot.set_restart(restart)
         await channel.send("{}, I'm back!".format(author.mention))
+    
+    # Send a push notification to IFTTT
+    await IFTTT.push(
+        "omega_psi_push",
+        "Omega Psi is online!",
+        "",
+        "Omega Psi is online and ready to go!"
+    )
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -133,6 +143,14 @@ async def on_command_error(ctx, error):
         await channel.send(
             embed = embed
         )
+
+@bot.event
+async def on_guild_join(guild):
+    await update_top_gg(bot)
+
+@bot.event
+async def on_guild_remove(guild):
+    await update_top_gg(bot)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

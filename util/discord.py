@@ -1,13 +1,44 @@
 from asyncio import wait, FIRST_COMPLETED
 from discord import Embed
+from functools import partial
+from os import environ
 from requests import post
 
 from cogs.globals import loop, SCROLL_REACTIONS
 from cogs.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, DELETE, CHECK_MARK
 
+from util.ifttt import IFTTT
 from util.functions import add_scroll_reactions, get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+async def update_top_gg(bot):
+    """Updates the amount of servers Omega Psi is in on top.gg
+
+    Parameters
+    ----------
+        bot : AutoShardedBot
+            The bot object to update on top.gg
+    """
+    await loop.run_in_executor(None,
+        partial(
+            post, "https://top.gg/api/bots/{}/stats".format(
+                environ["CLIENT_ID"]
+            ),
+            json = {
+                "server_count": len(bot.guilds)
+            },
+            headers = {
+                "Authorization": environ["TOP_GG_TOKEN"]
+            }
+        )
+    )
+    await IFTTT.push(
+        "omega_psi_push",
+        "Top.gg Server Count Updated!",
+        "",
+        "Omega Psi's server count has been updated on top.gg. Omega Psi is in {} servers".format(len(bot.guilds))
+    )
 
 def send_webhook_sync(webhook_url, embed):
     """Synchronously sends a webhook to the specified webhook URL.
