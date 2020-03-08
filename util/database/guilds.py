@@ -40,7 +40,7 @@ class Guild:
         guild_data = self._guilds.find_one({"_id": guild_id})
         if not guild_data:
             self._guilds.insert_one({"_id": guild_id})
-            self.set_guild_sync(data)
+            self.set_guild_sync(guild_id, data)
             guild_data = data
         
         guild_data = set_default(data, guild_data)
