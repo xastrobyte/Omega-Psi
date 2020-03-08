@@ -340,6 +340,7 @@ class Bot:
             ]
         })
         self.set_updates_sync(updates)
+        self.set_pending_update_sync({})
     
     def add_pending_feature_sync(self, feature, type):
         """Synchronously adds a new pending feature to Omega Psi
