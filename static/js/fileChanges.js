@@ -324,7 +324,7 @@ async function addFileChange(fileID) {
  * @param fileChangeID The ID of the file where the change is to edit and update
  * @param changeID the ID of the change to edit and update
  */
-async function editFileChange(fileChangeID, changeID) {
+async function editFileChange(fileID, changeID) {
 
     // Ask the user for the new fileChange information
     //  - change text
@@ -352,7 +352,7 @@ async function editFileChange(fileChangeID, changeID) {
     if (change) {
          $.ajax({
             url: `${BASE_URL}/fileChange/change`,
-            type: "POST",
+            type: "PUT",
             data: JSON.stringify({
                 fileID: fileID,
                 changeID: changeID,
@@ -365,7 +365,7 @@ async function editFileChange(fileChangeID, changeID) {
         }).done(function(data) {
 
             // Update the HTML element
-            document.createElement(`change${change}Change`).innerHTML = change;
+            document.getElementById(`change${changeID}Change`).innerHTML = change;
 
             // Let the user know that file change has been updated
             Swal.fire({
