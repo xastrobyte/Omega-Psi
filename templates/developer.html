@@ -278,7 +278,7 @@
                                                         <tr id="change{{ changeID }}">
                                                             <td></td>
                                                             <td id="change{{ changeID }}Change">{{ changed_files[fileID]["changes"][changeID] }}</td>
-                                                            <td><button class="page-form-button" onclick="editFileChange('{{ fileID }}', ''{{ changeID }}')">Edit</button></td>
+                                                            <td><button class="page-form-button" onclick="editFileChange('{{ fileID }}', '{{ changeID }}')">Edit</button></td>
                                                             <td><button class="page-form-button" onclick="removeFileChange('{{ fileID }}', '{{ changeID }}')">Remove</button></td>
                                                         </tr>
                                                     {% endfor %}
@@ -300,7 +300,8 @@
         </div>
     </body>
     <footer class="footer">
-        <p><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
+        <p style="text-align: center;"><a href="/privacyPolicy" class="link" target="_blank">Privacy Policy</a>
+<small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
 
     </footer>
 </html>

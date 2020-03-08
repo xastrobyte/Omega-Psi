@@ -176,14 +176,12 @@ class Footer:
         return self._links
     
     def generate_html(self):
-        html = "<p><small style=\"background: #202020;\"><code>Copyright &copy; {0}<script>new Date().getFullYear()>{0}&&document.write(\"-\"+new Date().getFullYear());</script>, {1}</code></small></p>\n".format(
+        html = "<p style=\"text-align: center;\">{2}<small style=\"background: #202020;\"><code>Copyright &copy; {0}<script>new Date().getFullYear()>{0}&&document.write(\"-\"+new Date().getFullYear());</script>, {1}</code></small></p>\n".format(
             self.get_copyright_year(),
-            self.get_copyright_name()
+            self.get_copyright_name(),
+            "".join([
+                "{}\n".format(link.generate_html()) for link in self.get_links()
+            ])
         )
-
-        for link in self.get_links():
-            html += "<br><p>{}</p>".format(
-                link.generate_html()
-            )
         
         return html

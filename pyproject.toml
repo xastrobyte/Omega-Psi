@@ -1,0 +1,19 @@
+[tool]
+[tool.poetry]
+authors = ["Your Name <you@example.com>"]
+name = "root"
+version = "0.0.0"
+[tool.poetry.dependencies]
+"discord.py" = "*"
+flask = "*"
+flask-session = "*"
+flask-cors = "*"
+google-api-python-client = "*"
+google-auth-httplib2 = "*"
+google-auth-oauthlib = "*"
+imdb-cli-tool = "*"
+imdbpy = "*"
+pymongo = "*"
+python = "^3.7"
+requests = "*"
+werkzeug = "^1.0"

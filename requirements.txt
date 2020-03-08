@@ -1,6 +1,13 @@
 discord.py
 Flask
+Flask-Session
+Flask-CORS
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
 IMDbPY
 pymongo
 requests
 imdb-cli-tool
+request
+pyopenssl

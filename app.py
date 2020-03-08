@@ -2,6 +2,7 @@ from asyncio import run_coroutine_threadsafe
 from datetime import datetime, timedelta
 from discord import Embed
 from flask import Flask, session, request, redirect, url_for, render_template, jsonify, make_response
+from flask_session import Session
 from os import environ
 from random import randint
 from requests import post, get
@@ -10,7 +11,7 @@ from threading import Thread
 from cogs.globals import loop, PRIMARY_EMBED_COLOR
 
 from util.database.database import database
-from util.website.website import Website, Footer
+from util.website.website import Website, Footer, Link
 from util.website.page import Page, Section, HomeSection, get_case_html, get_pending_update_html, get_file_change_html, get_tasks_html, get_feedback_html
 
 from util.discord import send_webhook_sync
@@ -29,6 +30,7 @@ app.config.update(
     PREFERRED_URL_SCHEME = "https",
     PERMANENT_SESSION_LIFETIME = timedelta(days = 7)
 )
+Session(app)
 
 DISCORD_OAUTH_LINK = "https://discordapp.com/api/oauth2/authorize?client_id=535587516816949248&redirect_uri=https%3A%2F%2Fomegapsi.fellowhashbrown.com%2Flogin&response_type=code&scope=identify"
 DISCORD_TOKEN_LINK = "https://discordapp.com/api/oauth2/token"
@@ -48,7 +50,10 @@ def make_session_permanent():
     #   Have the user login
     if request.endpoint in ["developer", "info"]:
         session["target_url"] = request.endpoint
-        user_data = database.data.get_session_user(request.cookies.get("user_id"))
+        cookie_user_id = request.cookies.get("user_id")
+        session_user_id = session.get("user_id")
+        session["user_id" ] = cookie_user_id if cookie_user_id else session_user_id
+        user_data = database.data.get_session_user(session["user_id"])
 
         # Check if the user is valid
         if user_data and "id" in user_data:
@@ -166,7 +171,7 @@ def report_bug():
         elif request.method == "PUT":
 
             # Make sure this user is a developer
-            if database.bot.is_developer_sync(request.cookies.get("user_id")):
+            if database.bot.is_developer_sync(session.get("user_id")):
             
                 # Get the bug report that is marked as seen
                 #   and find the user that reported it
@@ -174,7 +179,7 @@ def report_bug():
                 case_number = request.json["caseNumber"]
                 case = database.case_numbers.get_bug_sync(case_number)
                 user = OMEGA_PSI.get_user(int(case["author"]))
-                dev = OMEGA_PSI.get_user(int(request.cookies.get("user_id")))
+                dev = OMEGA_PSI.get_user(int(session.get("user_id")))
 
                 # Send a message to the user saying a developer has viewed their bug
                 #   only if the user was found and if the bug hasn't been seen already
@@ -216,7 +221,7 @@ def suggest():
             # Get the suggestion data along with the current user and get
             #   a discord.User object from their ID
             description = request.json["description"]
-            user_id = request.cookies.get("user_id")
+            user_id = session.get("user_id")
             user = OMEGA_PSI.get_user(int(user_id))
             case_number = database.case_numbers.get_suggestion_number_sync()
 
@@ -250,7 +255,7 @@ def suggest():
         elif request.method == "PUT":
 
             # Make sure this user is a developer
-            if database.bot.is_developer_sync(request.cookies.get("user_id")):
+            if database.bot.is_developer_sync(session.get("user_id")):
             
                 # Get the suggestion that is marked as seen
                 #   and find the user that suggested it
@@ -258,7 +263,7 @@ def suggest():
                 case_number = request.json["caseNumber"]
                 case = database.case_numbers.get_suggestion_sync(case_number)
                 user = OMEGA_PSI.get_user(int(case["author"]))
-                dev = OMEGA_PSI.get_user(int(request.cookies.get("user_id")))
+                dev = OMEGA_PSI.get_user(int(session.get("user_id")))
 
                 # Send a message to the user saying a developer has viewed their suggestion
                 #   only if the user was found and if the suggestion hasn't been seen already
@@ -337,6 +342,7 @@ def login():
         #   the user can reauthenticate when their token expires
         user_data["verified_at"] = int(datetime.now().timestamp())
         database.data.set_session_user(user_data["id"], user_data)
+        session["user_id"] = user_data["id"]
         response = make_response(
             redirect(
                 f"/{session['target_url']}",
@@ -350,7 +356,7 @@ def login():
 def developer():
 
     # Check if the current session user id is a developer
-    if database.bot.is_developer_sync(request.cookies.get("user_id")):
+    if database.bot.is_developer_sync(session.get("user_id")):
 
         # Get all the bug and suggestions cases and change the "author" key to
         #   show the authors name and discriminator
@@ -405,7 +411,7 @@ def developer():
 def pending_update():
 
     # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and request.cookies.get("user_id") and database.bot.is_developer_sync(request.cookies.get("user_id")):
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
 
         # Create a new pending update if the request is of type POST
         if request.method == "POST":
@@ -432,7 +438,7 @@ def pending_update():
 def create_feature():
 
     # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and request.cookies.get("user_id") and database.bot.is_developer_sync(request.cookies.get("user_id")):
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
 
         # Creating a feature
         if request.method == "POST":
@@ -496,7 +502,7 @@ def create_feature():
 def file_change_file():
 
     # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and request.cookies.get("user_id") and database.bot.is_developer_sync(request.cookies.get("user_id")):
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
         
         # Creating a new file
         if request.method == "POST":
@@ -526,7 +532,7 @@ def file_change_file():
 def file_change_file_change():
 
     # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and request.cookies.get("user_id") and database.bot.is_developer_sync(request.cookies.get("user_id")):
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
         
         # Creating a new change
         if request.method == "POST":
@@ -558,7 +564,7 @@ def file_change_file_change():
 def tasks():
 
     # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and request.cookies.get("user_id") and database.bot.is_developer_sync(request.cookies.get("user_id")):
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
         
         # Adding a new task
         if request.method == "POST":
@@ -608,7 +614,10 @@ def keep_alive(bot, cogs):
     website = Website(
         footer = Footer(
             copyright_name = "Jonah Pierce",
-            copyright_year = 2018
+            copyright_year = 2018,
+            links = [
+                Link(url = "/privacyPolicy", text = "Privacy Policy")
+            ]
         ),
         pages = [
             Page(

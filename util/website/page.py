@@ -615,7 +615,7 @@ def get_file_change_html():
                                                         <tr id="change{{ changeID }}">
                                                             <td></td>
                                                             <td id="change{{ changeID }}Change">{{ changed_files[fileID]["changes"][changeID] }}</td>
-                                                            <td><button class="page-form-button" onclick="editFileChange('{{ fileID }}', ''{{ changeID }}')">Edit</button></td>
+                                                            <td><button class="page-form-button" onclick="editFileChange('{{ fileID }}', '{{ changeID }}')">Edit</button></td>
                                                             <td><button class="page-form-button" onclick="removeFileChange('{{ fileID }}', '{{ changeID }}')">Remove</button></td>
                                                         </tr>
                                                     {% endfor %}
