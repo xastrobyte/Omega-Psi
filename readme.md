@@ -1,7 +1,7 @@
-[![Discord Bots](https://discordbots.org/api/widget/owner/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
-[![Discord Bots](https://discordbots.org/api/widget/status/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
-[![Discord Bots](https://discordbots.org/api/widget/servers/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
-[![Discord Bots](https://discordbots.org/api/widget/lib/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://top.gg/api/widget/owner/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://top.gg/api/widget/status/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://top.gg/api/widget/servers/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+[![Discord Bots](https://top.gg/api/widget/lib/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 
 Support Server: [![Discord Server](https://img.shields.io/discord/521185038969208850.svg)](https://discord.gg/W8yVrHt)
 
@@ -22,7 +22,6 @@ If you'd like to take a look at a full list of commands, Omega Psi's [website](h
 has a list of commands and any subcommands in it.
 
 ## Bugs and Suggestions
-
 If you find any bugs in the bot or if you'd like to make a suggestion, you can do that in one of two ways:
  * Use the commands in the bot (`o.bug` or `o.suggest`) to report a bug or make a suggestion
  * Head on over to the [info](https://omegapsi.fellowhashbrown.com/info) page on Omega Psi's website to report a bug or make a suggestion
