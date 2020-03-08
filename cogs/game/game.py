@@ -2,16 +2,17 @@ from asyncio import TimeoutError
 from discord import Embed, Member
 from discord.ext.commands import Cog, command
 
-from cogs.errors import MEMBER_NOT_FOUND_ERROR, NotGuildOrNSFW, NOT_GUILD_OR_NSFW_ERROR
+from cogs.errors import MEMBER_NOT_FOUND_ERROR
 from cogs.globals import JOIN, ROBOT, SMART, RANDOM, PLAY_NOW
 from cogs.predicates import is_nsfw_and_guild
 
-from cogs.game.minigames.connect_four.game import ConnectFourGame
-from cogs.game.minigames.tic_tac_toe.game import TicTacToeGame
-from cogs.game.minigames.game_of_life.game import GameOfLifeGame
-from cogs.game.minigames.uno.game import UnoGame
+from cogs.game.minigames.battleship.game import BattleshipGame
 from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanityGame
+from cogs.game.minigames.connect_four.game import ConnectFourGame
+from cogs.game.minigames.game_of_life.game import GameOfLifeGame
 from cogs.game.minigames.omok.game import OmokGame
+from cogs.game.minigames.tic_tac_toe.game import TicTacToeGame
+from cogs.game.minigames.uno.game import UnoGame
 
 from util.database.database import database
 from util.functions import get_embed_color
@@ -65,7 +66,8 @@ class Game(Cog, name = "game"):
                 "<:cah:540281486633336862> Cards Against Humanity": await database.users.get_cards_against_humanity(member),
                 "<:W4:549407153736253460> Uno": await database.users.get_uno(member),
                 ":house: Game of Life": await database.users.get_game_of_life(member),
-                ":brown_circle: Gomoku": await database.users.get_omok(member)
+                ":brown_circle: Gomoku": await database.users.get_omok(member),
+                ":ship: Battleship": await database.users.get_battleship(member)
             }
 
             embed = Embed(
@@ -97,6 +99,40 @@ class Game(Cog, name = "game"):
         await ctx.send(embed = embed)
 
     @command(
+        name = "battleship",
+        description = "Play a game of Battleship against an AI or against another person",
+        cog_name = "game"
+    )
+    async def battleship(self, ctx):
+
+        # Wait for other players
+        result = await self.wait_for_users(ctx, "Waiting for a Battleship opponent",
+            is_two_player = True,
+            timeout = 30
+        )
+
+        # The result is not None, it must be either a user or
+        #   the SMART/RANDOM reaction
+        if result != None:
+            game = BattleshipGame(
+                self.bot, ctx, 
+                ctx.author, 
+                1 if result in [SMART, RANDOM] else result, 
+                is_smart = result == SMART
+            )
+            await game.play()
+        
+        # The result is None, no one wanted to play the game
+        else:
+            await ctx.send(
+                embed = Embed(
+                    title = "No responses :frowning2:",
+                    description = "It seems like no one wanted to play with you.",
+                    colour = await get_embed_color(ctx.author)
+                )
+            )
+
+    @command(
         name = "cardsAgainstHumanity",
         aliases = ["cah"],
         description = "Play a game of Cards Against Humanity with at least 2 other players.",
@@ -114,7 +150,7 @@ class Game(Cog, name = "game"):
         )
 
         # The result is not None, there are players
-        if result is None:
+        if result != None:
 
             # Check if there were not enough players
             if not result:
@@ -157,7 +193,7 @@ class Game(Cog, name = "game"):
 
         # The result is not None, it must be either a user or
         #   the SMART/RANDOM reaction
-        if result is not None:
+        if result != None:
             game = ConnectFourGame(
                 self.bot, ctx, 
                 ctx.author, 
@@ -192,7 +228,7 @@ class Game(Cog, name = "game"):
 
         # The result is not None, it must be either a list of users or
         #   the ROBOT reaction
-        if result is not None:
+        if result != None:
             game = GameOfLifeGame(self.bot, ctx, result)
             await game.play()
         
@@ -222,7 +258,7 @@ class Game(Cog, name = "game"):
 
         # The result is not None, it must be either a user or
         #   the SMART/RANDOM reaction
-        if result is not None:
+        if result != None:
             game = OmokGame(
                 self.bot, ctx, ctx.author, 
                 1 if result in [SMART, RANDOM] else result, 
@@ -256,7 +292,7 @@ class Game(Cog, name = "game"):
 
         # The result is not None, it must be either a user or
         #   the SMART/RANDOM reaction
-        if result is not None:
+        if result != None:
             game = TicTacToeGame(
                 self.bot, ctx, ctx.author, 
                 1 if result in [SMART, RANDOM] else result, 
@@ -288,7 +324,7 @@ class Game(Cog, name = "game"):
         )
 
         # The result is not None, it must be either a user or a ROBOT reaction
-        if result is not None:
+        if result != None:
             game = UnoGame(
                 self.bot, ctx,
                 [ctx.author] if result == ROBOT else ([ctx.author] + result),
@@ -384,6 +420,7 @@ class Game(Cog, name = "game"):
             await message.add_reaction(ROBOT)
 
         # Loop until there are enough players
+        ai_chosen = False
         while len(players) != max_players:
             try:
                 reaction, user = await self.bot.wait_for(
@@ -396,6 +433,7 @@ class Game(Cog, name = "game"):
                 #  only process this if allow_ai is True
                 is_smart = None
                 if str(reaction) == ROBOT and allow_ai:
+                    ai_chosen = True
 
                     # Check if an intelligent AI is allowed
                     if allow_intelligent_ai:
@@ -440,7 +478,7 @@ class Game(Cog, name = "game"):
                     # If is_smart has not been set to True or False
                     #   the user who reacted is the one who is playing the game against
                     #   the original author
-                    if is_smart is None:
+                    if is_smart == None:
                         return user
                     else:
                         return SMART if is_smart else RANDOM
@@ -485,6 +523,10 @@ class Game(Cog, name = "game"):
             # No one reacted within the timeout range
             except TimeoutError:
                 await message.delete()
+
+                # Check if an AI is allowed and an AI was not chosen
+                if allow_ai and not ai_chosen:
+                    return None
 
                 # Check if there are enough players
                 if len(players) >= min_players:
@@ -538,13 +580,6 @@ class Game(Cog, name = "game"):
         ) and message.id == reaction.message.id
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    @cards_against_humanity.error
-    async def error_handler(self, ctx, error):
-
-        # Check if the error was because of is_nsfw_and_guild
-        if isinstance(error, NotGuildOrNSFW):
-            await ctx.send(embed = NOT_GUILD_OR_NSFW_ERROR)
 
 def setup(bot):
     bot.add_cog(Game(bot))

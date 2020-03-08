@@ -7,13 +7,13 @@ class Player:
 
     Keyword Parameters
     ------------------
-    member : discord.Member or str
-        The discord.Member defining this Player object or
-        a str clarifying this Player object as an AI player
-    is_smart : boolean
-        A boolean value determining if this Player is playing smart or random
-        Note: this only applies to AI players and is only set to True or False if
-                this player is an AI player
+        member : discord.Member or str
+            The discord.Member defining this Player object or
+            a str clarifying this Player object as an AI player
+        is_smart : boolean
+            A boolean value determining if this Player is playing smart or random
+            Note: this only applies to AI players and is only set to True or False if
+                    this player is an AI player
     """
 
     QUIT = "QUIT"

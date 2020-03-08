@@ -44,6 +44,10 @@ class User:
                 "active": False,
                 "webhook_key": None
             },
+            "battleship": {
+                "won": 0,
+                "lost": 0
+            },
             "connect_four": {
                 "won": 0,
                 "lost": 0
@@ -247,6 +251,22 @@ class User:
     # Minigame Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    def get_battleship_sync(self, user : Union[User, str]):
+        """Synchronously retrieves the user's battleship data from the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the Battleship data of
+        
+        Returns
+        -------
+            dict
+                The User's Battleship data
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["battleship"]
+
     def get_connect_four_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's connect four data from the database
 
@@ -309,9 +329,23 @@ class User:
                 The User's Omok data
         """
         user_data = self.get_user_sync(user)
-        return user_data["omok"];
+        return user_data["omok"]
     
     # # # # # # # # # # # # # # #
+
+    def update_battleship_sync(self, user : Union[User, str], won):
+        """Synchronously updates the user's battleship data in the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to update the Battleship data of
+            won : boolean
+                Whether or not the User won
+        """
+        user_data = self.get_user_sync(user)
+        user_data["battleship"]["won" if won else "lost"] += 1
+        self.set_user_sync(user, user_data)
     
     def update_connect_four_sync(self, user : Union[User, str], won):
         """Synchronously updates the user's connect four data in the database
@@ -370,6 +404,21 @@ class User:
         self.set_user_sync(user, user_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_battleship(self, user : Union[User, str]):
+        """Asynchronously retrieves the user's battleship data from the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the Battleship data of
+        
+        Returns
+        -------
+            dict
+                The User's Battleship data
+        """
+        return await loop.run_in_executor(None, self.get_battleship_sync, user)
 
     async def get_connect_four(self, user : Union[User, str]):
         """Asynchronously retrieves the user's connect four data from the database
@@ -432,6 +481,18 @@ class User:
         return await loop.run_in_executor(None, self.get_omok_sync, user)
 
     # # # # # # # # # # # # # # #
+
+    async def update_battleship(self, user : Union[User, str], won):
+        """Asynchronously updates the user's battleship data in the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to update the Battleship data of
+            won : boolean
+                Whether or not the User won
+        """
+        await loop.run_in_executor(None, self.update_battleship_sync, user, won)
 
     async def update_connect_four(self, user : Union[User, str], won):
         """Asynchronously updates the user's connect four data in the database
