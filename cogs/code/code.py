@@ -2,6 +2,7 @@ from base64 import b64encode, b64decode
 from discord import Embed
 from discord.ext.commands import command, Cog, group
 from functools import partial
+from os import environ
 from requests import get, post
 from urllib.parse import quote
 
@@ -37,9 +38,10 @@ MORSE_CHART = {
 }
 
 LOGIC_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true"
-LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true"
+LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true&wolframalpha=true"
 LOGIC_RAW_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&raw=true"
 QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
+WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={}&includepodid=LogicCircuit&output=json"
 
 JUDGE_POST_API_CALL = "https://api.judge0.com/submissions/"
 JUDGE_GET_API_CALL = "https://api.judge0.com/submissions/{}?fields=stdout,stderr,time,status"
@@ -428,6 +430,16 @@ class Code(Cog, name = "code"):
                 
                 # The truth table is within 2000 characters
                 else:
+
+                    # Call the WolframAlpha API to get a logical circuit from the expression
+                    response = await loop.run_in_executor(None,
+                        get, WOLFRAM_ALPHA_API_CALL.format(
+                            simplification["wolframalpha"],
+                            environ["WOLFRAM_ALPHA_API_KEY"]
+                        )
+                    )
+                    response = response.json()
+
                     await ctx.send(
                         embed = Embed(
                             title = "Logical Expression",
@@ -436,6 +448,11 @@ class Code(Cog, name = "code"):
                         ).add_field(
                             name = "Simplified",
                             value = simplification["value"]
+                        ).set_image(
+                            url = response["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                        ).set_footer(
+                            text = "Logic Circuit from WolframAlpha",
+                            icon_url = "https://cdn.iconscout.com/icon/free/png-256/wolfram-alpha-2-569293.png"
                         )
                     )
     
