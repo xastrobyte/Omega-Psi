@@ -7,6 +7,7 @@ class NotADeveloper(CheckFailure): pass
 class NotAGuildManager(CheckFailure): pass
 class NotInGuild(CheckFailure): pass
 class CommandDisabled(CheckFailure): pass
+class NotNSFWOrGuild(CheckFailure): pass
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -31,6 +32,7 @@ COMMAND_DISABLED_ERROR = lambda command: get_error_message("The `{}` command is 
 # # # # # Game Cog Errors # # # # #
 
 MEMBER_NOT_FOUND_ERROR = get_error_message("That member was not found in the server.")
+NOT_NSFW_OR_GUILD_ERROR = lambda command: get_error_message("The `{}` command can only be run in NSFW channels in a server.".format(command))
 
 # # # # # Insults Cog Errors # # # # #
 

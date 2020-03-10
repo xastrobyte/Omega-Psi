@@ -1,6 +1,6 @@
 from discord.ext.commands import check, when_mentioned_or
 
-from cogs.errors import NotADeveloper, NotAGuildManager, CommandDisabled
+from cogs.errors import NotADeveloper, NotAGuildManager, CommandDisabled, NotNSFWOrGuild
 from util.database.database import database
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -24,7 +24,9 @@ async def guild_only_predicate(ctx):
     return ctx.guild
 
 async def is_nsfw_and_guild_predicate(ctx):
-    return not ctx.guild and ctx.channel.is_nsfw()
+    if not ctx.guild or not ctx.channel.is_nsfw():
+        raise NotNSFWOrGuild()
+    return True
 
 async def is_command_enabled_predicate(ctx):
 
@@ -34,9 +36,14 @@ async def is_command_enabled_predicate(ctx):
     
     # Check in the guild disabled commands
     if ctx.guild:
-        if not await database.guilds.is_command_enabled(ctx.guild, ctx.command.qualified_name) and not await guild_manager_predicate(ctx):
-            raise CommandDisabled()
+        if not await database.guilds.is_command_enabled(ctx.guild, ctx.command.qualified_name):
 
+            # Check if the user is a guild manager, let them run it
+            try: 
+                await guild_manager_predicate(ctx)
+                return True
+            except: 
+                raise CommandDisabled()
     return True
 
 async def can_disable_commands_predicate(ctx):
