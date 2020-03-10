@@ -36,6 +36,7 @@ class Website:
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
     <script src="/static/js/bugs.js"></script>
     <script src="/static/js/suggestions.js"></script>
+    <script src="/static/js/settings.js"></script>
     <script src="/static/js/pendingUpdate.js"></script>
     <script src="/static/js/fileChanges.js"></script>
     <script src="/static/js/tasks.js"></script>
@@ -156,7 +157,7 @@ class Link:
         return self._url
     
     def generate_html(self):
-        return "<a href=\"{}\" class=\"link\" target=\"_blank\">{}</a>".format(
+        return "<a href=\"{}\" class=\"link\" style=\"font-family: cutive mono, monospace;\" target=\"_blank\">{}</a>".format(
             self.get_url(), self.get_text()
         )
 
@@ -179,8 +180,8 @@ class Footer:
         html = "<p style=\"text-align: center;\">{2}<small style=\"background: #202020;\"><code>Copyright &copy; {0}<script>new Date().getFullYear()>{0}&&document.write(\"-\"+new Date().getFullYear());</script>, {1}</code></small></p>\n".format(
             self.get_copyright_year(),
             self.get_copyright_name(),
-            "".join([
-                "{}\n".format(link.generate_html()) for link in self.get_links()
+            " | ".join([
+                "{}".format(link.generate_html()) for link in self.get_links()
             ])
         )
         

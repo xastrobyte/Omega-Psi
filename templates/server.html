@@ -1,0 +1,140 @@
+
+<html>
+
+    
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/styles.css" rel="stylesheet" type="text/css">
+
+    
+    <meta property="theme-color" content="#EC7600" />
+    <meta property="og:title" content="website.server();" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://omegapsi.fellowhashbrown.com/" />
+    <meta property="og:image" content="https://i.imgur.com/Hy5Gyut.png" />
+
+    <meta property="og:description" content="you can edit Omega Psi's setting in {{ guild.name }} here!" />
+    <meta property="og:site_name" content="Edit {{ guild.name }}" />
+    <title>Edit {{ guild.name }}</title>
+    
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='/site.webmanifest') }}">
+    <link rel="mask-icon" href="{{ url_for('static', filename='/safari-pinned-tab.svg') }}" color="#202020">
+    <meta name="msapplication-TileColor" content="#202020">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='/mstile-144x144.png') }}">
+    <meta name="theme-color" content="#202020">
+    <meta name="msapplication-config" content="{{ url_for('static', filename='/browserconfig.xml') }}">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="/static/js/bugs.js"></script>
+    <script src="/static/js/suggestions.js"></script>
+    <script src="/static/js/settings.js"></script>
+    <script src="/static/js/pendingUpdate.js"></script>
+    <script src="/static/js/fileChanges.js"></script>
+    <script src="/static/js/tasks.js"></script>
+
+</head>
+
+
+    <body>
+        <div class="page-body">
+
+            <!-- Navigation Bar -->
+            <nav class="nav-bar">
+                <img src="https://i.imgur.com/Hy5Gyut.png" class="social-image" style="width: 50px; height: 50px;">
+                <div id="nav-toggle">
+                    <input type="checkbox">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    
+                    <ul class="nav-links">
+                        
+                <li class="nav-item">
+                    <a class="nav-link" href="/">commands</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/info">info</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings">settings</a>
+                </li>
+
+                
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div class="content">
+                
+                <h1 class="page-title">
+                    <code class="field">website</code><code>.</code><code class="field">server</code><code>();</code>
+                </h1>
+
+                <div class="page-title-block" style="max-width: 75%;">
+                    <p style="text-align: center;">
+                        you can edit Omega Psi's setting in {{ guild.name }} here!
+                    </p>
+                </div>
+
+                
+                        <!--Guild Prefix Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">prefix</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block" style="text-align: center;">
+                            <p>The prefix for {{ guild.name }} is currently <code id="guildPrefix" class="field">{{ guild_prefix }}</code></br>
+                            you can <button class="page-form-button" onclick="changePrefix('{{ guild.id }}')">change it here</button></p>
+                        </div>
+                    
+
+                    <!--Guild Disabled Commands Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">disabledCommands</code><code>();</code>
+                        </h2>
+                        <div id="disabledCommandsDiv" class="page-section-block" style="text-align: center;">
+                            {% if disabled_commands|length == 0 %}
+                                <p id="noDisabledCommands">No Disabled Commands</p>
+                            {% else %}
+                                <table id="disabledCommandsTable" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th width="100%">disabled command</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="disabledCommands">
+                                    {% for command in disabled_commands -%}
+                                        <tr id="disabledCommand{{ command }}">
+                                            <td>{{ command }}</td>
+                                            <td><button class="page-form-button" onclick="enableCommand('{{ guild.id }}', '{{ command }}')">Enable</button>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                            <button id="disableCommand" class="page-form-button" onclick="disableCommand('{{ guild.id }}', {{ all_commands }})">Disable Command</button>
+                        </div>
+                
+
+
+                <br>
+                <br>
+                
+            </div>
+        </div>
+    </body>
+    <footer class="footer">
+        <p style="text-align: center;"><a href="/privacyPolicy" class="link" style="font-family: cutive mono, monospace;" target="_blank">privacy policy</a> | <a href="/developer" class="link" style="font-family: cutive mono, monospace;" target="_blank">devs</a><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
+
+    </footer>
+</html>

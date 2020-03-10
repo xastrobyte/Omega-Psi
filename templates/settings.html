@@ -1,0 +1,156 @@
+
+<html>
+
+    
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/styles.css" rel="stylesheet" type="text/css">
+
+    
+    <meta property="theme-color" content="#EC7600" />
+    <meta property="og:title" content="website.settings();" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://omegapsi.fellowhashbrown.com/" />
+    <meta property="og:image" content="https://i.imgur.com/Hy5Gyut.png" />
+
+    <meta property="og:description" content="use this page to manage any servers you're in (that you can manage) or your settings." />
+    <meta property="og:site_name" content="Settings" />
+    <title>Settings</title>
+    
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='/site.webmanifest') }}">
+    <link rel="mask-icon" href="{{ url_for('static', filename='/safari-pinned-tab.svg') }}" color="#202020">
+    <meta name="msapplication-TileColor" content="#202020">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='/mstile-144x144.png') }}">
+    <meta name="theme-color" content="#202020">
+    <meta name="msapplication-config" content="{{ url_for('static', filename='/browserconfig.xml') }}">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="/static/js/bugs.js"></script>
+    <script src="/static/js/suggestions.js"></script>
+    <script src="/static/js/settings.js"></script>
+    <script src="/static/js/pendingUpdate.js"></script>
+    <script src="/static/js/fileChanges.js"></script>
+    <script src="/static/js/tasks.js"></script>
+
+</head>
+
+
+    <body>
+        <div class="page-body">
+
+            <!-- Navigation Bar -->
+            <nav class="nav-bar">
+                <img src="https://i.imgur.com/Hy5Gyut.png" class="social-image" style="width: 50px; height: 50px;">
+                <div id="nav-toggle">
+                    <input type="checkbox">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    
+                    <ul class="nav-links">
+                        
+                <li class="nav-item">
+                    <a class="nav-link" href="/">commands</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/info">info</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link active" href="/settings">settings</a>
+                </li>
+
+                
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div class="content">
+                
+                <h1 class="page-title">
+                    <code class="field">website</code><code>.</code><code class="field">settings</code><code>();</code>
+                </h1>
+
+                <div class="page-title-block" style="max-width: 75%;">
+                    <p style="text-align: center;">
+                        use this page to manage any servers you're in (that you can manage) or your settings.
+                    </p>
+                </div>
+
+                
+                        <!--Manage Guilds Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">servers</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block" style="text-align: center;">
+                            <p>here's where you can change Omega Psi's settings in servers you manage</p>
+                            <table width="100%">
+                                <thead>
+                                    <tr>
+                                        <th width="75%">Server Name</th>
+                                        <th width="25%">Server ID</th>
+                                    </tr>
+                                </thead>
+                                {% for guild in manageable_guilds -%}
+                                    <tr>
+                                        <td>{{ guild.name }}</td>
+                                        <td>{{ guild.id }}</td>
+                                        <td><input type="button" class="page-form-button" onclick="window.location.href='/server/{{ guild.id }}'" value="Edit"></td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+        
+
+                        <!--Gamestats Section-->
+                        <h2 class="page-section">
+                            <code class="field">page</code><code>.</code><code class="field">gamestats</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block" style="text-align: center;">
+                            <p>change your own personal settings here or view your gamestats!</p>
+                            <p>you can change your embed color when using omega psi here ➡ <input id="userColor" type="color" style="background-color: #293134; border: 1px solid #808080; border-radius: 5px;" value="#{{ user_color }}" onchange="editUserColor('{{ user_color }}')"></p>
+                            <table width="100%">
+                                <thead>
+                                    <tr>
+                                        <th width="50%">Minigame</th>
+                                        <th width="15%">Wins</th>
+                                        <th width="15%">Losses</th>
+                                        <th width="20%">Ratio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for minigame in minigames -%}
+                                        <tr>
+                                            <td>{{ minigame }}</td>
+                                            <td>{{ minigames[minigame]["won"] }}</td>
+                                            <td>{{ minigames[minigame]["lost"] }}</td>
+                                            <td>{{ minigames[minigame]["ratio"] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+        
+
+
+                <br>
+                <br>
+                
+            </div>
+        </div>
+    </body>
+    <footer class="footer">
+        <p style="text-align: center;"><a href="/privacyPolicy" class="link" style="font-family: cutive mono, monospace;" target="_blank">privacy policy</a> | <a href="/developer" class="link" style="font-family: cutive mono, monospace;" target="_blank">devs</a><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
+
+    </footer>
+</html>

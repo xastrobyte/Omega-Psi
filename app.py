@@ -1,18 +1,20 @@
 from asyncio import run_coroutine_threadsafe
 from datetime import datetime, timedelta
 from discord import Embed
-from flask import Flask, session, request, redirect, url_for, render_template, jsonify, make_response
+from flask import Flask, session, request, redirect, url_for, render_template, jsonify, make_response, abort
 from flask_session import Session
 from os import environ
 from random import randint
 from requests import post, get
 from threading import Thread
 
-from cogs.globals import loop, PRIMARY_EMBED_COLOR
+from cogs.globals import loop, PRIMARY_EMBED_COLOR, MINIGAMES
+from cogs.predicates import is_developer_predicate
 
 from util.database.database import database
+from util.website.custom_html import get_case_html, get_pending_update_html, get_tasks_html, get_feedback_html, get_user_settings_html, get_server_settings_html
+from util.website.page import Page, Section, HomeSection
 from util.website.website import Website, Footer, Link
-from util.website.page import Page, Section, HomeSection, get_case_html, get_pending_update_html, get_file_change_html, get_tasks_html, get_feedback_html
 
 from util.discord import send_webhook_sync
 from util.string import dict_to_datetime, datetime_to_string
@@ -48,7 +50,7 @@ def make_session_permanent():
 
     # Check if the request is made to either /developer or /info
     #   Have the user login
-    if request.endpoint in ["developer", "info"]:
+    if request.endpoint in ["developer", "info", "settings"]:
         session["target_url"] = request.endpoint
         cookie_user_id = request.cookies.get("user_id")
         session_user_id = session.get("user_id")
@@ -98,9 +100,58 @@ def info():
         pending_update = pending_update
     ), 200
 
-@app.route("/roadmap")
-def roadmap():
-    return redirect("https://www.notion.so/0c5dd8ef184643b899f03fc9d1429729?v=39465eb450904f9bbf19e54436ac9059"), 302
+@app.route("/settings")
+def settings():
+
+    # Get a list of guilds that Omega Psi and the user are in where the user
+    #   also has manage guild permissions
+    manageable_guilds = []
+    for guild in OMEGA_PSI.guilds:
+        member = guild.get_member(int(session.get("user_id")))
+        if member and member.guild_permissions.manage_guild:
+            manageable_guilds.append(guild)
+
+    # Get the users minigame data from the database
+    user_data = database.users.get_user_sync(session.get("user_id"))
+    minigames = {}
+    for data in user_data:
+        if data in MINIGAMES:
+            user_data[data].update(
+                ratio = round(
+                    user_data[data]["won"] / user_data[data]["lost"]
+                    if user_data[data]["lost"] > 0 else
+                    user_data[data]["won"],
+                    2
+                )
+            )
+            minigames[data.replace("_", " ")] = user_data[data]
+
+    return render_template("settings.html", 
+        manageable_guilds = manageable_guilds,
+        minigames = minigames, 
+        user_color = hex(
+            user_data["embed_color"]
+            if user_data["embed_color"] else
+            PRIMARY_EMBED_COLOR
+        )[2:]
+    ), 200
+
+@app.route("/server/<string:guild_id>")
+def server(guild_id):
+    
+    # Make sure the user can manage the guild and get the 
+    #   prefix and disabled commands for the guild
+    guild = OMEGA_PSI.get_guild(int(guild_id))
+    member = guild.get_member(int(session.get("user_id")))
+    if guild and member and member.guild_permissions.manage_guild:
+        return render_template("server.html", 
+            guild = guild,
+            guild_prefix = database.guilds.get_prefix_sync(guild_id),
+            disabled_commands = database.guilds.get_disabled_commands_sync(guild_id)
+        )
+    
+    # The guild can't be found or the member can't be found or the member cannot manage the guild
+    abort(401)
 
 @app.route("/favicon.ico")
 def favicon():
@@ -110,6 +161,10 @@ def favicon():
 def privacy_policy():
     return render_template("privacyPolicy.html"), 200
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Errors
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template("pageNotFound.html"), 404
@@ -117,6 +172,10 @@ def page_not_found(error):
 @app.errorhandler(403)
 def missing_access(error):
     return render_template("missingAccess.html"), 403
+
+@app.errorhandler(401)
+def not_a_guild_manager(error):
+    return render_template("notServerManager.html"), 401
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Feedback Routes
@@ -292,6 +351,69 @@ def suggest():
     
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Settings Routes
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+@app.route("/settings/user", methods = ["POST"])
+def settings_user():
+
+    # Only run if the origin is from ALLOW_ORIGIN
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id"):
+
+        # Update the user's embed color in the database
+        database.users.set_embed_color_sync(session.get("user_id"), int(request.json["userColor"][1:], base = 16))
+        return jsonify({"success": True}), 201
+    
+    # The origin does not match ALLOW_ORIGIN
+    return jsonify({"error": "Unauthorized"}), 401
+
+@app.route("/settings/server", methods = ["GET", "POST", "PUT"])
+def settings_server():
+
+    # Getting a list of active commands
+    if request.method == "GET":
+        
+        # Get all active commands
+        all_commands = []
+        disabled_commands = database.guilds.get_disabled_commands_sync(request.args.get("guildID"))
+        for command in OMEGA_PSI.walk_commands():
+
+            # Don't add commands that have the is_developer check on it
+            if (
+                is_developer_predicate not in command.checks and 
+                command.qualified_name not in all_commands and
+                command.qualified_name not in disabled_commands and
+                command.qualified_name != "help"
+            ):
+                all_commands.append(command.qualified_name)
+
+        return jsonify(all_commands), 200
+
+    else:
+
+        # Only run if the origin is from ALLOW_ORIGIN
+        if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id"):
+
+            # Updating the prefix
+            if request.method == "POST":
+                database.guilds.set_prefix_sync(request.json["guildID"], request.json["prefix"])
+                return jsonify({"success": True}), 201
+
+            # Enabling/Disabling a command
+            elif request.method == "PUT":
+                if request.json["enable"]:
+                    if database.guilds.enable_command_sync(request.json["guildID"], request.json["command"]):
+                        return jsonify({"success": True}), 201
+                    return jsonify({"error": "That command is already enabled!"}), 401
+                else:
+                    if database.guilds.disable_command_sync(request.json["guildID"], request.json["command"]):
+                        return jsonify({"success": True}), 201
+                    return jsonify({"error": "That command is already disabled!"}), 401
+        
+        # The origin does not match ALLOW_ORIGIN
+        return jsonify({"error": "Unauthorized"}), 401
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Developer Routes
@@ -616,7 +738,8 @@ def keep_alive(bot, cogs):
             copyright_name = "Jonah Pierce",
             copyright_year = 2018,
             links = [
-                Link(url = "/privacyPolicy", text = "Privacy Policy")
+                Link(url = "/privacyPolicy", text = "privacy policy"),
+                Link(url = "/developer", text = "devs")
             ]
         ),
         pages = [
@@ -650,11 +773,6 @@ def keep_alive(bot, cogs):
                 ]
             ),
             Page(
-                title = "roadmap",
-                description = "you shouldn't be seeing this ...",
-                target = "/roadmap"
-            ),
-            Page(
                 title = "developer",
                 custom_title = "Developer Portal",
                 description = "only developers can see this ...",
@@ -679,11 +797,41 @@ def keep_alive(bot, cogs):
                         title = "pendingUpdate",
                         description = "all the information about a pending update goes here!",
                         custom_html = get_pending_update_html()
+                    )
+                ]
+            ),
+            Page(
+                title = "settings",
+                custom_title = "Settings",
+                description = "use this page to manage any servers you're in (that you can manage) or your settings.",
+                sections = [
+                    HomeSection(
+                        title = "servers",
+                        description = "here's where you can change Omega Psi's settings in servers you manage",
+                        custom_html = get_server_settings_html()
                     ),
                     HomeSection(
-                        title = "fileChanges",
-                        description = "any files changed when updating go here for easy access:)",
-                        custom_html = get_file_change_html()
+                        title = "user",
+                        description = "change your own personal settings here or view your gamestats!",
+                        custom_html = get_user_settings_html()
+                    )
+                ]
+            ),
+            Page(
+                title = "server",
+                custom_title = "Edit {{ guild.name }}",
+                description = "you can edit Omega Psi's setting in {{ guild.name }} here!",
+                ignore = True,
+                sections = [
+                    HomeSection(
+                        title = "prefix",
+                        description = "",
+                        custom_html = get_server_settings_html(True, "prefix")
+                    ),
+                    HomeSection(
+                        title = "disabledCommands",
+                        description = "",
+                        custom_html = get_server_settings_html(True, "disabledCommands")
                     )
                 ]
             ),
@@ -697,6 +845,12 @@ def keep_alive(bot, cogs):
                 title = "missingAccess",
                 custom_title = "Missing Access",
                 description = "you can't go to that page. if you think this is a mistake, please contact a developer.",
+                ignore = True
+            ),
+            Page(
+                title = "notServerManager",
+                custom_title = "Not a Server Manager",
+                description = "you don't have manage server permissions for that server!",
                 ignore = True
             )
         ]
