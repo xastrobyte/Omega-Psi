@@ -33,6 +33,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
     <script src="/static/js/bugs.js"></script>
     <script src="/static/js/suggestions.js"></script>
+    <script src="/static/js/settings.js"></script>
     <script src="/static/js/pendingUpdate.js"></script>
     <script src="/static/js/fileChanges.js"></script>
     <script src="/static/js/tasks.js"></script>
@@ -65,7 +66,7 @@
 
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/roadmap">roadmap</a>
+                    <a class="nav-link" href="/settings">settings</a>
                 </li>
 
                 
@@ -252,46 +253,6 @@
                             </div>
             
 
-                        <!--File Change Section-->
-                        <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">fileChanges</code><code>();</code>
-                        </h2>
-                        <div id="fileChangeDiv" class="page-section-block" style="text-align: left;">
-                            {% if changed_files == None %}
-                                <p id="noFileChanges">No File Changes</p>
-                            {% else %}
-                                <ul id="fileChanges" style="list-style-type: none;">
-                                    {% for fileID in changed_files -%}
-                                        <li id="file{{ fileID }}" style="overflow: hidden;">
-                                            <table width="100%">
-                                                <thead>
-                                                    <tr>
-                                                        <td id="file{{ fileID }}File">{{ changed_files[fileID]["filename"] }}</td>
-                                                        <td width="80%"></td>
-                                                        <td><button class="page-form-button" onclick="addFileChange('{{ fileID }}')">Add New Change</button></td>
-                                                        <td><button class="page-form-button" onclick="editFile('{{ fileID }}')">Edit</button></td>
-                                                        <td><button class="page-form-button" onclick="removeFile('{{ fileID }}')">Remove</button></td>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="file{{ fileID }}Changes">
-                                                    {% for changeID in changed_files[fileID]["changes"] -%}
-                                                        <tr id="change{{ changeID }}">
-                                                            <td></td>
-                                                            <td id="change{{ changeID }}Change">{{ changed_files[fileID]["changes"][changeID] }}</td>
-                                                            <td><button class="page-form-button" onclick="editFileChange('{{ fileID }}', '{{ changeID }}')">Edit</button></td>
-                                                            <td><button class="page-form-button" onclick="removeFileChange('{{ fileID }}', '{{ changeID }}')">Remove</button></td>
-                                                        </tr>
-                                                    {% endfor %}
-                                                </tbody>
-                                            </table>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
-                            <button id="addNewFile" class="page-form-button" onclick="addFile()">Add New File</button>
-                        </div>
-        
-
 
                 <br>
                 <br>
@@ -300,8 +261,7 @@
         </div>
     </body>
     <footer class="footer">
-        <p style="text-align: center;"><a href="/privacyPolicy" class="link" target="_blank">Privacy Policy</a>
-<small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
+        <p style="text-align: center;"><a href="/privacyPolicy" class="link" style="font-family: cutive mono, monospace;" target="_blank">privacy policy</a> | <a href="/developer" class="link" style="font-family: cutive mono, monospace;" target="_blank">devs</a><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
 
     </footer>
 </html>
