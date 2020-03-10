@@ -132,7 +132,8 @@ class Help(HelpCommand):
                         cogs[cog.qualified_name]["emoji"],
                         cogs[cog.qualified_name]["name"]
                     ),
-                    value = "`o.help {}`".format(
+                    value = "`{}help {}`".format(
+                        await database.guilds.get_prefix(self.context.guild),
                         cog.qualified_name
                     )
                 )
