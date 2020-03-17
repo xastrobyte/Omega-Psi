@@ -8,7 +8,7 @@ from random import randint
 from requests import post, get
 from threading import Thread
 
-from cogs.globals import loop, PRIMARY_EMBED_COLOR, MINIGAMES
+from cogs.globals import loop, PRIMARY_EMBED_COLOR
 from cogs.predicates import is_developer_predicate
 
 from util.database.database import database
@@ -113,27 +113,27 @@ def settings():
 
     # Get the users minigame data from the database
     user_data = database.users.get_user_sync(session.get("user_id"))
+    minigame_data = database.users.get_minigame_data_sync(session.get("user_id"))
     minigames = {}
-    for data in user_data:
-        if data in MINIGAMES:
-            user_data[data].update(
-                ratio = round(
-                    user_data[data]["won"] / user_data[data]["lost"]
-                    if user_data[data]["lost"] > 0 else
-                    user_data[data]["won"],
-                    2
-                )
+    for data in minigame_data:
+        minigame_data[data].update(
+            ratio = round(
+                minigame_data[data]["won"] / minigame_data[data]["lost"]
+                if minigame_data[data]["lost"] > 0 else
+                minigame_data[data]["won"],
+                2
             )
-            minigames[data.replace("_", " ")] = user_data[data]
+        )
+        minigames[data.replace("_", " ")] = minigame_data[data]
 
     return render_template("settings.html", 
         manageable_guilds = manageable_guilds,
         minigames = minigames, 
         user_color = hex(
             user_data["embed_color"]
-            if user_data["embed_color"] else
+            if user_data["embed_color"] is not None else
             PRIMARY_EMBED_COLOR
-        )[2:]
+        )[2:].rjust(6, "0")
     ), 200
 
 @app.route("/server/<string:guild_id>")
@@ -142,16 +142,18 @@ def server(guild_id):
     # Make sure the user can manage the guild and get the 
     #   prefix and disabled commands for the guild
     guild = OMEGA_PSI.get_guild(int(guild_id))
-    member = guild.get_member(int(session.get("user_id")))
-    if guild and member and member.guild_permissions.manage_guild:
-        return render_template("server.html", 
-            guild = guild,
-            guild_prefix = database.guilds.get_prefix_sync(guild_id),
-            disabled_commands = database.guilds.get_disabled_commands_sync(guild_id)
-        )
+    if guild:
+        member = guild.get_member(int(session.get("user_id")))
+        if member and member.guild_permissions.manage_guild:
+            return render_template("server.html", 
+                guild = guild,
+                guild_prefix = database.guilds.get_prefix_sync(guild_id),
+                disabled_commands = database.guilds.get_disabled_commands_sync(guild_id)
+            )
+        abort(401)
     
     # The guild can't be found or the member can't be found or the member cannot manage the guild
-    abort(401)
+    abort(400)
 
 @app.route("/favicon.ico")
 def favicon():
@@ -172,6 +174,10 @@ def page_not_found(error):
 @app.errorhandler(403)
 def missing_access(error):
     return render_template("missingAccess.html"), 403
+
+@app.errorhandler(400)
+def no_such_guild(error):
+    return render_template("noSuchGuild.html"), 400
 
 @app.errorhandler(401)
 def not_a_guild_manager(error):
@@ -845,6 +851,12 @@ def keep_alive(bot, cogs):
                 title = "missingAccess",
                 custom_title = "Missing Access",
                 description = "you can't go to that page. if you think this is a mistake, please contact a developer.",
+                ignore = True
+            ),
+            Page(
+                title = "noSuchGuild",
+                custom_title = "No Such Guild",
+                description = "Omega Psi is not in that guild",
                 ignore = True
             ),
             Page(
