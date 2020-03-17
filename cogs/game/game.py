@@ -10,6 +10,7 @@ from cogs.game.minigames.battleship.game import BattleshipGame
 from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanityGame
 from cogs.game.minigames.connect_four.game import ConnectFourGame
 from cogs.game.minigames.game_of_life.game import GameOfLifeGame
+from cogs.game.minigames.mastermind.game import MastermindGame
 from cogs.game.minigames.omok.game import OmokGame
 from cogs.game.minigames.tic_tac_toe.game import TicTacToeGame
 from cogs.game.minigames.uno.game import UnoGame
@@ -60,14 +61,10 @@ class Game(Cog, name = "game"):
             
         # Get the member data if they were found
         if member:
+            minigame_data = await database.users.get_minigame_data(member)
             stats = {
-                ":x: Tic Tac Toe": await database.users.get_tic_tac_toe(member),
-                ":red_circle: Connect Four": await database.users.get_connect_four(member),
-                "<:cah:540281486633336862> Cards Against Humanity": await database.users.get_cards_against_humanity(member),
-                "<:W4:549407153736253460> Uno": await database.users.get_uno(member),
-                ":house: Game of Life": await database.users.get_game_of_life(member),
-                ":brown_circle: Gomoku": await database.users.get_omok(member),
-                ":ship: Battleship": await database.users.get_battleship(member)
+                minigame.replace("_", " ").title(): minigame_data[minigame]
+                for minigame in minigame_data
             }
 
             embed = Embed(
@@ -243,6 +240,15 @@ class Game(Cog, name = "game"):
             )
     
     @command(
+        name = "mastermind",
+        aliases = ["codeBreaker", "codeBreak"],
+        description = "Play a game of Mastermind",
+        cog_name = "game"
+    )
+    async def mastermind(self, ctx):
+        await MastermindGame(self.bot, ctx, ctx.author).play()
+    
+    @command(
         name = "omok",
         aliases = ["gomoku", "go"],
         description = "Play a game of Omok against an opponent or an AI",
@@ -327,8 +333,7 @@ class Game(Cog, name = "game"):
         if result != None:
             game = UnoGame(
                 self.bot, ctx,
-                [ctx.author] if result == ROBOT else ([ctx.author] + result),
-                against_ais = result == ROBOT
+                result
             )
             await game.play()
         
