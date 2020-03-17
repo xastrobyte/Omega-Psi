@@ -1,7 +1,9 @@
 from datetime import datetime
 from discord import Embed
 from discord.ext.commands import Cog, group, command, Paginator
+from functools import partial
 from imdb import IMDb
+from os import environ
 from random import choice, randint
 from requests import get
 from urllib.parse import quote
@@ -10,7 +12,7 @@ from cogs.errors import get_error_message, UNIMPLEMENTED_ERROR
 from cogs.globals import loop
 
 from util.database.database import database
-from util.discord import process_scrolling
+from util.discord import process_scrolling, process_page_reactions
 from util.functions import get_embed_color
 from util.imgur import Imgur
 from util.string import generate_random_string
@@ -363,12 +365,29 @@ class Misc(Cog, name = "misc"):
                     ),
                     value = paginator.pages[i]
                 )
+            
+            await ctx.send(embed = embed)
         
         # User is only accessing their Imgur album
         else:
-            embed = UNIMPLEMENTED_ERROR
-            
-        await ctx.send(embed = embed)
+
+            # Get the list of images
+            album_images = await Imgur.get_imgur_album(album_id)
+
+            # Create the scrolling embed
+            await process_scrolling(ctx, self.bot, title = "Images",
+                pages = [
+                    Embed(
+                        title = "Your Imgur Album",
+                        description = "_ _" if len(album_images) > 0 else "You don't have any images",
+                        colour = await get_embed_color(ctx.author)
+                    ).set_image(
+                        url = image["link"]
+                    )
+                    for image in album_images
+                ],
+                send_page = True
+            )
 
     @command(
         name = "movie",
