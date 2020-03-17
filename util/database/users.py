@@ -7,6 +7,12 @@ from util.misc import set_default
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+MINIGAMES = [
+    "battleship", "connect_four", "tic_tac_toe",
+    "cards_against_humanity", "uno", "game_of_life",
+    "omok", "mastermind"
+]
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class User:
@@ -69,6 +75,10 @@ class User:
                 "lost": 0
             },
             "omok": {
+                "won": 0,
+                "lost": 0
+            },
+            "mastermind": {
                 "won": 0,
                 "lost": 0
             }
@@ -251,6 +261,26 @@ class User:
     # Minigame Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+    def get_minigame_data_sync(self, user : Union[User, str]):
+        """Synchronously retrieves the user's minigame data from the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the minigame data of
+        
+        Returns
+        -------
+            dict
+                The User's minigame data
+        """
+        user_data = self.get_user_sync(user)
+        minigame_data = {}
+        for key in user_data:
+            if key in MINIGAMES:
+                minigame_data[key] = user_data[key]
+        return minigame_data
+
     def get_battleship_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's battleship data from the database
 
@@ -331,6 +361,22 @@ class User:
         user_data = self.get_user_sync(user)
         return user_data["omok"]
     
+    def get_mastermind_sync(self, user : Union[User, str]):
+        """Synchronously retrieves the user's mastermind data from the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the Mastermind data of
+            
+        Returns
+        -------
+            dict
+                The User's Mastermind data
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["mastermind"]
+    
     # # # # # # # # # # # # # # #
 
     def update_battleship_sync(self, user : Union[User, str], won):
@@ -403,7 +449,36 @@ class User:
         user_data["omok"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
+    def update_mastermind_sync(self, user : Union[User, str], won):
+        """Synchronously updates the user's mastermind data in the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to update the Mastermind data of
+            won : boolean
+                Whether or not the User won
+        """
+        user_data = self.get_user_sync(user)
+        user_data["mastermind"]["won" if won else "lost"] += 1
+        self.set_user_sync(user, user_data)
+    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_minigame_data(self, user : Union[User, str]):
+        """Asynchronously retrieves the user's minigame data from the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the minigame data of
+        
+        Returns
+        -------
+            dict
+                The User's minigame data
+        """
+        return await loop.run_in_executor(None, self.get_minigame_data_sync, user)
 
     async def get_battleship(self, user : Union[User, str]):
         """Asynchronously retrieves the user's battleship data from the database
@@ -479,6 +554,21 @@ class User:
                 The User's Omok data
         """
         return await loop.run_in_executor(None, self.get_omok_sync, user)
+    
+    async def get_mastermind(self, user : Union[User, str]):
+        """Asynchronously retrieves the user's mastermind data from the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the Mastermind data of
+            
+        Returns
+        -------
+            dict
+                The User's Mastermind data
+        """
+        return await loop.run_in_executor(None, self.get_mastermind_sync, user)
 
     # # # # # # # # # # # # # # #
 
@@ -541,6 +631,18 @@ class User:
                 Whether or not the User won
         """
         await loop.run_in_executor(None, self.update_omok_sync, user, won)
+    
+    async def update_mastermind(self, user : Union[User, str], won):
+        """Asynchronously updates the user's mastermind data in the database
+
+        Parameters
+        ----------
+            user : str or User
+                The User to update the Mastermind data of
+            won : boolean
+                Whether or not the User won
+        """
+        await loop.run_in_executor(None, self.update_mastermind_sync, user, won)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Card Game Access Methods
