@@ -113,10 +113,11 @@ def get_pending_update_html(on_developer_page = True):
                             </h2>
                             <div id="pendingUpdateDiv" class="page-section-block" style="text-align: center;">
                                 {% if pending_update == None %}
-                                    <p>No Pending Update</p>
+                                    <p id="noPendingUpdate">No Pending Update</p>
+                                    <button id="createUpdate" class="page-form-button" onclick="createUpdate()">Create Update</button>
                                 {% else %}
                                     {% if pending_update["features"]|length == 0 %}
-                                        <p id="noFeatures">No Features</p>
+                                        <p id="noFeatures">No Features Yet</p>
                                     {% else %}
                                         <table id="featuresTable" width="100%">
                                             <thead>
