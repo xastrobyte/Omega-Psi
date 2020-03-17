@@ -13,6 +13,8 @@ ANIMAL_API = "https://www.fellowhashbrown.com/api/animals?type={}"
 BABY_ANIMAL_API = "https://www.fellowhashbrown.com/api/animals?type={}&baby=true"
 ANIMAL_FACT_API = "https://www.fellowhashbrown.com/api/animals?type={}&fact=true"
 
+DOG_FACT_API = "http://dog-api.kinduff.com/api/facts"
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class Animal(Cog, name = "animal"):
@@ -345,9 +347,30 @@ class Animal(Cog, name = "animal"):
 
         # Check if getting an animal fact
         else:
-            await ctx.send(
+
+            # Check if the animal is a dog
+            if animal == "dog":
+                response = await loop.run_in_executor(None,
+                    get, DOG_FACT_API
+                )
+                response = response.json()
+                if response["success"]:
+                    embed = Embed(
+                        title = "Dog fact",
+                        description = response["facts"][0],
+                        colour = await get_embed_color(ctx.author)
+                    )
+                else:
+                    embed = Embed(
+                        title = "Could not load a fact :(",
+                        description = "_ _",
+                        colour = await get_embed_color(ctx.author)
+                    )
+            
+            # The fact is for an unimplemented animal fact
+            else:
                 embed = UNIMPLEMENTED_ERROR
-            )
+            await ctx.send(embed = embed)
 
 def setup(bot):
     bot.add_cog(Animal(bot))
