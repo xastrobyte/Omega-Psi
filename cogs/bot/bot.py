@@ -687,7 +687,7 @@ class Bot(Cog, name = "bot"):
     )
     async def source(self, ctx):
         await ctx.send(
-            "https://repl.it/@FellowHashbrown/Omega-Psi\nhttps://github.com/FellowHashbrown/Omega-Psi"
+            "https://repl.it/@FellowHashbrown/OmegaPsi\nhttps://github.com/FellowHashbrown/Omega-Psi"
         )
     
     @command(
