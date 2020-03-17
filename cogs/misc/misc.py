@@ -56,7 +56,8 @@ SYMBOLS = {
     "*": "✖",
     "-": "➖",
     "/": "➗",
-    "$": "💲"
+    "$": "💲",
+    " ": "  "
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -177,7 +178,7 @@ class Misc(Cog, name = "misc"):
             result = ""
             for char in text.lower():
                 if char.isalpha():
-                    result += ":regional_indicator_{}:".format(char)
+                    result += ":regional_indicator_{}: ".format(char)
                 elif char.isdigit():
                     result += EMOJI_DIGITS[int(char)]
                 elif char in SYMBOLS:
