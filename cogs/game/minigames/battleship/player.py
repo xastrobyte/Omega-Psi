@@ -391,11 +391,23 @@ class BattleshipPlayer(Player):
             # Check if there was a last hit and that the AI is smart
             result = None
             if self.last_hit and self.is_smart:
+                row = self.last_hit[0]
+                column = self.last_hit[1]
 
                 # Check if a direction exists, continue to go towards that direction
                 if self.current_direction:
-                    row = self.last_hit[0] + self.current_direction[0]
-                    column = self.last_hit[1] + self.current_direction[1]
+                    row += self.current_direction[0]
+                    column += self.current_direction[1]
+
+                    # Check if the new row and column exceed the board boundaries
+                    #   if so, reverse the direction
+                    if row < 0 or row >= game.get_current_board().height or column < 0 or column > game.get_current_board().width:
+                        self.current_direction = (
+                            -self.current_direction[0],
+                            -self.current_direction[1]
+                        )
+                        row += self.current_direction[0]
+                        column += self.current_direction[1]
 
                     # Continue generating a new position until the position is not in shots
                     while (row, column) in game.get_current_board().shots:
@@ -403,18 +415,17 @@ class BattleshipPlayer(Player):
                         column += self.current_direction[1]
                     result = game.get_current_board().fire(row, column)
 
-                    # If there was a hit, save the last hit
+                    # If there was a hit, save the last hit and check if the ship was sunk
                     if result == BattleshipBoard.HIT:
                         self.last_hit = row, column
-                    
-                    # If there was not a hit, check if the ship was sunk
-                    #   if not, reverse the direction
-                    #   if so, reset the last hit and the current direction
-                    else:
                         if game.get_current_board().did_ship_sink(game.get_current_board().get_at(*self.last_hit)):
                             self.last_hit = None
                             self.current_direction = None
-                        else:
+                    
+                    # If there was not a hit, check if the last hit was not sunk yet
+                    #   if not, reverse the direction
+                    else:
+                        if not game.get_current_board().did_ship_sink(game.get_current_board().get_at(*self.last_hit)):
                             self.current_direction = (
                                 -self.current_direction[0],
                                 -self.current_direction[1]
@@ -422,21 +433,27 @@ class BattleshipPlayer(Player):
                 
                 # The current direction does not exist, try finding adjacent spots
                 else:
-                    direction = choice(DIRECTIONS)
 
                     # Find all adjacent spots around the chosen spot and add the
                     #   directions to tried_directions wherever the AI has already gone previously
                     for temp_dir in DIRECTIONS:
                         temp_chosen = (
-                            1 if str(direction) == DOWN else (-1 if str(direction) == UP else 0),
-                            1 if str(direction) == RIGHT else (-1 if str(direction) == LEFT else 0)
+                            1 if str(temp_dir) == DOWN else (-1 if str(temp_dir) == UP else 0),
+                            1 if str(temp_dir) == RIGHT else (-1 if str(temp_dir) == LEFT else 0)
                         )
                         temp_row = row + temp_chosen[0]
                         temp_column = column + temp_chosen[1]
-                        if (temp_row, temp_column) in game.get_current_board().spots and temp_dir not in self.tried_directions:
+
+                        # Check if the temp_row, temp_column exceed the boards size, add them to the tried directions
+                        if temp_row < 0 or temp_row >= game.get_current_board().height or temp_column < 0 or temp_column >= game.get_current_board().width:
+                            self.tried_directions.append(temp_dir)
+                        
+                        # Check if the temp_row, temp_column has already been made
+                        if (temp_row, temp_column) in game.get_current_board().shots and temp_dir not in self.tried_directions:
                             self.tried_directions.append(temp_dir)
                     
                     # While the AI chose a direction that's already been tried, have them continue choosing
+                    direction = choice(DIRECTIONS)
                     while direction in self.tried_directions:
                         direction = choice(DIRECTIONS)
 
@@ -452,7 +469,7 @@ class BattleshipPlayer(Player):
                     #   The AI's next turn will move in the opposite direction
                     row = self.last_hit[0] + chosen_direction[0]
                     column = self.last_hit[1] + chosen_direction[1]
-                    while (row, column) in game.get_current_board().spots:
+                    while (row, column) in game.get_current_board().shots:
                         row += chosen_direction[0]
                         column += chosen_direction[1]
                     result = game.get_current_board().fire(row, column)
