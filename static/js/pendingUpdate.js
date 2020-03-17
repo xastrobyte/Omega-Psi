@@ -14,12 +14,22 @@ function createUpdate() {
     }).done(function(data) {
 
         // Create the "No Features Yet" text and the "Add New Feature" button
-        pendingUpdateHTML = "<p>No Features Yet</p>";
-        addNewFeatureHTML = "<button id=\"addNewFeature\" class=\"page-form-button\" onclick=\"addFeature()\">Add New Feature</button>";
+        var p = document.createElement("p");
+        p.id = "noFeatures";
+        var textNode = document.createTextNode("No Features Yet");
+        p.appendChild(textNode);
+
+        var button = document.createElement("button");
+        button.id = "addNewFeature";
+        button.className = "page-form-button";
+        button.setAttribute("onclick", "addFeature()");
+        button.innerHTML = "Add New Feature";
 
         // Clear the pending update div and add the html elements
-        document.getElementById("pendingUpdateDiv").textContent = "";
-        document.getElementById("pendingUpdateDiv").innerHTML = pendingUpdateHTML + "\n" + addNewFeatureHTML;
+        document.getElementById("noPendingUpdate").remove();
+        document.getElementById("createUpdate").remove();
+        document.getElementById("pendingUpdateDiv").appendChild(p);
+        document.getElementById("pendingUpdateDiv").appendChild(button);
 
         // Let the user know the update was created
         Swal.fire({
@@ -110,8 +120,17 @@ async function commitUpdate() {
         }).done(function(data) {
 
             // Clear the pending update div and the file change div
-            document.getElementById("featuresTable").textContent = "";
-            // document.getElementById("fileChanges").textContent = "";
+            document.getElementById("featuresTable").remove();
+            document.getElementById("addNewFeature").remove();
+            var p = document.createElement("p");
+            p.id = "noPendingUpdate";
+            var textNode = document.createTextNode("No Pending Update");
+            p.appendChild(textNode);
+
+            var button = document.createElement("button");
+            button.className = "page-form-button";
+            button.id = "createUpdate";
+            // button.setAttribute("");
 
             Swal.fire({
                 title: "Update Committed!",
@@ -219,8 +238,11 @@ async function addFeature() {
 
             // There is no features table, add it to the pendingUpdateDiv
             else {
-                document.getElementById("pendingUpdateDiv").textContent = "";
-                document.getElementById("pendingUpdateDiv").appendChild(createFeatureElements(data, true));
+                document.getElementById("noFeatures").remove();
+                document.getElementById("pendingUpdateDiv").insertBefore(
+                    createFeatureElements(data, true),
+                    document.getElementById("addNewFeature")
+                );
             }
 
             // Let the user know that the feature has been added
@@ -408,6 +430,18 @@ function removeFeature(featureID) {
 
         // Remove the row of the feature and let the user know it was removed
         document.getElementById(`feature${featureID}`).remove();
+        if (document.getElementById("features").children.length == 0) {
+            document.getElementById("featuresTable").remove();
+            var p = document.createElement("p");
+            p.id = "noFeatures";
+            var textNode = document.createTextNode("No Features Yet");
+            p.appendChild(textNode);
+
+            document.getElementById("pendingUpdateDiv").insertBefore(
+                p,
+                document.getElementById("addNewFeature")
+            );
+        }
 
         // Let the user know that the feature has been removed
         Swal.fire({
@@ -455,6 +489,7 @@ function createFeatureElements(feature, createTable = false) {
         // Create the <table>, <thead>, and <tbody> elements
         var table = document.createElement("table");
         table.id = "featuresTable";
+        table.width = "100%";
 
         var thead = document.createElement("thead");
         var tbody = document.createElement("tbody");
@@ -464,16 +499,18 @@ function createFeatureElements(feature, createTable = false) {
 
         var featureHeader = document.createElement("th");
         featureHeader.innerHTML = "Feature";
+        featureHeader.width = "92%";
         var typeHeader = document.createElement("th");
         typeHeader.innerHTML = "Type";
+        typeHeader.width = "8%";
         var dateHeader = document.createElement("th");
         dateHeader.innerHTML = "Date";
 
         // Add the headers to the header, the header to the thead, and the thead to the table
-        header.appendChild(featureHeader);
-        header.appendChild(typeHeader);
-        header.appendChild(dateHeader);
-        thead.appendChild(header);
+        headers.appendChild(featureHeader);
+        headers.appendChild(typeHeader);
+        headers.appendChild(dateHeader);
+        thead.appendChild(headers);
         tbody.appendChild(createFeatureElements(feature));
         table.appendChild(thead);
         table.appendChild(tbody);
