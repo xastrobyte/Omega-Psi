@@ -287,7 +287,7 @@ class Developer(Cog, name = "developer"):
             markdown = {
                 "description": description,
                 "changes": "\n".join([
-                    " `{}` | {}".format(
+                    " * `{}` | {}".format(
                         feature["type"],
                         feature["feature"]
                     )
@@ -297,7 +297,7 @@ class Developer(Cog, name = "developer"):
             regular = {
                 "description": description.replace("`", ""),
                 "changes": "\n".join([
-                    " |{}| - {}".format(
+                    " * |{}| - {}".format(
                         feature["type"],
                         feature["feature"].replace("`", "\'")
                     )
