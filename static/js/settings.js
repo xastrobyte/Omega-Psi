@@ -75,6 +75,7 @@ async function changePrefix(guildID) {
         // Check if the last letter in the prefix is an alphabet letter, add a space to the 
         //  prefix
         lastLetter = newPrefix.charAt(newPrefix.length - 1);
+        var prefix = newPrefix;
         if (lastLetter.toUpperCase() != lastLetter.toLowerCase())
             prefix = newPrefix + " ";
         $.ajax({
