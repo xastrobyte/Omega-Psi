@@ -13,7 +13,7 @@ ANIMAL_API = "https://www.fellowhashbrown.com/api/animals?type={}"
 BABY_ANIMAL_API = "https://www.fellowhashbrown.com/api/animals?type={}&baby=true"
 ANIMAL_FACT_API = "https://www.fellowhashbrown.com/api/animals?type={}&fact=true"
 
-DOG_FACT_API = "http://dog-api.kinduff.com/api/facts"
+DOG_CAT_FACT_API = "https://cat-fact.herokuapp.com/facts/random?animal_type={}"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -96,13 +96,13 @@ class Animal(Cog, name = "animal"):
     async def fox_baby(self, ctx):
         await self.animal_command(ctx, "fox", baby = True)
     
-    @fox.command(
-        name = "fact",
-        description = "Get a random fact about foxs from the internet.",
-        cog_name = "animal"
-    )
-    async def fox_fact(self, ctx):
-        await self.animal_command(ctx, "fox", fact = True)
+    # @fox.command(
+    #     name = "fact",
+    #     description = "Get a random fact about foxs from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def fox_fact(self, ctx):
+    #     await self.animal_command(ctx, "fox", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -123,13 +123,13 @@ class Animal(Cog, name = "animal"):
     async def penguin_baby(self, ctx):
         await self.animal_command(ctx, "penguin", baby = True)
     
-    @penguin.command(
-        name = "fact",
-        description = "Get a random fact about penguins from the internet.",
-        cog_name = "animal"
-    )
-    async def penguin_fact(self, ctx):
-        await self.animal_command(ctx, "penguin", fact = True)
+    # @penguin.command(
+    #     name = "fact",
+    #     description = "Get a random fact about penguins from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def penguin_fact(self, ctx):
+    #     await self.animal_command(ctx, "penguin", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -150,13 +150,13 @@ class Animal(Cog, name = "animal"):
     async def elephant_baby(self, ctx):
         await self.animal_command(ctx, "elephant", baby = True)
     
-    @elephant.command(
-        name = "fact",
-        description = "Get a random fact about elephants from the internet.",
-        cog_name = "animal"
-    )
-    async def elephant_fact(self, ctx):
-        await self.animal_command(ctx, "elephant", fact = True)
+    # @elephant.command(
+    #     name = "fact",
+    #     description = "Get a random fact about elephants from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def elephant_fact(self, ctx):
+    #     await self.animal_command(ctx, "elephant", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -177,13 +177,13 @@ class Animal(Cog, name = "animal"):
     async def sloth_baby(self, ctx):
         await self.animal_command(ctx, "sloth", baby = True)
     
-    @sloth.command(
-        name = "fact",
-        description = "Get a random fact about sloths from the internet.",
-        cog_name = "animal"
-    )
-    async def sloth_fact(self, ctx):
-        await self.animal_command(ctx, "sloth", fact = True)
+    # @sloth.command(
+    #     name = "fact",
+    #     description = "Get a random fact about sloths from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def sloth_fact(self, ctx):
+    #     await self.animal_command(ctx, "sloth", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -204,13 +204,13 @@ class Animal(Cog, name = "animal"):
     async def rabbit_baby(self, ctx):
         await self.animal_command(ctx, "rabbit", baby = True)
     
-    @rabbit.command(
-        name = "fact",
-        description = "Get a random fact about rabbits from the internet.",
-        cog_name = "animal"
-    )
-    async def rabbit_fact(self, ctx):
-        await self.animal_command(ctx, "rabbit", fact = True)
+    # @rabbit.command(
+    #     name = "fact",
+    #     description = "Get a random fact about rabbits from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def rabbit_fact(self, ctx):
+    #     await self.animal_command(ctx, "rabbit", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -231,13 +231,13 @@ class Animal(Cog, name = "animal"):
     async def hedgehog_baby(self, ctx):
         await self.animal_command(ctx, "hedgehog", baby = True)
     
-    @hedgehog.command(
-        name = "fact",
-        description = "Get a random fact about hedgehogs from the internet.",
-        cog_name = "animal"
-    )
-    async def hedgehog_fact(self, ctx):
-        await self.animal_command(ctx, "hedgehog", fact = True)
+    # @hedgehog.command(
+    #     name = "fact",
+    #     description = "Get a random fact about hedgehogs from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def hedgehog_fact(self, ctx):
+    #     await self.animal_command(ctx, "hedgehog", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -258,13 +258,13 @@ class Animal(Cog, name = "animal"):
     async def bat_baby(self, ctx):
         await self.animal_command(ctx, "bat", baby = True)
     
-    @bat.command(
-        name = "fact",
-        description = "Get a random fact about bats from the internet.",
-        cog_name = "animal"
-    )
-    async def bat_fact(self, ctx):
-        await self.animal_command(ctx, "bat", fact = True)
+    # @bat.command(
+    #     name = "fact",
+    #     description = "Get a random fact about bats from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def bat_fact(self, ctx):
+    #     await self.animal_command(ctx, "bat", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -285,13 +285,13 @@ class Animal(Cog, name = "animal"):
     async def squirrel_baby(self, ctx):
         await self.animal_command(ctx, "squirrel", baby = True)
     
-    @squirrel.command(
-        name = "fact",
-        description = "Get a random fact about squirrels from the internet.",
-        cog_name = "animal"
-    )
-    async def squirrel_fact(self, ctx):
-        await self.animal_command(ctx, "squirrel", fact = True)
+    # @squirrel.command(
+    #     name = "fact",
+    #     description = "Get a random fact about squirrels from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def squirrel_fact(self, ctx):
+    #     await self.animal_command(ctx, "squirrel", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -312,13 +312,13 @@ class Animal(Cog, name = "animal"):
     async def hamster_baby(self, ctx):
         await self.animal_command(ctx, "hamster", baby = True)
     
-    @hamster.command(
-        name = "fact",
-        description = "Get a random fact about hamsters from the internet.",
-        cog_name = "animal"
-    )
-    async def hamster_fact(self, ctx):
-        await self.animal_command(ctx, "hamster", fact = True)
+    # @hamster.command(
+    #     name = "fact",
+    #     description = "Get a random fact about hamsters from the internet.",
+    #     cog_name = "animal"
+    # )
+    # async def hamster_fact(self, ctx):
+    #     await self.animal_command(ctx, "hamster", fact = True)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -349,24 +349,17 @@ class Animal(Cog, name = "animal"):
         else:
 
             # Check if the animal is a dog
-            if animal == "dog":
+            if animal in ["dog", "cat"]:
                 response = await loop.run_in_executor(None,
-                    get, DOG_FACT_API
+                    get, DOG_CAT_FACT_API.format(animal)
                 )
                 response = response.json()
-                if response["success"]:
-                    embed = Embed(
-                        title = "Dog fact",
-                        description = response["facts"][0],
-                        colour = await get_embed_color(ctx.author)
-                    )
-                else:
-                    embed = Embed(
-                        title = "Could not load a fact :(",
-                        description = "_ _",
-                        colour = await get_embed_color(ctx.author)
-                    )
-            
+                embed = Embed(
+                    title = "{} fact".format(animal.title()),
+                    description = response["text"],
+                    colour = await get_embed_color(ctx.author)
+                )
+                
             # The fact is for an unimplemented animal fact
             else:
                 embed = UNIMPLEMENTED_ERROR
