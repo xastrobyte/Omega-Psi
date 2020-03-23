@@ -1,14 +1,17 @@
 from base64 import b64encode, b64decode
-from discord import Embed
+from discord import Embed, File
 from discord.ext.commands import command, Cog, group
 from functools import partial
+from io import BytesIO
 from os import environ
+from PIL import Image
 from requests import get, post
 from urllib.parse import quote
 
 from cogs.errors import get_error_message
 from cogs.globals import loop, FIELD_THRESHOLD
 
+from util.database.database import database
 from util.functions import get_embed_color
 
 from cogs.code.base_converter import convert
@@ -37,8 +40,42 @@ MORSE_CHART = {
     "8": "---..", "9": "----."
 }
 
-LOGIC_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true"
-LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true&wolframalpha=true"
+PSEUDO = 0
+CODE = 1
+BOOLEAN = 2
+BITWISE = 3
+OPERATOR_CONVERSIONS = {
+    "NOT": {
+        "!": CODE,
+        "~": BITWISE,
+        "-": BOOLEAN,
+        "NOT": PSEUDO,
+        "not": PSEUDO
+    },
+    "AND": {
+        "&&": CODE,
+        "&": BITWISE,
+        "*": BOOLEAN,
+        "AND": PSEUDO,
+        "and": PSEUDO
+    },
+    "OR": {
+        "||": CODE,
+        "|": BITWISE,
+        "+": BOOLEAN,
+        "OR": PSEUDO,
+        "or": PSEUDO
+    }
+}
+OPERATORS = [
+    { "NOT ": "not ", "NOT": "not", "NAND": "nand", "XNOR": "xnor", "NOR": "nor",   "XOR": "xor", "AND": "and",   "OR": "or"  },
+    { "NOT ": "!",    "NOT": "!",   "NAND": "!&&",  "XNOR": "!^",   "NOR": "!\|\|", "XOR": "^",   "AND": "&&",    "OR": "\|\|"  },
+    { "NOT ": "-",    "NOT": "-",   "NAND": "-*",   "XNOR": "-^",   "NOR": "-+",    "XOR": "^",   "AND": "*",     "OR": "+"   },
+    { "NOT ": "~",    "NOT": "~",   "NAND": "~&",   "XNOR": "~^",   "NOR": "~|",    "XOR": "^",   "AND": "&",     "OR": "|"   }
+]
+
+LOGIC_TRUTH_TABLE_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true&operator={}"
+LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true"
 LOGIC_RAW_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&raw=true"
 QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
 WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={}&includepodid=LogicCircuit&output=json"
@@ -393,9 +430,25 @@ class Code(Cog, name = "code"):
         # There was an expression given
         else:
 
+            # Find the first operator that shows up and set the operator type
+            operator_type = PSEUDO
+            for char in expression:
+                if char in OPERATOR_CONVERSIONS["NOT"]:
+                    operator_type = OPERATOR_CONVERSIONS["NOT"][char]
+                    break
+                elif char in OPERATOR_CONVERSIONS["AND"]:
+                    operator_type = OPERATOR_CONVERSIONS["AND"][char]
+                    break
+                elif char in OPERATOR_CONVERSIONS["OR"]:
+                    operator_type = OPERATOR_CONVERSIONS["OR"][char]
+                    break
+
             # Call the Logic api
             response = await loop.run_in_executor(None,
-                get, LOGIC_API_CALL.format(quote(expression))
+                get, LOGIC_TRUTH_TABLE_API_CALL.format(
+                    quote(expression),
+                    operator_type
+                )
             )
             truth_table = response.json()
 
@@ -421,6 +474,12 @@ class Code(Cog, name = "code"):
                 # Create the embed for the expression
                 truth_table = truth_table["value"]
                 table = "```\n{}\n```".format("\n".join(truth_table))
+                for operator in OPERATORS[operator_type]:
+                    table = table.replace(operator, OPERATORS[operator_type][operator])
+                    
+                    simplification["value"]["simplified"] = simplification["value"]["simplified"].replace(
+                        operator, OPERATORS[operator_type][operator]
+                    )
 
                 # Check if the truth table exceeds the size of the description threshold (2000)
                 if len(table) >= 2000 or len(truth_table[0]) >= 140:
@@ -432,29 +491,98 @@ class Code(Cog, name = "code"):
                 else:
 
                     # Call the WolframAlpha API to get a logical circuit from the expression
-                    response = await loop.run_in_executor(None,
-                        get, WOLFRAM_ALPHA_API_CALL.format(
-                            simplification["wolframalpha"],
-                            environ["WOLFRAM_ALPHA_API_KEY"]
+                    #   in the original form, the simplified form,
+                    #   the nand form, and the nor form
+                    original, simplified, nand, nor = (
+                        await loop.run_in_executor(None,
+                            get, WOLFRAM_ALPHA_API_CALL.format(
+                                simplification["value"]["functional"],
+                                environ["WOLFRAM_ALPHA_API_KEY"]
+                            )
+                        ),
+                        await loop.run_in_executor(None,
+                            get, WOLFRAM_ALPHA_API_CALL.format(
+                                simplification["value"]["functional_simplified"],
+                                environ["WOLFRAM_ALPHA_API_KEY"]
+                            )
+                        ),
+                        await loop.run_in_executor(None,
+                            get, WOLFRAM_ALPHA_API_CALL.format(
+                                "{} nand form".format(simplification["value"]["functional"]),
+                                environ["WOLFRAM_ALPHA_API_KEY"]
+                            )
+                        ),
+                        await loop.run_in_executor(None,
+                            get, WOLFRAM_ALPHA_API_CALL.format(
+                                "{} NOR form".format(simplification["value"]["functional"]),
+                                environ["WOLFRAM_ALPHA_API_KEY"]
+                            )
                         )
                     )
-                    response = response.json()
+                    original = original.json()
+                    simplified = simplified.json()
+                    nand = nand.json()
+                    nor = nor.json()
 
-                    await ctx.send(
-                        embed = Embed(
-                            title = "Logical Expression",
-                            description = table,
-                            colour = await get_embed_color(ctx.author)
-                        ).add_field(
-                            name = "Simplified",
-                            value = simplification["value"]
-                        ).set_image(
-                            url = response["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
-                        ).set_footer(
-                            text = "Logic Circuit from WolframAlpha",
-                            icon_url = "https://cdn.iconscout.com/icon/free/png-256/wolfram-alpha-2-569293.png"
+                    # Get the images for the Original, Simplified, NAND, and NOR forms
+                    #   if they exist
+                    if "pods" in original["queryresult"]: original = original["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: original = None
+
+                    if "pods" in simplified["queryresult"]: simplified = simplified["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: simplified = None
+
+                    if "pods" in nand["queryresult"]: nand = nand["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: nand = None
+
+                    if "pods" in nor["queryresult"]: nor = nor["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: nor = None
+
+                    # Combine the images into one using PIL and
+                    #   and create a File object to send as a separate message
+                    sources = [original, simplified, nand, nor]
+                    images = []
+                    for image in sources:
+                        if image is not None:
+                            img = await loop.run_in_executor(None,
+                                get, image
+                            )
+                            images.append(Image.open(BytesIO(img.content)))
+                    widths, heights = zip(*(image.size for image in images))
+                    new_width = sum(widths)
+                    new_height = max(heights)
+                    new_image = Image.new("RGB", (new_width, new_height))
+                    x_offset = 0
+                    for image in images:
+                        image = image.resize((image.size[0], new_height))
+                        new_image.paste(image, (x_offset, 0))
+                        x_offset += image.size[0]
+                    
+                    # Compress the image into PNG
+                    image = BytesIO()
+                    new_image.save(image, format = "png")
+                    image = image.getvalue()
+
+                    # Setup the Embed
+                    embed = Embed(
+                        title = "Logical Expression",
+                        description = table,
+                        colour = await get_embed_color(ctx.author)
+                    ).add_field(
+                        name = "Simplified",
+                        value = simplification["value"]["simplified"]
+                    ).add_field(
+                        name = "Other Circuits",
+                        value = "From left to right: `{}`".format(
+                            ", ".join(
+                                ["Original", "Simplified", "NAND", "NOR"][i]
+                                for i in range(len(sources))
+                                if sources[i] is not None
+                            )
                         )
                     )
+                    await ctx.send(embed = embed)
+                    await ctx.send(file = File(BytesIO(image), filename = "circuits.png"))
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
@@ -468,7 +596,9 @@ class Code(Cog, name = "code"):
         if not ctx.invoked_subcommand:
             await ctx.send(
                 embed = get_error_message(
-                    "You need to specify the language you want to execute in.\nRun `o.help execute` for a list of those languages."
+                    "You need to specify the language you want to execute in.\nRun `{}help execute` for a list of those languages.".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
                 )
             )
     
