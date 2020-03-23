@@ -6,12 +6,12 @@ from os import environ
 from traceback import format_exception
 
 from cogs.errors import COMMAND_FAILED_ERROR, CommandDisabled, COMMAND_DISABLED_ERROR, NotNSFWOrGuild, NOT_NSFW_OR_GUILD_ERROR
-from cogs.globals import FIELD_THRESHOLD
 from cogs.help_command import Help, cogs
 from cogs.predicates import get_prefix, is_command_enabled_predicate
 
 from util.database.database import database
 from util.discord import update_top_gg
+from util.functions import create_fields, add_fields
 from util.ifttt import IFTTT
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -31,7 +31,6 @@ async def command_enabled(ctx):
 async def on_ready():
 
     # Set the presence of the bot when it's ready
-    print("i'm ready to go")
     await bot.change_presence(
         status = Status.online,
         activity = Activity(
@@ -63,6 +62,11 @@ async def on_ready():
         "",
         "Omega Psi is online and ready to go!"
     )
+    print("i'm ready to go")
+
+@bot.event
+async def on_command(ctx):
+    async with ctx.typing(): pass
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -82,12 +86,8 @@ async def on_command_error(ctx, error):
     elif ctx.command:
         await ctx.send(embed = COMMAND_FAILED_ERROR(ctx.command))
 
-        # Get only the files that pertain to the bot
-        #   if any files are found outside of the bot
-        #   ignore them and stop there
-        exc = format_exception(type(error), error, error.__traceback__)
-
         # Create embed
+        exc = format_exception(type(error), error, error.__traceback__)
         embed = Embed(
             title = "Command Failed",
             description = str(error),
@@ -102,46 +102,21 @@ async def on_command_error(ctx, error):
                 str(ctx.author)
             )
         }
-
-        # Create traceback fields
-        tb_fields = []
-        tb_field = ""
-        for line in exc:
-
-            line += "\n"
-
-            if len(tb_field) + len(line) > FIELD_THRESHOLD:
-                tb_fields.append(tb_field)
-                tb_field = ""
-            
-            tb_field += line
-        
-        if len(tb_field) > 0:
-            tb_fields.append(tb_field)
-
         for field in fields:
             embed.add_field(
                 name = field,
                 value = fields[field],
                 inline = False
             )
-        
-        count = 0
-        for field in tb_fields:
-            count += 1
-            embed.add_field(
-                name = "Traceback {}".format(
-                    "({} / {})".format(
-                        count, len(tb_fields)
-                    ) if len(tb_fields) > 1 else ""
-                ),
-                value = "```py\n{}\n```".format(field),
-                inline = False
-            )
+
+        # Create and add traceback fields
+        add_fields(embed, "Traceback", create_fields(
+            exc, 
+            key = lambda field: f"```py\n{field}\n```"
+        ))
         
         # Get the error channel
         channel = bot.get_channel(int(environ["COMMAND_ERROR_CHANNEL"]))
-
         await channel.send(
             embed = embed
         )
@@ -149,10 +124,26 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_guild_join(guild):
     await update_top_gg(bot)
+    await bot.change_presence(
+        status = Status.online,
+        activity = Activity(
+            name = "o.help in {} server{}".format(len(bot.guilds), "s" if len(bot.guilds) != 1 else ""),
+            type = 2, # Listening to
+            url = "https://twitch.tv/FellowHashbrown"
+        )
+    )
 
 @bot.event
 async def on_guild_remove(guild):
     await update_top_gg(bot)
+    await bot.change_presence(
+        status = Status.online,
+        activity = Activity(
+            name = "o.help in {} server{}".format(len(bot.guilds), "s" if len(bot.guilds) != 1 else ""),
+            type = 2, # Listening to
+            url = "https://twitch.tv/FellowHashbrown"
+        )
+    )
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
