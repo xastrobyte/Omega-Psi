@@ -1,18 +1,15 @@
 from datetime import datetime
 from discord import Embed
-from discord.ext.commands import Cog, group, command, Paginator
-from functools import partial
+from discord.ext.commands import Cog, command, Paginator
 from imdb import IMDb
-from os import environ
 from random import choice, randint
 from requests import get
-from urllib.parse import quote
 
-from cogs.errors import get_error_message, UNIMPLEMENTED_ERROR
+from cogs.errors import get_error_message
 from cogs.globals import loop
 
 from util.database.database import database
-from util.discord import process_scrolling, process_page_reactions
+from util.discord import process_scrolling
 from util.functions import get_embed_color
 from util.imgur import Imgur
 from util.string import generate_random_string
@@ -31,11 +28,6 @@ AVATAR_API = "https://api.adorable.io/avatars/face/{}/{}/{}/{}"
 CHUCK_NORRIS_URL = "https://api.chucknorris.io/jokes/random"
 COIT_URL = "https://coit.pw/{}"
 ROBOHASH_API = "https://robohash.org/{}"
-STRANGE_PLANET_RANDOM_API = "https://fellowhashbrown.com/api/strangePlanet"
-STRANGE_PLANET_RECENT_API = f"{STRANGE_PLANET_RANDOM_API}?recent=true"
-STRANGE_PLANET_SEARCH_API = f"{STRANGE_PLANET_RANDOM_API}?keywords={{}}&target={{}}&limit=-1"
-XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"
-XKCD_RECENT_API_CALL = "https://xkcd.com/info.0.json"
 
 EMOJI_DIGITS = [
     ":zero:",
@@ -447,236 +439,6 @@ class Misc(Cog, name = "misc"):
             # There was at least one tv show found
             else:
                 await ctx.send(embed = await get_tv_show_embed(ctx, IMDB, tv_shows[0], IMDB_LINK))
-    
-    @group(
-        name = "xkcd",
-        description = "Sends a random XKCD comic.",
-        cog_name = "misc"
-    )
-    async def xkcd(self, ctx):
-        if not ctx.invoked_subcommand:
-
-            # Get the most recent comic in order to get a random comic
-            recent = await loop.run_in_executor(None,
-                get, XKCD_RECENT_API_CALL
-            )
-            recent = recent.json()
-            comic = str(randint(1, recent["num"]))
-
-            # Get the comic and send it in an embed, allowing the user to scroll through
-            comic = await loop.run_in_executor(None,
-                get, XKCD_API_CALL.format(comic)
-            )
-            comic = comic.json()
-
-            # Process the scrolling
-            await process_scrolling(ctx, self.bot, refresh_function = self.xkcd_comic_refresh, min_page = 1, max_page = recent["num"], current_page = comic["num"])
-
-    @xkcd.command(
-        name = "recent",
-        aliases = ["r"],
-        description = "Sends the most recent XKCD comic.",
-        cog_name = "misc"
-    )
-    async def xkcd_recent(self, ctx):
-
-        # Get the most recent comic in order to get a random comic
-        recent = await loop.run_in_executor(None,
-            get, XKCD_RECENT_API_CALL
-        )
-        recent = recent.json()
-
-        # Process the scrolling
-        await process_scrolling(ctx, self.bot, refresh_function = self.xkcd_comic_refresh, min_page = 1, max_page = recent["num"], current_page = recent["num"])
-    
-    @xkcd.command(
-        name = "search",
-        aliases = ["find"],
-        description = "Sends an XKCD comic with the specified comic number.",
-        cog_name = "misc"
-    )
-    async def xkcd_find(self, ctx, comic_number= None):
-
-        # Check if the comic_number was not specified
-        if not comic_number:
-            await ctx.send(embed = get_error_message("You must specify the XKCD comic number to look for."))
-        
-        # The comic number was specified
-        else:
-
-            # Validate that comic_number is a number
-            try:
-                comic_number = int(comic_number)
-        
-                # Get the most recent comic in order validate the comic number
-                recent = await loop.run_in_executor(None,
-                    get, XKCD_RECENT_API_CALL
-                )
-                recent = recent.json()
-
-                # Check if the comic number is invalid
-                if comic_number < 1 or comic_number > recent["num"]:
-                    await ctx.send(embed = get_error_message("That XKCD comic does not exist!"))
-                
-                # The comic number is valid
-                else:
-
-                    # Get the comic and send it in an embed, allowing the user to scroll through
-                    comic = await loop.run_in_executor(None,
-                        get, XKCD_API_CALL.format(comic_number)
-                    )
-                    comic = comic.json()
-
-                    # Process the scrolling
-                    await process_scrolling(ctx, self.bot, refresh_function = self.xkcd_comic_refresh, min_page = 1, max_page = recent["num"], current_page = comic["num"])
-            
-            # comic_number is not a number
-            except:
-                await ctx.send(embed = get_error_message("The comic number you gave isn't a number at all."))
-    
-    @group(
-        name = "strangePlanet",
-        description = "Sends a random comic from Nathan W. Pyle's Strange Planet series.",
-        cog_name = "misc"
-    )
-    async def strange_planet(self, ctx):
-        if not ctx.invoked_subcommand:
-
-            # Call the API and get an image
-            #   then send the image in an embed
-            response = await loop.run_in_executor(None,
-                get, STRANGE_PLANET_RANDOM_API
-            )
-            response = response.json()
-            await ctx.send(
-                embed = Embed(
-                    title = "Random Strange Planet Comic",
-                    description = "_ _",
-                    colour = await get_embed_color(ctx.author)
-                ).set_image(
-                    url = response["data"]
-                )
-            )
-    
-    @strange_planet.command(
-        name = "recent",
-        aliases = ["r"],
-        description = "Sends the most recent comic from the Strange Planet series.",
-        cog_name = "misc"
-    )
-    async def strange_planet_recent(self, ctx):
-
-        # Call the API and get an image
-        #   then send the image in an embed
-        response = await loop.run_in_executor(None,
-            get, STRANGE_PLANET_RECENT_API
-        )
-        response = response.json()
-        await ctx.send(
-            embed = Embed(
-                title = "Recent Strange Planet Comic",
-                description = "_ _",
-                colour = await get_embed_color(ctx.author)
-            ).set_image(
-                url = response["data"]
-            )
-        )
-    
-    @strange_planet.group(
-        name = "search",
-        aliases = ["find"],
-        description = "Lets you search for a comic or reaction from the Strange Planet series.",
-        cog_name = "misc",
-        invoke_without_command = True
-    )
-    async def strange_planet_search(self, ctx, *, keywords = None, target = "all"):
-        if not ctx.invoked_subcommand:
-
-            # Check if there are no keywords
-            if not keywords:
-                await ctx.send(
-                    embed = get_error_message(
-                        "You need to specify keywords to search for comics or reactions."
-                    )
-                )
-            
-            # There are keywords
-            else:
-                
-                # Call the API and get an image
-                response = await loop.run_in_executor(None,
-                    get, STRANGE_PLANET_SEARCH_API.format(quote(keywords), target)
-                )
-                response = response.json()
-
-                # No images were found, tell the user
-                if len(response["data"]) == 0:
-                    await ctx.send(
-                        embed = get_error_message(
-                            "There were no comics found :(\nMaybe try a more broad search?"
-                        )
-                    )
-                
-                # Images were found, show the user all search results
-                else:
-                    pages = response["data"]
-                    await process_scrolling(
-                        ctx, self.bot, 
-                        pages = [
-                            Embed(
-                                title = "Search results for \"{}\" {}".format(
-                                    keywords,
-                                    "({} / {})".format(
-                                        i + 1, len(pages)
-                                    ) if len(pages) > 1 else ""
-                                ),
-                                description = "_ _",
-                                colour = await get_embed_color(ctx.author)
-                            ).set_image(
-                                url = pages[i]
-                            )
-                            for i in range(len(pages))
-                        ]
-                    )
-    
-    @strange_planet_search.command(
-        name = "comics",
-        description = "Lets you search for a comic from the Strange Planet series.",
-        cog_name = "misc"
-    )
-    async def strange_planet_search_comics(self, ctx, *, keywords = None):
-        await self.strange_planet_search(ctx, keywords = keywords, target = "comics")
-    
-    @strange_planet_search.command(
-        name = "reactions",
-        description = "Lets you search for a reaction from the Strange Planet series.",
-        cog_name = "misc"
-    )
-    async def strange_planet_search_reactions(self, ctx, *, keywords = None):
-        await self.strange_planet_search(ctx, keywords = keywords, target = "reactions")
-    
-    # # # # # # # # # # # # # # # # # # # # # # # # # 
-
-    async def xkcd_comic_refresh(self, ctx, comic_number):
-        """Grabs the comic at the specified number and returns the title, description, and url for
-        an embed
-        """
-
-        # Get the comic
-        comic = await loop.run_in_executor(None,
-            get, XKCD_API_CALL.format(comic_number)
-        )
-        comic = comic.json()
-
-        # Return the comic data
-        return Embed(
-            title = "{} (#{})".format(comic["safe_title"], comic["num"]),
-            description = "_ _",
-            colour = await get_embed_color(ctx.author),
-            timestamp = datetime(int(comic["year"]), int(comic["month"]), int(comic["day"]))
-        ).set_image(
-            url = comic["img"]
-        )
 
 def setup(bot):
     bot.add_cog(Misc(bot))
