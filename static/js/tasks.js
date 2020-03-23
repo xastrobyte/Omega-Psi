@@ -119,8 +119,9 @@ async function editTask(taskID) {
     if (task) {
         $.ajax({
             url: `${BASE_URL}/tasks`,
-            type: "POST",
+            type: "PUT",
             data: JSON.stringify({
+                taskID: taskID,
                 task: task
             }),
             contentType: "application/json; charset=utf-8"
