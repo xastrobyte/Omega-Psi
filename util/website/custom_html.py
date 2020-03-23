@@ -4,7 +4,7 @@ def get_case_html(is_bugs):
             """
                             <!--Case Section-->
                             <h2 class="page-section">
-                                <code class="field">page</code><code>.</code><code class="field">bugs</code><code>();</code>
+                                <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">bugs</code><code>();</code>
                             </h2>
                             <div class="page-section-block">
                             {% if bug_cases|length == 0 %}
@@ -57,7 +57,7 @@ def get_case_html(is_bugs):
         """
                         <!--Case Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">suggestions</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">suggestions</code><code>();</code>
                         </h2>
                         <div class="page-section-block">
                         {% if suggestion_cases|length == 0 %}
@@ -109,7 +109,7 @@ def get_pending_update_html(on_developer_page = True):
             """
                             <!--Pending Update Section-->
                             <h2 class="page-section">
-                                <code class="field">page</code><code>.</code><code class="field">pendingUpdate</code><code>();</code>
+                                <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">pendingUpdate</code><code>();</code>
                             </h2>
                             <div id="pendingUpdateDiv" class="page-section-block" style="text-align: center;">
                                 {% if pending_update == None %}
@@ -149,7 +149,7 @@ def get_pending_update_html(on_developer_page = True):
         """
                         <!--Pending Update Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">pendingUpdate</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">pendingUpdate</code><code>();</code>
                         </h2>
                         <div id="pendingUpdateDiv" class="page-section-block" style="text-align: center;">
                             {% if pending_update == None %}
@@ -188,7 +188,7 @@ def get_tasks_html(for_feedback_page = False):
             """
                             <!--Tasklist Section-->
                             <h2 class="page-section">
-                                <code class="field">page</code><code>.</code><code class="field">tasks</code><code>();</code>
+                                <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">tasks</code><code>();</code>
                             </h2>
                             <div id="tasksDiv" class="page-section-block" style="text-align: center;">
                                 <p>below is the current tasklist that developers intend to complete</p>
@@ -220,7 +220,7 @@ def get_tasks_html(for_feedback_page = False):
         """
                         <!--Tasklist Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">tasks</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">tasks</code><code>();</code>
                         </h2>
                         <div id="tasklistDiv" class="page-section-block" style="text-align: center;">
                             <p>below is the current tasklist that developers intend to complete</p>
@@ -251,7 +251,7 @@ def get_feedback_html():
         """
                         <!--Feedback Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">feedback</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">feedback</code><code>();</code>
                         </h2>
                         <div id="feedbackDiv" class="page-section-block" style="text-align: center;">
                             <p>if you found a bug, you can <button class=\"page-form-button\" onclick=\"reportBug()\">report</button> it.</p>
@@ -269,7 +269,7 @@ def get_server_settings_html(view_guild = False, section = None):
                     """
                         <!--Guild Prefix Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">prefix</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">prefix</code><code>();</code>
                         </h2>
                         <div class="page-section-block" style="text-align: center;">
                             <p>The prefix for {{ guild.name }} is currently <code id="guildPrefix" class="field">{{ guild_prefix }}</code></br>
@@ -282,7 +282,7 @@ def get_server_settings_html(view_guild = False, section = None):
                 """
                     <!--Guild Disabled Commands Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">disabledCommands</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">disabledCommands</code><code>();</code>
                         </h2>
                         <div id="disabledCommandsDiv" class="page-section-block" style="text-align: center;">
                             {% if disabled_commands|length == 0 %}
@@ -314,7 +314,7 @@ def get_server_settings_html(view_guild = False, section = None):
         """
                         <!--Manage Guilds Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">servers</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">servers</code><code>();</code>
                         </h2>
                         <div class="page-section-block" style="text-align: center;">
                             <p>here's where you can change Omega Psi's settings in servers you manage</p>
@@ -342,7 +342,7 @@ def get_user_settings_html():
         """
                         <!--Gamestats Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">gamestats</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">gamestats</code><code>();</code>
                         </h2>
                         <div class="page-section-block" style="text-align: center;">
                             <p>change your own personal settings here or view your gamestats!</p>

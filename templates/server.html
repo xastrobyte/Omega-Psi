@@ -78,7 +78,7 @@
             <div class="content">
                 
                 <h1 class="page-title">
-                    <code class="field">website</code><code>.</code><code class="field">server</code><code>();</code>
+                    <span class="section-name"><code class="field">website</code><code>.</code></span><code class="field">server</code><code>();</code>
                 </h1>
 
                 <div class="page-title-block" style="max-width: 75%;">
@@ -90,7 +90,7 @@
                 
                         <!--Guild Prefix Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">prefix</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">prefix</code><code>();</code>
                         </h2>
                         <div class="page-section-block" style="text-align: center;">
                             <p>The prefix for {{ guild.name }} is currently <code id="guildPrefix" class="field">{{ guild_prefix }}</code></br>
@@ -100,7 +100,7 @@
 
                     <!--Guild Disabled Commands Section-->
                         <h2 class="page-section">
-                            <code class="field">page</code><code>.</code><code class="field">disabledCommands</code><code>();</code>
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">disabledCommands</code><code>();</code>
                         </h2>
                         <div id="disabledCommandsDiv" class="page-section-block" style="text-align: center;">
                             {% if disabled_commands|length == 0 %}

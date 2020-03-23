@@ -77,7 +77,7 @@ class Page:
         html = (
                 """
                 <h1 class="page-title">
-                    <code class="field">website</code><code>.</code><code class="field">{}</code><code>();</code>
+                    <span class="section-name"><code class="field">website</code><code>.</code></span><code class="field">{}</code><code>();</code>
                 </h1>
 
                 <div class="page-title-block" style="max-width: 75%;">
@@ -117,7 +117,7 @@ class KeySection:
                 """
                 <h2 class="page-section">
                     <a name="key"></a>
-                    <code class="field">page</code><code>.</code><code class="field">key</code><code>();</code>
+                    <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">key</code><code>();</code>
                 </h2>
                 <div class="page-section-block" style="text-align: center;">
                     {}
@@ -179,7 +179,7 @@ class Section:
                 """
                 <h2 class="page-section">
                     <a name="{}"></a>
-                    <code class="field">page</code><code>.</code><code class="field">{}</code><code>();</code>
+                    <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">{}</code><code>();</code>
                 </h2>
                 <div class="page-section-block" style="text-align: center;">
                     <p style="text-align: center;">

@@ -32,6 +32,10 @@ small {
   background: #293134;
 }
 
+.section-name {
+    visibility: visible;
+}
+
 .content {
   padding: 10px;
   flex: 1 0 auto;
@@ -548,6 +552,10 @@ tr {
 }
 
 @media only screen and (max-width: 786px) {
+
+    .section-name {
+        display: none;
+    }
 	
 	.download-table p {
 		font-size: 3vw;
