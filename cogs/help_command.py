@@ -41,6 +41,11 @@ cogs = {
         "emoji": ":asterisk: ",
         "extension": "cogs.math.math"
     },
+    "comics": {
+        "name": "Comics",
+        "emoji": ":notebook: ",
+        "extension": "cogs.comics.comics"
+    },
     "misc": {
         "name": "Misc",
         "emoji": ":mag: ",
@@ -133,7 +138,7 @@ class Help(HelpCommand):
                         cogs[cog.qualified_name]["name"]
                     ),
                     value = "`{}help {}`".format(
-                        await database.guilds.get_prefix(self.context.guild),
+                        await database.guilds.get_prefix(self.context.guild) if self.context.guild else "",
                         cog.qualified_name
                     )
                 )
