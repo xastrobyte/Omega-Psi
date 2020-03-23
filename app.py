@@ -48,7 +48,7 @@ def make_session_permanent():
     """Makes the current session permanent"""
     request.environ["wsgi.url_scheme"] = "https"
 
-    # Check if the request is made to either /developer or /info
+    # Check if the request is made to either /developer, /info, or /settings
     #   Have the user login
     if request.endpoint in ["developer", "info", "settings"]:
         session["target_url"] = request.endpoint
