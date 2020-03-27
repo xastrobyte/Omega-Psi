@@ -79,6 +79,7 @@ LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression=
 LOGIC_RAW_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&raw=true"
 QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
 WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={}&includepodid=LogicCircuit&output=json"
+WOLFRAM_ALPHA_ICON = "https://cdn.iconscout.com/icon/free/png-512/wolfram-alpha-2-569293.png"
 
 JUDGE_POST_API_CALL = "https://api.judge0.com/submissions/"
 JUDGE_GET_API_CALL = "https://api.judge0.com/submissions/{}?fields=stdout,stderr,time,status"
@@ -493,7 +494,7 @@ class Code(Cog, name = "code"):
                     # Call the WolframAlpha API to get a logical circuit from the expression
                     #   in the original form, the simplified form,
                     #   the nand form, and the nor form
-                    original, simplified, nand, nor = (
+                    original_form, simplified_form, nand_form, nor_form, and_form, or_form = (
                         await loop.run_in_executor(None,
                             get, WOLFRAM_ALPHA_API_CALL.format(
                                 simplification["value"]["functional"],
@@ -517,46 +518,68 @@ class Code(Cog, name = "code"):
                                 "{} NOR form".format(simplification["value"]["functional"]),
                                 environ["WOLFRAM_ALPHA_API_KEY"]
                             )
+                        ),
+                        await loop.run_in_executor(None,
+                            get, WOLFRAM_ALPHA_API_CALL.format(
+                                "{} AND form".format(simplification["value"]["functional"]),
+                                environ["WOLFRAM_ALPHA_API_KEY"]
+                            )
+                        ),
+                        await loop.run_in_executor(None,
+                            get, WOLFRAM_ALPHA_API_CALL.format(
+                                "{} OR form".format(simplification["value"]["functional"]),
+                                environ["WOLFRAM_ALPHA_API_KEY"]
+                            )
                         )
                     )
-                    original = original.json()
-                    simplified = simplified.json()
-                    nand = nand.json()
-                    nor = nor.json()
+                    original_form = original_form.json()
+                    simplified_form = simplified_form.json()
+                    nand_form = nand_form.json()
+                    nor_form = nor_form.json()
+                    and_form = and_form.json()
+                    or_form = or_form.json()
 
                     # Get the images for the Original, Simplified, NAND, and NOR forms
                     #   if they exist
-                    if "pods" in original["queryresult"]: original = original["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
-                    else: original = None
+                    if "pods" in original_form["queryresult"]: original_form = original_form["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: original_form = None
 
-                    if "pods" in simplified["queryresult"]: simplified = simplified["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
-                    else: simplified = None
+                    if "pods" in simplified_form["queryresult"]: simplified_form = simplified_form["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: simplified_form = None
 
-                    if "pods" in nand["queryresult"]: nand = nand["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
-                    else: nand = None
+                    if "pods" in nand_form["queryresult"]: nand_form = nand_form["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: nand_form = None
 
-                    if "pods" in nor["queryresult"]: nor = nor["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
-                    else: nor = None
+                    if "pods" in nor_form["queryresult"]: nor_form = nor_form["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: nor_form = None
+
+                    if "pods" in and_form["queryresult"]: and_form = and_form["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: nand_form = None
+
+                    if "pods" in or_form["queryresult"]: or_form = or_form["queryresult"]["pods"][0]["subpods"][0]["img"]["src"]
+                    else: or_form = None
 
                     # Combine the images into one using PIL and
                     #   and create a File object to send as a separate message
-                    sources = [original, simplified, nand, nor]
+                    sources = [original_form, simplified_form, nand_form, nor_form, and_form, or_form]
                     images = []
                     for image in sources:
                         if image is not None:
                             img = await loop.run_in_executor(None,
                                 get, image
                             )
-                            images.append(Image.open(BytesIO(img.content)))
+                            image = Image.open(BytesIO(img.content))
+                            images.append(image)
                     widths, heights = zip(*(image.size for image in images))
                     new_width = sum(widths)
                     new_height = max(heights)
-                    new_image = Image.new("RGB", (new_width, new_height))
+                    new_image = Image.new("RGB", (new_width + len(images) - 1, new_height))
                     x_offset = 0
                     for image in images:
-                        image = image.resize((image.size[0], new_height))
-                        new_image.paste(image, (x_offset, 0))
-                        x_offset += image.size[0]
+                        new_image.paste(image, (x_offset, 
+                            (new_height - image.size[1]) // 2
+                        ))
+                        x_offset += image.size[0] + 1
                     
                     # Compress the image into PNG
                     image = BytesIO()
@@ -575,11 +598,15 @@ class Code(Cog, name = "code"):
                         name = "Other Circuits",
                         value = "From left to right: `{}`".format(
                             ", ".join(
-                                ["Original", "Simplified", "NAND", "NOR"][i]
+                                ["Original", "Simplified", "NAND", "NOR", "AND", "OR"][i]
                                 for i in range(len(sources))
                                 if sources[i] is not None
                             )
-                        )
+                        ),
+                        inline = False
+                    ).set_footer(
+                        text = "Logic Circuits from Wolfram|Alpha",
+                        icon_url = WOLFRAM_ALPHA_ICON
                     )
                     await ctx.send(embed = embed)
                     await ctx.send(file = File(BytesIO(image), filename = "circuits.png"))
