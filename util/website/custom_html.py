@@ -20,6 +20,9 @@ def get_case_html(is_bugs):
                                                 <th width="35%">Description</th>
                                                 <th width="15%">Reporter</th>
                                                 <th width="5%">Seen?</th>
+                                                <th width="5%">Fixed?</th>
+                                                <th></th>
+                                                <th></th>
                                             <tr>
                                         </thead>
                                         <tbody>
@@ -37,6 +40,14 @@ def get_case_html(is_bugs):
                                                             No
                                                         {% endif %}
                                                     </td>
+                                                    <td id="bug{{ case }}FixedText">
+                                                        {% if bug_cases[case]["fixed"] %}
+                                                            Yes
+                                                        {% else %}
+                                                            No
+                                                        {% endif %}
+                                                    </td>
+                                                    <td><button id="fixBug{{ case }}" type="button" class="page-form-button" onclick="fixBug({{ case }})">Fix</button></td>
                                                     <td>
                                                         {% if bug_cases[case]["seen"] %}
                                                             <button id="markBug{{ case }}Seen" type="button" class="page-form-button" onclick="markBugAsSeen({{ case }})">Seen By {{ bug_cases[case]["seen"] }}</button>
@@ -68,9 +79,13 @@ def get_case_html(is_bugs):
                                     <thead>
                                         <tr>
                                             <th width="10%">Number</th>
-                                            <th width="70%">Description</th>
+                                            <th width="45%">Description</th>
                                             <th width="15%">Suggester</th>
                                             <th width="5%">Seen?</th>
+                                            <th width="5%">Considered?</th>
+                                            <th width="45%">Reason</th>
+                                            <th></th>
+                                            <th></th>
                                         <tr>
                                     </thead>
                                     <tbody>
@@ -86,6 +101,29 @@ def get_case_html(is_bugs):
                                                         No
                                                     {% endif %}
                                                 </td>
+                                                <td id="suggestion{{ case }}ConsideredText">
+                                                    {% if not suggestion_cases[case]["consideration"] %}
+                                                        Not Yet
+                                                    {% else %}
+                                                        {% if suggestion_cases[case]["consideration"]["considered"] %}
+                                                            Yes
+                                                        {% else %}
+                                                            No
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </td>
+                                                <td id="suggestion{{ case }}ReasonText">
+                                                    {% if not suggestion_cases[case]["consideration"] %}
+                                                        None Yet
+                                                    {% else %}
+                                                        {% if suggestion_cases[case]["consideration"]["considered"] %}
+                                                            N/A
+                                                        {% else %}
+                                                            {{ suggestion_cases[case]["consideration"]["reason"] }}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </td>
+                                                <td><button id="considerSuggestion{{ case }}" type="button" class="page-form-button" onclick="considerSuggestion({{ case }})">Consider/Don't Consider</button></td>
                                                 <td>
                                                     {% if suggestion_cases[case]["seen"] %}
                                                         <button id="markSuggestion{{ case }}Seen" type="button" class="page-form-button" onclick="markSuggestionAsSeen({{ case }})">Seen By {{ suggestion_cases[case]["seen"] }}</button>
@@ -119,26 +157,30 @@ def get_pending_update_html(on_developer_page = True):
                                     {% if pending_update["features"]|length == 0 %}
                                         <p id="noFeatures">No Features Yet</p>
                                     {% else %}
-                                        <table id="featuresTable" width="100%">
-                                            <thead>
-                                                <tr>
-                                                    <th width="92%">Feature</th>
-                                                    <th width="8%">Type</th>
-                                                    <th>Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="features">
-                                                {% for feature in pending_update["features"] -%}
-                                                    <tr id="feature{{ feature }}">
-                                                        <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
-                                                        <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
-                                                        <td>{{ pending_update["features"][feature]["datetime"] }}</td>
-                                                        <td><button class="page-form-button" onclick="editFeature('{{ feature }}')">Edit</button></td>
-                                                        <td><button class="page-form-button" onclick="removeFeature('{{ feature }}')">Remove</button></td>
+                                        <div class="cases-box">
+                                            <table id="featuresTable" class="case-table" width="100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="92%">Feature</th>
+                                                        <th width="8%">Type</th>
+                                                        <th>Date</th>
+                                                        <th></th>
+                                                        <th></th>
                                                     </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody id="features">
+                                                    {% for feature in pending_update["features"] -%}
+                                                        <tr id="feature{{ feature }}">
+                                                            <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
+                                                            <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
+                                                            <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                            <td><button class="page-form-button" onclick="editFeature('{{ feature }}')">Edit</button></td>
+                                                            <td><button class="page-form-button" onclick="removeFeature('{{ feature }}')">Remove</button></td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     {% endif %}
                                     <button id="addNewFeature" class="page-form-button" onclick="addFeature()">Add New Feature</button>
                                 {% endif %}
@@ -158,24 +200,26 @@ def get_pending_update_html(on_developer_page = True):
                                 {% if pending_update["features"]|length == 0 %}
                                     <p id="noFeatures">No Features</p>
                                 {% else %}
-                                    <table id="featuresTable" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th width="92%">Feature</th>
-                                                <th width="8%">Type</th>
-                                                <th>Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="features">
-                                            {% for feature in pending_update["features"] -%}
-                                                <tr id="feature{{ feature }}">
-                                                    <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
-                                                    <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
-                                                    <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                    <div class="cases-box">
+                                        <table id="featuresTable" class="case-table" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th width="92%">Feature</th>
+                                                    <th width="8%">Type</th>
+                                                    <th>Date</th>
                                                 </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody id="features">
+                                                {% for feature in pending_update["features"] -%}
+                                                    <tr id="feature{{ feature }}">
+                                                        <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
+                                                        <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
+                                                        <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -195,22 +239,24 @@ def get_tasks_html(for_feedback_page = False):
                                 {% if tasks == None %}
                                     <p id="noTasks">No Tasks Yet</p>
                                 {% else %}
-                                    <table id="tasksTable" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th width="100%">Task</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="tasks">
-                                            {% for taskID in tasks -%}
-                                                <tr id ="task{{ taskID }}">
-                                                    <td id="task{{ taskID }}Task">{{ tasks[taskID] }}</td>
-                                                    <td><button class="page-form-button" onclick="editTask('{{ taskID }}')">Edit</button</td>
-                                                    <td><button class="page-form-button" onclick="removeTask('{{ taskID }}')">Remove</button></td>
+                                    <div class="cases-box">
+                                        <table id="tasksTable" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th width="100%">Task</th>
                                                 </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody id="tasks">
+                                                {% for taskID in tasks -%}
+                                                    <tr id ="task{{ taskID }}">
+                                                        <td id="task{{ taskID }}Task">{{ tasks[taskID] }}</td>
+                                                        <td><button class="page-form-button" onclick="editTask('{{ taskID }}')">Edit</button</td>
+                                                        <td><button class="page-form-button" onclick="removeTask('{{ taskID }}')">Remove</button></td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 {% endif %}
                                 <button id="addNewTask" class="page-form-button" onclick="addTask()">Add New Task</button>
                             </div>
@@ -227,24 +273,62 @@ def get_tasks_html(for_feedback_page = False):
                             {% if tasks == None %}
                                 <p id="noTasks">The Tasklist Is Empty</p>
                             {% else %}
-                                <table id="tasksTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Task</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tasks">
-                                        {% for taskID in tasks -%}
-                                            <tr id ="task{{ taskID }}">
-                                                <td>{{ tasks[taskID] }}</td>
+                                <div class="cases-box">
+                                    <table id="tasksTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Task</th>
                                             </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody id="tasks">
+                                            {% for taskID in tasks -%}
+                                                <tr id ="task{{ taskID }}">
+                                                    <td>{{ tasks[taskID] }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                             {% endif %}
                         </div>
         """
     )
+
+def get_bot_settings_html(settings):
+    if settings == "disabledCommands":
+        return (
+            """
+                        <!--Disabled Commands Section-->
+                        <h2 class="page-section">
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">disabledCommands</code><code>();</code>
+                        </h2>
+                        <div id="disabledCommandsDiv" class="page-section-block" style="text-align: center;">
+                            {% if disabled_commands|length == 0 %}
+                                <p id="noDisabledCommands">No Disabled Commands</p>
+                            {% else %}
+                                <div class="cases-box">
+                                    <table id="disabledCommandsTable" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="100%">disabled command</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="disabledCommands">
+                                        {% for command in disabled_commands -%}
+                                            <tr id="disabledCommand{{ command }}">
+                                                <td>{{ command }}</td>
+                                                <td><button class="page-form-button" onclick="globallyEnableCommand('{{ command }}')">Enable</button>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                            <button id="disableCommand" class="page-form-button" onclick="globallyDisableCommand({{ all_commands }})">Disable Command</button>
+                        </div>
+            """
+        )
 
 def get_feedback_html():
     return (
@@ -292,6 +376,7 @@ def get_server_settings_html(view_guild = False, section = None):
                                     <thead>
                                         <tr>
                                             <th width="100%">disabled command</th>
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody id="disabledCommands">
@@ -323,6 +408,7 @@ def get_server_settings_html(view_guild = False, section = None):
                                     <tr>
                                         <th width="75%">Server Name</th>
                                         <th width="25%">Server ID</th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 {% for guild in manageable_guilds -%}

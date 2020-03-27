@@ -122,6 +122,156 @@ async function changePrefix(guildID) {
 }
 
 /**
+ * Lets the developer enable a command globally in the bot
+ */
+function globallyEnableCommand(command) {
+
+    // Call a PUT request on /settings/bot to enable the command
+    $.ajax({
+        url: `${BASE_URL}/settings/bot`,
+        type: "PUT",
+        data: JSON.stringify({
+            enable: true,
+            command: command
+        }),
+        contentType: "application/json; charset=utf-8"
+    
+    // If the request succeeds, remove the command from the disabled commands table
+    //  and let the developer know the command was enabled
+    }).done(function(data) {
+
+        // Check if there are no disabled commands, reinsert the "No Disabled Commands" text
+        document.getElementById(`disabledCommand${command}`).remove();
+        if (document.getElementById("disabledCommands").children.length == 0) {
+            document.getElementById("disabledCommandsTable").remove();
+            var p = document.createElement("p");
+            p.id = "noDisabledCommands";
+            var text = document.createTextNode("No Disabled Commands");
+            p.appendChild(text);
+            document.getElementById("disabledCommandsDiv").insertBefore(
+                p,
+                document.getElementById("disableCommand")
+            );
+        }
+
+        Swal.fire({
+            title: "Command Enabled",
+            text: `The "${command}" command has been enabled!`,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup',
+                content: 'swal-content',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm',
+                input: 'swal-input'
+            }
+        })
+
+    // If the request fails, let the developer know why
+    }).fail(function(data) {
+
+    })
+}
+
+/**
+ * Lets the developer disable a command globally in the bot
+ */
+
+async function globallyDisableCommand(command) {
+
+    // Get an array of all commands that are active in the bot
+    $.ajax({
+        url: `${BASE_URL}/settings/bot`,
+        type: "GET",
+        contentType: "application/json; charset=utf-8"
+    
+    // If the GET request succeeds, continue with asking the user which command to disable
+    }).done(async function(data) {
+        var allCommands = data;
+
+        // Ask the user to select a command to disable
+        var command;
+        await Swal.fire({
+            title: "Select Command",
+            text: "Select a command to disable in the bot",
+            input: 'select',
+            inputOptions: allCommands,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup',
+                content: 'swal-content',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm',
+                input: 'swal-input'
+            },
+            inputValidator: (result) => {
+                if (result) { command = allCommands[result]; }
+            }
+        })
+
+        // Call a PUT request on /settings/server to disable the command
+        if (command) {
+            $.ajax({
+                url: `${BASE_URL}/settings/bot`,
+                type: "PUT",
+                data: JSON.stringify({
+                    enable: false,
+                    command: command
+                }),
+                contentType: "application/json; charset=utf-8"
+            
+            // If the request succeeds, add the command to the disabled commands table
+            //  and let the developer know the command was disabled
+            }).done(function(data) {
+
+                // Check if disabling a command, add the disabled elements to the proper Node
+                if (document.getElementById("disabledCommandsTable")) {
+                    document.getElementById("disabledCommands").appendChild(createDisabledElements(null, command));
+                } else {
+                    document.getElementById("noDisabledCommands").remove();
+                    document.getElementById("disabledCommandsDiv").insertBefore(
+                        createDisabledElements(null, command, true),
+                        document.getElementById("disableCommand")
+                    );
+                }
+
+                Swal.fire({
+                    title: "Command Disabled",
+                    text: `The "${command}" command has been disabled!`,
+                    customClass: {
+                        container: 'swal-container',
+                        popup: 'swal-popup',
+                        content: 'swal-content',
+                        title: 'swal-title',
+                        confirmButton: 'swal-confirm',
+                        input: 'swal-input'
+                    }
+                })
+
+            // If the request fails, let the developer know why
+            }).fail(function(error) {
+                Swal.fire({
+                    title: "Something Went Wrong :(",
+                    text: error.responseJSON.error,
+                    icon: "failed",
+                    customClass: {
+                        container: 'swal-container',
+                        popup: 'swal-popup',
+                        content: 'swal-content',
+                        title: 'swal-title',
+                        confirmButton: 'swal-confirm'
+                    }
+                })
+            })
+        }
+
+    // If the GET request fails, log it to the console
+    }).fail(function(error) {
+        console.log(error);
+    })
+}
+
+/**
  * Let's the user enable a command that's currently disabled
  */
 function enableCommand(guildID, command) {
@@ -329,7 +479,10 @@ function createDisabledElements(guildID, command, createTable = false) {
         var enableButton = document.createElement("button");
         enableButton.className = "page-form-button";
         enableButton.innerHTML = "Enable";
-        enableButton.setAttribute("onclick", `enableCommand('${guildID}', '${command}')`);
+        if (guildID)
+            enableButton.setAttribute("onclick", `enableCommand('${guildID}', '${command}')`);
+        else
+            enableButton.setAttribute("onclick", `globallyEnableCommand('${command}')`);
         enableCell.appendChild(enableButton);
         tr.appendChild(commandCell);
         tr.appendChild(enableCell);

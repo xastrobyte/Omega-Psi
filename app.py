@@ -12,11 +12,11 @@ from cogs.globals import loop, PRIMARY_EMBED_COLOR
 from cogs.predicates import is_developer_predicate
 
 from util.database.database import database
-from util.website.custom_html import get_case_html, get_pending_update_html, get_tasks_html, get_feedback_html, get_user_settings_html, get_server_settings_html
+from util.website.custom_html import get_case_html, get_pending_update_html, get_tasks_html, get_feedback_html, get_user_settings_html, get_server_settings_html, get_bot_settings_html
 from util.website.page import Page, Section, HomeSection
 from util.website.website import Website, Footer, Link
 
-from util.discord import send_webhook_sync
+from util.functions import get_embed_color_sync
 from util.string import dict_to_datetime, datetime_to_string
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -199,30 +199,51 @@ def report_bug():
             # Get the bug report data along with the current user and get
             #   a discord.User object from their ID
             description = request.json["description"]
-            user_id = request.cookies.get("user_id")
+            user_id = session.get("user_id")
             user = OMEGA_PSI.get_user(int(user_id))
             case_number = database.case_numbers.get_bug_number_sync()
 
-            # Add the bug report to the database and send an IFTTT webhook to all developers and the Bug channel
-            database.case_numbers.add_bug_sync(request.json["sourceType"], request.json["source"], user_id, description)
+            # Create an embed that will be sent to the developers, the bug reporter
+            #   and the bug channel
             embed = Embed(
-                title = "Bug Reported (#{})".format(case_number),
-                description = "Reported by {}".format(
-                    str(user) if user else "Unknown (ID: {})".format(user_id)
-                ),
-                colour = PRIMARY_EMBED_COLOR
+                title = "Bug (#{})".format(case_number),
+                description = "_ _",
+                colour = get_embed_color_sync(user),
+                timestamp = datetime.now()
+            ).add_field(
+                name = "User",
+                value = str(user)
+            ).add_field(
+                name = "Source Type",
+                value = request.json["sourceType"]
             ).add_field(
                 name = "Source",
-                value = "`{}` - {}".format(request.json["sourceType"], request.json["source"])
+                value = request.json["source"]
             ).add_field(
-                name = "Description",
+                name = "Bug",
                 value = description,
                 inline = False
+            ).add_field(
+                name = "Seen?",
+                value = "No"
+            ).add_field(
+                name = "Fixed?",
+                value = "No"
             )
-            send_webhook_sync(environ["BUG_WEBHOOK"], embed)
-            for dev in database.bot.get_developers_sync():
+            
+            channel = OMEGA_PSI.get_channel(int(environ["BUG_CHANNEL"]))
+            channel_send = run_coroutine_threadsafe(channel.send(embed = embed), loop)
+            msg = channel_send.result()
 
-                # Send a message to each developer displaying what the bug is
+            # Add the bug into the database
+            database.case_numbers.add_bug_sync(
+                request.json["sourceType"], request.json["source"],
+                user, description, msg.id
+            )
+            database.users.add_user_bug_sync(user, case_number)
+
+            # Send a message to each developer displaying what the bug is
+            for dev in database.bot.get_developers_sync():
                 dev = OMEGA_PSI.get_user(int(dev))
                 if dev:
                     developer_send = run_coroutine_threadsafe(
@@ -232,7 +253,7 @@ def report_bug():
                     developer_send.result()
             return jsonify({"message": "Bug #{} created".format(case_number)}), 201
         
-        # Check if the method is PUT; A developer has marked a bug as seen
+        # Check if the method is PUT; A developer has marked a bug as seen OR as fixed
         elif request.method == "PUT":
 
             # Make sure this user is a developer
@@ -245,31 +266,107 @@ def report_bug():
                 case = database.case_numbers.get_bug_sync(case_number)
                 user = OMEGA_PSI.get_user(int(case["author"]))
                 dev = OMEGA_PSI.get_user(int(session.get("user_id")))
+                seen_dev = OMEGA_PSI.get_user(int(case["seen"])) if case["seen"] is not None else None
 
-                # Send a message to the user saying a developer has viewed their bug
-                #   only if the user was found and if the bug hasn't been seen already
-                if user and not case["seen"]:
-                    database.case_numbers.mark_bug_seen_sync(case_number, dev)
-                    user_send = run_coroutine_threadsafe(
-                        user.send(
-                            embed = Embed(
-                                title = "Bug Report Seen By Developer",
-                                description = "{} has seen your bug report".format(str(dev)),
-                                colour = PRIMARY_EMBED_COLOR
-                            ).add_field(
-                                name = "Bug (#{})".format(case_number),
-                                value = case["bug"]
-                            )
-                        ),
+                # Update the embed with the new values and edit the original message in the bug channel
+                embed = Embed(
+                    title = "Bug (#{})".format(case_number),
+                    description = "_ _",
+                    colour = get_embed_color_sync(user),
+                    timestamp = datetime.now()
+                ).add_field(
+                    name = "User",
+                    value = str(user)
+                ).add_field(
+                    name = "Source Type",
+                    value = case["source_type"]
+                ).add_field(
+                    name = "Source",
+                    value = case["source"]
+                ).add_field(
+                    name = "Bug",
+                    value = case["bug"],
+                    inline = False
+                ).add_field(
+                    name = "Seen?",
+                    value = "Yes, by {}".format(
+                        str(dev) if seen_dev is None else str(seen_dev)
+                    )
+                ).add_field(
+                    name = "Fixed?",
+                    value = "{}".format(
+                        "No" if "fixed" not in request.json else "Yes"
+                    ) if not case["fixed"] else "Yes"
+                )
+
+                # Only update the message if the bug has been marked as seen or if the fixed key exists
+                if case["seen"] is None or ("fixed" in request.json and not case["fixed"]):
+
+                    # Get the message that this bug is connected to
+                    channel = OMEGA_PSI.get_channel(int(environ["BUG_CHANNEL"]))
+                    message = run_coroutine_threadsafe(
+                        channel.fetch_message(int(case["message_id"])),
                         loop
                     )
-                    user_send.result()
+                    message = message.result()
+                    
+                    # Update the message
+                    update_message = run_coroutine_threadsafe(message.edit(embed = embed), loop)
+                    update_message.result()
+
+                # Check if the "fixed" key exists in the request.json
+                if "fixed" in request.json:
+
+                    # Send a message to the user saying a developer has marked their bug as fixed
+                    #   only if the user was found
+                    database.case_numbers.fix_bug_sync(case_number)
+                    if user and not case["fixed"]:
+                        user_send = run_coroutine_threadsafe(
+                            user.send(
+                                embed = Embed(
+                                    title = "Bug Fixed!",
+                                    description = "_ _",
+                                    colour = PRIMARY_EMBED_COLOR
+                                ).add_field(
+                                    name = "Bug (#{})".format(case_number),
+                                    value = case["bug"]
+                                )
+                            ),
+                            loop
+                        )
+                        user_send.result()
+                    
+                    # The bug was already fixed
+                    elif case["fixed"]:
+                        return jsonify({"bug": case_number}), 400
+                    return jsonify({"message": "Bug #{} marked as fixed".format(case_number)}), 201
+
+                else:
+
+                    # Send a message to the user saying a developer has viewed their bug
+                    #   only if the user was found and if the bug hasn't been seen already
+                    database.case_numbers.mark_bug_seen_sync(case_number, dev)
+                    if user and case["seen"] is None:
+                        user_send = run_coroutine_threadsafe(
+                            user.send(
+                                embed = Embed(
+                                    title = "Bug Report Seen By Developer",
+                                    description = "{} has seen your bug report".format(str(dev)),
+                                    colour = PRIMARY_EMBED_COLOR
+                                ).add_field(
+                                    name = "Bug (#{})".format(case_number),
+                                    value = case["bug"]
+                                )
+                            ),
+                            loop
+                        )
+                        user_send.result()
                 
-                # The bug report was already seen
-                #   send an error code for a Swal message to be sent in JS
-                elif case["seen"]:
-                    return jsonify({"bug": case_number, "developer": str(dev)}), 400
-                return jsonify({"message": "Bug #{} marked as seen".format(case_number), "developer": str(dev)}), 201
+                    # The bug report was already seen
+                    #   send an error code for a Swal message to be sent in JS
+                    elif case["seen"]:
+                        return jsonify({"bug": case_number, "developer": str(dev)}), 400
+                    return jsonify({"message": "Bug #{} marked as seen".format(case_number), "developer": str(dev)}), 201
         
         # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
@@ -290,23 +387,37 @@ def suggest():
             user = OMEGA_PSI.get_user(int(user_id))
             case_number = database.case_numbers.get_suggestion_number_sync()
 
-            # Add the bug report to the database and send an IFTTT webhook to all developers
-            database.case_numbers.add_suggestion_sync(user_id, description)
+            # Add the suggestion to the database and send a message to all developers
             embed = Embed(
                 title = "Suggestion (#{})".format(case_number),
-                description = "Suggested by {}".format(
-                    str(user) if user else "Unknown (ID: {})".format(user_id)
-                ),
-                colour = PRIMARY_EMBED_COLOR
+                description = "_ _",
+                colour = get_embed_color_sync(user),
+                timestamp = datetime.now()
             ).add_field(
-                name = "Description",
+                name = "User",
+                value = str(user)
+            ).add_field(
+                name = "Suggestion",
                 value = description,
                 inline = False
+            ).add_field(
+                name = "Seen?",
+                value = "No"
+            ).add_field(
+                name = "Considered?",
+                value = "Not Yet"
             )
-            send_webhook_sync(environ["SUGGESTION_WEBHOOK"], embed)
-            for dev in database.bot.get_developers_sync():
 
-                # Send a message to each developer displaying what the suggestion is
+            channel = OMEGA_PSI.get_channel(int(environ["SUGGESTION_CHANNEL"]))
+            channel_send = run_coroutine_threadsafe(channel.send(embed = embed), loop)
+            msg = channel_send.result()
+
+            # Add the suggestion into the database
+            database.case_numbers.add_suggestion_sync(user, description, msg.id)
+            database.users.add_user_suggestion_sync(user, case_number)
+
+            # Send a message to each developer displaying what the suggestion is
+            for dev in database.bot.get_developers_sync():
                 dev = OMEGA_PSI.get_user(int(dev))
                 if dev:
                     developer_send = run_coroutine_threadsafe(
@@ -316,12 +427,12 @@ def suggest():
                     developer_send.result()
             return jsonify({"message": "Suggestion #{} created".format(case_number)}), 201
         
-        # Check if the method is PUT; A developer has marked a bug as seen
+        # Check if the method is PUT; A developer has marked a suggestion as seen OR the suggestion is being considered/not considered
         elif request.method == "PUT":
 
             # Make sure this user is a developer
             if database.bot.is_developer_sync(session.get("user_id")):
-            
+
                 # Get the suggestion that is marked as seen
                 #   and find the user that suggested it
                 #   also retrieve the developer that marked the suggestion as seen
@@ -329,31 +440,121 @@ def suggest():
                 case = database.case_numbers.get_suggestion_sync(case_number)
                 user = OMEGA_PSI.get_user(int(case["author"]))
                 dev = OMEGA_PSI.get_user(int(session.get("user_id")))
+                seen_dev = OMEGA_PSI.get_user(int(case["seen"])) if case["seen"] is not None else None
 
-                # Send a message to the user saying a developer has viewed their suggestion
-                #   only if the user was found and if the suggestion hasn't been seen already
-                if user and not case["seen"]:
-                    database.case_numbers.mark_suggestion_seen_sync(case_number, dev)
-                    user_send = run_coroutine_threadsafe(
-                        user.send(
-                            embed = Embed(
-                                title = "Suggestion Seen By Developer",
-                                description = "{} has seen your suggestion".format(str(dev)),
-                                colour = PRIMARY_EMBED_COLOR
-                            ).add_field(
-                                name = "Suggestion (#{})".format(case_number),
-                                value = case["suggestion"]
-                            )
-                        ),
+                # Update the embed sent in the suggestions channel
+                if "consideration" in request.json:
+                    considered_text = "No\n**Reason**: {}".format(
+                        request.json["consideration"]["reason"]
+                    ) if not request.json["consideration"]["consider"] else "Yes"
+                else:
+                    if case["consideration"]:
+                        considered_text = "No\n**Reason**: {}".format(
+                            case["consideration"]["reason"]
+                        ) if not case["consideration"]["considered"] else "Yes"
+                    else:
+                        considered_text = "Not Yet"
+                embed = Embed(
+                    title = "Suggestion (#{})".format(case_number),
+                    description = "_ _",
+                    colour = get_embed_color_sync(user),
+                    timestamp = datetime.now()
+                ).add_field(
+                    name = "User",
+                    value = str(user)
+                ).add_field(
+                    name = "Suggestion",
+                    value = case["suggestion"],
+                    inline = False
+                ).add_field(
+                    name = "Seen?",
+                    value = "Yes, by {}".format(
+                        str(dev) if seen_dev is None else str(seen_dev)
+                    )
+                ).add_field(
+                    name = "Considered?",
+                    value = considered_text
+                )
+
+                # Only update the message if the suggestion has been marked as seen or if the consideration key exists
+                if case["seen"] is None or "consideration" in request.json:
+
+                    # Get the message this suggestion is connected to
+                    channel = OMEGA_PSI.get_channel(int(environ["SUGGESTION_CHANNEL"]))
+                    message = run_coroutine_threadsafe(
+                        channel.fetch_message(int(case["message_id"])),
                         loop
                     )
-                    user_send.result()
-                
-                # The suggestion was already seen
-                #   send an error code for a Swal message to be sent in JS
-                elif case["seen"]:
-                    return jsonify({"suggestion": case_number, "developer": str(dev)}), 400
-                return jsonify({"message": "Suggestion #{} marked as seen".format(case_number)}), 201
+                    message = message.result()
+                    
+                    # Update the message
+                    update_message = run_coroutine_threadsafe(message.edit(embed = embed), loop)
+                    update_message.result()
+
+                # Check if the "consideration" key exists in the request.json
+                if "consideration" in request.json:
+                    
+                    # Send a message to the user saying their suggestion is being considered/not considered
+                    #   only if the user was found
+                    database.case_numbers.consider_suggestion_sync(
+                        case_number, 
+                        request.json["consideration"]["consider"],
+                        request.json["consideration"]["reason"]
+                    )
+                    if user:
+
+                        # Set up the embed
+                        embed = Embed(
+                            title = "Suggestion {}Considered".format(
+                                "" if request.json["consideration"]["consider"] else "Not "
+                            ),
+                            description = "_ _",
+                            colour = PRIMARY_EMBED_COLOR
+                        ).add_field(
+                            name = "Suggestion (#{})".format(case_number),
+                            value = case["suggestion"]
+                        )
+
+                        # Add the reason if the suggestion is not being considered
+                        if not request.json["consideration"]["consider"]:
+                            embed.add_field(
+                                name = "Reason",
+                                value = request.json["consideration"]["reason"],
+                                inline = False
+                            )
+                        user_send = run_coroutine_threadsafe(
+                            user.send(embed = embed),
+                            loop
+                        )
+                        user_send.result()
+                    return jsonify({"message": "Suggestion #{} {}considered".format(case_number, "" if request.json["consideration"]["consider"] else "not ")}), 201
+            
+                else:
+
+                    # Send a message to the user saying a developer has viewed their suggestion
+                    #   only if the user was found and if the suggestion hasn't been seen already
+                    database.case_numbers.mark_suggestion_seen_sync(case_number, dev)
+                    if user and case["seen"] is None:
+                        user_send = run_coroutine_threadsafe(
+                            user.send(
+                                embed = Embed(
+                                    title = "Suggestion Seen By Developer",
+                                    description = "{} has seen your suggestion".format(str(dev)),
+                                    colour = PRIMARY_EMBED_COLOR
+                                ).add_field(
+                                    name = "Suggestion (#{})".format(case_number),
+                                    value = case["suggestion"]
+                                )
+                            ),
+                            loop
+                        )
+                        user_send.result()
+                    
+                    # The suggestion was already seen
+                    #   send an error code for a Swal message to be sent in JS
+                    elif case["seen"]:
+                        return jsonify({"suggestion": case_number, "developer": str(dev)}), 400
+                    return jsonify({"message": "Suggestion #{} marked as seen".format(case_number), "developer": str(dev)}), 201
     
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
@@ -504,6 +705,20 @@ def developer():
                 dev = OMEGA_PSI.get_user(int(suggestion_cases[case]["seen"]))
                 suggestion_cases[case]["seen"] = "Unknown" if not dev else str(dev)
         
+        # Get a list of globally active commands in the bot
+        all_commands = []
+        disabled_commands = database.bot.get_disabled_commands_sync()
+        for command in OMEGA_PSI.walk_commands():
+
+            # Don't add commands that have the is_developer check on it
+            if (
+                is_developer_predicate not in command.checks and 
+                command.qualified_name not in all_commands and
+                command.qualified_name not in disabled_commands and
+                command.qualified_name != "help"
+            ):
+                all_commands.append(command.qualified_name)
+        
         # Get the pending update data
         pending_update = database.bot.get_pending_update_sync()
         if len(pending_update) == 0:
@@ -529,7 +744,9 @@ def developer():
             suggestion_cases = suggestion_cases,
             pending_update = pending_update,
             changed_files = changed_files,
-            tasks = tasks
+            tasks = tasks,
+            disabled_commands = disabled_commands,
+            all_commands = all_commands
         )
     
     # The session user is not a developer
@@ -715,6 +932,47 @@ def tasks():
     
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
+
+@app.route("/settings/bot", methods = ["GET", "PUT"])
+def settings_bot():
+
+    # Getting a list of active commands
+    if request.method == "GET":
+        
+        # Get all active commands
+        all_commands = []
+        disabled_commands = database.bot.get_disabled_commands_sync()
+        for command in OMEGA_PSI.walk_commands():
+
+            # Don't add commands that have the is_developer check on it
+            if (
+                is_developer_predicate not in command.checks and 
+                command.qualified_name not in all_commands and
+                command.qualified_name not in disabled_commands and
+                command.qualified_name != "help"
+            ):
+                all_commands.append(command.qualified_name)
+
+        return jsonify(all_commands), 200
+
+    else:
+
+        # Only run if the origin is from ALLOW_ORIGIN
+        if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id"):
+
+            # Enabling/Disabling a command
+            if request.method == "PUT":
+                if request.json["enable"]:
+                    if database.bot.enable_command_sync(request.json["command"]):
+                        return jsonify({"success": True}), 201
+                    return jsonify({"error": "That command is already enabled!"}), 401
+                else:
+                    if database.bot.disable_command_sync(request.json["command"]):
+                        return jsonify({"success": True}), 201
+                    return jsonify({"error": "That command is already disabled!"}), 401
+        
+        # The origin does not match ALLOW_ORIGIN
+        return jsonify({"error": "Unauthorized"}), 401
     
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -793,6 +1051,11 @@ def keep_alive(bot, cogs):
                         title = "suggestions",
                         description = "all suggestions made by users of the bot will be displayed below",
                         custom_html = get_case_html(False)
+                    ),
+                    HomeSection(
+                        title = "disabledCommands",
+                        description = "",
+                        custom_html = get_bot_settings_html("disabledCommands")
                     ),
                     HomeSection(
                         title = "tasks",
