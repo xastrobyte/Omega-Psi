@@ -1,8 +1,8 @@
 from asyncio import wait, FIRST_COMPLETED
-from discord import Embed, Status, Activity, Member
+from datetime import datetime
+from discord import Embed, Status, Member
 from discord.ext.commands import Cog, group, command
-from os import environ, execv
-from sys import executable, argv
+from os import environ
 from typing import Union
 
 from cogs.errors import (
@@ -16,9 +16,9 @@ from cogs.predicates import is_developer, guild_manager, guild_only
 
 from util.database.database import database
 
-from util.discord import send_webhook
+from util.discord import process_scrolling
 from util.functions import get_embed_color, create_fields, add_fields, add_scroll_reactions
-from util.string import datetime_to_string, datetime_to_length
+from util.string import datetime_to_string, datetime_to_length, dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -143,27 +143,35 @@ class Bot(Cog, name = "bot"):
                 bug_description = result.content
                 await result.delete()
                     
-                # Save the bug data into the database and any images on Imgur
+                # Save the bug data into the database
                 bug_number = await database.case_numbers.get_bug_number()
-                await database.case_numbers.add_bug(
-                    source_type, source,
-                    str(ctx.author.id), 
-                    bug_description
-                )
 
                 # Create an embed that will be sent to the developers and 
                 # as a confirmation message to the reporter
                 embed = Embed(
-                    title = "Bug Reported (#{})".format(bug_number),
-                    description = "Reported by {}".format(str(ctx.author)),
-                    colour = await get_embed_color(ctx.author)
+                    title = "Bug (#{})".format(bug_number),
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author),
+                    timestamp = datetime.now()
+                ).add_field(
+                    name = "User",
+                    value = str(ctx.author)
+                ).add_field(
+                    name = "Source Type",
+                    value = source_type
                 ).add_field(
                     name = "Source",
-                    value = "`{}` - {}".format(source_type, source)
+                    value = source
                 ).add_field(
-                    name = "Description",
+                    name = "Bug",
                     value = bug_description,
                     inline = False
+                ).add_field(
+                    name = "Seen?",
+                    value = "No"
+                ).add_field(
+                    name = "Fixed?",
+                    value = "No"
                 )
 
                 # Send a message to all developers
@@ -175,8 +183,15 @@ class Bot(Cog, name = "bot"):
                 # Send a confirmation message to the user
                 await ctx.send(embed = embed)
             
-                # Send a message to the bug channel
-                await send_webhook(environ["BUG_WEBHOOK"], embed)
+                # Send a message to the bug channel and save the bug into the database
+                channel = self.bot.get_channel(int(environ["BUG_CHANNEL"]))
+                msg = await channel.send(embed = embed)
+                await database.case_numbers.add_bug(
+                    source_type, source,
+                    str(ctx.author.id),
+                    bug_description,
+                    str(msg.id)
+                )
     
     @command(
         name = "suggest", aliases = ["suggestion"],
@@ -184,34 +199,157 @@ class Bot(Cog, name = "bot"):
         cog_name = "bot"
     )
     async def suggest(self, ctx, *, suggestion = None):
+
+        # Check if a suggestion does not exist
+        if suggestion is None:
+            embed = get_error_message("You must specify the suggestion you want to submit!")
         
-        # Save the suggestion into the database
-        suggestion_number = await database.case_numbers.get_suggestion_number()
-        await database.case_numbers.add_suggestion(ctx.author, suggestion)
+        # The suggestion exists
+        else:
+            
+            # Save the suggestion into the database
+            suggestion_number = await database.case_numbers.get_suggestion_number()
 
-        # Create an embed that will be sent to the developers and
-        # as a confirmation message to the suggestor
-        embed = Embed(
-            title = "Suggestion Made (#{})".format(suggestion_number),
-            description = "Submitted by {}".format(str(ctx.author)),
-            colour = await get_embed_color(ctx.author)
-        ).add_field(
-            name = "Suggestion",
-            value = suggestion,
-            inline = False
-        )
+            # Create an embed that will be sent to the developers and
+            # as a confirmation message to the suggestor
+            embed = Embed(
+                title = "Suggestion (#{})".format(suggestion_number),
+                description = "_ _",
+                colour = await get_embed_color(ctx.author),
+                timestamp = datetime.now()
+            ).add_field(
+                name = "User",
+                value = str(ctx.author)
+            ).add_field(
+                name = "Suggestion",
+                value = suggestion,
+                inline = False
+            ).add_field(
+                name = "Seen?",
+                value = "No"
+            ).add_field(
+                name = "Considered?",
+                value = "Not Yet"
+            )
 
-        # Send a message to all developers
-        for dev in await database.bot.get_developers():
-            dev = self.bot.get_user(int(dev))
-            try: await dev.send(embed = embed)
-            except: pass
+            # Send a message to all developers
+            for dev in await database.bot.get_developers():
+                dev = self.bot.get_user(int(dev))
+                try: await dev.send(embed = embed)
+                except: pass
 
+            # Send a message to the suggestion channel
+            channel = self.bot.get_channel(int(environ["SUGGESTION_CHANNEL"]))
+            msg = await channel.send(embed = embed)
+            await database.case_numbers.add_suggestion(ctx.author, suggestion, msg.id)
+    
         # Send a confirmation message to the user
         await ctx.send(embed = embed)
 
-        # Send a message to the suggestion channel
-        await send_webhook(environ["SUGGESTION_WEBHOOK"], embed)
+    @command(
+        name = "myBugs",
+        description = "Allows you to view a list of bugs you have reported and their current status",
+        cog_name = "bot"
+    )
+    async def my_bugs(self, ctx):
+
+        # Get the bug case numbers the author has reported
+        cases = await database.case_numbers.get_bug_cases(
+            key = lambda case: case["author"] == str(ctx.author.id)
+        )
+        cases = cases["cases"]
+        
+        # Check if there are no case_numbers
+        if len(cases) == 0:
+            await ctx.send(embed = Embed(
+                title = "No Bugs",
+                description = "You haven't reported any bugs!",
+                colour = await get_embed_color(ctx.author)
+            ))
+        
+        # There is at least 1 case_number
+        else:
+            bugs = []
+            for case_number in cases:
+                case = cases[case_number]
+                seen_dev = self.bot.get_user(int(case["seen"])) if case["seen"] is not None else None
+                embed = Embed(
+                    title = "Bug (#{})".format(str(case_number)),
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author),
+                    timestamp = dict_to_datetime(case["time"])
+                ).add_field(
+                    name = "Source Type",
+                    value = case["source_type"]
+                ).add_field(
+                    name = "Source",
+                    value = case["source"]
+                ).add_field(
+                    name = "Bug",
+                    value = case["bug"],
+                    inline = False
+                ).add_field(
+                    name = "Seen?",
+                    value = "No" if seen_dev is None else "Yes, by {}".format(str(seen_dev))
+                ).add_field(
+                    name = "Fixed?",
+                    value = "No" if not case["fixed"] else "Yes"
+                )
+                bugs.append(embed)
+            
+            # Allow the user to scroll through the bugs
+            await process_scrolling(ctx, self.bot, pages = bugs)
+    
+    @command(
+        name = "mySuggestions",
+        description = "Allows you to view a list of suggestions you have submitted and their current status",
+        cog_name = "bot"
+    )
+    async def my_suggestions(self, ctx):
+        
+        # Get the suggestion case numbers the author has reported
+        cases = await database.case_numbers.get_suggestion_cases(
+            key = lambda case: case["author"] == str(ctx.author.id)
+        )
+        cases = cases["cases"]
+        
+        # Check if there are no case_numbers
+        if len(cases) == 0:
+            await ctx.send(embed = Embed(
+                title = "No Suggestions",
+                description = "You haven't submitted any suggestions!",
+                colour = await get_embed_color(ctx.author)
+            ))
+        
+        # There is at least 1 case_number
+        else:
+            suggestions = []
+            for case_number in cases:
+                case = cases[case_number]
+                seen_dev = self.bot.get_user(int(case["seen"])) if case["seen"] is not None else None
+                embed = Embed(
+                    title = "Suggestion (#{})".format(str(case_number)),
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author),
+                    timestamp = dict_to_datetime(case["time"])
+                ).add_field(
+                    name = "Suggestion",
+                    value = case["suggestion"],
+                    inline = False
+                ).add_field(
+                    name = "Seen?",
+                    value = "No" if seen_dev is None else "Yes, by {}".format(str(seen_dev))
+                ).add_field(
+                    name = "Considered?",
+                    value = "Not Yet" if case["consideration"] is None else (
+                        "No\n**Reason**: {}".format(case["consideration"]["reason"])
+                        if not case["consideration"]["considered"] else "Yes"
+                    )
+                )
+                suggestions.append(embed)
+            
+            # Allow the user to scroll through the suggestions
+            await process_scrolling(ctx, self.bot, pages = suggestions)
     
     @command(
         name = "pendingUpdate", 
@@ -501,162 +639,6 @@ class Bot(Cog, name = "bot"):
         await ctx.send(embed = embed)
     
     @command(
-        name = "guildInfo",
-        aliases = ["gi"],
-        description = "Gives you information about this server.",
-        cog_name = "misc"
-    )
-    @guild_only()
-    async def guild_info(self, ctx):
-
-        # Create the fields for the guild data
-        globally_disabled = await database.bot.get_disabled_commands()
-        guild_disabled = await database.guilds.get_disabled_commands(ctx.guild)
-        fields = {
-            "Owner": ctx.guild.owner.mention,
-            "Created At": datetime_to_string(ctx.guild.created_at),
-            "Globally Disabled Commands": "\n".join([
-                "`{}`".format(command)
-                for command in globally_disabled
-            ]) if len(globally_disabled) > 0 else "No Globally Disabled Commands",
-            "Disabled Commands in this Guild": "\n".join([
-                "`{}`".format(command)
-                for command in guild_disabled
-            ]) if len(guild_disabled) > 0 else "No Disabled Commands in this server",
-            "Members": "{} Members\n{} Online\n{} Bots\n{} People".format(
-                len(ctx.guild.members),
-                len([ member for member in ctx.guild.members if member.status == Status.online ]),
-                len([ member for member in ctx.guild.members if member.bot ]),
-                len([ member for member in ctx.guild.members if not member.bot ])
-            )
-        }
-        
-        # Create the embed for the guild info
-        embed = Embed(
-            name = "Guild Info",
-            description = "_ _",
-            colour = await get_embed_color(ctx.author)
-        ).set_footer(
-            text = "Server Name: {} | Server ID: {}".format(ctx.guild.name, ctx.guild.id)
-        ).set_thumbnail(
-            url = ctx.guild.icon_url
-        )
-        for field in fields:
-            embed.add_field(
-                name = field,
-                value = fields[field]
-            )
-
-        # Create roles fields
-        roles = create_fields(ctx.guild.roles[::-1], key = lambda role: role.mention, new_line = False)
-        for i in range(len(roles)):
-            embed.add_field(
-                name = "Roles {}".format(
-                    "({} / {})".format(
-                        i + 1, len(roles)
-                    ) if len(roles) > 1 else ""
-                ),
-                value = roles[i],
-                inline = False
-            )
-        
-        await ctx.send(embed = embed)
-    
-    @command(
-        name = "userInfo",
-        aliases = ["ui"],
-        description = "Gives you info about a member in this guild.",
-        cog_name = "misc"
-    )
-    @guild_only()
-    async def user_info(self, ctx, *, user : Union[Member, str] = None):
-        
-        # Check if getting info for specific user
-        if user != None:
-
-            # Try to find user if not already converted to member
-            if type(user) != Member:
-
-                # Iterate through members
-                found = False
-                for member in ctx.guild.members:
-
-                    # Get a list of possible aliases
-                    check_list = [member.name.lower(), member.display_name.lower()]
-                    if member.nick != None:
-                        check_list.append(member.nick.lower())
-
-                    # See if the user is equivalent 
-                    if user.lower() in check_list:
-                        user = member
-                        found = True
-                        break
-        
-                # User was not found
-                if not found:
-                    user = None
-        
-        # Getting info for self
-        else:
-            user = ctx.author
-
-        # Make sure user is not none
-        if user != None:
-        
-            # Send user data
-            permissions = ", ".join([
-                perm.replace("_", " ").title()
-                for perm, has_perm in list(ctx.channel.permissions_for(user))
-                if has_perm == True
-            ]) if not ctx.channel.permissions_for(user).administrator else "Administrator"
-
-            fields = {
-                "Member": "{} ({}#{})".format(
-                    user.mention, 
-                    user.name, user.discriminator
-                ),
-                "Created At": datetime_to_string(user.created_at),
-                "Joined At": datetime_to_string(user.joined_at),
-                "Permissions": permissions if len(permissions) > 0 else "None",
-                "Status": str(user.status)
-            }
-
-            # Create embed
-            embed = Embed(
-                name = "User Info",
-                description = " ",
-                colour = await get_embed_color(ctx.author)
-            ).set_thumbnail(
-                url = user.avatar_url
-            ).set_footer(
-                text = "User Name: {} | User ID: {}".format(
-                    "{}#{}".format(
-                        user.name, user.discriminator
-                    ),
-                    user.id
-                )
-            )
-
-            for field in fields:
-                embed.add_field(
-                    name = field,
-                    value = fields[field],
-                    inline = False
-                )
-            
-            await ctx.send(
-                embed = embed
-            )
-        
-        # user is none
-        else:
-            await ctx.send(
-                embed = get_error_message(
-                    "There was no member found with that name."
-                )
-            )
-    
-    @command(
         name = "support", aliases = ["discord"],
         description = "Gives you an invite link to my Discord server.",
         cog_name = "bot"
@@ -710,161 +692,7 @@ class Bot(Cog, name = "bot"):
             "Pong! `{}ms`".format(int(self.bot.latency * 1000))
         )
 
-    @command(
-        name = "prefix", aliases = ["pre"],
-        description = "Changes the prefix for this server.",
-        cog_name = "bot"
-    )
-    @guild_only()
-    @guild_manager()
-    async def prefix(self, ctx, *, prefix : str = None):
-        
-        # Check if prefix is None (didn't enter it in)
-        if prefix == None:
-            await ctx.send(
-                embed = get_error_message(
-                    "You must clarify the new prefix!"
-                )
-            )
-        
-        # There is a prefix specified
-        else:
-
-            # Check if prefix ends with letter or digit
-            if prefix[-1].isdigit() or prefix[-1].isalpha():
-                prefix += " "
-
-            # Change prefix for guild
-            await database.guilds.set_prefix(ctx.guild, prefix)
-            
-            # Send message
-            await ctx.send(
-                embed = Embed(
-                    title = "Prefix Changed",
-                    description = f"This server's prefix is now `{prefix}`",
-                    colour = await get_embed_color(ctx.author)
-                )
-            )
-    
-    @command(
-        name = "enableCommand",
-        description = "Enables a specified command in this server.",
-        cog_name = "developer"
-    )
-    @guild_only()
-    @guild_manager()
-    async def enable_command(self, ctx, cmd = None):
-
-        # Check if there is no command to enable
-        if not cmd:
-            await ctx.send(
-                embed = get_error_message("You need to specify the command to enable.")
-            )
-        
-        # There is a command to enable
-        else:
-
-            # Check that it's a valid command in the bot
-            cmd = self.bot.get_command(cmd)
-            if not cmd:
-                await ctx.send(
-                    embed = get_error_message("That command does not exist!")
-                )
-            
-            # The command is valid, enable it if possible
-            else:
-                enabled = await database.guilds.enable_command(ctx.guild, cmd.qualified_name)
-                if not enabled:
-                    await ctx.send(
-                        embed = get_error_message("That command is already enabled!")
-                    )
-                
-                else:
-                    await ctx.send(
-                        embed = Embed(
-                            title = "Command Enabled",
-                            description = "`{}` has been enabled".format(cmd.qualified_name),
-                            colour = await get_embed_color(ctx.author)
-                        )
-                    )
-    
-    @command(
-        name = "disableCommand",
-        description = "Disables a specified command in this server.",
-        cog_name = "developer"
-    )
-    @guild_only()
-    @guild_manager()
-    async def disable_command(self, ctx, cmd = None):
-
-        # Check if there is no command to disable
-        if not cmd:
-            await ctx.send(
-                embed = get_error_message("You need to specify the command to disable.")
-            )
-        
-        # There is a command to disable
-        else:
-
-            # Check that it's a valid command in the bot
-            cmd = self.bot.get_command(cmd)
-            if not cmd:
-                await ctx.send(
-                    embed = get_error_message("That command does not exist!")
-                )
-            
-            # The command is valid, disable it if possible
-            else:
-                disabled = await database.guilds.disable_command(ctx.guild, cmd.qualified_name)
-                if not disabled:
-                    await ctx.send(
-                        embed = get_error_message("That command is already disabled!")
-                    )
-                
-                else:
-                    await ctx.send(
-                        embed = Embed(
-                            title = "Command disabled",
-                            description = "`{}` has been disabled".format(cmd.qualified_name),
-                            colour = await get_embed_color(ctx.author)
-                        )
-                    )
-
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    @command(
-        name = "restart",
-        description = "Restarts the bot.",
-        cog_name = "bot"
-    )
-    @is_developer()
-    async def restart(self, ctx):
-        
-        # Change the bot presence to say "Reloading..."
-        await self.bot.change_presence(
-            status = Status.online,
-            activity = Activity(
-                name = "Restarting...",
-                type = 0,
-                url = "https://twitch.tv/FellowHashbrown"
-            )
-        )
-
-        # Set the restart data in the database
-        await database.bot.set_restart({
-            "send": True,
-            "channel_id": str(ctx.channel.id) if ctx.channel != None else None,
-            "author_id": str(ctx.author.id)
-        })
-
-        # Actually restart
-        await ctx.send(
-            "{}, I will be right back!".format(ctx.author.mention)
-        )
-
-        execv(executable, ["python"] + argv)
-
-        await self.bot.logout()
 
     @tasks.command(
         name = "add",
@@ -913,22 +741,11 @@ class Bot(Cog, name = "bot"):
 
     @tasks_add.error
     @tasks_remove.error
-    @prefix.error
-    @guild_info.error
-    @user_info.error
     async def error_handling(self, ctx, error):
 
         # Check if the user who called the commands is not a developer
         if isinstance(error, NotADeveloper):
             await ctx.send(embed = NOT_A_DEVELOPER_ERROR)
-        
-        # Check if the user who called the commands can't manage the guild
-        elif isinstance(error, NotAGuildManager):
-            await ctx.send(embed = NOT_A_GUILD_MANAGER_ERROR)
-        
-        # Check if the command cannot run in a private message
-        elif isinstance(error, NotInGuild):
-            await ctx.send(embed = NOT_IN_GUILD_ERROR)
 
 def setup(bot):
     bot.add_cog(Bot(bot))

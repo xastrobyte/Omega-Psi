@@ -116,7 +116,7 @@ async function reportBug() {
 /**
  * Marks a specified bug as seen in the database
  */
-function markBugAsSeen(caseNumber) {
+function markBugAsSeen(caseNumber, ignoreSwal = false) {
 
     // Send a PUT request to /reportBug to update the bug to marked as seen
     $.ajax({
@@ -134,9 +134,68 @@ function markBugAsSeen(caseNumber) {
         // Update the bug's HTML elements
         document.getElementById(`bug${caseNumber}SeenText`).innerHTML = "Yes";
         document.getElementById(`markBug${caseNumber}Seen`).innerHTML = `Seen By ${data.developer}`;
+        if (!ignoreSwal) {
+            Swal.fire({
+                title: "Bug Marked As Seen!",
+                text: `Bug #${caseNumber} has been marked as seen`,
+                icon: "success",
+                customClass: {
+                    container: 'swal-container',
+                    popup: 'swal-popup',
+                    content: 'swal-content',
+                    title: 'swal-title',
+                    confirmButton: 'swal-confirm'
+                }
+            })
+        }
+
+    // If the request fails, the bug has already been marked as seen
+    }).fail(function(error) {
+        if (!ignoreSwal) {
+            Swal.fire({
+                title: "Bug Already Seen",
+                text: `Bug #${caseNumber} has already been seen by ${error.responseJSON.developer}`,
+                icon: "error",
+                customClass: {
+                    container: 'swal-container',
+                    popup: 'swal-popup',
+                    content: 'swal-content',
+                    title: 'swal-title',
+                    confirmButton: 'swal-confirm',
+                    input: 'swal-input'
+                }
+            })
+        }
+    })
+}
+
+/**
+ * Allows a developer to mark a specified bug as fixed
+ */
+async function fixBug(caseNumber) {
+
+    // Mark the bug as seen
+    markBugAsSeen(caseNumber, true); // This will ignore any Sweet Alert popup messages from being displayed
+
+    // Send a PUT request to /reportBug to fix the bug
+    $.ajax({
+        url: `${BASE_URL}/reportBug`,
+        type: "PUT",
+        data: JSON.stringify({
+            caseNumber: caseNumber,
+            fixed: true
+        }),
+        contentType: "application/json; charset=utf-8"
+    
+    // If the request succeeds, let the developer know and update the HTML elements pertaining to the bug
+    //  Also mark the bug as seen if it has not already been seen
+    }).done(function(data) {
+
+        // Update the bug's HTML elements
+        document.getElementById(`bug${caseNumber}FixedText`).innerHTML = "Yes";
         Swal.fire({
-            title: "Bug Marked As Seen!",
-            text: `Bug #${caseNumber} has been marked as seen`,
+            title: "Bug Marked as Fixed!",
+            text: `Bug #${caseNumber} has been marked as fixed`,
             icon: "success",
             customClass: {
                 container: 'swal-container',
@@ -147,19 +206,18 @@ function markBugAsSeen(caseNumber) {
             }
         })
 
-    // If the request fails, the bug has already been marked as seen
+    // If the request fails, let the developer know why it failed
     }).fail(function(error) {
         Swal.fire({
-            title: "Bug Already Seen",
-            text: `Bug #${caseNumber} has already been seen by ${error.responseJSON.developer}`,
+            title: "Bug Already Fixed",
+            text: `Bug #${caseNumber} has already been fixed`,
             icon: "error",
             customClass: {
                 container: 'swal-container',
                 popup: 'swal-popup',
                 content: 'swal-content',
                 title: 'swal-title',
-                confirmButton: 'swal-confirm',
-                input: 'swal-input'
+                confirmButton: 'swal-confirm'
             }
         })
     })

@@ -1,12 +1,13 @@
 from asyncio import wait, FIRST_COMPLETED
-from discord import Embed, Member
+from discord import Embed, Member, Status, Activity
 from discord.ext.commands import Cog, group, command, Greedy
 from functools import partial
-from os import environ
+from os import environ, execv
 from requests import post
+from sys import executable, argv
 
 from cogs.errors import get_error_message
-from cogs.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, CHECK_MARK, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, loop
+from cogs.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, CHECK_MARK, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, loop, NOT_CONSIDER, CONSIDER
 from cogs.predicates import is_developer
 
 from util.database.database import database
@@ -33,6 +34,40 @@ class Developer(Cog, name = "developer"):
         self.bot = bot
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @command(
+        name = "restart",
+        description = "Restarts the bot.",
+        cog_name = "developer"
+    )
+    @is_developer()
+    async def restart(self, ctx):
+        
+        # Change the bot presence to say "Reloading..."
+        await self.bot.change_presence(
+            status = Status.online,
+            activity = Activity(
+                name = "Restarting...",
+                type = 0,
+                url = "https://twitch.tv/FellowHashbrown"
+            )
+        )
+
+        # Set the restart data in the database
+        await database.bot.set_restart({
+            "send": True,
+            "channel_id": str(ctx.channel.id) if ctx.channel != None else None,
+            "author_id": str(ctx.author.id)
+        })
+
+        # Actually restart
+        await ctx.send(
+            "{}, I will be right back!".format(ctx.author.mention)
+        )
+
+        execv(executable, ["python"] + argv)
+
+        await self.bot.logout()
 
     @command(
         name = "updateTopGG",
@@ -533,33 +568,66 @@ class Developer(Cog, name = "developer"):
             # Setup an embed to view the current unseen bug case
             if current_case != -1:
                 author = self.bot.get_user(int(get_case(current_case)["author"]))
-                developer = self.bot.get_user(int(get_case(current_case)["seen"]))
-                embed = Embed(
-                    title = "Bugs" if bugs else "Suggestions",
-                    description = "**{} #{}**: {}{}\n**Author**: {}".format(
-                        "Bug" if bugs else "Suggestion", case_numbers[current_case], get_case(current_case)[case_id],
-                        "\n**Source**: `{}` - {}".format(
-                            get_case(current_case)["source_type"],
-                            get_case(current_case)["source"],
-                        ) if bugs else "",
-                        str(author)
-                    ),
-                    colour = await get_embed_color(ctx.author),
-                    timestamp = dict_to_datetime(get_case(current_case)["time"])
-                ).set_footer(
-                    text = "{} Seen? {} {}".format(
-                        "Bug" if bugs else "Suggestion",
-                        CHECK_MARK if get_case(current_case)["seen"] else LEAVE,
-                        "By {}".format(
-                            str(developer)
-                        ) if get_case(current_case)["seen"] else ""
+                developer = self.bot.get_user(int(get_case(current_case)["seen"])) if get_case(current_case)["seen"] else None
+                if bugs:
+                    embed = Embed(
+                        title = "Bug (#{})".format(str(case_numbers[current_case])),
+                        description = "_ _",
+                        colour = await get_embed_color(author),
+                        timestamp = dict_to_datetime(get_case(current_case)["time"])
+                    ).add_field(
+                        name = "Source Type",
+                        value = get_case(current_case)["source_type"]
+                    ).add_field(
+                        name = "Source",
+                        value = get_case(current_case)["source"]
+                    ).add_field(
+                        name = "Bug",
+                        value = get_case(current_case)["bug"],
+                        inline = False
+                    ).add_field(
+                        name = "Seen?",
+                        value = "No" if developer is None else "Yes, by {}".format(str(developer))
+                    ).add_field(
+                        name = "Fixed?",
+                        value = "No" if not get_case(current_case)["fixed"] else "Yes"
                     )
-                )
+
+                    # Update the message in the Bug channel
+                    channel = self.bot.get_channel(int(environ["BUG_CHANNEL"]))
+                    bug_message = await channel.fetch_message(get_case(current_case)["message_id"])
+                else:
+                    embed = Embed(
+                        title = "Suggestion (#{})".format(str(case_numbers[current_case])),
+                        description = "_ _",
+                        colour = await get_embed_color(author),
+                        timestamp = dict_to_datetime(get_case(current_case)["time"])
+                    ).add_field(
+                        name = "Suggestion",
+                        value = get_case(current_case)["suggestion"],
+                        inline = False
+                    ).add_field(
+                        name = "Seen?",
+                        value = "No" if developer is None else "Yes, by {}".format(str(developer))
+                    ).add_field(
+                        name = "Considered?",
+                        value = "Not Yet" if get_case(current_case)["consideration"] is None else (
+                            "No\n**Reason**: {}".format(get_case(current_case)["consideration"]["reason"])
+                            if not get_case(current_case)["consideration"]["considered"] else "Yes"
+                        )
+                    )
+
+                    # Update the message in the Suggestion channel
+                    channel = self.bot.get_channel(int(environ["SUGGESTION_CHANNEL"]))
+                    suggestion_message = await channel.fetch_message(get_case(current_case)["message_id"])
 
                 # Let the user view all the bug reports in a scrolling embed
                 message = await ctx.send(embed = embed)
                 await add_scroll_reactions(message, cases)
                 await message.add_reaction(CHECK_MARK)
+                await message.add_reaction(CONSIDER)
+                if not bugs:
+                    await message.add_reaction(NOT_CONSIDER)
                 while True:
                     
                     # Wait for the user to react with what reaction they want to do
@@ -567,7 +635,7 @@ class Developer(Cog, name = "developer"):
                     check_reaction = lambda reaction, user: (
                         reaction.message.id == message.id and
                         user.id == ctx.author.id and
-                        str(reaction) in (SCROLL_REACTIONS + [CHECK_MARK])
+                        str(reaction) in (SCROLL_REACTIONS + [CHECK_MARK, CONSIDER, NOT_CONSIDER])
                     )
                     done, pending = await wait([
                         self.bot.wait_for("reaction_add", check = check_reaction),
@@ -594,47 +662,146 @@ class Developer(Cog, name = "developer"):
                         current_case += 1 if current_case < len(case_numbers) - 1 else 0
                     
                     # The reaction is the check mark (mark case number as seen)
-                    elif str(reaction) == CHECK_MARK and not get_case(current_case)["seen"]:
+                    elif (str(reaction) == CHECK_MARK and not get_case(current_case)["seen"]) or str(reaction) in [CONSIDER, NOT_CONSIDER]:
 
                         # Mark the case as seen
                         if bugs:
+
+                            # Mark the bug as fixed
+                            if str(reaction) == CONSIDER and not get_case(current_case)["fixed"]:
+                                await database.case_numbers.fix_bug(case_numbers[current_case])
                             await database.case_numbers.mark_bug_seen(case_numbers[current_case], ctx.author)
                         else:
+
+                            # Consider or Don't Consider the suggestion
+                            if str(reaction) in [CONSIDER, NOT_CONSIDER]:
+
+                                # Ask the developer for the reason why the suggestion was not considered
+                                reason = None
+                                if str(reaction) == NOT_CONSIDER:
+                                    ask_for_reason_message = await ctx.send(embed = Embed(
+                                        title = "Give a reason",
+                                        description = "Specify the reason why the suggestion was not considered.",
+                                        colour = await get_embed_color(ctx.author)
+                                    ))
+                                    reason_message = await self.bot.wait_for("message", check = lambda message: (
+                                        message.author.id == ctx.author.id and
+                                        message.channel.id == ctx.channel.id
+                                    ))
+                                    reason = reason_message.content
+                                    await ask_for_reason_message.delete()
+                                    await reason_message.delete()
+
+                                # Consider or Don't Consider the suggestion
+                                await database.case_numbers.consider_suggestion(
+                                    case_numbers[current_case],
+                                    str(reaction) == CONSIDER,
+                                    reason
+                                )
                             await database.case_numbers.mark_suggestion_seen(case_numbers[current_case], ctx.author)
 
                         # Notify the author that their case was seen
                         user = self.bot.get_user(int(get_case(current_case)["author"]))
                         if user:
-                            try:
-                                await user.send(
-                                    embed = Embed(
-                                        title = "{} Seen By Developer".format(
-                                            "Bug Report" if bugs else "Suggestion"
-                                        ),
-                                        description = "{} has seen your {}".format(
-                                            str(ctx.author),
-                                            "bug report" if bugs else "suggestion"
-                                        ),
-                                        colour = await get_embed_color(user)
-                                    ).add_field(
-                                        name = "{} (#{})".format(
-                                            "Bug" if bugs else "Suggestion",
-                                            str(case_numbers[current_case])
-                                        ),
-                                        value = get_case(current_case)[case_id]
+
+                            # Only notify the user that their case was seen if it wasn't already marked as seen
+                            if not get_case(current_case)["seen"]:
+                                get_case(current_case)["seen"] = str(ctx.author.id)
+                                try:
+                                    await user.send(
+                                        embed = Embed(
+                                            title = "{} Seen By Developer".format(
+                                                "Bug Report" if bugs else "Suggestion"
+                                            ),
+                                            description = "{} has seen your {}".format(
+                                                str(ctx.author),
+                                                "bug report" if bugs else "suggestion"
+                                            ),
+                                            colour = await get_embed_color(user)
+                                        ).add_field(
+                                            name = "{} (#{})".format(
+                                                "Bug" if bugs else "Suggestion",
+                                                str(case_numbers[current_case])
+                                            ),
+                                            value = get_case(current_case)[case_id]
+                                        )
                                     )
-                                )
-                            except:
-                                await ctx.send(
-                                    embed = Embed(
-                                        title = "Could Not Send Message",
-                                        description = "Attempt to notify author of viewing {} failed.".format(
-                                            "bug report" if bugs else "suggestion"
+
+                                except:
+                                    await ctx.send(
+                                        embed = Embed(
+                                            title = "Could Not Send Message",
+                                            description = "Attempt to notify author of viewing {} failed.".format(
+                                                "bug report" if bugs else "suggestion"
+                                            ),
+                                            colour = 0x800000
                                         ),
-                                        colour = 0x800000
-                                    ),
-                                    delete_after = 15
-                                )
+                                        delete_after = 15
+                                    )
+                            
+                            # Let the user know their bug was fixed
+                            if bugs and str(reaction) == CONSIDER and not get_case(current_case)["fixed"]:
+                                get_case(current_case)["fixed"] = True
+                                try:
+                                    await user.send(
+                                        embed = Embed(
+                                            title = "Bug Fixed!",
+                                            description = "_ _",
+                                            colour = await get_embed_color(user)
+                                        ).add_field(
+                                            name = "Bug (#{})".format(str(case_numbers[current_case])),
+                                            value = get_case(current_case)[case_id]
+                                        )
+                                    )
+                                except:
+                                    await ctx.send(
+                                        embed = Embed(
+                                            title = "Could Not Send Message",
+                                            description = "Attempt to notify {} of fixing bug failed.".format(
+                                                str(user)
+                                            ),
+                                            colour = 0x800000
+                                        ),
+                                        delete_after = 15
+                                    )
+                            
+                            # Let the user know if their suggestion was considered or not
+                            if not bugs and str(reaction) in [CONSIDER, NOT_CONSIDER]:
+                                get_case(current_case)["consideration"] = {
+                                    "considered": str(reaction) == CONSIDER,
+                                    "reason": reason if str(reaction) != CONSIDER else None
+                                }
+                                try:
+                                    await user.send(
+                                        embed = Embed(
+                                            title = "Suggestion {}Considered".format(
+                                                "" if str(reaction) == CONSIDER else "Not "
+                                            ),
+                                            description = "{} has {}considered your suggestion {}".format(
+                                                str(ctx.author),
+                                                "" if str(reaction) == CONSIDER else "not ",
+                                                "because **_{}_**".format(reason) if str(reaction) == NOT_CONSIDER else ""
+                                            ),
+                                            colour = await get_embed_color(user)
+                                        ).add_field(
+                                            name = "Suggestion (#{})".format(
+                                                str(case_numbers[current_case])
+                                            ),
+                                            value = get_case(current_case)[case_id]
+                                        )
+                                    )
+                                except:
+                                    await ctx.send(
+                                        embed = Embed(
+                                            title = "Could Not Send Message",
+                                            description = "Attempt to notify {} of {}considering suggestion failed.".format(
+                                                str(user),
+                                                "" if str(reaction) == CONSIDER else "not "
+                                            ),
+                                            colour = 0x800000
+                                        ),
+                                        delete_after = 15
+                                    )
                     
                     # The reaction is leave, delete the message and break from the loop
                     elif str(reaction) == LEAVE:
@@ -643,36 +810,66 @@ class Developer(Cog, name = "developer"):
                     
                     # Update the embed and the message
                     author = self.bot.get_user(int(get_case(current_case)["author"]))
-                    developer = self.bot.get_user(int(get_case(current_case)["seen"]))
-                    embed = Embed(
-                        title = "Bugs" if bugs else "Suggestions",
-                        description = "**{} #{}**: {}{}\n**Author**: {}".format(
-                            "Bug" if bugs else "Suggestion", case_numbers[current_case], get_case(current_case)[case_id],
-                            "\n**Source**: `{}` - {}".format(
-                                get_case(current_case)["source_type"],
-                                get_case(current_case)["source"],
-                            ) if bugs else "",
-                            str(author)
-                        ),
-                        colour = await get_embed_color(ctx.author),
-                        timestamp = dict_to_datetime(get_case(current_case)["time"])
-                    ).set_footer(
-                        text = "{} Seen? {} {}".format(
-                            "Bug" if bugs else "Suggestion",
-                            CHECK_MARK if get_case(current_case)["seen"] else LEAVE,
-                            "By {}".format(
-                                str(developer)
-                            ) if get_case(current_case)["seen"] else ""
+                    developer = self.bot.get_user(int(get_case(current_case)["seen"])) if get_case(current_case)["seen"] else None
+                    if bugs:
+                        embed = Embed(
+                            title = "Bug (#{})".format(str(case_numbers[current_case])),
+                            description = "_ _",
+                            colour = await get_embed_color(author),
+                            timestamp = dict_to_datetime(get_case(current_case)["time"])
+                        ).add_field(
+                            name = "Source Type",
+                            value = get_case(current_case)["source_type"]
+                        ).add_field(
+                            name = "Source",
+                            value = get_case(current_case)["source"]
+                        ).add_field(
+                            name = "Bug",
+                            value = get_case(current_case)["bug"],
+                            inline = False
+                        ).add_field(
+                            name = "Seen?",
+                            value = "No" if developer is None else "Yes, by {}".format(str(developer))
+                        ).add_field(
+                            name = "Fixed?",
+                            value = "No" if not get_case(current_case)["fixed"] else "Yes"
                         )
-                    )
+                        await bug_message.edit(embed = embed)
+                    else:
+                        embed = Embed(
+                            title = "Suggestion (#{})".format(str(case_numbers[current_case])),
+                            description = "_ _",
+                            colour = await get_embed_color(author),
+                            timestamp = dict_to_datetime(get_case(current_case)["time"])
+                        ).add_field(
+                            name = "Suggestion",
+                            value = get_case(current_case)["suggestion"],
+                            inline = False
+                        ).add_field(
+                            name = "Seen?",
+                            value = "No" if developer is None else "Yes, by {}".format(str(developer))
+                        ).add_field(
+                            name = "Considered?",
+                            value = "Not Yet" if get_case(current_case)["consideration"] is None else (
+                                "No\n**Reason**: {}".format(get_case(current_case)["consideration"]["reason"])
+                                if not get_case(current_case)["consideration"]["considered"] else "Yes"
+                            )
+                        )
+                        await suggestion_message.edit(embed = embed)
                     await message.edit(embed = embed)
         
         # There are no unseen bugs
         else:
             await ctx.send(
                 embed = Embed(
-                    title = "No Unseen {}".format("Bug Reports" if bugs else "Suggestions"),
-                    description = "There were no unseen {} found".format("bug reports" if bugs else "suggestions"),
+                    title = "No {}{}".format(
+                        "Unseen " if unseen_only else "",
+                        "Bug Reports" if bugs else "Suggestions"
+                    ),
+                    description = "There were no {}{} found".format(
+                        "unseen " if unseen_only else "",
+                        "bug reports" if bugs else "suggestions"
+                    ),
                     colour = await get_embed_color(ctx.author)
                 )
             )  

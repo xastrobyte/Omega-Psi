@@ -1,5 +1,5 @@
 from cogs.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE
-from cogs.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD
+from cogs.globals import PRIMARY_EMBED_COLOR, FIELD_THRESHOLD, loop
 
 from util.database.database import database
 
@@ -130,6 +130,25 @@ def create_fields(data, *, by_word = False, threshold = FIELD_THRESHOLD, key = N
     
     return fields
 
+def get_embed_color_sync(user):
+    """Retrieves the embed color for the specified user. If they do not have one, the primary color
+    is returned
+
+    Parameters
+    ----------
+        user : User
+            The discord user to get the embed color of
+    
+    Returns
+    -------
+        int
+            The embed color of the user
+    """
+    colour = database.users.get_embed_color_sync(user)
+    if colour is None:
+        return PRIMARY_EMBED_COLOR
+    return colour
+
 async def get_embed_color(user):
     """Retrieves the embed color for the specified user. If they do not have one, the primary color
     is returned
@@ -144,7 +163,4 @@ async def get_embed_color(user):
         int
             The embed color of the user
     """
-    colour = await database.users.get_embed_color(user)
-    if not colour:
-        return PRIMARY_EMBED_COLOR
-    return colour
+    return await loop.run_in_executor(None, get_embed_color_sync, user)
