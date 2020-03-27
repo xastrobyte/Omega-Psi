@@ -25,7 +25,7 @@ has a list of commands and any subcommands in it.
 
 ### Server Managers
 * As a server manager, you can choose what commands to enable or disable using the `enableCommand` and `disableCommand` commands.
-    * Note that you *cannot* disable the `help` command or the `enableCommand` and `disableCommand` commands. That would completely lock you out of enabling commands
+    * Note that you *cannot* disable the `help` command. That would completely unhelpful to your server's members
     * You can also change the prefix for your server.
         * Note that if you change the prefix to something that ends in a letter or a number, you will need to add a space when calling a command (which makes sense)
 
