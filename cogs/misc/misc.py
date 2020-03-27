@@ -208,7 +208,9 @@ class Misc(Cog, name = "misc"):
         else:
 
             # Check if color is a valid HEX color
-            if len(hex_code) == 6 and len([char for char in hex_code.lower() if char not in "0123456789abcdef"]) == 0:
+            if (len(hex_code) == 6 or len(hex_code) == 3) and len([char for char in hex_code.lower() if char not in "0123456789abcdef"]) == 0:
+                if len(hex_code) == 3:
+                    hex_code = "{}{}{}".format(hex_code[0] * 2, hex_code[1] * 2, hex_code[2] * 2)
                 await database.users.set_embed_color(ctx.author, eval("0x{}".format(hex_code)))
 
                 await ctx.send(

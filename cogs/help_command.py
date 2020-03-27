@@ -16,11 +16,6 @@ cogs = {
         "emoji": ":unicorn: ",
         "extension": "cogs.animal.animal",
     },
-    "bot": {
-        "name": "Bot",
-        "emoji": ":robot: ",
-        "extension": "cogs.bot.bot"
-    },
     "code": {
         "name": "Code",
         "emoji": ":keyboard: ",
@@ -50,6 +45,16 @@ cogs = {
         "name": "Misc",
         "emoji": ":mag: ",
         "extension": "cogs.misc.misc"
+    },
+    "server": {
+        "name": "Server",
+        "emoji": ":floppy_disk: ",
+        "extension": "cogs.server.server"
+    },
+    "bot": {
+        "name": "Bot",
+        "emoji": ":robot: ",
+        "extension": "cogs.bot.bot"
     },
     "developer": {
         "name": "Developer",
@@ -124,8 +129,6 @@ class Help(HelpCommand):
             name = "Version " + recent["version"],
             url = GITHUB_RELEASE.format(recent["version"]),
             icon_url = "https://i.imgur.com/Hy5Gyut.png"
-        ).set_footer(
-            text = "❕❕❕ Add an extra . to any command for a mobile view!"
         )
 
         # Add fields for each cog in the bot

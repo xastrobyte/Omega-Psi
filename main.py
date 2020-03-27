@@ -97,8 +97,8 @@ async def on_command_error(ctx, error):
         # Add fields
         fields = {
             "Command Author": ctx.author,
-            "Guild Name": ctx.guild.name if ctx.guild != None else "Private Message",
-            "Channel Name": ctx.channel.name if ctx.guild != None else "Private Message with {}".format(
+            "Guild Name": ctx.guild.name if ctx.guild is not None else "Private Message",
+            "Channel Name": ctx.channel.name if ctx.guild is not None else "Private Message with {}".format(
                 str(ctx.author)
             )
         }
