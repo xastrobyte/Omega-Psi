@@ -403,22 +403,26 @@ def get_server_settings_html(view_guild = False, section = None):
                         </h2>
                         <div class="page-section-block" style="text-align: center;">
                             <p>here's where you can change Omega Psi's settings in servers you manage</p>
-                            <table width="100%">
-                                <thead>
-                                    <tr>
-                                        <th width="75%">Server Name</th>
-                                        <th width="25%">Server ID</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                {% for guild in manageable_guilds -%}
-                                    <tr>
-                                        <td>{{ guild.name }}</td>
-                                        <td>{{ guild.id }}</td>
-                                        <td><input type="button" class="page-form-button" onclick="window.location.href='/server/{{ guild.id }}'" value="Edit"></td>
-                                    </tr>
-                                {% endfor %}
-                            </table>
+                            {% if manageable_guilds|length != 0 %}
+                                <table width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th width="75%">Server Name</th>
+                                            <th width="25%">Server ID</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    {% for guild in manageable_guilds -%}
+                                        <tr>
+                                            <td>{{ guild.name }}</td>
+                                            <td>{{ guild.id }}</td>
+                                            <td><input type="button" class="page-form-button" onclick="window.location.href='/server/{{ guild.id }}'" value="Edit"></td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            {% else %}
+                                you don't have <code class="field">manage server</code> permissions in any servers that Omega Psi is in :(
+                            {% endif %}
                         </div>
         """
     )
