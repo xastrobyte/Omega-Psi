@@ -7,12 +7,6 @@ from util.misc import set_default
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-MINIGAMES = [
-    "battleship", "connect_four", "tic_tac_toe",
-    "cards_against_humanity", "uno", "game_of_life",
-    "omok", "mastermind"
-]
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class User:
@@ -50,37 +44,39 @@ class User:
                 "active": False,
                 "webhook_key": None
             },
-            "battleship": {
-                "won": 0,
-                "lost": 0
-            },
-            "connect_four": {
-                "won": 0,
-                "lost": 0
-            },
-            "tic_tac_toe": {
-                "won": 0,
-                "lost": 0
-            },
-            "cards_against_humanity": {
-                "won": 0,
-                "lost": 0
-            },
-            "uno": {
-                "won": 0,
-                "lost": 0
-            },
-            "game_of_life": {
-                "won": 0,
-                "lost": 0
-            },
-            "omok": {
-                "won": 0,
-                "lost": 0
-            },
-            "mastermind": {
-                "won": 0,
-                "lost": 0
+            "minigames": {
+                "battleship": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "connect_four": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "tic_tac_toe": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "cards_against_humanity": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "uno": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "game_of_life": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "omok": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "mastermind": {
+                    "won": 0,
+                    "lost": 0
+                }
             }
         }
 
@@ -256,6 +252,126 @@ class User:
                 Whether or not the User's IFTTT is active
         """
         return await loop.run_in_executor(None, self.toggle_ifttt_sync, user)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Reported Bugs/Suggestions Access Methods
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_user_bugs_sync(self, user : Union[User, str]):
+        """Synchronously retrieves the bug case numbers that this user has reported
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the reported bugs for
+
+        Returns
+        -------
+            list
+                A list of bug case numbers that this user has reported
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["bugs"]
+    
+    def add_user_bug_sync(self, user : Union[User, str], bug_number):
+        """Synchronously adds a bug case number to this user's reported bugs list
+
+        Parameters
+        ----------
+            user : str or User
+                The User to add a bug case number to the reported bugs of
+            bug_number : int
+                The bug case number to add
+        """
+        user_data = self.get_user_sync(user)
+        user_data["bugs"].append(bug_number)
+        self.set_user_sync(user, user_data)
+    
+    def get_user_suggestions_sync(self, user : Union[User, str]):
+        """Synchronously retrieves the suggestion case numbers that this user has suggested
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the reported suggestions for
+
+        Returns
+        -------
+            list
+                A list of suggestion case numbers that this user has reported
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["suggestions"]
+    
+    def add_user_suggestion_sync(self, user : Union[User, str], suggestion_number):
+        """Synchronously adds a suggestion case number to this user's suggestion list
+
+        Parameters
+        ----------
+            user : str or User
+                The User to add a suggestion case number to the reported suggestions of
+            suggestion_number : int
+                The suggestion case number to add
+        """
+        user_data = self.get_user_sync(user)
+        user_data["suggestions"].append(suggestion_number)
+        self.set_user_sync(user, user_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_user_bugs(self, user : Union[User, str]):
+        """Synchronously retrieves the bug case numbers that this user has reported
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the reported bugs for
+
+        Returns
+        -------
+            list
+                A list of bug case numbers that this user has reported
+        """
+        return await loop.run_in_executor(None, self.get_user_bugs_sync, user)
+
+    async def add_user_bug(self, user : Union[User, str], bug_number):
+        """Synchronously adds a bug case number to this user's reported bugs list
+
+        Parameters
+        ----------
+            user : str or User
+                The User to add a bug case number to the reported bugs of
+            bug_number : int
+                The bug case number to add
+        """
+        await loop.run_in_executor(None, self.add_user_bug_sync, user, bug_number)
+
+    async def get_user_suggestions(self, user : Union[User, str]):
+        """Synchronously retrieves the suggestion case numbers that this user has suggested
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the reported suggestions for
+
+        Returns
+        -------
+            list
+                A list of suggestion case numbers that this user has reported
+        """
+        return await loop.run_in_executor(None, self.get_user_suggestions_sync, user)
+
+    async def add_user_suggestion(self, user : Union[User, str], suggestion_number):
+        """Synchronously adds a suggestion case number to this user's suggestion list
+
+        Parameters
+        ----------
+            user : str or User
+                The User to add a suggestion case number to the reported suggestions of
+            suggestion_number : int
+                The suggestion case number to add
+        """
+        await loop.run_in_executor(None, self.add_user_suggestion_sync, user, suggestion_number)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Minigame Access Methods
@@ -275,11 +391,7 @@ class User:
                 The User's minigame data
         """
         user_data = self.get_user_sync(user)
-        minigame_data = {}
-        for key in user_data:
-            if key in MINIGAMES:
-                minigame_data[key] = user_data[key]
-        return minigame_data
+        return user_data["minigames"]
 
     def get_battleship_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's battleship data from the database
@@ -295,7 +407,7 @@ class User:
                 The User's Battleship data
         """
         user_data = self.get_user_sync(user)
-        return user_data["battleship"]
+        return user_data["minigames"]["battleship"]
 
     def get_connect_four_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's connect four data from the database
@@ -311,7 +423,7 @@ class User:
                 The User's Connect Four data
         """
         user_data = self.get_user_sync(user)
-        return user_data["connect_four"]
+        return user_data["minigames"]["connect_four"]
     
     def get_tic_tac_toe_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's tic tac toe data from the database
@@ -327,7 +439,7 @@ class User:
                 The User's Tic Tac Toe data
         """
         user_data = self.get_user_sync(user)
-        return user_data["tic_tac_toe"]
+        return user_data["minigames"]["tic_tac_toe"]
     
     def get_game_of_life_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's game of life data from the database
@@ -343,7 +455,7 @@ class User:
                 The User's Game of Life data
         """
         user_data = self.get_user_sync(user)
-        return user_data["game_of_life"]
+        return user_data["minigames"]["game_of_life"]
     
     def get_omok_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's omok data from the database
@@ -359,7 +471,7 @@ class User:
                 The User's Omok data
         """
         user_data = self.get_user_sync(user)
-        return user_data["omok"]
+        return user_data["minigames"]["omok"]
     
     def get_mastermind_sync(self, user : Union[User, str]):
         """Synchronously retrieves the user's mastermind data from the database
@@ -375,7 +487,7 @@ class User:
                 The User's Mastermind data
         """
         user_data = self.get_user_sync(user)
-        return user_data["mastermind"]
+        return user_data["minigames"]["mastermind"]
     
     # # # # # # # # # # # # # # #
 
@@ -390,7 +502,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["battleship"]["won" if won else "lost"] += 1
+        user_data["minigames"]["battleship"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     def update_connect_four_sync(self, user : Union[User, str], won):
@@ -404,7 +516,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["connect_four"]["won" if won else "lost"] += 1
+        user_data["minigames"]["connect_four"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     def update_tic_tac_toe_sync(self, user : Union[User, str], won):
@@ -418,7 +530,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["tic_tac_toe"]["won" if won else "lost"] += 1
+        user_data["minigames"]["tic_tac_toe"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     def update_game_of_life_sync(self, user : Union[User, str], won):
@@ -432,7 +544,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["game_of_life"]["won" if won else "lost"] += 1
+        user_data["minigames"]["game_of_life"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     def update_omok_sync(self, user : Union[User, str], won):
@@ -446,7 +558,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["omok"]["won" if won else "lost"] += 1
+        user_data["minigames"]["omok"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     def update_mastermind_sync(self, user : Union[User, str], won):
@@ -460,7 +572,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["mastermind"]["won" if won else "lost"] += 1
+        user_data["minigames"]["mastermind"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -662,7 +774,7 @@ class User:
                 The JSON object of the User's Cards Against Humanity data
         """
         user_data = self.get_user_sync(user)
-        return user_data["cards_against_humanity"]
+        return user_data["minigames"]["cards_against_humanity"]
     
     def get_uno_sync(self : Union[User, str], user):
         """Synchronously retrieves the user's uno data from the database
@@ -678,7 +790,7 @@ class User:
                 The JSON object of the User's Uno data
         """
         user_data = self.get_user_sync(user)
-        return user_data["uno"]
+        return user_data["minigames"]["uno"]
     
     # # # # # # # # # # # # # # #
     
@@ -693,7 +805,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["cards_against_humanity"]["won" if won else "lost"] += 1
+        user_data["minigames"]["cards_against_humanity"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     def update_uno_sync(self, user : Union[User, str], won):
@@ -707,7 +819,7 @@ class User:
                 Whether or not the User won
         """
         user_data = self.get_user_sync(user)
-        user_data["uno"]["won" if won else "lost"] += 1
+        user_data["minigames"]["uno"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

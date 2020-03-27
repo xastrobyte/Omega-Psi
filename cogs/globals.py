@@ -130,3 +130,6 @@ SMART = ROBOT
 RANDOM = "🎲"
 
 MINIGAMES = ["battleship", "connect_four", "cards_against_humanity", "game_of_life", "omok", "tic_tac_toe", "uno"]
+
+CONSIDER = "▶️"
+NOT_CONSIDER = "⏹️"
