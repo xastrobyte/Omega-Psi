@@ -97,20 +97,22 @@
                             {% if tasks == None %}
                                 <p id="noTasks">The Tasklist Is Empty</p>
                             {% else %}
-                                <table id="tasksTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Task</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tasks">
-                                        {% for taskID in tasks -%}
-                                            <tr id ="task{{ taskID }}">
-                                                <td>{{ tasks[taskID] }}</td>
+                                <div class="cases-box">
+                                    <table id="tasksTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Task</th>
                                             </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody id="tasks">
+                                            {% for taskID in tasks -%}
+                                                <tr id ="task{{ taskID }}">
+                                                    <td>{{ tasks[taskID] }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                             {% endif %}
                         </div>
         
@@ -126,24 +128,26 @@
                                 {% if pending_update["features"]|length == 0 %}
                                     <p id="noFeatures">No Features</p>
                                 {% else %}
-                                    <table id="featuresTable" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th width="92%">Feature</th>
-                                                <th width="8%">Type</th>
-                                                <th>Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="features">
-                                            {% for feature in pending_update["features"] -%}
-                                                <tr id="feature{{ feature }}">
-                                                    <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
-                                                    <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
-                                                    <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                    <div class="cases-box">
+                                        <table id="featuresTable" class="case-table" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th width="92%">Feature</th>
+                                                    <th width="8%">Type</th>
+                                                    <th>Date</th>
                                                 </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody id="features">
+                                                {% for feature in pending_update["features"] -%}
+                                                    <tr id="feature{{ feature }}">
+                                                        <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
+                                                        <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
+                                                        <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -167,7 +171,7 @@
         </div>
     </body>
     <footer class="footer">
-        <p style="text-align: center;"><a href="/privacyPolicy" class="link" style="font-family: cutive mono, monospace;" target="_blank">privacy policy</a> | <a href="/developer" class="link" style="font-family: cutive mono, monospace;" target="_blank">devs</a><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
+        <p style="text-align: center;"><a href="/privacyPolicy" class="link" style="font-family: cutive mono, monospace;">privacy policy</a> | <a href="/developer" class="link" style="font-family: cutive mono, monospace;">devs</a><small style="background: #202020;"><code>Copyright &copy; 2018<script>new Date().getFullYear()>2018&&document.write("-"+new Date().getFullYear());</script>, Jonah Pierce</code></small></p>
 
     </footer>
 </html>
