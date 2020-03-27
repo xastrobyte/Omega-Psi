@@ -157,7 +157,7 @@ class Link:
         return self._url
     
     def generate_html(self):
-        return "<a href=\"{}\" class=\"link\" style=\"font-family: cutive mono, monospace;\" target=\"_blank\">{}</a>".format(
+        return "<a href=\"{}\" class=\"link\" style=\"font-family: cutive mono, monospace;\">{}</a>".format(
             self.get_url(), self.get_text()
         )
 
