@@ -1,6 +1,6 @@
 import app
 from app import keep_alive
-from discord import Embed, Status, Activity
+from discord import Embed, Status, Activity, Intents
 from discord.ext.commands import AutoShardedBot
 from os import environ
 from traceback import format_exception
@@ -21,9 +21,13 @@ from util.ifttt import IFTTT
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+intents = Intents.default()
+intents.members = True
+
 bot = AutoShardedBot(
     command_prefix = get_prefix, case_insensitive = True,
-    help_command = Help()
+    help_command = Help(),
+    intents = intents
 )
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

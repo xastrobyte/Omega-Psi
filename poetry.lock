@@ -332,7 +332,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "e6cae6fd9bce7d8652d5720a0e66495be4d610e8ca574390327b269343703ea0"
+content-hash = "5dd09d2bb618cef21720116374b01386b87ea37521c0e136a5d9400bdfe42cf9"
 python-versions = "^3.8"
 
 [metadata.files]
