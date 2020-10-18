@@ -236,7 +236,10 @@ class Section:
 
         # Check if the command has any subcommands
         try:
-            subcommands = command.commands
+            subcommands = sorted(
+                command.commands, 
+                key = lambda command: command.name
+            )
 
             # Create an unnumbered list for the command and a list of list items for its subcommands
             command_ul = (
