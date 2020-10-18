@@ -1,5 +1,8 @@
+[![Run on Repl.it](https://repl.it/badge/github/fellowhashbrown/Omega-Psi)](https://repl.it/github/fellowhashbrown/Omega-Psi)
+
 [![Discord Bots](https://top.gg/api/widget/owner/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 [![Discord Bots](https://top.gg/api/widget/status/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
+
 [![Discord Bots](https://top.gg/api/widget/servers/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 [![Discord Bots](https://top.gg/api/widget/lib/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 
