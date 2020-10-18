@@ -11,30 +11,22 @@ from util.database.users import User
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+
 class Database:
+    """The Database class collects all the functions from each of the
+    specific database classes into one to make it easier to use
+    """
     def __init__(self):
 
         # Create the connection to the Omega Psi database and authenticate
-        self.connection = MongoClient("ds115244.mlab.com", 15244, connect = False, retryWrites = False)
-        self._omega_psi = self.connection["omegapsi"]
+        self.client = MongoClient(f"mongodb+srv://{environ['DATABASE_USERNAME']}:{environ['DATABASE_PASSWORD']}@fellowhashbrown.orymo.gcp.mongodb.net/omegapsi?retryWrites=true&w=majority")
+        self.omegapsi = self.client.omegapsi
 
-        self._omega_psi.authenticate(
-            environ["DATABASE_USERNAME"], 
-            environ["DATABASE_PASSWORD"]
-        )
+        self.bot = Bot(self.omegapsi["bot"])
+        self.data = Data(self.omegapsi["data"])
+        self.case_numbers = CaseNumber(self.omegapsi["case_numbers"])
+        self.guilds = Guild(self.omegapsi["guilds"])
+        self.users = User(self.omegapsi["users"])
 
-        # Keep track of the collections
-        self._bot = self._omega_psi.bot
-        self._guilds = self._omega_psi.guilds
-        self._users = self._omega_psi.users
-        self._data = self._omega_psi.data
-        self._case_numbers = self._omega_psi.case_numbers
-
-        # Give each collection their own database class to help split it up by data types
-        self.bot = Bot(self._bot)
-        self.guilds = Guild(self._guilds)
-        self.users = User(self._users)
-        self.data = Data(self._data)
-        self.case_numbers = CaseNumber(self._case_numbers)
 
 database = Database()

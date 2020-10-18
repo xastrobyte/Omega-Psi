@@ -19,14 +19,10 @@ class BattleshipGame(Game):
 
     Parameters
     ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
-        challenger : Member
-            The challenging player
-        opponent : Member or int
-            The player opposing the challenger
+    :param bot: The bot object used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param challenger: The challenging player
+    :param opponent: The player opposing the challenger
             If this parameter is an int, the opponent is an AI
     """
 
@@ -143,10 +139,7 @@ class BattleshipGame(Game):
     async def show_results(self, did_hit):
         """Show the results to both players
 
-        Parameters
-        ----------
-            did_hit : boolean
-                Whether or not the current player made a HIT on the opposing player's board
+        :param did_hit: Whether or not the current player made a HIT on the opposing player's board
         """
         await self.challenger.show_results(self, did_hit)
         await self.opponent.show_results(self, did_hit)
@@ -199,9 +192,7 @@ class BattleshipGame(Game):
     def are_opponent_ships_sunk(self):
         """Returns whether or not all of the opponents ships have been sunk
 
-        Returns
-        -------
-            boolean
+        :rtype: boolean
         """
         for ship in BattleshipBoard.SHIPS:
             if not self.get_current_board().did_ship_sink(ship["number"]):
@@ -211,15 +202,9 @@ class BattleshipGame(Game):
     def did_opponent_submit(self, player):
         """Returns whether or not the opposite player submitted their board
 
-        Parameters
-        ----------
-            player : BattleshipPlayer
-                The player object that asked if the opponent submitted
+        :param player: The player object that asked if the opponent submitted
         
-        Returns
-        -------
-            boolean
-                Whether or not the opposite player submitted their board
+        :rtype: boolean
         """
         if player.id == self.challenger.id:
             return self.opponent.board is not None
@@ -228,10 +213,7 @@ class BattleshipGame(Game):
     def get_current_board(self):
         """Returns the opposing player's board
 
-        Returns
-        -------
-            BattleshipBoard
-                The opposing player's board
+        :rtype: BattleshipBoard
         """
         if self.get_current_player().id == self.challenger.id:
             return self.opponent.board

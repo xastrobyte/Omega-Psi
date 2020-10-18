@@ -23,10 +23,7 @@ REPLACEMENTS = {
 class BlackCard:
     """A BlackCard object holds the data for a black card in Cards Against Humanity
 
-    Parameters
-    ----------
-        json : dict
-            A JSON object containing the "text" on the card and how many white cards
+    :param json: A JSON object containing the "text" on the card and how many white cards
             each player should "pick" from their hand
     """
 
@@ -70,10 +67,7 @@ class BlackCard:
 class WhiteCard:
     """A WhiteCard object holds the data for a white card in Cards Against Humanity
 
-    Parameters
-    ----------
-        text : str
-            The text on this WhiteCard
+    :param text: The text on this WhiteCard
     """
 
     def __init__(self, text):

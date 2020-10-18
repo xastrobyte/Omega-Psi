@@ -37,12 +37,7 @@ class TicTacToeBoard(Board):
     def check_for_winner(self):
         """Checks for a winner in the board
 
-        Returns
-        -------
-            int
-                TicTacToeBoard.WIN if the player wins
-                TicTacToeBoard.LOSS if the player loses
-                0 if there is no winner yet
+        :rtype: int
         """
 
         # Iterate through the rows

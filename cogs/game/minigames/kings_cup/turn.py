@@ -1,7 +1,6 @@
 from discord import Embed
 
 from cogs.globals import PRIMARY_EMBED_COLOR
-
 from cogs.game.minigames.base_game.turn import Turn
 
 from util.functions import get_embed_color
@@ -10,18 +9,10 @@ from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-class CardsAgainstHumanityTurn(Turn):
-    """A CardsAgainstHumanityTurn keeps track of actions that happen during a judge's turn
-    the current player of the game is the judge of the game
+class KingsCupTurn(Turn):
 
-    :param game: The game object that this Turn is connected to
-    :param player: The player that this Turn object is directly connected to
-        Note that if None is given, the player will automatically be grabbed from the
-        game's current player
-    """
-
-    def __init__(self, game, player = None):
-        super().__init__(game, player)
+    def __init__(self, game):
+        super().__init__(game)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Other Methods
@@ -32,25 +23,27 @@ class CardsAgainstHumanityTurn(Turn):
         and updates the message for it.
         If no message is found, a new message is created
 
-        :param action: The action of this turn
+        Parameters
+        ----------
+            action : str
+                The action of this turn
         """
-        self.actions = [action]
+        self.actions.append(action)
 
         # Create the embed for the turn
         #   and add a footer at the end for the current player's amount of money
         embed = Embed(
-            title = "Round {}".format(self.game.round),
+            title = "{} is the Dealer!".format(self.player.get_name()),
             description = "\n".join(self.actions),
-            colour = await get_embed_color(self.player.member)
-        ).add_field(
-            name = "Scores",
-            value = "\n".join([
-                "*{}* - **{}**".format(
-                    player.get_name(), player.wins
-                )
-                for player in self.game.players
-            ])
+            colour = await get_embed_color(self.player.member) if not self.player.is_ai else PRIMARY_EMBED_COLOR
         )
+
+        # Add the rules field if there are any rules
+        if len(self.game.rules) > 0:
+            embed.add_field(
+                name = "Rules",
+                value = "\n".join([ rule for rule in self.game.rules ])
+            )
 
         # Check if there is no message found
         if not self.message:
@@ -59,4 +52,3 @@ class CardsAgainstHumanityTurn(Turn):
         # A message was found, update it
         else:
             await self.message.edit(embed = embed)
-

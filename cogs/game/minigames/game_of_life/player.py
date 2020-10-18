@@ -23,11 +23,8 @@ from util.functions import get_embed_color
 class GameOfLifePlayer(Player):
     """A GameOfLifePlayer object holds information regarding a player in the Game of Life minigame.
 
-    Keyword Parameters
-    ------------------
-        member : discord.Member or str
-            The discord.Member defining this GameOfLifePlayer object or
-            a str clarifying this GameOfLifePlayer object as an AI player
+    :param member: The discord.Member defining this GameOfLifePlayer object or
+        a str clarifying this GameOfLifePlayer object as an AI player
     """
 
     def __init__(self, member):
@@ -202,10 +199,7 @@ class GameOfLifePlayer(Player):
     async def setup(self, game):
         """Let's the player decide if they are going to college or choosing a career.
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if the player is an AI and simulate a decision
@@ -279,10 +273,7 @@ class GameOfLifePlayer(Player):
         react to make their move or, if this player is an AI, choosing the best place
         to go
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if the player has an extra turn, remove it
@@ -382,24 +373,11 @@ class GameOfLifePlayer(Player):
         If getting color, when this: returns True, the color is black
                                      returns False, the color is red
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object this player is connected to
+        :param game: The game object this player is connected to
+        :param is_color: Whether or not to get the color of the result or just a number. (Defaults to False)
+        :param allow_leave: Whether or not to allow the player to leave during this spin. (Defaults to False)
         
-        Keyword Parameters
-        ------------------
-            is_color : boolean
-                Whether or not to get the color of the result or just a number. (Defaults to False)
-            allow_leave : boolean
-                Whether or not to allow the player to leave during this spin. (Defaults to False)
-        
-        Returns
-        -------
-            int
-                The resulting number
-            boolean
-                Whether or not the color is black
+        :returns: The resulting number or whether the color is black or red
         """
 
         # Check if the player is an AI, simulate waiting to spin
@@ -456,21 +434,12 @@ class GameOfLifePlayer(Player):
     async def ask_for_career(self, game, *, new_career = False):
         """Let's the player choose their career given two cards
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object this player is connected to
+        :param game: The game object this player is connected to
+        :param new_career: Whether the player is choosing between their current
+            career and a new one or choosing between two new careers
         
-        Keyword Parameters
-        ------------------
-            new_career : boolean
-                Whether the player is choosing between their current
-                career and a new one or choosing between two new careers
-            
-        Returns
-        -------
-            career_card : CareerCard
-                The career the player chose
+        :returns: The career the player chose
+        :rtype: CareerCard
         """
 
         # Set the target deck of career cards depending on whether or not
@@ -537,25 +506,13 @@ class GameOfLifePlayer(Player):
     async def ask_for_house(self, game, *, sell_house = False, house = None):
         """Let's the player decide if they want to buy a house, sell a house, or do nothing
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game that this player is connected to
-            
-        Keyword Parameters
-        ------------------
-            sell_house : boolean
-                Whether or not to directly sell a player's house
-                Note that this is primarily used when finalizing the end of a game
-            house : HouseCard
-                The specific house to sell
-                Note that this is primarily used when finalizing the end of a game
+        :param game: The game that this player is connected to
+        :param sell_house: Whether or not to directly sell a player's house
+            Note that this is primarily used when finalizing the end of a game
+        :param house: The specific house to sell
+            Note that this is primarily used when finalizing the end of a game
         
-        Returns
-        -------
-            int
-                How much money a house was sold for
-                Note that this is primarily used when finalizing the end of a game
+        :rtype: int
         """
 
         # Only ask the player what they want to do if not directly selling a house
@@ -808,21 +765,11 @@ class GameOfLifePlayer(Player):
     async def ask_for_opponent(self, game, *, is_lawsuit = False):
         """Asks this player to choose an opponent for a competition or a lawsuit card
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game that this player is connected to
- 
-        Keyword Parameters
-        ------------------
-            is_lawsuit : boolean
-                Whether or not this player is choosing an opponent for
-                a lawsuit. (Defaults to False)
+        :param game: The game that this player is connected to
+        :param is_lawsuit: Whether or not this player is choosing an opponent for
+            a lawsuit. (Defaults to False)
         
-        Returns
-        -------
-            player : GameOfLifePlayer
-                The player that this player chose as their opponent
+        :rtype: GameOfLifePlayer
         """
 
         # Check if the player is an AI
@@ -891,18 +838,11 @@ class GameOfLifePlayer(Player):
     async def ask_for_spot(self, game, message, spots, *, choose_from = 1):
         """Asks the player to choose a spot for their Spin to Win token.
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game that this player is connected to
-            spots : dict
-                A dict object that holds data about spots already chosen
-                and who chose the spot
-        
-        Keyword Parameters
-        ------------------
-            choose_from : int
-                The amount of spots the player can choose from. (Default is 1)
+        :param game: The game that this player is connected to
+        :param message: The message to use to keep track of people's chosen spots
+        :param spots: A dict object that holds data about spots already chosen
+            and who chose the spot
+        :param choose_from: The amount of spots the player can choose from. (Default is 1)
         """
 
         # Let the player decide on how many spots to take
@@ -962,10 +902,7 @@ class GameOfLifePlayer(Player):
     async def process_pet_space(self, game):
         """Processes the pet space when a player lands on it
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
         
         # Pull a card from the game's pet card deck
@@ -1064,12 +1001,8 @@ class GameOfLifePlayer(Player):
     async def process_stop_space(self, game, board_space):
         """Processes the stop space when this player lands on it
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
-            board_space : BoardSpace
-                The board space object where this player is current occupying
+        :param game: The game object that this player is connected to
+        :param board_space: The board space object where this player is current occupying
         """
 
         # Check if the player is graduating, ask them to choose a career
@@ -1282,12 +1215,8 @@ class GameOfLifePlayer(Player):
     async def process_baby_space(self, game, board_space):
         """Processes the baby space when this player lands on it
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
-            board_space : BoardSpace
-                The board space object where this player is current occupying
+        :param game: The game object that this player is connected to
+        :param board_space: The board space object where this player is current occupying
         """
         
         # Determine what action the baby space is
@@ -1307,28 +1236,15 @@ class GameOfLifePlayer(Player):
     async def ask_for_split_path(self, game, *, title = None, description = None, true_path = None, false_path = None):
         """Asks the player to decide on a split path
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
+        :param title: The title of the embed to send
+        :param description: A formatted description of the embed to send
+            Note that this description must include format braces to take into account
+            the true_path and false_path emojis
+        :param true_path: An emoji for the player to go towards the new split path
+        :param false_path: An emoji for the player to stay on the same path
         
-        Keyword Parameters
-        ------------------
-            title : str
-                The title of the embed to send
-            description : str
-                A formatted description of the embed to send
-                Note that this description must include format braces to take into account
-                    the true_path and false_path emojis
-            true_path : str
-                An emoji for the player to go towards the new split path
-            false_path : str
-                An emoji for the player to stay on the same path
-        
-        Returns
-        -------
-            boolean
-                Whether or not the player is going down the new path
+        :rtype: bool
         """
 
         # Send a message asking the player if they want to go down the new path or stay on
@@ -1359,12 +1275,8 @@ class GameOfLifePlayer(Player):
     def next_space(self, game, number):
         """Moves the player as many moves as specfied by number
 
-        Parameters
-        ----------
-            game : GameOfLifeGame
-                The game object that this player is connected to
-            number : int
-                The amount of spaces to move the player
+        :param game: The game object that this player is connected to
+        :param number: The amount of spaces to move the player
         """
         
         # Keep track of how many moves have been made,
@@ -1419,10 +1331,7 @@ class GameOfLifePlayer(Player):
         If the player is a discord.Member object, the name
         will be their username + discriminator
 
-        Returns
-        -------
-        str
-            The name of this player
+        :rtype: str
         """
         if self.is_ai:
             return self.member
@@ -1431,9 +1340,6 @@ class GameOfLifePlayer(Player):
     def give_payday(self, *, paydays_passed = 1):
         """Gives the player a payday from their career
 
-        Keyword Parameters
-        ----------
-        paydays_passed : int
-            The amount of paydays to give to the player
+        :param paydays_passed: The amount of paydays to give to the player
         """
         self.cash += self.career.salary * paydays_passed

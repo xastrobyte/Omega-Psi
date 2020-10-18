@@ -1,5 +1,5 @@
 from discord import Embed
-from random import choice, shuffle
+from random import choice
 
 from cogs.globals import PRIMARY_EMBED_COLOR, LEAVE
 
@@ -18,21 +18,9 @@ from util.functions import get_embed_color
 class UnoGame(Game):
     """An UnoGame object holds information pertaining to a game of Uno
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
-        players : Member[]
-            The list of players in the game
-
-    Keyword Parameters
-    ----------
-        against_ais : boolean
-            Whether or not this game is being played against AIs
-        ai_amount : int
-            The amount of AIs to play against
+    :param bot: The bot object used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param players: The list of players in the game
     """
 
     def __init__(self, bot, ctx, players):
@@ -132,10 +120,7 @@ class UnoGame(Game):
     async def process_card(self, card):
         """Processes the specified card if it's a draw "card", reverse card, etc.
 
-        Parameters
-        ----------
-            card : str
-                The card to be processed
+        :param card: The card to be processed
         """
 
         # Show the card to everyone
@@ -200,15 +185,8 @@ class UnoGame(Game):
     async def show_card(self, card, *, extras = []):
         """Shows the current player's card choice to the other players and the game channel
 
-        Parameters
-        ----------
-            card : str
-                The card the current player chose
-        
-        Keyword Parameters
-        ------------------
-            extras : str[]
-                A list of extra information to add to the message
+        :param card: The card the current player chose
+        :param extras: A list of extra information to add to the message
         """
 
         # Keep track of actions here to add actions to a message sent to a player
@@ -284,10 +262,7 @@ class UnoGame(Game):
         """Returns a list of valid cards that can be played in reference
         to whatever card is on top
 
-        Returns
-        -------
-            cards : str[]
-                A list of valid cards that can be placed
+        :rtype: list
         """
 
         valid_cards = []
@@ -313,9 +288,6 @@ class UnoGame(Game):
     async def add_action(self, action):
         """Adds a new action to the current turn object in the game
 
-        Parameters
-        ----------
-            action : str
-                The action that happened in this turn
+        :param action: The action that happened in this turn
         """
         await self.current_turn.add_action(action)

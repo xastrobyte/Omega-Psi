@@ -6,30 +6,26 @@ from cogs.globals import loop
 from util.functions import get_embed_color
 from util.string import minutes_to_runtime
 
+
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
+
 
 async def get_movie_embed(ctx, imdb, movie, movie_link):
     """Retrieves a movie object and gets the data associated with the movie
     to put into an Embed
 
-    Parameters
-    ----------
-        ctx : Context
-            The context that the movie command was run in
-        imdb : IMDb
-            The IMDb object to use to access movie data
-        movie : Movie
-            The movie object to process
-        movie_link : str
-            A formatted string to get the link to the specified movie on IMDb
+    :param ctx: The context that the movie command was run in
+    :param imdb: The IMDb object to use to access movie data
+    :param movie: The movie object to process
+    :param movie_link: A formatted string to get the link to the specified movie on IMDb
     """
 
     movie = await loop.run_in_executor(None,
-        imdb.get_movie,
-        movie.movieID
-    )
+                                       imdb.get_movie,
+                                       movie.movieID
+                                       )
 
     # Get following data only:
     #   - title
@@ -40,29 +36,45 @@ async def get_movie_embed(ctx, imdb, movie, movie_link):
     #   - running time
     #   - cast (first 20)
     #   - poster (if possible)
-    try: title = movie.get("title")
-    except: title = "No Title"
+    try:
+        title = movie.get("title")
+    except KeyError:
+        title = "No Title"
 
-    try: plotOutline = movie.get("plot outline")
-    except: plotOutline = "No Plot Outline Yet"
+    try:
+        plot_outline = movie.get("plot outline")
+    except KeyError:
+        plot_outline = "No Plot Outline Yet"
 
-    try: directors = [director.get("name") for director in movie.get("director")]
-    except: directors = ["N/A"]
+    try:
+        directors = [director.get("name") for director in movie.get("director")]
+    except KeyError:
+        directors = ["N/A"]
 
-    try: producers = [dist.get("name") for dist in movie.get("production companies")]
-    except: producers = ["N/A"]
+    try:
+        producers = [dist.get("name") for dist in movie.get("production companies")]
+    except KeyError:
+        producers = ["N/A"]
 
-    try: year = movie.get("year")
-    except: year = "No Year"
+    try:
+        year = movie.get("year")
+    except KeyError:
+        year = "No Year"
 
-    try: length = minutes_to_runtime(int(movie.get("runtimes")[0]))
-    except: length = "N/A"
+    try:
+        length = minutes_to_runtime(int(movie.get("runtimes")[0]))
+    except KeyError:
+        length = "N/A"
 
-    try: cast = [person.get("name") for person in movie.get("cast")[:20]]
-    except: cast = ["N/A"]
+    try:
+        cast = [person.get("name") for person in movie.get("cast")[:20]]
+    except KeyError:
+        cast = ["N/A"]
 
-    try: poster = movie.get("cover url")
-    except: poster = None
+    try:
+        poster = movie.get("cover url")
+    except KeyError:
+        poster = None
 
     fields = {
         "Director(s)": ", ".join(directors),
@@ -74,49 +86,44 @@ async def get_movie_embed(ctx, imdb, movie, movie_link):
 
     # Add data to embed
     embed = Embed(
-        title = title,
-        description = plotOutline,
-        colour = await get_embed_color(ctx.author),
-        timestamp = datetime.now(),
-        url = movie_link.format(movie.movieID)
+        title=title,
+        description=plot_outline,
+        colour=await get_embed_color(ctx.author),
+        timestamp=datetime.now(),
+        url=movie_link.format(movie.movieID)
     ).set_footer(
-        text = "IMDb"
+        text="IMDb"
     )
 
     for field in fields:
         embed.add_field(
-            name = field,
-            value = fields[field],
-            inline = False
+            name=field,
+            value=fields[field],
+            inline=False
         )
-    
-    if poster != None:
+
+    if poster is not None:
         embed.set_image(
-            url = poster
+            url=poster
         )
-    
+
     return embed
+
 
 async def get_tv_show_embed(ctx, imdb, tv_show, tv_show_link):
     """Retrieves a tv show object and gets the data associated with the tv show
     to put into an Embed
 
-    Parameters
-    ----------
-        ctx : Context
-            The context that the tvShow command was run in
-        imdb : IMDb
-            The IMDb object to use to access tv show data
-        tv_show : TVShow
-            The tv show object to process
-        tv_show_link : str
-            A formatted string to get the link to the specified tv show on IMDb
+    :param ctx: The context that the tvShow command was run in
+    :param imdb: The IMDb object to use to access tv show data
+    :param tv_show: The tv show object to process
+    :param tv_show_link: A formatted string to get the link to the specified tv show on IMDb
     """
 
     show = await loop.run_in_executor(None,
-        imdb.get_movie,
-        tv_show.movieID
-    )
+                                      imdb.get_movie,
+                                      tv_show.movieID
+                                      )
 
     # Get following data only:
     #   - title
@@ -127,29 +134,45 @@ async def get_tv_show_embed(ctx, imdb, tv_show, tv_show_link):
     #   - number of seasons
     #   - cast (first 20)
     #   - poster (if possible)
-    try: title = show.get("title")
-    except: title = "No Title"
+    try:
+        title = show.get("title")
+    except KeyError:
+        title = "No Title"
 
-    try: plotOutline = show.get("plot outline")
-    except: plotOutline = "No Plot Outline Yet."
+    try:
+        plot_outline = show.get("plot outline")
+    except KeyError:
+        plot_outline = "No Plot Outline Yet."
 
-    try: writer = [person.get("name") for person in show.get("writer")]
-    except: writer = ["N/A"]
+    try:
+        writer = [person.get("name") for person in show.get("writer")]
+    except KeyError:
+        writer = ["N/A"]
 
-    try: producers = [dist.get("name") for dist in show.get("production companies")]
-    except: producers = ["N/A"]
+    try:
+        producers = [dist.get("name") for dist in show.get("production companies")]
+    except KeyError:
+        producers = ["N/A"]
 
-    try: year = show.get("year")
-    except: year = "No Year"
+    try:
+        year = show.get("year")
+    except KeyError:
+        year = "No Year"
 
-    try: seasons = show.get("seasons")
-    except: seasons = "No Seasons"
+    try:
+        seasons = show.get("seasons")
+    except KeyError:
+        seasons = "No Seasons"
 
-    try: cast = [person.get("name") for person in show.get("cast")[:20]]
-    except: cast = ["N/A"]
+    try:
+        cast = [person.get("name") for person in show.get("cast")[:20]]
+    except KeyError:
+        cast = ["N/A"]
 
-    try: poster = show.get("cover url")
-    except: poster = None
+    try:
+        poster = show.get("cover url")
+    except KeyError:
+        poster = None
 
     fields = {
         "Writer(s)": ", ".join(writer),
@@ -161,25 +184,25 @@ async def get_tv_show_embed(ctx, imdb, tv_show, tv_show_link):
 
     # Add all data to the embed
     embed = Embed(
-        title = title,
-        description = plotOutline,
-        colour = await get_embed_color(ctx.author),
-        timestamp = datetime.now(),
-        url = tv_show_link.format(show.movieID)
+        title=title,
+        description=plot_outline,
+        colour=await get_embed_color(ctx.author),
+        timestamp=datetime.now(),
+        url=tv_show_link.format(show.movieID)
     ).set_footer(
-        text = "IMDb"
+        text="IMDb"
     )
 
     for field in fields:
         embed.add_field(
-            name = field,
-            value = fields[field],
-            inline = True
+            name=field,
+            value=fields[field],
+            inline=True
         )
 
-    if poster != None:
+    if poster is not None:
         embed.set_image(
-            url = poster
+            url=poster
         )
-    
+
     return embed

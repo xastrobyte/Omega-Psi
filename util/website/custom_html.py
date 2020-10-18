@@ -1,4 +1,6 @@
 def get_case_html(is_bugs):
+    """Retrieves the 
+    """
     if is_bugs:
         return (
             """
@@ -173,7 +175,7 @@ def get_pending_update_html(on_developer_page = True):
                                                         <tr id="feature{{ feature }}">
                                                             <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
                                                             <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
-                                                            <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                            <td>{{ pending_update["features"][feature]["human_time"] }}</td>
                                                             <td><button class="page-form-button" onclick="editFeature('{{ feature }}')">Edit</button></td>
                                                             <td><button class="page-form-button" onclick="removeFeature('{{ feature }}')">Remove</button></td>
                                                         </tr>
@@ -214,7 +216,7 @@ def get_pending_update_html(on_developer_page = True):
                                                     <tr id="feature{{ feature }}">
                                                         <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
                                                         <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
-                                                        <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                        <td>{{ pending_update["features"][feature]["human_time"] }}</td>
                                                     </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -430,13 +432,42 @@ def get_server_settings_html(view_guild = False, section = None):
 def get_user_settings_html():
     return (
         """
+                        <!--User Settings Section-->
+                        <h2 class="page-section">
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">settings</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block" style="text-align: center;">
+                            <p>change your own personal settings here!</p>
+                            <div class="cases-box">
+                                <table width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td width="100%">change your embed color when using omega psi</td>
+                                            <td><input id="userColor" type="color" style="background-color: #293134; border: 1px solid #808080; border-radius: 5px;" value="#{{ user_color }}" onchange="editUserColor('{{ user_color }}')"></td>
+                                        </tr>
+                                        {% for target in notification_data -%}
+                                            <tr>
+                                                <td width="100%">{{ notification_descriptions[target] }}</td>
+                                                <td><label class="switch">
+                                                    <input id="{{ target }}Checkbox" type="checkbox" oninput="manageNotifications(`{{ target }}`)"
+                                                    {% if notification_data[target]["active"] %}
+                                                        checked
+                                                    {% endif %}
+                                                    >
+                                                    <span class="slider"></span>
+                                                </label></td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!--Gamestats Section-->
                         <h2 class="page-section">
                             <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">gamestats</code><code>();</code>
                         </h2>
                         <div class="page-section-block" style="text-align: center;">
-                            <p>change your own personal settings here or view your gamestats!</p>
-                            <p>you can change your embed color when using omega psi here ➡ <input id="userColor" type="color" style="background-color: #293134; border: 1px solid #808080; border-radius: 5px;" value="#{{ user_color }}" onchange="editUserColor('{{ user_color }}')"></p>
                             <table width="100%">
                                 <thead>
                                     <tr>

@@ -15,17 +15,12 @@ from util.functions import get_embed_color
 class TicTacToeGame(Game):
     """A TicTacToeGame object that holds information about a Tic Tac Toe game
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
-        challenger : Member
-            The challenging player
-        opponent : Member or int
-            The player opposing the challenger
-            If this parameter is an int, the opponent is an AI
+    :param bot: The bot object used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param challenger: The challenging player
+    :param opponent: The player opposing the challenger
+        If this parameter is an int, the opponent is an AI
+    :param is_smart: Whether or not to make the opponent smart
     """
 
     def __init__(self, bot, ctx, challenger, opponent, *, is_smart = None):
@@ -176,10 +171,7 @@ class TicTacToeGame(Game):
     def get_valid_reactions(self):
         """Returns a list of valid reactions a player can make when it is their turn
 
-        Returns
-        -------
-            list
-                Valid reactions a player can make during their turn
+        :rtype: list
         """
         
         # Setup a list of valid reactions

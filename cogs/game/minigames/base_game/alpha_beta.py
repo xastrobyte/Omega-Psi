@@ -1,27 +1,15 @@
-from random import choice
 from cogs.game.minigames.base_game.board import Board
 
 def alpha_beta(board, is_player_turn, depth = 0, alpha = Board.LOSS, beta = Board.WIN, max_depth = 4):
     """An alpha-beta pruning algorithm for an AI to decide which move is best
     for them
 
-    Parameters
-    ----------
-        board : Board
-            A Board object to use to find the best move
-        is_player_turn : boolean
-            Whether or not this instance of the function is the players turn
-        depth : int
-            The current depth of this instance
-        alpha : int
-            The current alpha value
-        beta : int
-            The current beta value
-        
-    Keyword Parameters
-    ------------------
-        max_depth : int
-            The maximum depth in the tree to search through (Default is 4).
+    :param board: A Board object to use to find the best move
+    :param is_player_turn: Whether or not this instance of the function is the players turn
+    :param depth: The current depth of this instance
+    :param alpha: The current alpha value
+    :param beta: The current beta value
+    :param max_depth: The maximum depth in the tree to search through (Default: 4)
     """
 
     # Keep track of the best move and the best score

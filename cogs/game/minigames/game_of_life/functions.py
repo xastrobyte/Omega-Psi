@@ -4,22 +4,12 @@ def choose_house(player, *, buy = True, house_one = None, house_two = None):
     """Has the AI intelligently choose a house depending on the purchase prices
     and the sell prices
 
-    
-    Parameters
-    ----------
-        player : GameOfLifePlayer
-            The player object that must choose between two houses
-    
-    Keyword Parameters
-    ------------------
-        buy : boolean
-            Whether or not to decide 
-        house_one : HouseCard
-            The first house card the player must decide on
-            Note: this is only used when deciding on buying a house
-        house_two : HouseCard
-            The second house card the player must decide on
-            Note: this is only used when deciding on buying a house
+    :param player: The player object that must choose between two houses
+    :param buy: Whether or not to decide 
+    :param house_one: The first house card the player must decide on
+        Note: this is only used when deciding on buying a house
+    :param house_two: The second house card the player must decide on
+        Note: this is only used when deciding on buying a house
     """
 
     # Check if the player is choosing between 2 houses

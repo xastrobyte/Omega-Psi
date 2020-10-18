@@ -81,9 +81,9 @@ QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}
 WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={}&includepodid=LogicCircuit&output=json"
 WOLFRAM_ALPHA_ICON = "https://cdn.iconscout.com/icon/free/png-512/wolfram-alpha-2-569293.png"
 
-JUDGE_POST_API_CALL = "https://api.judge0.com/submissions/"
-JUDGE_GET_API_CALL = "https://api.judge0.com/submissions/{}?fields=stdout,stderr,time,status"
-JUDGE_GET_LANGUAGES_API_CALL = "https://api.judge0.com/languages"
+JUDGE_POST_API_CALL = "https://judge0.p.rapidapi.com/submissions/"
+JUDGE_GET_API_CALL = "https://judge0.p.rapidapi.com/submissions/{}?fields=stdout,stderr,time,status"
+JUDGE_GET_LANGUAGES_API_CALL = "https://judge0.p.rapidapi.com/languages"
 
 LANGUAGES = {
     "bash": {
@@ -174,6 +174,27 @@ class Code(Cog, name = "code"):
     """All things having to do with coding go here"""
     def __init__(self, bot):
         self.bot = bot
+
+        # Retrieve the most updated ID from each language
+        languages = get(
+            JUDGE_GET_LANGUAGES_API_CALL,
+            headers = {
+                "x-rapidapi-host": "judge0.p.rapidapi.com",
+                "x-rapidapi-key": environ["JUDGE0_API_KEY"]
+            }
+        )
+        languages = languages.json()
+        for lang in languages:
+            lang_id, lang_name = lang["id"], lang["name"]
+            if lang_name.find("(") != -1:
+                lang_short = lang_name[:lang_name.find("(") - 1]
+            else:
+                lang_short = lang_name
+            if lang_short in LANGUAGES and LANGUAGES[lang_short]["id"] < lang_id:
+                LANGUAGES[lang_short].update(
+                    name = lang_name,
+                    id = lang_id
+                )
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -183,6 +204,13 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def convert(self, ctx, start_base : int = None, end_base : int = None, value : str = None):
+        """Allows the user to convert numbers from one base to another
+
+        :param ctx: The context of where the message was sent
+        :param start_base: The base to convert the value from
+        :param end_base: The base to convert the value to
+        :param value: The value to convert
+        """
         
         # Check if the start base and end bases are valid
         try:
@@ -215,14 +243,157 @@ class Code(Cog, name = "code"):
         await ctx.send(embed = embed)
     
     @group(
+        name = "textTo",
+        description = "Converts text to some encoding options",
+        cog_name = "code"
+    )
+    async def text_to(self, ctx):
+        """Allows the user to convert text to other encodings
+
+        :param ctx: The context of where the message was sent
+        """
+        if not ctx.invoked_subcommand:
+            await ctx.send(
+                embed = get_error_message(
+                    "You must specify the type of conversion you want to do.\nTry running `{}help textTo`".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
+                )
+            )
+    
+    @text_to.group(
+        name = "decimal",
+        aliases = ["ascii"],
+        description = "Lets you encode or decode text into decimal values",
+        cog_name = "code"
+    )
+    async def text_to_decimal(self, ctx):
+        """Allows the user to convert text into decimal values
+
+        :param ctx: The context of where the message was sent
+        """
+        if not ctx.invoked_subcommand:
+            await ctx.send(
+                embed = get_error_message(
+                    "You must specify if you want to encode or decode text.\nTry running `{}help textTo decimal`".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
+                )
+            )
+    
+    @text_to_decimal.command(
+        name = "encode",
+        aliases = ["enc", "e"],
+        description = "Encodes text into decimal values using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_decimal_encode(self, ctx, *, text = None):
+        """Allows the user to convert text to its ASCII equivalent
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to encode!")
+        
+        # There is text given
+        else:
+            embed = Embed(
+                title = "Text to Decimal",
+                description = "_ _",
+                colour = await get_embed_color(ctx.author)
+            ).add_field(
+                name = "Text",
+                value = text
+            ).add_field(
+                name = "Decimal",
+                value = " ".join([
+                    str(ord(char))
+                    for char in text
+                ]),
+                inline = False
+            )
+
+        await ctx.send(embed = embed)
+    
+    @text_to_decimal.command(
+        name = "decode",
+        aliases = ["dec", "d"],
+        description = "Decodes decimal values into text using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_decimal_decode(self, ctx, *, text = None):
+        """Allows the user to convert ASCII values into text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to decode!")
+        
+        # There is text given
+        else:
+
+            # Split the text by spaces and check if there are any values that exceed 255
+            text_split = text.split()
+            valid = True
+            for i in range(len(text_split)):
+                value = text_split[i]
+                try:
+                    value = int(value)
+                    if value > 255:
+                        raise
+                    text_split[i] = value # If this line is reached, the value is valid
+                except:
+                    valid = False
+
+            # The numbers are valid as a whole
+            if valid:
+                embed = Embed(
+                    title = "Decimal to Text",
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "Decimal",
+                    value = text
+                ).add_field(
+                    name = "Text",
+                    value = "".join([
+                        chr(char)
+                        for char in text_split
+                    ]),
+                    inline = False
+                )
+            
+            # One of the values was not valid
+            else:
+                embed = get_error_message("One of the decimal values was either >255 or was not a valid decimal value.")
+
+        await ctx.send(embed = embed)
+    
+    @text_to.group(
         name = "base64",
         aliases = ["b64"],
         description = "Let's you encode or decode text in Base64 encoding.",
         cog_name = "code"
     )
     async def base_64(self, ctx):
+        """Allows the user to convert text into Base-64
+
+        :param ctx: The context of where the message was sent
+        """
         if not ctx.invoked_subcommand:
-            await ctx.send(embed = get_error_message("You must specify if you want to encode or decode text.\nTry running `ob.help base64` for more information."))
+            await ctx.send(
+                embed = get_error_message(
+                    "You must specify if you want to encode or decode text.\nTry running `{}help textTo base64`".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
+                )
+            )
     
     @base_64.command(
         name = "encode",
@@ -231,6 +402,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def base_64_encode(self, ctx, *, text : str = None):
+        """Allows the user to convert text into Base-64
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
         
         # Check if no text is given
         if not text:
@@ -253,6 +429,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def base_64_decode(self, ctx, *, text : str = None):
+        """Allows the user to convert text from Base-64
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
         
         # Check if no text is given
         if not text:
@@ -273,12 +454,16 @@ class Code(Cog, name = "code"):
         
         await ctx.send(embed = embed)
     
-    @group(
+    @text_to.group(
         name = "morse",
-        description = "Shows you a conversion chart for Morse code.",
+        description = "Shows you a conversion chart for Morse code or lets you encode/decode text and Morse code.",
         cog_name = "code"
     )
-    async def morse(self, ctx):
+    async def text_to_morse(self, ctx):
+        """Allows the user to convert text into Morse
+
+        :param ctx: The context of where the message was sent
+        """
         if not ctx.invoked_subcommand:
 
             # Find the longest conversion on the left side in order to
@@ -326,13 +511,18 @@ class Code(Cog, name = "code"):
                 )
             )
     
-    @morse.command(
+    @text_to_morse.command(
         name = "encode",
         aliases = ["enc", "e"],
         description = "Encode regular text into Morse code.",
         cog_name = "code"
     )
-    async def morse_encode(self, ctx, *, text : str = None):
+    async def text_to_morse_encode(self, ctx, *, text : str = None):
+        """Allows the user to convert text into Morse
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
 
         # Call the Morse API
         result = await loop.run_in_executor(None,
@@ -356,13 +546,18 @@ class Code(Cog, name = "code"):
     
         await ctx.send(embed = embed)
     
-    @morse.command(
+    @text_to_morse.command(
         name = "decode",
         aliases = ["dec", "d"],
         description = "Decode Morse code into regular text.",
         cog_name = "code"
     )
-    async def morse_decode(self, ctx, *, text : str = None):
+    async def text_to_morse_decode(self, ctx, *, text : str = None):
+        """Allows the user to convert Morse into text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
         
         # Call the Morse API
         result = await loop.run_in_executor(None,
@@ -386,6 +581,348 @@ class Code(Cog, name = "code"):
     
         await ctx.send(embed = embed)
     
+    @text_to.group(
+        name = "binary",
+        aliases = ["bin"],
+        description = "Lets you encode/decode text into binary.",
+        cog_name = "code"
+    )
+    async def text_to_binary(self, ctx):
+        """Allows the user to convert text into binary numbers
+
+        :param ctx: The context of where the message was sent
+        """
+        if not ctx.invoked_subcommand:
+            await ctx.send(
+                embed = get_error_message(
+                    "You must specify whether you want to encode or decode text! Try `{}help textTo binary`".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
+                )
+            )
+    
+    @text_to_binary.command(
+        name = "encode",
+        aliases = ["enc", "e"],
+        description = "Encodes text into binary using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_binary_encode(self, ctx, *, text = None):
+        """Allows the user to convert text into binary
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to encode!")
+        
+        # There is text given
+        else:
+            embed = Embed(
+                title = "Text to Binary",
+                description = "_ _",
+                colour = await get_embed_color(ctx.author)
+            ).add_field(
+                name = "Text",
+                value = text
+            ).add_field(
+                name = "Binary",
+                value = " ".join([
+                    bin(ord(char))[2:].rjust(8, "0")
+                    for char in text
+                ]),
+                inline = False
+            )
+
+        await ctx.send(embed = embed)
+    
+    @text_to_binary.command(
+        name = "decode",
+        aliases = ["dec", "d"],
+        description = "Decodes binary into text using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_binary_decode(self, ctx, *, text = None):
+        """Allows the user to convert binary to text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to decode!")
+        
+        # There is text given
+        else:
+
+            # Split the text by spaces and check if there are any values that exceed 255 (in decimal)
+            text_split = text.split()
+            valid = True
+            for i in range(len(text_split)):
+                value = text_split[i]
+                try:
+                    value = int(value, 2)
+                    if value > 255:
+                        raise
+                    text_split[i] = value # If this line is reached, the value is valid
+                except:
+                    valid = False
+
+            # The numbers are valid as a whole
+            if valid:
+                embed = Embed(
+                    title = "Binary to Text",
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "Binary",
+                    value = text
+                ).add_field(
+                    name = "Text",
+                    value = "".join([
+                        chr(char)
+                        for char in text_split
+                    ]),
+                    inline = False
+                )
+            
+            # One of the values was not valid
+            else:
+                embed = get_error_message("One of the binary values was either >255 or was not a valid binary value.")
+
+        await ctx.send(embed = embed)
+    
+    @text_to.group(
+        name = "octal",
+        aliases = ["oct"],
+        description = "Lets you encode/decode text into octal.",
+        cog_name = "code"
+    )
+    async def text_to_octal(self, ctx):
+        """Allows the user to convert text into octal
+
+        :param ctx: The context of where the message was sent
+        """
+        if not ctx.invoked_subcommand:
+            await ctx.send(
+                embed = get_error_message(
+                    "You must specify if you want to encode or decode text.\nTry running `{}help textTo octal`".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
+                )
+            )
+    
+    @text_to_octal.command(
+        name = "encode",
+        aliases = ["enc", "e"],
+        description = "Encodes text into octal using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_octal_encode(self, ctx, *, text = None):
+        """Allows the user to convert text into octal
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to encode!")
+        
+        # There is text given
+        else:
+            embed = Embed(
+                title = "Text to Octal",
+                description = "_ _",
+                colour = await get_embed_color(ctx.author)
+            ).add_field(
+                name = "Text",
+                value = text
+            ).add_field(
+                name = "Octal",
+                value = " ".join([
+                    oct(ord(char))[2:].rjust(3, "0")
+                    for char in text
+                ]),
+                inline = False
+            )
+
+        await ctx.send(embed = embed)
+    
+    @text_to_octal.command(
+        name = "decode",
+        aliases = ["dec", "d"],
+        description = "Decodes octal into text using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_octal_decode(self, ctx, *, text = None):
+        """Allows the user to convert octal into text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to decode!")
+        
+        # There is text given
+        else:
+
+            # Split the text by spaces and check if there are any values that exceed 255 (in decimal)
+            text_split = text.split()
+            valid = True
+            for i in range(len(text_split)):
+                value = text_split[i]
+                try:
+                    value = int(value, 8)
+                    if value > 255:
+                        raise
+                    text_split[i] = value # If this line is reached, the value is valid
+                except:
+                    valid = False
+
+            # The numbers are valid as a whole
+            if valid:
+                embed = Embed(
+                    title = "Octal to Text",
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "Octal",
+                    value = text
+                ).add_field(
+                    name = "Text",
+                    value = "".join([
+                        chr(char)
+                        for char in text_split
+                    ]),
+                    inline = False
+                )
+            
+            # One of the values was not valid
+            else:
+                embed = get_error_message("One of the octal values was either >255 or was not a valid octal value.")
+
+        await ctx.send(embed = embed)
+
+    @text_to.group(
+        name = "hex",
+        aliases = ["hexadecimal", "h"],
+        description = "Lets you encode/decode text into hexadecimal",
+        cog_name = "code"
+    )
+    async def text_to_hex(self, ctx):
+        """Allows the user to convert text into hex
+
+        :param ctx: The context of where the message was sent
+        """
+        if not ctx.invoked_subcommand:
+            await ctx.send(
+                embed = get_error_message(
+                    "You must specify if you want to encode or decode text.\nTry running `{}help textTo hex`".format(
+                        await database.guilds.get_prefix(ctx.guild) if ctx.guild else ""
+                    )
+                )
+            )
+    
+    @text_to_hex.command(
+        name = "encode",
+        aliases = ["enc", "e"],
+        description = "Encodes text into hex using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_hex_encode(self, ctx, *, text = None):
+        """Allows the user to convert text into hex
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to encode!")
+        
+        # There is text given
+        else:
+            embed = Embed(
+                title = "Text to Hex",
+                description = "_ _",
+                colour = await get_embed_color(ctx.author)
+            ).add_field(
+                name = "Text",
+                value = text
+            ).add_field(
+                name = "Hex",
+                value = " ".join([
+                    hex(ord(char))[2:].rjust(2, "0")
+                    for char in text
+                ]),
+                inline = False
+            )
+
+        await ctx.send(embed = embed)
+    
+    @text_to_hex.command(
+        name = "decode",
+        aliases = ["dec", "d"],
+        description = "Decodes hex into text using ASCII values",
+        cog_name = "code"
+    )
+    async def text_to_hex_decode(self, ctx, *, text = None):
+        """Allows the user to convert hex into text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to convert
+        """
+
+        # Check if there is no text given
+        if text is None:
+            embed = get_error_message("You must specify the text to decode!")
+        
+        # There is text given
+        else:
+
+            # Split the text by spaces and check if there are any values that exceed 255 (in decimal)
+            text_split = text.split()
+            valid = True
+            for i in range(len(text_split)):
+                value = text_split[i]
+                try:
+                    value = int(value, 16)
+                    if value > 255:
+                        raise
+                    text_split[i] = value # If this line is reached, the value is valid
+                except:
+                    valid = False
+
+            # The numbers are valid as a whole
+            if valid:
+                embed = Embed(
+                    title = "Hex to Text",
+                    description = "_ _",
+                    colour = await get_embed_color(ctx.author)
+                ).add_field(
+                    name = "Hex",
+                    value = text
+                ).add_field(
+                    name = "Text",
+                    value = "".join([
+                        chr(char)
+                        for char in text_split
+                    ]),
+                    inline = False
+                )
+            
+            # One of the values was not valid
+            else:
+                embed = get_error_message("One of the hex values was either >255 or was not a valid hex value.")
+
+        await ctx.send(embed = embed)
+    
     @command(
         name = "qrCode",
         aliases = ["qr"],
@@ -393,6 +930,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def qr_code(self, ctx, *, text : str = None):
+        """Allows the user to generate a QR code from text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to create a QR code from
+        """
         
         # Check if there is no text
         if not text:
@@ -421,6 +963,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def logic(self, ctx, *, expression : str = None):
+        """Allows the user retrieve a truth table from a logical expression
+
+        :param ctx: The context of where the message was sent
+        :param expression: The text to convert
+        """
 
         # Check if no expression was given
         if not expression:
@@ -620,6 +1167,10 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute(self, ctx):
+        """Allows the user to run code from different languages
+
+        :param ctx: The context of where the message was sent
+        """
         if not ctx.invoked_subcommand:
             await ctx.send(
                 embed = get_error_message(
@@ -635,6 +1186,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_bash(self, ctx, *, code : str = None):
+        """Allows the user to execute Bash code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "bash")
     
     @execute.command(
@@ -643,6 +1199,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_basic(self, ctx, *, code : str = None):
+        """Allows the user to execute BASIC code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "basic")
     
     @execute.command(
@@ -651,6 +1212,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_c(self, ctx, *, code : str = None):
+        """Allows the user to execute C code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "c")
     
     @execute.command(
@@ -659,6 +1225,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_cpp(self, ctx, *, code : str = None):
+        """Allows the user to execute C++ code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "c++")
     
     @execute.command(
@@ -667,6 +1238,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_csharp(self, ctx, *, code : str = None):
+        """Allows the user to execute C# code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "c#")
     
     @execute.command(
@@ -675,6 +1251,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_go(self, ctx, *, code : str = None):
+        """Allows the user to execute Go code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "go")
     
     @execute.command(
@@ -683,6 +1264,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_haskell(self, ctx, *, code : str = None):
+        """Allows the user to execute Haskell code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "haskell")
     
     @execute.command(
@@ -691,6 +1277,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_fortran(self, ctx, *, code : str = None):
+        """Allows the user to execute Fortran code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "fortran")
     
     @execute.command(
@@ -699,6 +1290,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_java(self, ctx, *, code : str = None):
+        """Allows the user to execute Java code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "java")
     
     @execute.command(
@@ -708,6 +1304,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_javascript(self, ctx, *, code : str = None):
+        """Allows the user to execute JavaScript code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "javascript")
     
     @execute.command(
@@ -716,6 +1317,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_pascal(self, ctx, *, code : str = None):
+        """Allows the user to execute Pascal code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "pascal")
     
     @execute.command(
@@ -724,6 +1330,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_php(self, ctx, *, code : str = None):
+        """Allows the user to execute PHP code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "php")
     
     @execute.command(
@@ -732,6 +1343,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_prolog(self, ctx, *, code : str = None):
+        """Allows the user to execute Prolog code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "prolog")
     
     @execute.command(
@@ -740,6 +1356,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_python(self, ctx, *, code : str = None):
+        """Allows the user to execute Python code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "python")
     
     @execute.command(
@@ -748,6 +1369,11 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_ruby(self, ctx, *, code : str = None):
+        """Allows the user to execute Ruby code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "ruby")
     
     @execute.command(
@@ -756,17 +1382,19 @@ class Code(Cog, name = "code"):
         cog_name = "code"
     )
     async def execute_rust(self, ctx, *, code : str = None):
+        """Allows the user to execute Rust code
+
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        """
         await self.execute_code(ctx, code, language = "rust")
     
     async def execute_code(self, ctx, code, *, language = None):
         """Executes the specified code in the specified language.
 
-        Parameters
-        ----------
-            code : str
-                The code to run
-            language : str
-                The language to run the code in
+        :param ctx: The context of where the message was sent
+        :param code: The code to execute
+        :param language: The language to execute the code in
         """
 
         # Get the language ID from the language
@@ -794,7 +1422,10 @@ class Code(Cog, name = "code"):
                     "cpu_extra_time": 2
                 },
                 headers = {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "accept": "application/json",
+                    "x-rapidapi-host": "judge0.p.rapidapi.com",
+                    "x-rapidapi-key": environ["JUDGE0_API_KEY"]
                 }
             )
         )
@@ -804,11 +1435,18 @@ class Code(Cog, name = "code"):
         # Call the Judge0 API until the previous submission has finished
         while True:
             response = await loop.run_in_executor(None,
-                get,
-                JUDGE_GET_API_CALL.format(token)
+                partial(
+                    get,
+                    JUDGE_GET_API_CALL.format(token),
+                    headers = {
+                        "x-rapidapi-host": "judge0.p.rapidapi.com",
+                        "x-rapidapi-key": environ["JUDGE0_API_KEY"]
+                    }
+                )
             )
             response = response.json()
-            if response["status"]["id"] != 2: # ID 2 is processing the code
+            print(response)
+            if response["status"]["id"] not in [1, 2]: # ID 1 and 2 is in queue and processing the code
                 break
         
         # Split up the STDOUT and STDERR into separate fields
@@ -872,4 +1510,8 @@ class Code(Cog, name = "code"):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def setup(bot):
+    """Add's this cog to the bot
+
+    :param bot: The bot to add the cog to
+    """
     bot.add_cog(Code(bot))

@@ -1,4 +1,9 @@
 class ConnectFourBoard:
+    """A ConnectFourBoard to keep track the state of a ConnectFourGame
+
+    :param width: The width of the Connect Four board (Default: 7)
+    :param height: The height of the Connect Four board (Default: 6)
+    """
 
     DEFAULT_WIDTH = 7
     DEFAULT_HEIGHT = 6
@@ -11,9 +16,7 @@ class ConnectFourBoard:
     def __str__(self):
         """Returns a stringified version of the board for easy printing in Discord
 
-        Returns
-        -------
-            string
+        :rtype: str
         """
 
         # Emoji numbers for the top row
@@ -84,17 +87,10 @@ class ConnectFourBoard:
     def generate_board(self, width, height):
         """Generates a board with the specified width and height
 
-        Parameters
-        ----------
-            width : int
-                The width of the Connect Four board
-            height : int
-                The height of the Connect Four board
+        :param width: The width of the Connect Four board
+        :param height: The height of the Connect Four board
             
-        Returns
-        -------
-            list
-                The generated Connect Four board
+        :rtype: list
         """
         self.board = []
         for row in range(height):
@@ -108,10 +104,7 @@ class ConnectFourBoard:
     def copy(self):
         """A method to copy this board and return the copy
             
-        Returns
-        -------
-            ConnectFourBoard
-                A copy of this board
+        :rtype: ConnectFourBoard
         """
         new_board = ConnectFourBoard(width = self.width, height = self.height)
         for row in range(self.height):
@@ -122,37 +115,23 @@ class ConnectFourBoard:
     def is_column_full(self, column):
         """Determines whether or not a specified column is full in this Connect Four board
 
-        Parameters
-        ----------
-            column : int
-                The column to check if it is full or not
+        :param column: The column to check if it is full or not
             
-        Returns
-        -------
-            boolean
-                Whether or not the specified column is full
+        :rtype: boolean
         """
         return self.board[0][column] != None
     
     def is_board_full(self):
         """Determines whether or not the entire board is full in this Connect Four board
     
-        Returns
-        -------
-            boolean
-                Whether or not the specified board is full
+        :rtype: boolean
         """
         return self.board[0].count(None) == 0
     
     def check_for_winner(self):
         """Checks to see if there are any winners in this Connect Four board
 
-        Returns
-        -------
-            boolean or None
-                True, the winner of this board is the challenger
-                False, the winner of this board is the opponent
-                None, there is no winner of this board yet
+        :rtype: boolean | None
         """
 
         # Check horizontally
@@ -185,16 +164,10 @@ class ConnectFourBoard:
     def add_piece(self, column, *, is_challenger = None):
         """Adds a Connect Four piece to this Connect Four board at the specified column
 
-        Parameters
-        ----------
-            column : int
-                The column to add the piece to
+        :param column: The column to add the piece to
         
-        Keyword Parameters
-        ------------------
-            is_challenger : boolean or None
-                Whether or not the piece being added is a challenger's piece
-                or an opponent's piece
+        :param is_challenger: Whether or not the piece being added is a challenger's piece
+            or an opponent's piece
         """
 
         # Iterate through the rows from the bottom up
@@ -212,10 +185,7 @@ class ConnectFourBoard:
     def remove_piece(self, column):
         """Removes a Connect Four piece from this Connect Four board
 
-        Parameters
-        ----------
-            column : int
-                The column to remove a piece from
+        :param column: The column to remove a piece from
         """
 
         # Iterate through the rows from the top down

@@ -7,13 +7,11 @@ class Player:
 
     Keyword Parameters
     ------------------
-        member : discord.Member or str
-            The discord.Member defining this Player object or
-            a str clarifying this Player object as an AI player
-        is_smart : boolean
-            A boolean value determining if this Player is playing smart or random
-            Note: this only applies to AI players and is only set to True or False if
-                    this player is an AI player
+    :param member: The Discord User defining this Player object or a string
+        clarifying this Player object as an AI Player
+    
+    :param is_smart: Whether or not this Player is playing cleverly or randomly
+        Note: This only applies to AI players
     """
 
     QUIT = "QUIT"
@@ -76,10 +74,7 @@ class Player:
         react to make their move or, if this player is an AI, choosing the best place
         to go
 
-        Parameters
-        ----------
-            game : Game
-                The game object that this player is connected to
+        :param game: The game object this player is connected to
         """
         pass
 
@@ -90,10 +85,7 @@ class Player:
     def get_name(self):
         """Retrieves the name of this Player for simpler formatting.
 
-        Returns
-        -------
-        str
-            The name of this Player
+        :rtype: str
         """
 
         # If the player is an AI, only the name is returned

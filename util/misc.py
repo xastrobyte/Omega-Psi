@@ -1,17 +1,10 @@
 def set_default(default_dict, result_dict):
     """Sets default values for a dictionary recursively.
 
-    Parameters
-    ----------
-        default_dict : dict
-            The template dictionary to use to set values
-        result_dict : dict
-            The dictionary to load the template values into
+    :param default_dict: The template dictionary to use to set values
+    :param result_dict: The dictionary to load the template values into
     
-    Returns
-    -------
-        dict
-            The resulting default dictionary values
+    :rtype: dict
     """
 
     # Iterate through default values

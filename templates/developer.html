@@ -315,7 +315,7 @@
                                                         <tr id="feature{{ feature }}">
                                                             <td id="feature{{ feature }}Feature">{{ pending_update["features"][feature]["feature"] }}</td>
                                                             <td id="feature{{ feature }}Type">{{ pending_update["features"][feature]["type"] }}</td>
-                                                            <td>{{ pending_update["features"][feature]["datetime"] }}</td>
+                                                            <td>{{ pending_update["features"][feature]["human_time"] }}</td>
                                                             <td><button class="page-form-button" onclick="editFeature('{{ feature }}')">Edit</button></td>
                                                             <td><button class="page-form-button" onclick="removeFeature('{{ feature }}')">Remove</button></td>
                                                         </tr>

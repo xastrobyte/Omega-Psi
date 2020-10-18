@@ -6,10 +6,7 @@ from random import choice, randint
 def minutes_to_runtime(minutes):
     """Turns an amount of minutes into a runtime as if for a movie or TV show
 
-    Parameters
-    ----------
-        minutes : int
-            The amount of minutes to turn into a runtime
+    :param minutes: The amount of minutes to turn into a runtime
     """
 
     # Turn the minutes into hours
@@ -21,15 +18,9 @@ def minutes_to_runtime(minutes):
 def timestamp_to_datetime(timestamp):
     """Turns a string timestamp into a datetime.
 
-    Parameters
-    ----------
-        timestamp : str
-            The string version of the timestamp
+    :param timestamp: The string version of the timestamp
     
-    Returns
-    -------
-        datetime
-            A datetime object of the specified timestamp
+    :rtype: datetime
     """
 
     # Get the date and time
@@ -48,15 +39,9 @@ def datetime_to_dict(date_time):
     """Turns a datetime.datetime object into a JSON object
     that keeps track of the year, month, day, hour, minute, and second
 
-    Parameters
-    ----------
-        date_time: datetime
-            A datetime object to convert into a JSON object
+    :param date_time: A datetime object to convert into a JSON object
     
-    Returns
-    -------
-        dict
-            The specified datetime object turned into a JSON object
+    :rtype: dict
     """
 
     return {
@@ -72,15 +57,9 @@ def dict_to_datetime(datetime_dict):
     """Turns a JSON object that keeps track of a datetime's information
     back into a datetime.datetime object
 
-    Parameters
-    ----------
-        datetime_dict : dict
-            A JSON object to turn into a datetime object
+    :param datetime_dict: A JSON object to turn into a datetime object
     
-    Returns
-    -------
-        datetime
-            The datetime object
+    :rtype: datetime
     """
     
     return datetime(
@@ -91,15 +70,8 @@ def dict_to_datetime(datetime_dict):
 def datetime_to_string(date_time, *, short = False):
     """Turns a datetime into a readable string.
 
-    Parameters
-    ----------
-        date_time : datetime
-            The datetime object to convert
-    
-    Keyword Parameters
-    ------------------
-        short : boolean
-            Whether or not to get a shortened version of the datetime in the MM/DD/YYYY format. (Defaults to False)
+    :param date_time: The datetime object to convert
+    :param short: Whether or not to get a shortened version of the datetime in the MM/DD/YYYY format. (Defaults to False)
     """
 
     if short:
@@ -148,15 +120,9 @@ def datetime_to_length(date_time):
     """Takes in a datetime.datetime object, compares it with the current time, and returns the difference
     in descending order starting with years, months, days, etc.
 
-    Parameters
-    ----------
-        date_time : datetime
-            The datetime object to convert to a length
+    :param date_time The datetime object to convert to a length
     
-    Returns
-    -------
-        str
-            The text of the datetime converted to a length of time
+    :rtype: str
     """
 
     # Get the current datetime and get the difference
@@ -188,12 +154,7 @@ def datetime_to_length(date_time):
     )
 
 def generate_random_string():
-    """Generates a random string with a random length.
-
-    Returns
-    -------
-        A string with random values
-    """
+    """Generates a random string with a random length."""
 
     characters = (
         [chr(i) for i in range(ord("A"), ord("Z") + 1)] +

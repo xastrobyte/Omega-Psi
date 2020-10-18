@@ -60,18 +60,11 @@ class BattleshipBoard(Board):
     def get_at(self, row, column):
         """Returns the value at the specified row and column
 
-        Parameters
-        ----------
-            row : int
-                The row to get the value at
-            column : int
-                The column to get the value at
+        :param row: The row to get the value at
+        :param column: The column to get the value at
         
-        Returns
-        -------
-            ship_number : int or None
-                The ship number at the specified location
-                If None is returned, the space is unoccupied
+        :returns: The ship number at the specified location
+            or None if the space is unoccupied
         """
         return self.board[row][column]
 
@@ -85,15 +78,10 @@ class BattleshipBoard(Board):
     
     def set_at(self, row, column, ship_number):
         """Sets a ship number at the specified row and column
-
-        Parameters
-        ----------
-            row : int
-                The row to set the ship number at
-            column : int
-                The column to set the ship number at
-            ship_number : int
-                The ship number to set
+        
+        :param row: The row to set the ship number at
+        :param column: The column to set the ship number at
+        :param ship_number: The ship number to set
         """
         if self.board[row][column] is None:
             self.board[row][column] = ship_number
@@ -107,17 +95,10 @@ class BattleshipBoard(Board):
     def fire(self, row, column):
         """Makes a shot at the specified location and returns whether or not it was a hit
 
-        Parameters
-        ----------
-            row : int
-                The row to make a move at
-            column : int
-                The column to make a move at
+        :param row: The row to make a move at
+        :param column: The column to make a move at
         
-        Returns
-        -------
-            value : HIT or MISS
-                A value describing whether the player hit a ship or if they missed
+        :returns: A value describing whether the player hit a ship or if they missed
         """
         self.shots.append((row, column))
         if self.get_at(row, column) is not None:
@@ -127,15 +108,9 @@ class BattleshipBoard(Board):
     def did_ship_sink(self, ship_number = None):
         """Determines if the specified ship number has been sank
 
-        Parameters
-        ----------
-            ship_number : int
-                The ship number to determine if it sank or not
+        :param ship_number: The ship number to determine if it sank or not
 
-        Returns
-        -------
-            boolean
-                Whether or not the specified ship has been sunken
+        :returns: Whether or not the specified ship has been sunken
         """
 
         # If the ship number does not exist, get the value at the last shot
@@ -153,20 +128,10 @@ class BattleshipBoard(Board):
         the ships will be shown using their associated emoji. Any shots the opponent made
         will be written with an X instead. Missed shots will be shown with a white bubble
 
-        Parameters
-        ----------
-            for_player : boolean
-                Whether or not to show the full contents of the board
-
-        Keyword Parameters
-        ------------------
-            include_ships : boolean
-                Whether or not to show which ships have been sunken
+        :param for_player: Whether or not to show the full contents of the board
+        :param include_ships: Whether or not to show which ships have been sunken
         
-        Returns
-        -------
-            str
-                The board in emoji representation
+        :returns: The board in emoji representation
         """
 
         # Add a row of the column emojis to the result

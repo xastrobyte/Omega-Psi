@@ -12,7 +12,12 @@ class NotNSFWOrGuild(CheckFailure): pass
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def get_error_message(message):
-    """Returns an error message in the form of an embed"""
+    """Returns an error message in the form of an embed
+
+    :param message: The error message to display
+    
+    :rtype: Embed
+    """
 
     return Embed(
         title = "Error",

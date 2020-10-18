@@ -19,15 +19,8 @@ class BattleshipPlayer(Player):
     """A BattleshipPlayer object holds information regarding 
     a player in the Battleship minigame.
 
-    Parameters
-    ----------
-        member : Member
-            The discord member that will be connected to this Player
-
-    Keyword Parameters
-    ------------------
-        is_smart : boolean
-            A boolean value determining if this Player is playing smart or random
+    :param member: The discord member that will be connected to this Player
+    :param is_smart: A boolean value determining if this Player is playing smart or random
             Note: this only applies to AI players and is only set to True or False if
                     this player is an AI player
     """
@@ -101,10 +94,7 @@ class BattleshipPlayer(Player):
     async def setup(self, game):
         """Asks the player to setup their ships in the specified Battleship game
 
-        Parameters
-        ----------
-            game : BattleshipGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Ask the player to decide where they want their ships to go to
@@ -373,16 +363,11 @@ class BattleshipPlayer(Player):
             )
 
     async def process_turn(self, game):
-        """
-        Parameters
-        ----------
-            game : BattleshipGame
-                The game object that this player is connected to
+        """Processes the turn for this player
+
+        :param game: The game object that this player is connected to
         
-        Returns
-        -------
-            result : BattleshipBoard.HIT or BattleshipBoard.MISS
-                Whether the player made a hit or a miss on their opponents board
+        :rtype: BattleshipBoard.HIT | BattleshipBoard.MISS
         """
         
         # Check if the player is an AI
@@ -554,10 +539,7 @@ class BattleshipPlayer(Player):
         If the current player is this player, it will show the opponents board
         If the current player is the opposite player, it will show this player's board
 
-        Parameters
-        ----------
-            game : BattleshipGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if this player is a real player
@@ -592,12 +574,8 @@ class BattleshipPlayer(Player):
     async def show_results(self, game, did_hit):
         """Shows the results of the current turn by updating this player's message
 
-        Parameters
-        ----------
-            game : BattleshipGame
-                The game object that this player is connected to
-            did_hit : boolean
-                Whether or not the current player hit one of the the opposite player's ships
+        :param game: The game object that this player is connected to
+        :param did_hit: Whether or not the current player hit one of the the opposite player's ships
         """
 
         # Check if this player is a real player
@@ -616,10 +594,7 @@ class BattleshipPlayer(Player):
     async def show_winner(self, game, winner):
         """Shows the winner of the Battleship game to this player
 
-        Parameters
-        ----------
-            winner : BattleshipPlayer
-                The winner of the current Battleship game
+        :param winner: The winner of the current Battleship game
         """
         
         # Check if the player is a real player

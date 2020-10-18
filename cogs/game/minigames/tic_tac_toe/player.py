@@ -10,18 +10,12 @@ from cogs.game.minigames.tic_tac_toe.variables import TIC_TAC_TOE_REACTIONS, QUI
 class TicTacToePlayer(Player):
     """A TicTacToePlayer object holds information regarding a player in the Tic Tac Toe minigame.
 
-    Parameters
-    ----------
-        member : Member or int
-            The Member defining this TicTacToePlayer object or
-            an int clarifying this TicTacToePlayer object as an AI player
+    :param member: The Member defining this TicTacToePlayer object or
+        an int clarifying this TicTacToePlayer object as an AI player
 
-    Keyword Parameters
-    ------------------
-        is_smart : boolean
-            A boolean value determining if this OmokPlayer is playing smart or random
-            Note: this only applies to AI players and is only set to True or False if
-                    this player is an AI player
+    :param is_smart: A boolean value determining if this OmokPlayer is playing smart or random
+        Note: this only applies to AI players and is only set to True or False if
+        this player is an AI player
     """
     
     def __init__(self, member, *, is_smart = None):
@@ -39,10 +33,7 @@ class TicTacToePlayer(Player):
         react to make their move or, if this player is an AI, choosing the best place
         to go
 
-        Parameters
-        ----------
-            game : TicTacToeGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if the player is an AI

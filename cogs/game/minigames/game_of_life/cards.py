@@ -2,19 +2,10 @@ class CareerCard:
     """A Career Card contains information pertaining to the name of a career, the salary
     of a career, and the bonus number of a career
 
-    Parameters
-    ----------
-        name : str
-            The name of the career
-        salary : int
-            The amount of money given to the player each payday
-        bonus : int
-            The number that needs to be rolled for the player to receive bonus money
-    
-    Keyword Parameters
-    ------------------
-        json : dict
-            A json object that holds the same values as the parameters specified above
+    :param name: The name of the career
+    :param salary: The amount of money given to the player each payday
+    :param bouns: The number that needs to be rolled for the player to receive bonus money
+    :param json: A json object that holds the same values as the parameters specified above
     """
 
     def __init__(self, name = None, salary = None, bonus = None, *, json = None):
@@ -79,21 +70,11 @@ class HouseCard:
     """A House Card contains information pertaining to the name of the house, the purchase price
     the spin red selling price and the spin black selling price
 
-    Parameters
-    ----------
-        name : str
-            The name of the house
-        purchase : int
-            The price of the house
-        spin_red : int
-            The amount of money given to the player if they spin red when selling the house
-        spin_black : int
-            The amount of money given to the player if they spin black when selling the house
-    
-    Keyword Parameters
-    ------------------
-        json : dict
-            A json object that holds the same values as the parameters specified above
+    :param name: The name of the house
+    :param purchase: The price of the house
+    :param spin_red: The amount of money given to the player if they spin red when selling the house
+    :param spin_black: The amount of money given to the player if they spin black when selling the house
+    :param json: A json object that holds the same values as the parameters specified above
     """
 
     def __init__(self, name = None, purchase = None, spin_red = None, spin_black = None, *, json = None):
@@ -169,25 +150,13 @@ class PetCard:
     the type of action, the amount of the card, whether or not the card adds a pet,
     and whether or not the money in the amount comes from/is paid to the bank.
 
-    Parameters
-    ----------
-        name : str
-            The name of the house
-        action_text : str
-            The description of the pet card
-        add : boolean
-            Whether or not the card adds pets to the player's car
-        action : str
-            The type of action of the card
-        amount : int
-            The amount of money paid or received
-        bank : boolean
-            Whether or not the money comes from/is paid to the bank
-    
-    Keyword Parameters
-    ------------------
-        json : dict
-            A json object that holds the same values as the parameters specified above
+    :param name: The name of the house
+    :param action_text: The description of the pet card
+    :param add: Whether or not the card adds pets to the player's car
+    :param action: The type of action of the card
+    :param amount: The amount of money paid or received
+    :param bank: Whether or not the money comes from/is paid to the bank
+    :param json: A json object that holds the same values as the parameters specified above
     """
 
     def __init__(self, name = None, action_text = None, add = None, action = None, amount = None, bank = None, *, json = None):
@@ -281,19 +250,10 @@ class ActionCard:
     any spin values (low, medium, high), the amounts of money received from those spaces,
     and whether or not the money comes from/is paid to the bank.
 
-    Parameters
-    ----------
-        name : str
-            The name of the card
-        action : Action
-            The specific action attributes of this card
-        spin : Spin
-            The specific spin attributes of this card
-    
-    Keyword Parameters
-    ------------------
-        json : dict
-            A json object that holds the same values as the parameters specified above
+    :param name: The name of the card
+    :param action: The specific action attributes of this card
+    :param spin: The specific spin attributes of this card
+    :param json: A json object that holds the same values as the parameters specified above
     """
 
     def __init__(self, name = None, action = None, spin = None, *, json = None):
@@ -381,23 +341,12 @@ class ActionCard:
         """An Action object is used to hold specific information about the text and
         type of action card it belongs to
 
-        Parameters
-        ----------
-            text : str or None
-                Any specific action text that acts as a description of this ActionCard
-            type : str
-                The type of action card this is
-            target : str
-                The target player(s) of this action card
-            special : str or None
-                Any special type of card this action card may be
-            bank : boolean
-                Whether or not the money spun or received/paid comes from the bank
-        
-        Keyword Parameters
-        ------------------
-            json : dict
-                A json object that holds the same values as the parameters specified above
+        :param text: Any specific action text that acts as a description of this ActionCard
+        :param type: The type of action card this is
+        :param target: The target player(s) of this action card
+        :param special: Any special type of card this action card may be
+        :param bank: Whether or not the money spun or received/paid comes from the bank
+        :param json: A json object that holds the same values as the parameters specified above
         """
 
         def __init__(self, text = None, type = None, target = None, special = None, bank = None, *, json = None):
@@ -477,23 +426,13 @@ class ActionCard:
             For example, if a player has to spin 1-5 to collect 50k from the bank
                       or if a player has to spin 6-10 to collect 100k from the bank
         
-        Parameters
-        ----------
-            type : str
-                A type of "number" or "color" that describes if the player has to spin
-                a number or a color to collect their reward/pay money
-            low : SpinType
-                A SpinType object that describes the low spinning value
-            medium : SpinType or None
-                A SpinType object that describes the medium spinning value
-                Note that this is not required by every card
-            high : SpinType
-                A SpinType object that describes the high spinning value
-            
-        Keyword Parameters
-        ------------------
-            json : dict
-                A json object that holds the same values as the parameters specified above
+        :param type: A type of "number" or "color" that describes if the player has to spin
+            a number or a color to collect their reward/pay money
+        :param low: A SpinType object that describes the low spinning value
+        :param medium: A SpinType object that describes the medium spinning value
+            Note that this is not required by every card
+        :param high: A SpinType object that describes the high spinning value
+        :param json: A json object that holds the same values as the parameters specified above
         """
 
         def __init__(self, type = None, low = None, high = None, medium = None, *, json = None):
@@ -579,32 +518,20 @@ class ActionCard:
             """A SpinType contains information about the attributes of a low, high, or medium
             spinning action.
 
-            Parameters
-            ----------
-                text : str
-                    The text that describes this specific spin value
-                color : str
-                    The name of the color that describes this SpinType
-                    Note that this parameter can only be None if
-                        the low and high parameters are specified
-                low : int
-                    The low value that this SpinType object holds
-                    Note that this parameter can only be None if
-                        the color parameter is specified
-                high : int
-                    The high value that this SpinType object holds
-                    Note that this parameter can only be None if
-                        the color parameter is specified
-                amount : int
-                    The amount that is received/paid by the target player of this card
-
-            Keyword Parameters
-            ------------------
-                json : dict
-                    A json object that holds the same values as the parameters specified above
-                type : str
-                    A string determining if the SpinType is of type color
-                    if so, the low and high values are brought in from red and black colors
+            :param text: The text that describes this specific spin value
+            :param color: The name of the color that describes this SpinType
+                Note that this parameter can only be None if
+                the low and high parameters are specified
+            :param low: The low value that this SpinType object holds
+                Note that this parameter can only be None if
+                the color parameter is specified
+            :param high: The high value that this SpinType object holds
+                Note that this parameter can only be None if
+                the color parameter is specified
+            :param amount: The amount that is received/paid by the target player of this card
+            :param json: A json object that holds the same values as the parameters specified above
+            :param type: A string determining if the SpinType is of type color
+                if so, the low and high values are brought in from red and black colors
             """
 
             def __init__(self, text = None, color = None, low = None, high = None, amount = None, *, json = None, type = None):
@@ -676,35 +603,22 @@ class BoardSpace:
     the type of space, whether or not the space is a STOP sign space,
     or, if there are two paths to a space, which space comes next depending on the player's choice
 
-    Parameters
-    ----------
-        space : str
-            The identifying value of the current space
-        type : str
-            The type of space
-        path : str
-            The identifying path of the space
-        stop : boolean
-            Whether or not this space is a stop space
-        next : str or None
-            The space that follows this current space
-            Note that this parameter can only be None if 
-                the next_true and next_false parameters are specified
-        next_true : str or None
-            The space that follows this current space when the player decides
-            to go to a specific path
-            Note that this parameter can only be None if
-                the next parameter is specified
-        next_false : str or None
-            The space that follows this current space when the player decides
-            to stay on their current path
-            Note that this parameter can only be None if
-                the next parameter is specified
-
-    Keyword Parameters
-    ------------------
-        json : dict
-            A json object that holds the same values as the parameters specified above
+    :param space: The identifying value of the current space
+    :param type: The type of space
+    :param path: The identifying path of the space
+    :param stop: Whether or not this space is a stop space
+    :param next: The space that follows this current space
+        Note that this parameter can only be None if 
+        the next_true and next_false parameters are specified
+    :param next_true: The space that follows this current space when the player decides
+        to go to a specific path
+        Note that this parameter can only be None if
+        the next parameter is specified
+    :param next_space: The space that follows this current space when the player decides
+        to stay on their current path
+        Note that this parameter can only be None if
+        the next parameter is specified
+    :param json: A json object that holds the same values as the parameters specified above
     """
 
     def __init__(self, space = None, type = None, path = None, stop = None, next = None, next_true = None, next_false = None, spin = None, amount = None, *, json = None):

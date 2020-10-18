@@ -12,7 +12,12 @@ from util.functions import get_embed_color
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class MastermindGame(Game):
-    """
+    """A MastermindGame that holds information about a player's game
+    of mastermind
+
+    :param bot: The bot to use to wait for reactions
+    :param ctx: The context of where the game is being played
+    :param challenger: The player that is playing the game
     """
 
     def __init__(self, bot, ctx, challenger):
@@ -72,10 +77,9 @@ class MastermindGame(Game):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     
     async def play(self):
-        """Allows the players to play a game of Mastermind
+        """Allows the player to play a game of Mastermind
         """
         self.code = await self.opponent.ask_for_code(self)
-        print(self.code)
         won = False
         for i in range(9, -1, -1):
 
@@ -137,8 +141,6 @@ class MastermindGame(Game):
         """Returns a list of guesses made in the game
         into a single string
 
-        Returns
-        -------
-            str
+        :rtype: str
         """
         return "\n".join(self.guesses)

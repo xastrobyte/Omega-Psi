@@ -5,17 +5,10 @@ BASES = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 def base_to_ten(value : str, base):
     """Converts a given value from the specified base into decimal.
 
-    Parameters
-    ----------
-        value: str or int
-            A number in the specified base to convert to decimal
-        base: int
-            The base of the specified value
+    :param value: The value to convert from the specified base
+    :param base: The base to convert the specified value from
 
-    Returns
-    -------
-        int
-            The decimal equivalent of the specified value
+    :return: The decimal equivalent of the specified value
     """
 
     # Validate that the number is a valid number in the specified base
@@ -42,17 +35,10 @@ def base_to_ten(value : str, base):
 def ten_to_base(value : int, base):
     """Converts a given decimal value into the specified base.
 
-    Parameters
-    ----------
-        value : int
-            A decimal number to convert
-        base : int
-            The target base
-    
-    Returns
-    -------
-        str
-            The converted value in the specified base
+    :param value: The number to convert
+    :param base: The base to convert the specified number to
+
+    :return: The converted value in the specified base
     """
 
     # Check if the base is 10, return the value
@@ -77,19 +63,11 @@ def ten_to_base(value : int, base):
 def convert(value, start, end):
     """Converts a number from a start base to its equivalent in the end base.
 
-    Parameters
-    ----------
-    value : int or str
-        The number to convert from a given start base to a given end base
-    start : int
-        The base to convert the number from
-    end : int  
-        The base to convert the number to
+    :param value: The number to convert
+    :param start: The base to convert the number from
+    :param end: The base to convert the number to
 
-    Returns
-    -------
-    str
-        The converted number
+    :return: The converted number
     """
     
     # Convert value from base_to_ten

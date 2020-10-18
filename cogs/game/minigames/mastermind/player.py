@@ -14,10 +14,7 @@ from util.functions import get_embed_color
 class MastermindPlayer(Player):
     """A MastermindPlayer object holds information regarding a player in the Mastermind minigame.
 
-    Keyword Parameters
-    ------------------
-        member : discord.Member
-            The discord.Member defining this MastermindPlayer object
+    :param member: The discord.Member defining this MastermindPlayer object
     """
 
     def __init__(self, member):
@@ -30,10 +27,7 @@ class MastermindPlayer(Player):
     async def ask_for_code(self, game):
         """Has the player ask for the code for a Mastermind game
 
-        Parameters
-        ----------
-            game : MastermindGame
-                The game object this player is connected to
+        :param game: The game object this player is connected to
         """
         
         # The player is an AI (as of right now, the setup player will always be an AI)
@@ -48,10 +42,7 @@ class MastermindPlayer(Player):
     async def ask_for_guess(self, game):
         """Asks the player to make their guess in a Mastermind game
 
-        Parameters
-        ----------
-            game : MastermindGame
-                The game object this player is connected to
+        :param game: The game object this player is connected to
         """
         
         # The player is a real person

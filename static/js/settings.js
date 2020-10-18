@@ -10,6 +10,7 @@ function editUserColor(originalColor) {
         url: `${BASE_URL}/settings/user`,
         type: "POST",
         data: JSON.stringify({
+            "embed": true,
             userColor: color
         }),
         contentType: "application/json; charset=utf-8"
@@ -42,6 +43,24 @@ function editUserColor(originalColor) {
                 confirmButton: 'swal-confirm'
             }
         })
+    })
+}
+
+/**
+ * Manages the notifications for the current user
+ */
+function manageNotifications(target) {
+
+    // Get the notification input for the target
+    var isChecked = document.getElementById(`${target}Checkbox`).checked;
+    $.ajax({
+        url: `${BASE_URL}/settings/user`,
+        type: "POST",
+        data: JSON.stringify({
+            notification: target,
+            enable: isChecked
+        }),
+        contentType: "application/json; charset=utf-8"
     })
 }
 

@@ -15,10 +15,7 @@ from util.functions import add_scroll_reactions, get_embed_color
 async def update_top_gg(bot):
     """Updates the amount of servers Omega Psi is in on top.gg
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object to update on top.gg
+    :param bot: The bot object to update on top.gg
     """
     await loop.run_in_executor(None,
         partial(
@@ -44,12 +41,8 @@ def send_webhook_sync(webhook_url, embed):
     """Synchronously sends a webhook to the specified webhook URL.
     This uses the embed given to send it to the proper channel in discord
 
-    Parameters
-    ----------
-        webhook_url : str
-            The URL to send a webhook through
-        embed : Embed
-            The embed object to send through the webhook
+    :param webhook_url: The URL to send a webhook through
+    :param embed: The embed object to send through the webhook
     """
     post(
         webhook_url, 
@@ -61,12 +54,8 @@ async def send_webhook(webhook_url, embed):
     """Asynchronously sends a webhook to the specified webhook URL.
     This uses the embed given to send it to the proper channel in discord
 
-    Parameters
-    ----------
-        webhook_url : str
-            The URL to send a webhook through
-        embed : Embed
-            The embed object to send through the webhook
+    :param webhook_url: The URL to send a webhook through
+    :param embed: The embed object to send through the webhook
     """
     await loop.run_in_executor(None, send_webhook_sync, webhook_url, embed)
 
@@ -74,18 +63,11 @@ async def process_page_reactions(ctx, bot, base_embed, title, pages, *, key = No
     """Processes the reactions given to an embed to scroll through pages of the embed
     If no base_embed is given, it is assumed that the pages parameter holds individual Embeds
 
-    Parameters
-    ----------
-        ctx : context
-            The context where the message is sent
-        bot : bot
-            The discord bot object that controls the waiting for reactions
-        base_embed : Embed
-            The base embed that the scrolling message will always show
-        title: str
-            The title of each page of the scrolling message
-        pages : list
-            The list of pages that will be processed for the embed
+    :param ctx: The context where the message is sent
+    :param bot: The discord bot object that controls the waiting for reactions
+    :param base_embed: The base embed that the scrolling message will always show
+    :param title: The title of each page of the scrolling message
+    :param pages: The list of pages that will be processed for the embed
     """
 
     # If there is no embed, the pages are individual embeds, only deal with those
@@ -186,34 +168,21 @@ async def process_page_reactions(ctx, bot, base_embed, title, pages, *, key = No
 async def process_scrolling(ctx, bot, *, base_embed = None, title = None, pages = None, approve_function = None, deny_function = None, refresh_function = None, current_page = 0, min_page = 0, max_page = 1, send_page = False):
     """Processes scrolling through an embed dynamically
 
-    Parameters
-    ----------
-        ctx : Context
-            The context that the embed message is sent
-        bot : AutoShardedBot
-            The bot object that is used to wait for reactions
+    :param ctx: The context that the embed message is sent
+    :param bot: The bot object that is used to wait for reactions
     
-    Keyword Parameters
-    ------------------
-        base_embed : Embed
-            The base embed for the scrolling embed
-        title : str
-            A custom title to use for pagination when using fields in an embed
-        pages : list
-            A list of pages to process from
-            If no base embed is specified, the pages are assumed to be a list of Embed objects
-            However, if the base embed is specified, the pages are strings to be inserted into the value
-                of an embed field
-        approve_function : coroutine
-            The coroutine to call whenever the approve emoji is reacted with
-        deny_function : coroutine
-            The coroutine to call whenever the deny emojiy is reacted with
-        refresh_function : coroutine
-            The coroutine to call whenever a new page is being processed
-            This function should have two parameters: one for the ctx and
-                one for the current value. It should return an embed to be used in a message
-        current_page : int
-            The page to start the embed at
+    :param base_embed: The base embed for the scrolling embed
+    :param title: A custom title to use for pagination when using fields in an embed
+    :param pages: A list of pages to process from
+        If no base embed is specified, the pages are assumed to be a list of Embed objects
+        However, if the base embed is specified, the pages are strings to be inserted into the value
+            of an embed field
+    :param approve_function: The coroutine to call whenever the approve emoji is reacted with
+    :param deny_function: The coroutine to call whenever the deny emojiy is reacted with
+    :param refresh_function: The coroutine to call whenever a new page is being processed
+        This function should have two parameters: one for the ctx and
+        one for the current value. It should return an embed to be used in a message
+    :param current_page: The page to start the embed at
     """
     
     # If there is no embed, the pages are individual embeds, only deal with those

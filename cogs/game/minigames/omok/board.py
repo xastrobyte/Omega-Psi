@@ -16,9 +16,7 @@ class OmokBoard(Board):
     def __str__(self):
         """Returns a stringified version of the board for easy printing in Discord
 
-        Returns
-        -------
-            string
+        :rtype: str
         """
 
         # Emoji numbers for the top row
@@ -110,17 +108,7 @@ class OmokBoard(Board):
     def check_for_winner(self):
         """Checks for a winner in the board based off the last move of the game
 
-        Parameters
-        ----------
-            last_move : tuple
-                The last move a player made to make it simpler to find a winner
-
-        Returns
-        -------
-            int
-                TicTacToeBoard.WIN if the player wins
-                TicTacToeBoard.LOSS if the player loses
-                0 if there is no winner yet
+        :rtype: int
         """
 
         # Get the row and column of the last move

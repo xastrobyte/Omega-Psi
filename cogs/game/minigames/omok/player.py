@@ -11,18 +11,12 @@ from cogs.game.minigames.omok.variables import OMOK_REACTIONS, QUIT
 class OmokPlayer(Player):
     """An OmokPlayer object holds information regarding a player in the Omok minigame.
 
-    Parameters
-    ----------
-        member : Member or int
-            The Member defining this OmokPlayer object or
-            an int clarifying this OmokPlayer object as an AI player
+    :param member: The Member defining this OmokPlayer object or
+        an int clarifying this OmokPlayer object as an AI player
 
-    Keyword Parameters
-    ------------------
-        is_smart : boolean
-            A boolean value determining if this OmokPlayer is playing smart or random
-            Note: this only applies to AI players and is only set to True or False if
-                    this player is an AI player
+    :param is_smart: A boolean value determining if this OmokPlayer is playing smart or random
+        Note: this only applies to AI players and is only set to True or False if
+        this player is an AI player
     """
     
     def __init__(self, member, *, is_smart = None):
@@ -41,10 +35,7 @@ class OmokPlayer(Player):
         react to make their move or, if this player is an AI, choosing the best place
         to go
 
-        Parameters
-        ----------
-            game : OmokGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if the player is an AI
@@ -123,10 +114,7 @@ class OmokPlayer(Player):
         """Determines the best move for the AI to go to 
         depending on the Player's last move in the specified board
 
-        Parameters
-        ----------
-            board : OmokBoard
-                The board object to process
+        :param game: The game to use to determine the best move
         """
 
         move = None
@@ -168,12 +156,9 @@ class OmokPlayer(Player):
         """Finds effective moves the AI could make by trying to block the player
         on either sides of a possible row given the length of the row
 
-        Parameters
-        ----------
-            board : OmokBoard
-                The board object to process
-            count : int
-                The distance of the row to take into consideration
+        :param game: The game to use to find the most effective move
+        :param count: The distance of the row to take into consideration
+        :param for_player: Whether or not to find effective moves for a player
         """
 
         moves = []
@@ -273,140 +258,3 @@ class OmokPlayer(Player):
                     moves.append((move[0] ** (right_total * count), *move[1:]))
 
         return moves
-
-    """
-    # Check horizontally
-    left = right = -1
-    left_count = right_count = total = 0
-    add_left = add_right = True
-    for offset in range(1, 5):
-
-        # Check if the left offset reaches a space that's different from the last move
-        #   or if the offset reaches the bound of the board
-        if (last_column - offset <= 0 or board.board[last_row][last_column - offset] != last_move) and add_left:
-            left = last_column - offset
-            right = left + count + 1
-            add_left = False
-
-        # Check if the right offset reaches a space that's different from the last move
-        #   of if the offset reaches the bound of the board
-        if (last_column + offset >= board.width - 1 or board.board[last_row][last_column + offset] != last_move) and add_right:
-            right = last_column + offset
-            left = right - count
-            add_right = False
-        
-        # There are still possibilities open to either the left or right
-        left_count += 1 if add_left else 0
-        right_count += 1 if add_right else 0
-        total += 1 if add_left else 0 + 1 if add_right else 0
-    
-    # Check if the horizontal row has pieces >= the specified count
-    #   only add the left or right side if they are in bounds and if
-    #   the moves are not already taken
-    print(left_count, right_count, count)
-    if left_count + right_count + 1 >= count:
-        if left >= 0 and board.board[last_row][left] == None:
-            moves.append(((left_count + right_count + 1) ** count, last_row, left))
-        if right <= board.width - 1 and board.board[last_row][right] == None:
-            moves.append(((left_count + right_count + 1) ** count, last_row, right))
-    
-    # Check vertically
-    up = down = 0
-    up_count = down_count = total = 0
-    add_up = add_down = True
-    for offset in range(1, 5):
-
-        # Check if the up offset reaches a space that's different from the last move
-        #   or if the offset reaches the bound of the board
-        if last_row - offset <= 0 and add_up:
-            up = last_row - offset
-            down = up + count + 1
-            add_up = False
-
-        # Check if the right offset reaches a space that's different from the last move
-        #   of if the offset reaches the bound of the board
-        if (last_row + offset >= board.height - 1 or board.board[last_row + offset][last_column] != last_move) and add_down:
-            down = last_row + offset
-            up = down - count
-            add_down = False
-        
-        # There are still possibilities open to either up or down
-        up_count += 1 if add_up else 0
-        down_count += 1 if add_down else 0
-        total += 1 if add_up else 0 + 1 if add_down else 0
-
-    # Check if the vertical column has pieces >= the specified count
-    #   only add the up or down side if they are in bounds and if
-    #   the moves are not already taken
-    if up_count + down_count + 1 >= count:
-        if up >= 0 and board.board[up][last_column] == None:
-            moves.append(((up_count + down_count + 1) ** count, up, last_column))
-        if down <= board.height - 1 and board.board[down][last_column] == None:
-            moves.append(((up_count + down_count + 1) ** count, down, last_column))
-
-    # Check left_upper to right_lower diagonal
-    left_upper = right_lower = (0, 0)
-    left_upper_count = right_lower_count = 0
-    add_left_upper = add_right_lower = True
-    for offset in range(1, 5):
-
-        # Check if the left upper offset reaches a space that's different from the last move
-        #   or if the offset reaches the bound of the board
-        if (last_column - offset <= 0 or last_row - offset <= 0 or board.board[last_row - offset][last_column - offset] != last_move) and add_left_upper:
-            left_upper = (last_row - offset, last_column - offset)
-            right_lower = (left_upper[0] + count + 1, left_upper[1] + count + 1)
-            add_left_upper = False
-
-        # Check if the right lower offset reaches a space that's different from the last move
-        #   of if the offset reaches the bound of the board
-        if (last_column + offset >= board.width - 1 or last_row + offset >= board.height - 1 or board.board[last_row + offset][last_column + offset] != last_move) and add_right_lower:
-            right_lower = (last_row + offset, last_column + offset)
-            left_upper = (right_lower[0] - count + 1, right_lower[1] - count + 1)
-            add_right_lower = False
-        
-        # There are still possibilities open to either left upper or right lower
-        left_upper_count += 1 if add_left_upper else 0
-        right_lower_count += 1 if add_right_lower else 0
-
-    # Check if the descending diagonal has pieces >= the specified count
-    #   only add the left upper or right lower side if they are in bounds and if
-    #   the moves are not already taken
-    if left_upper_count + right_lower_count + 1 >= count:
-        if left_upper[0] >= 0 and left_upper[1] >= 0 and board.board[left_upper[0]][left_upper[1]] == None:
-            moves.append(((left_upper_count + right_lower_count + 1) ** count, left_upper[0], left_upper[1]))
-        if right_lower[0] <= board.height - 1 and right_lower[1] <= board.width - 1 and board.board[right_lower[0]][right_lower[1]] == None:
-            moves.append(((left_upper_count + right_lower_count + 1) ** count, right_lower[0], right_lower[1]))
-
-    # Check left_lower to right_upper diagonal
-    left_lower = right_upper = (0, 0)
-    left_lower_count = right_upper_count = 0
-    add_left_lower = add_right_upper = True
-    for offset in range(1, 5):
-
-        # Check if the left lower offset reaches a space that's different from the last move
-        #   or if the offset reaches the bound of the board
-        if (last_column - offset <= 0 or last_row + offset >= board.height - 1 or board.board[last_row + offset][last_column - offset] != last_move) and add_left_lower:
-            left_lower = (last_row + offset, last_column - offset)
-            right_upper = (left_lower[0] - count - 1, left_lower[1] + count + 1)
-            add_left_lower = False
-        
-        # Check if the right upper offset reaches a space that's different from the last move
-        #   or if the offset reaches the bound of the board
-        if (last_column + offset >= board.width - 1 or last_row - offset <= 0 or board.board[last_row - offset][last_column + offset] != last_move) and add_right_upper:
-            right_upper = (last_row - offset, last_column + offset)
-            left_lower = (right_upper[0] + count - 1, right_upper[1] - count + 1)
-            add_right_upper = False
-        
-        # There are still possibilities open to either left lower or right upper
-        left_lower_count += 1 if add_left_lower else 0
-        right_upper_count += 1 if add_right_upper else 0
-
-    # Check if the ascending diagonal has pieces >= the specified count
-    #   only add the left lower or right upper side if they are in bounds and if
-    #   the moves are not already taken
-    if left_lower_count + right_upper_count + 1 >= count:
-        if left_lower[0] <= board.height - 1 and left_lower[1] >= 0 and board.board[left_lower[0]][left_lower[1]] == None:
-            moves.append(((left_lower_count + right_upper_count + 1) ** count, left_lower[0], left_lower[1]))
-        if right_upper[0] >= 0 and right_upper[1] <= board.width - 1 and board.board[right_upper[0]][right_upper[1]] == None:
-            moves.append(((left_lower_count + right_upper_count + 1) ** count, right_upper[0], right_upper[1]))
-    """

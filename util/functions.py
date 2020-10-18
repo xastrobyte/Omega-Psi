@@ -6,12 +6,8 @@ from util.database.database import database
 async def add_scroll_reactions(message, fields):
     """Adds the scrolling reactions to a message based off how many fields there are.
 
-    Parameters
-    ----------
-        message : Message
-            The discord message that the reactions are being added to
-        fields : list
-            A list of items that are being scrolled through
+    :param message: The discord message that the reactions are being added to
+    :param fields: A list of items that are being scrolled through
     """
 
     # Only add scrolling reactions if there are more than 1 page
@@ -35,19 +31,10 @@ def add_fields(embed, field_name, fields, *, empty_message = None):
     """Adds fields to an embed with field numbers that correspond to how many different fields
     there are
 
-    Parameters
-    ----------
-        embed : Embed
-            The discord embed to add the fields to
-        field_name : str
-            The name that each field should have
-        fields : list
-            The fields to process through
-    
-    Keyword Parameters
-    ------------------
-        empty_message : str
-            A string that is given in the embed whenever there are no fields
+    :param embed: The discord embed to add the fields to
+    :param field_name: The name that each field should have
+    :param fields: The fields to process through
+    :param empty_message: A string that is given in the embed whenever there are no fields
     """
 
     # Check if there are no fields, display the empty message
@@ -77,23 +64,12 @@ def add_fields(embed, field_name, fields, *, empty_message = None):
 def create_fields(data, *, by_word = False, threshold = FIELD_THRESHOLD, key = None, include_count = False, new_line = True):
     """Creates fields based on a given list of inputs
 
-    Parameters
-    ----------
-        data : iterable
-            An iterable to add to field text
-    
-    Keyword Parameters
-    ------------------
-        by_word : boolean
-            Whether or not to split up the data by word (if str is given)
-        threshold : int
-            The maximum size of the data to add to a field
-        key : function
-            A custom function to format the data after it's been loaded
-        include_count : boolean
-            Whether or not to include the field count in the title of each field
-        new_line : boolean
-            Whether or not to add a new line to each value in the data
+    :param data: An iterable to add to field text
+    :param by_word: Whether or not to split up the data by word (if str is given)
+    :param threshold: The maximum size of the data to add to a field
+    :param key: A custom function to format the data after it's been loaded
+    :param include_count: Whether or not to include the field count in the title of each field
+    :param new_line: Whether or not to add a new line to each value in the data
     """
 
     # Check if the data is not a list; Make a list out of it
@@ -134,15 +110,9 @@ def get_embed_color_sync(user):
     """Retrieves the embed color for the specified user. If they do not have one, the primary color
     is returned
 
-    Parameters
-    ----------
-        user : User
-            The discord user to get the embed color of
+    :param user: The discord user to get the embed color of
     
-    Returns
-    -------
-        int
-            The embed color of the user
+    :rtype: int
     """
     colour = database.users.get_embed_color_sync(user)
     if colour is None:
@@ -153,14 +123,8 @@ async def get_embed_color(user):
     """Retrieves the embed color for the specified user. If they do not have one, the primary color
     is returned
 
-    Parameters
-    ----------
-        user : User
-            The discord user to get the embed color of
+    :param user: The discord user to get the embed color of
     
-    Returns
-    -------
-        int
-            The embed color of the user
+    :rtype: int
     """
     return await loop.run_in_executor(None, get_embed_color_sync, user)

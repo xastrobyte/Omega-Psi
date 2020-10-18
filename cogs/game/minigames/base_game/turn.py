@@ -11,12 +11,8 @@ from util.functions import get_embed_color
 class Turn:
     """A Turn object that holds the information about any turn's in a game.
 
-    Parameters
-    ----------
-        game : GameOfLifeGame
-            The game object that this Turn is connected to
-        player : GameOfLifePlayer or None
-            The player that this Turn object is directly connected to
+    :param game: The game object that this Turn is connected to
+    :param player: The player that this Turn object is directly connected to
             Note that if None is given, the player will automatically be grabbed from the
             game's current player
     """
@@ -76,10 +72,7 @@ class Turn:
         and updates the message for it.
         If no message is found, a new message is created
 
-        Parameters
-        ----------
-            action : str
-                The action of this turn
+        :param action: The action of this turn
         """
         self.actions.append(action)
 

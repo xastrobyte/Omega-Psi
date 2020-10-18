@@ -18,21 +18,11 @@ class IFTTT:
     def push_sync(event_name, title, subject, text, *, key = None):
         """Synchronously makes an IFTTT call to the webhook URL given the event and webhook key
 
-        Parameters
-        ----------
-            event_name : str
-                An event name to use to send a webhook to
-            title : str
-                The title of the webhook
-            subject : str
-                The subject of the webhook
-            text : str
-                The text of the webhook
-        
-        Keyword Parameters
-        ------------------
-            key : str
-                A specific IFTTT webhook key to use instead of the default one
+        :param event_name: An event name to use to send a webhook to
+        :param title: The title of the webhook
+        :param subject: The subject of the webhook
+        :param text: The text of the webhook
+        :param key: A specific IFTTT webhook key to use instead of the default one
         """
         post(
             IFTTT.IFTTT_WEBHOOK_URL.format(
@@ -50,21 +40,11 @@ class IFTTT:
     async def push(event_name, title, subject, text, *, key = None):
         """Asynchronously makes an IFTTT call to the webhook URL given the event and webhook key
 
-        Parameters
-        ----------
-            event_name : str
-                An event name to use to send a webhook to
-            title : str
-                The title of the webhook
-            subject : str
-                The subject of the webhook
-            text : str
-                The text of the webhook
-        
-        Keyword Parameters
-        ------------------
-            key : str
-                A specific IFTTT webhook key to use instead of the default one
+        :param event_name: An event name to use to send a webhook to
+        :param title: The title of the webhook
+        :param subject: The subject of the webhook
+        :param text: The text of the webhook
+        :param key: A specific IFTTT webhook key to use instead of the default one
         """
         await loop.run_in_executor(None, 
             partial(

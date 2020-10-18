@@ -75,32 +75,22 @@ class Help(HelpCommand):
     async def send_error_message(self, error):
         """Sends an error message to the error channel for Omega Psi
 
-        Parameters
-        ----------
-            error : str
-                The error message to display
+        :param error: The error message to display
         """
         await self.context.send(embed = get_error_message(error))
 
     def command_not_found(self, string):
         """Returns a custom string when a given command is not found in the bot
 
-        Parameters
-        ----------
-            string : str
-                The name of the command that was not found
+        :param string: The name of the command that was not found
         """
         return "No command called `{}` found".format(string)
     
     def subcommand_not_found(self, command, string):
         """Returns a custom string when a given subcommand is not found under the given command
 
-        Parameters
-        ----------
-            command : Command
-                The command that did not have the specified subcommand
-            string : str
-                The name of the subcommand that was not found
+        :param command: The command that did not have the specified subcommand
+        :param string: The name of the subcommand that was not found
         """
         return "`{}` has no subcommand `{}`".format(command.name, string)
 
@@ -111,10 +101,7 @@ class Help(HelpCommand):
     async def send_bot_help(self, mapping):
         """Sends a list of cogs in the bot, sorted alphabetically
 
-        Parameters
-        ----------
-            mapping : Mapping
-                A mapping of Cogs and a list of commands in each cog
+        :param mapping: A mapping of Cogs and a list of commands in each cog
         """
 
         # Get the most recent version of Omega Psi
@@ -151,10 +138,7 @@ class Help(HelpCommand):
     async def send_cog_help(self, cog):
         """Sends a list of commands in the specified cog, sorted alphabetically
 
-        Parameters
-        ----------
-            cog : Cog
-                The cog object to get help for
+        :param cog: The cog object to get help for
         """
 
         # Make sure the user can access this cog
@@ -198,10 +182,7 @@ class Help(HelpCommand):
         """Sends the command, and any subcommands, laid out by the specified group
         sorted alphabetically
 
-        Parameters
-        ----------
-            group : Group
-                The group object to get help for
+        :param group: The group object to get help for
         """
 
         # Run a check on the command to make sure the author can run it
@@ -243,10 +224,7 @@ class Help(HelpCommand):
     async def send_command_help(self, command):
         """Sends help for the specified command
 
-        Parameters
-        ----------
-            command : Command
-                The command object to get help for
+        :param command: The command object to get help for
         """
 
         # Run a check on the command to make sure the author can run it

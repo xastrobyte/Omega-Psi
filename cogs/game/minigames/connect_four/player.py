@@ -8,15 +8,11 @@ class ConnectFourPlayer(Player):
     """A Player object that holds the important information for other possible game instances
     used in Omega Psi. When given a `str`, the player is set as an AI player.
 
-    Keyword Parameters
-    ------------------
-        member : discord.Member or str
-            The discord.Member defining this Player object or
-            a str clarifying this Player object as an AI player
-        is_smart : boolean
-            A boolean value determining if this Player is playing smart or random
-            Note: this only applies to AI players and is only set to True or False if
-                    this player is an AI player
+    :param member: The discord.Member defining this Player object or
+        a str clarifying this Player object as an AI player
+    :param is_smart: A boolean value determining if this Player is playing smart or random
+        Note: this only applies to AI players and is only set to True or False if
+        this player is an AI player
     """
 
     COLUMN_FULL = "COLUMN_FULL"
@@ -38,10 +34,7 @@ class ConnectFourPlayer(Player):
         react to make their move or, if this player is an AI, choosing the best place
         to go
 
-        Parameters
-        ----------
-            game : ConnectFourGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if the player is an AI
@@ -95,15 +88,9 @@ class ConnectFourPlayer(Player):
         """Determines the best move for an AI to go to given the current board's state
         If no best move is found, a random move is returned.
 
-        Parameters
-        ----------
-            board : ConnectFourBoard
-                The board to determine a best move from
+        :param board: The board to determine a best move from
         
-        Returns
-        -------
-            int
-                The move that the AI will take
+        :rtype: int
         """
 
         # Check if the AI is smart, run a smart version of the AI

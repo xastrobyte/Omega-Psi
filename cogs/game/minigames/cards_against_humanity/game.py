@@ -23,14 +23,9 @@ class CardsAgainstHumanityGame(Game):
     When this object is created, all sets available at https://cards-against-humanity-api.herokuapp.com/sets
     are loaded including each white and black card.
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
-        players : CardsAgainstHumanityPlayer[]
-            A list of players that are playing this game
+    :param bot: The bot object used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param players: A list of players that are playing this game
     """
 
     def __init__(self, bot, ctx, players):
@@ -188,10 +183,7 @@ class CardsAgainstHumanityGame(Game):
     async def show_results(self, winning_submission):
         """Shows the results of the current round of the game
 
-        Parameters
-        ----------
-            winning_submission : Submission
-                The card submission that won the current round of the game
+        :param winning_submission: The card submission that won the current round of the game
         """
         await self.add_action(
             "{} won this round!\n{}".format(
@@ -215,10 +207,7 @@ class CardsAgainstHumanityGame(Game):
     async def show_winner(self, winner):
         """Shows the winner of the game to everyone and ends the game
 
-        Parameters
-        ----------
-            winner : CardsAgainstHumanityPlayer
-                The winner of this game
+        :param winner: The winner of this game
         """
         await self.ctx.send(
             embed = Embed(
@@ -235,22 +224,21 @@ class CardsAgainstHumanityGame(Game):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def next_judge(self):
-        """Moves to the next judge and increases the round count
-        """
+        """Moves to the next judge and increases the round count"""
         super().next_player()
         self.round += 1
         self.submissions = []
 
     def new_turn(self, player = None):
-        """Creates a new Turn object for this Game."""
+        """Creates a new Turn object for this Game.
+        
+        :param player: The player to initiate a turn with
+        """
         self.current_turn = CardsAgainstHumanityTurn(self, player)
     
     async def add_action(self, action):
         """Adds a new action to the current turn object in the game
 
-        Parameters
-        ----------
-            action : str
-                The action that happened in this turn
+        :param action: The action that happened in this turn
         """
         await self.current_turn.add_action(action)

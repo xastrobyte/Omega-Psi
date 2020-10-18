@@ -10,26 +10,13 @@ class Game:
     used in Omega Psi. When given a list of players, the game is set as a 2+ player game.
     When not given a list of players, the challenger and opponent parameters must be given.
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
+    :param bot: The bot object to be used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param players: The list of players in the game
+    :param challenger: The challenging player
+    :param opponent: The opposition player
 
-    Keyword Parameters
-    ----------
-        players : Player[]
-            The list of players in the game
-        challenger : Player
-            The challenging player
-        opponent : Player
-            The player opposing the challenger
-
-    Raises
-    ------
-        TypeError
-            When either the challenger or opponent is not given in a two-player game
+    :raises TypeError: When either the challenger of opponent is not given in a two-player game
     """
 
     def __init__(self, bot, ctx, *, players = [], challenger = None, opponent = None):
@@ -150,7 +137,7 @@ class Game:
 
     @abstractmethod
     async def play(self):
-        """Let's the players in this game play this Game"""
+        """Lets the players in this game play this Game"""
         pass
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -160,10 +147,7 @@ class Game:
     def get_current_player(self):
         """Retrieves the current player in the game.
 
-        Returns
-        -------
-            Player
-                The current player in the game
+        :rtype: Player
         """
 
         # Check if the game is a two-player game
@@ -182,10 +166,7 @@ class Game:
     def get_next_player(self):
         """Retrieves the player that comes next in the game.
 
-        Returns
-        -------
-        Player
-            The next player in the game
+        :rtype: Player
         """
 
         # Check if the game is a two-player game
@@ -215,10 +196,7 @@ class Game:
         """Increases the current player value to move onto the next player.
         Wraps around if necessary.
 
-        Keyword Parameters
-        ------------------
-            skip_next : boolean
-                Whether or not to skip the next player. (Defaults to False)
+        :param skip_next: Whether or not to skip the next player (Default: False)
         """
 
         # Increase the current player number to the next number

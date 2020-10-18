@@ -56,6 +56,7 @@ SYMBOLS = {
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
+
 class Misc(Cog, name = "misc"):
     """This category has commands that really don't fit anywhere."""
     def __init__(self, bot):
@@ -69,6 +70,10 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def advice(self, ctx):
+        """Allows a user to get some random advice
+
+        :param ctx: The context of where the message was sent
+        """
         
         # Get the advice
         advice = await loop.run_in_executor(None,
@@ -93,6 +98,10 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def chuck_norris(self, ctx):
+        """Allows a user to get a random Chuck Norris joke
+
+        :param ctx: The context of where the message was sent
+        """
         
         # Get the joke; and URL
         chuckNorrisJson = await loop.run_in_executor(None,
@@ -120,6 +129,11 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def color(self, ctx, hex_code = None):
+        """Allows a user to get info about a color
+
+        :param ctx: The context of where the message was sent
+        :param hex_code: The HEX code of the color
+        """
 
         # Check if hex_code is None; Throw error message
         if hex_code == None:
@@ -158,6 +172,11 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def emojify(self, ctx, *, text = None):
+        """Allows a user to emojify a piece of text
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to emojify
+        """
         
         # Check if text is None; Throw error message
         if text == None:
@@ -191,6 +210,11 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def set_embed_color(self, ctx, hex_code = None):
+        """Allows a user to set their embed color when using the bot
+
+        :param ctx: The context of where the message was sent
+        :param hex_code: The color to set it to
+        """
         
         # Check if resetting
         if hex_code == None:
@@ -235,6 +259,10 @@ class Misc(Cog, name = "misc"):
         cog_name = "image"
     )
     async def avatar(self, ctx):
+        """Allows a user to get a random cute avatar
+
+        :param ctx: The context of where the message was sent
+        """
         
         # Get list of face features
         face_values = await loop.run_in_executor(None,
@@ -291,6 +319,11 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def imgur(self, ctx, *params):
+        """Allows a user to upload an image to imgur
+
+        :param ctx: The context of where the message was sent
+        :param params: A list of images to upload
+        """
 
         # Get the album for the user and the attachments or parameters given
         album = await database.users.get_imgur(ctx.author)
@@ -389,6 +422,11 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def movie(self, ctx, *, movie = None):
+        """Allows a user to search up movie information from IMDb
+
+        :param ctx: The context of where the message was sent
+        :param movie: The movie to search for
+        """
 
         # There was no movie specified
         if not movie:
@@ -420,6 +458,11 @@ class Misc(Cog, name = "misc"):
         cog_name = "misc"
     )
     async def tv_show(self, ctx, *, tv_show = None):
+        """Allows a user to search up tv show information from IMDb
+
+        :param ctx: The context of where the message was sent
+        :param tv_show: The TV show to search for
+        """
 
         # There was no tv show specified
         if not tv_show:
@@ -443,4 +486,8 @@ class Misc(Cog, name = "misc"):
                 await ctx.send(embed = await get_tv_show_embed(ctx, IMDB, tv_shows[0], IMDB_LINK))
 
 def setup(bot):
+    """Add's this cog to the bot
+
+    :param bot: The bot to add the cog to
+    """
     bot.add_cog(Misc(bot))

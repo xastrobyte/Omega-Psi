@@ -16,15 +16,8 @@ from util.functions import get_embed_color
 class UnoPlayer(Player):
     """An UnoPlayer object holds information about a player in an Uno game
 
-    Keyword Parameters
-    ------------------
-        member : discord.Member or str
-            The discord.Member defining this Player object or
-            a str clarifying this Player object as an AI player
-        is_smart : boolean
-            A boolean value determining if this Player is playing smart or random
-            Note: this only applies to AI players and is only set to True or False if
-                    this player is an AI player
+    :param member: The discord.Member defining this Player object or
+        a str clarifying this Player object as an AI player
     """
 
     def __init__(self, member):
@@ -70,15 +63,9 @@ class UnoPlayer(Player):
     async def wait_for_card(self, game):
         """Waits for this player to choose a card to place down
 
-        Parameters
-        ----------
-            game : UnoGame
-                The game object this player is connected to
+        :param game: The game object this player is connected to
 
-        Returns
-        -------
-            card : str
-                The card this player chose
+        :rtype: str
         """
 
         # Get all the valid cards that can be current chosen
@@ -126,6 +113,8 @@ class UnoPlayer(Player):
         """Sends a message to this player displaying who's turn it is.
         The current player of the game does not receive this message though because they
         are sent a separate message
+
+        :param game: The game that this player is connected to
         """
 
         # Only send the message if this player is not an AI and if 
@@ -144,17 +133,9 @@ class UnoPlayer(Player):
         current player is this player. The current player of the game already chose
         their card so they know what they chose
 
-        Parameters
-        ----------
-            game : UnoGame
-                The game this player is connected to
-            card : str
-                The card the current player chose
-        
-        Keyword Parameters
-        ------------------
-            extras : str[]
-                A list of extra information to add to the message
+        :param game: The game this player is connected to
+        :param card: The card the current player chose
+        :param extras: A list of extra information to add to the message
         """
 
         # Only send the message if this player is not an AI and if 
@@ -178,10 +159,7 @@ class UnoPlayer(Player):
     async def show_winner(self, game):
         """Displays the winner of the specified game to this player
 
-        Parameters
-        ----------
-            game : UnoGame
-                The game that this player is connected to
+        :param game: The game that this player is connected to
         """
 
         # Only display the winner this player is not an ai
@@ -199,15 +177,9 @@ class UnoPlayer(Player):
     async def ask_for_new_color(self, game):
         """Asks the player to choose a new color for when they choose a wild card
 
-        Parameters
-        ----------
-            game : UnoGame
-                The game object this player is connected to
+        :param game: The game object this player is connected to
             
-        Returns
-        -------
-            card : str
-                The new colored card the player chose
+        :rtype: str
         """
 
         # Check if the player is an ai

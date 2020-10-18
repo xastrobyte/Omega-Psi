@@ -15,10 +15,7 @@ class CardsAgainstHumanityPlayer(Player):
     """A CardsAgainstHumanityPlayer object holds information regarding 
     a player in the Cards Against Humanity minigame.
 
-    Keyword Parameters
-    ------------------
-        member : Member
-            The discord member that will be connected to this Player
+    :param member: The discord member that will be connected to this Player
     """
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -29,10 +26,7 @@ class CardsAgainstHumanityPlayer(Player):
         """A Submission object holds information about the submission of a player during
         a round of Cards Against Humanity
 
-        Parameters
-        ----------
-            player : CardsAgainstHumanityPlayer
-                The player that this submission is connected to
+        :param player: The player that this submission is connected to
         """
 
         def __init__(self, player):
@@ -127,10 +121,7 @@ class CardsAgainstHumanityPlayer(Player):
         If this player is the current player in the game (the judge), 
         they will not be asked for their submission
 
-        Parameters
-        ----------
-            game : CardsAgainstHumanityGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if this player is the current judge in the game
@@ -226,10 +217,7 @@ class CardsAgainstHumanityPlayer(Player):
     async def show_submissions(self, game):
         """Shows the current submissions for this game once all the cards are in
 
-        Parameters
-        ----------
-            game : CardsAgainstHumanityGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # Check if this player is the judge
@@ -306,12 +294,8 @@ class CardsAgainstHumanityPlayer(Player):
         """Shows the results for the current round of the game
         Each player's name will be displayed along with their card
 
-        Parameters
-        ----------
-            game : CardsAgainstHumanityGame
-                The game object that this player is connected to
-            winning_submission : Submission
-                The card submission that won the current round of the game
+        :param game: The game object that this player is connected to
+        :param winning_submission: The card submission that won the current round of the game
         """
         
         # Update the player's message with each player's submission matched with their name
@@ -352,12 +336,8 @@ class CardsAgainstHumanityPlayer(Player):
     async def show_winner(self, game, winner):
         """Shows the winner of the game
 
-        Parameters
-        ----------
-            game : CardsAgainstHumanityGame
-                The game object that this player is connected to
-            winner : CardsAgainstHumanityPlayer
-                The winner of the Cards Against Humanity game
+        :param game: The game object that this player is connected to
+        :param winner: The winner of the Cards Against Humanity game
         """
         await self.member.send(
             embed = Embed(
@@ -384,10 +364,7 @@ class CardsAgainstHumanityPlayer(Player):
         """Gives the player as many cards as needed specified by the amount of cards
         the player will have to pick
 
-        Parameters
-        ----------
-            game : CardsAgainstHumanityGame
-                The game object that this player is connected to
+        :param game: The game object that this player is connected to
         """
 
         # If the player does not have 7 cards, give them as many cards as it takes

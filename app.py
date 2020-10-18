@@ -24,7 +24,7 @@ from util.string import dict_to_datetime, datetime_to_string
 app = Flask("Omega Psi (BETA)")
 app.config.update(
     SESSION_TYPE = "mongodb",
-    SESSION_MONGODB = database.connection,
+    SESSION_MONGODB = database.client,
     SESSION_MONGODB_DB = "omegapsi",
     SESSION_COOKIE_SECURE = True,
     SESSION_COOKIE_SAMESITE = 'Lax',
@@ -34,12 +34,17 @@ app.config.update(
 )
 Session(app)
 
-DISCORD_OAUTH_LINK = "https://discordapp.com/api/oauth2/authorize?client_id=535587516816949248&redirect_uri=https%3A%2F%2Fomegapsi.fellowhashbrown.com%2Flogin&response_type=code&scope=identify"
-DISCORD_TOKEN_LINK = "https://discordapp.com/api/oauth2/token"
+DISCORD_OAUTH_LINK = "https://discord.com/api/oauth2/authorize?client_id=535587516816949248&redirect_uri=https%3A%2F%2Fomegapsi.fellowhashbrown.com%2Flogin&response_type=code&scope=identify"
+DISCORD_TOKEN_LINK = "https://discord.com/api/oauth2/token"
 
 OMEGA_PSI = None
 
 ALLOW_ORIGIN = "https://omegapsi.fellowhashbrown.com"
+
+notification_descriptions = {
+    "update": "receive notifications when an update is made to Omega Psi",
+    "new_feature": "receive notifications when a new feature is added to the current pending update in Omega Psi"
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -52,9 +57,9 @@ def make_session_permanent():
     #   Have the user login
     if request.endpoint in ["developer", "info", "settings"]:
         session["target_url"] = request.endpoint
-        cookie_user_id = request.cookies.get("user_id")
         session_user_id = session.get("user_id")
-        session["user_id" ] = cookie_user_id if cookie_user_id else session_user_id
+        cookie_user_id = request.cookies.get("user_id")
+        session["user_id"] = cookie_user_id if cookie_user_id else session_user_id
         user_data = database.data.get_session_user(session["user_id"])
 
         # Check if the user is valid
@@ -75,10 +80,12 @@ def make_session_permanent():
 @app.route("/")
 @app.route("/commands")
 def commands():
+    """Renders the commands webpage"""
     return render_template("commands.html"), 200
 
 @app.route("/info")
 def info():
+    """Renders the info webpage"""
 
     # Get the tasks data
     tasks = database.bot.get_tasks_sync()
@@ -92,7 +99,7 @@ def info():
     else:
         for feature in pending_update["features"]:
             feature = pending_update["features"][feature]
-            feature["datetime"] = datetime_to_string(dict_to_datetime(feature["datetime"]), short = True)
+            feature["human_time"] = datetime_to_string(dict_to_datetime(feature["datetime"]), short = True)
             
     return render_template("info.html", 
         user_id = request.cookies.get("user_id"),
@@ -102,6 +109,7 @@ def info():
 
 @app.route("/settings")
 def settings():
+    """Renders the settings webpage"""
 
     # Get a list of guilds that Omega Psi and the user are in where the user
     #   also has manage guild permissions
@@ -110,9 +118,12 @@ def settings():
         member = guild.get_member(int(session.get("user_id")))
         if member and member.guild_permissions.manage_guild:
             manageable_guilds.append(guild)
+    
+    # Get the user data to show the update notifications, if the user is receiving them
+    user_data = database.users.get_user_sync(session.get("user_id"))
+    notification_data = user_data["notifications"]
 
     # Get the users minigame data from the database
-    user_data = database.users.get_user_sync(session.get("user_id"))
     minigame_data = database.users.get_minigame_data_sync(session.get("user_id"))
     minigames = {}
     for data in minigame_data:
@@ -128,7 +139,9 @@ def settings():
 
     return render_template("settings.html", 
         manageable_guilds = manageable_guilds,
-        minigames = minigames, 
+        minigames = minigames,
+        notification_data = notification_data,
+        notification_descriptions = notification_descriptions,
         user_color = hex(
             user_data["embed_color"]
             if user_data["embed_color"] is not None else
@@ -138,6 +151,10 @@ def settings():
 
 @app.route("/server/<string:guild_id>")
 def server(guild_id):
+    """Renders a server settings webpage
+
+    :param guild_id: The guild which the webpage applies to
+    """
     
     # Make sure the user can manage the guild and get the 
     #   prefix and disabled commands for the guild
@@ -157,10 +174,12 @@ def server(guild_id):
 
 @app.route("/favicon.ico")
 def favicon():
+    """Retrieves the favicon"""
     return redirect("/static/favicon.ico")
 
 @app.route("/privacyPolicy")
 def privacy_policy():
+    """Renders the privacy policy webpage"""
     return render_template("privacyPolicy.html"), 200
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -169,18 +188,22 @@ def privacy_policy():
 
 @app.errorhandler(404)
 def page_not_found(error):
+    """Renders the page not found webpage"""
     return render_template("pageNotFound.html"), 404
 
 @app.errorhandler(403)
 def missing_access(error):
+    """Renders the missing access webpage"""
     return render_template("missingAccess.html"), 403
 
 @app.errorhandler(400)
 def no_such_guild(error):
+    """Renders the no such guild webpage"""
     return render_template("noSuchGuild.html"), 400
 
 @app.errorhandler(401)
 def not_a_guild_manager(error):
+    """Renders the not a guild manager webpage"""
     return render_template("notServerManager.html"), 401
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -189,6 +212,7 @@ def not_a_guild_manager(error):
 
 @app.route("/reportBug", methods = ["POST", "PUT"])
 def report_bug():
+    """Processes the report bug API endpoint"""
 
     # Only run if the origin is from ALLOW_ORIGIN
     if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN:
@@ -373,6 +397,7 @@ def report_bug():
 
 @app.route("/suggest", methods = ["POST", "PUT"])
 def suggest():
+    """Processes the suggest API endpoint"""
 
     # Only run if the origin is from ALLOW_ORIGIN
     if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN:
@@ -565,19 +590,30 @@ def suggest():
 
 @app.route("/settings/user", methods = ["POST"])
 def settings_user():
+    """Processes the user settings API endpoint"""
 
     # Only run if the origin is from ALLOW_ORIGIN
     if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id"):
 
-        # Update the user's embed color in the database
-        database.users.set_embed_color_sync(session.get("user_id"), int(request.json["userColor"][1:], base = 16))
-        return jsonify({"success": True}), 201
+        # Changing the user's embed color
+        if "embed" in request.json:
+            database.users.set_embed_color_sync(session.get("user_id"), int(request.json["userColor"][1:], base = 16))
+            return jsonify({"success": True}), 201
+        
+        # Changing the user's notifications
+        elif "notification" in request.json:
+            if request.json["notification"] == "update":
+                database.users.toggle_update_notification_sync(session.get("user_id"), request.json["enable"])
+            elif request.json["notification"] == "new_feature":
+                database.users.toggle_new_feature_notification_sync(session.get("user_id"), request.json["enable"])
+            return jsonify({"success": True}), 201
     
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
 
 @app.route("/settings/server", methods = ["GET", "POST", "PUT"])
 def settings_server():
+    """Processes the server settings API endpoint"""
 
     # Getting a list of active commands
     if request.method == "GET":
@@ -628,6 +664,7 @@ def settings_server():
 
 @app.route("/login", methods = ["GET", "POST"])
 def login():
+    """Processes login webpage/endpoint"""
 
     # Check if code exists in the URL parameters
     code = request.args.get("code")
@@ -658,7 +695,7 @@ def login():
         session_data = response.json()
 
         response = get(
-            "https://discordapp.com/api/v6/users/@me",
+            "https://discord.com/api/v6/users/@me",
             headers = {
                 "Authorization": "Bearer {}".format(session_data["access_token"])
             }
@@ -683,6 +720,7 @@ def login():
 
 @app.route("/developer")
 def developer():
+    """Renders the developer webpage"""
 
     # Check if the current session user id is a developer
     if database.bot.is_developer_sync(session.get("user_id")):
@@ -726,12 +764,7 @@ def developer():
         else:
             for feature in pending_update["features"]:
                 feature = pending_update["features"][feature]
-                feature["datetime"] = datetime_to_string(dict_to_datetime(feature["datetime"]), short = True)
-            
-        # Get the file change data
-        changed_files = database.bot.get_changed_files_sync()
-        if len(changed_files) == 0:
-            changed_files = None
+                feature["human_time"] = datetime_to_string(dict_to_datetime(feature["datetime"]), short = True)
         
         # Get the tasks data
         tasks = database.bot.get_tasks_sync()
@@ -743,7 +776,6 @@ def developer():
             bug_cases = bug_cases,
             suggestion_cases = suggestion_cases,
             pending_update = pending_update,
-            changed_files = changed_files,
             tasks = tasks,
             disabled_commands = disabled_commands,
             all_commands = all_commands
@@ -754,6 +786,7 @@ def developer():
 
 @app.route("/pendingUpdate", methods = ["POST", "PUT"])
 def pending_update():
+    """Processes the pending update API endpoint"""
 
     # Only run if the origin is from ALLOW_ORIGIN
     if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
@@ -781,6 +814,7 @@ def pending_update():
 
 @app.route("/pendingUpdate/feature", methods = ["POST", "PUT", "DELETE"])
 def create_feature():
+    """Processes the feature API endpoint"""
 
     # Only run if the origin is from ALLOW_ORIGIN
     if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
@@ -792,6 +826,35 @@ def create_feature():
             if len(database.bot.get_pending_update_sync()) != 0:
                 feature = database.bot.add_pending_feature_sync(request.json["feature"], request.json["featureType"])
                 feature["datetime"] = datetime_to_string(dict_to_datetime(feature["datetime"]), short = True)
+                
+                # Update all users who want to be notified of a new feature
+                notification_data = database.bot.get_notifications_sync()
+                users = notification_data["new_feature"]
+                for user_id in users:
+                    user = OMEGA_PSI.get_user(int(user_id))
+
+                    # Check if the user is valid
+                    if user is not None:
+                        try:
+                            user_send = run_coroutine_threadsafe(
+                                user.send(
+                                    embed = Embed(
+                                        title = "Feature Added",
+                                        description = "\"{}\" has been added as a feature to the pending update.".format(
+                                            request.json["feature"]
+                                        ),
+                                        colour = get_embed_color_sync(user)
+                                    )
+                                ),
+                                loop
+                            )
+                            user_send.result()
+                        except: pass
+                    
+                    # The user is invalid, remove them from the notifications
+                    else:
+                        database.bot.manage_notifications_sync("new_feature", user_id, False)
+
                 return jsonify(feature), 201
             
             # The pending update does not exist
@@ -843,70 +906,9 @@ def create_feature():
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
 
-@app.route("/fileChange/file", methods = ["POST", "PUT", "DELETE"])
-def file_change_file():
-
-    # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
-        
-        # Creating a new file
-        if request.method == "POST":
-            file_id = database.bot.add_file_sync(request.json["filename"])
-            if file_id:
-                return jsonify({"filename": request.json["filename"], "id": file_id}), 201
-            return jsonify({"error": "File already exists"}), 409
-        
-        # Editing a file
-        elif request.method == "PUT":
-            file_json = database.bot.edit_file_sync(request.json["fileID"], request.json["filename"])
-            if file_json:
-                return jsonify(file_json), 202
-            return jsonify({"error": "File does not exist"}), 404
-        
-        # Removing a file
-        elif request.method == "DELETE":
-            file_json = database.bot.remove_file_sync(request.json["fileID"])
-            if file_json:
-                return jsonify(file_json), 200
-            return jsonify({"error": "File does not exist"}), 404
-    
-    # The origin does not match ALLOW_ORIGIN
-    return jsonify({"error": "Unauthorized"}), 401
-
-@app.route("/fileChange/change", methods = ["POST", "PUT", "DELETE"])
-def file_change_file_change():
-
-    # Only run if the origin is from ALLOW_ORIGIN
-    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
-        
-        # Creating a new change
-        if request.method == "POST":
-            change_id = database.bot.add_file_change_sync(request.json["fileID"], request.json["change"])
-            return jsonify({"id": change_id, "change": request.json["change"]}), 201
-        
-        # Editing an existing change
-        elif request.method == "PUT":
-            change = database.bot.edit_file_change_sync(request.json["fileID"], request.json["changeID"], request.json["change"])
-            if change == False:
-                return jsonify({"error": "Change does not exist for file"}), 404
-            elif change == None:
-                return jsonify({"error": "File does not exist"}), 404
-            return jsonify({"change": change}), 201
-        
-        # Removing a file
-        elif request.method == "DELETE":
-            change = database.bot.remove_file_change_sync(request.json["fileID"], request.json["changeID"])
-            if change == False:
-                return jsonify({"error": "Change does not exist for file"}), 404
-            elif change == None:
-                return jsonify({"error": "File does not exist"}), 404
-            return jsonify({"change": change}), 200
-    
-    # The origin does not match ALLOW_ORIGIN
-    return jsonify({"error": "Unauthorized"}), 401
-
 @app.route("/tasks", methods = ["POST", "PUT", "DELETE"])
 def tasks():
+    """Processes the tasks API endpoint"""
 
     # Only run if the origin is from ALLOW_ORIGIN
     if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
@@ -935,6 +937,7 @@ def tasks():
 
 @app.route("/settings/bot", methods = ["GET", "PUT"])
 def settings_bot():
+    """Processes the bot settings API endpoint"""
 
     # Getting a list of active commands
     if request.method == "GET":
@@ -977,9 +980,15 @@ def settings_bot():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def run():
+    """Runs the Omega Psi website/bot"""
     app.run(host = "0.0.0.0", port = randint(1000, 9999))
 
 def keep_alive(bot, cogs):
+    """Keeps the bot alive and generates all the HTML files
+
+    :param bot: The bot object to use
+    :param cogs: The JSON of cog information
+    """
 
     # Create sections for each cog's commands
     command_sections = []

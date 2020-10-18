@@ -21,21 +21,11 @@ from util.functions import get_embed_color
 class GameOfLifeGame(Game):
     """A GameOfLifeGame object that holds information about a game of The Game of Life
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
-        players : Member[]
-            The list of players in the game
-
-    Keyword Parameters
-    ----------
-        against_ais : boolean
-            Whether or not this game is being played against AIs
-        ai_amount : int
-            The amount of AIs to play against
+    :param bot: The bot object used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param players: The list of players in the game
+    :param against_ais: Whether or not this game is being played against AIs
+    :param ai_amount: The amount of AIs to play against
     """
 
     def __init__(self, bot, ctx, players, *, against_ais = False, ai_amount = 4):
@@ -327,10 +317,7 @@ class GameOfLifeGame(Game):
         """Pays a bonus to any player that holds a salary card
         with the bonus number matching the specified number
 
-        Parameters
-        ----------
-            number : int
-                The number to pay bonuses to players who have this number
+        :param number: The number to pay bonuses to players who have this number
         """
 
         # Iterate through all players who have a career card
@@ -355,10 +342,7 @@ class GameOfLifeGame(Game):
     async def process_action_card(self, board_space):
         """Processes the action card that a player lands on
 
-        Parameters
-        ----------
-            board_space : BoardSpace
-                The board space that is used to process the action card
+        :param board_space: The board space that is used to process the action card
         """
         
         # Pull a card from the game's action cards
@@ -676,19 +660,10 @@ class GameOfLifeGame(Game):
         """Asks the challenging player to choose an opponent to spin against each other
         to see who gets the higher number.
 
-        Parameters
-        ----------
-            challenger : GameOfLifePlayer
-                The player who is choosing their opponent to spin off against
-            
-        Returns
-        -------
-            winner : GameOfLifePlayer
-                The player who won the spin off
-            value : int
-                The number that the winning player spun
-                Note that this is only useful when the type of competition
-                    is a compete_10k event
+        :param challenger: The player who is choosing their opponent to spin off against
+        
+        :returns: The winner of the spin off and the number that the winning player spun
+        :rtype: tuple
         """
         
         # Have the player choose an opponent in this game
@@ -737,18 +712,14 @@ class GameOfLifeGame(Game):
     def get_retired(self):
         """Returns a list of players who have already retired
 
-        Returns
-        -------
-            players : list
+        :rtype: list
         """
         return [ player for player in self.players if player.is_retired ]
 
     def is_everyone_retired(self):
         """Returns whether or not each player in the game has retired
 
-        Returns
-        -------
-            boolean
+        :rtype: bool
         """
         for player in self.players:
             if not player.is_retired:
@@ -762,9 +733,6 @@ class GameOfLifeGame(Game):
     async def add_action(self, action):
         """Adds a new action to the current turn object in the game
 
-        Parameters
-        ----------
-            action : str
-                The action that happened in this turn
+        :param action: The action that happened in this turn
         """
         await self.current_turn.add_action(action)

@@ -24,15 +24,9 @@ class Imgur:
     async def create_imgur_album(data = None):
         """Creates an anonymous Imgur album and returns the album hash and album ID
 
-        Parameters
-        ----------
-            data : dict or None
-                The default data to create the Imgur album with
+        :param data: The default data to create the Imgur album with
         
-        Returns
-        -------
-            dict
-                A dict object containing the created album hash and the created album ID
+        :rtype: dict
         """
 
         # Make a POST request to create the anonymous Imgur album
@@ -64,17 +58,11 @@ class Imgur:
     async def add_to_imgur_album(url, album_hash):
         """Adds an image at the specified URL to the specified album given the album hash
 
-        Parameters
-        ----------
-            url : str
-                The URL of an image to add
-            album_hash : str
-                The anonymous album to add the image to
+        :param url: The URL of an image to add
+        :param album_hash: The anonymous album to add the image to
 
-        Returns
-        -------
-            bool
-                Whether or not the image was added to specified album.
+        :returns: Whether or not the URL was added to the given Imgur album hash
+        :rtype: bool
         """
         
         # Make a POST request to add upload the image to the specified Imgur album hash
@@ -105,15 +93,9 @@ class Imgur:
     async def get_imgur_album(album_id):
         """Gets a list of images from the specified album
 
-        Parameters
-        ----------
-            album_id : str
-                The ID of the album to get images from
+        :param album_id: The ID of the album to get images from
 
-        Returns
-        -------
-            list
-                A list of images from the specified album
+        :rtype: list
         """
         
         # Make a GET request to access the images from the specified album

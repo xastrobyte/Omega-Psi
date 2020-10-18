@@ -18,21 +18,12 @@ from util.functions import get_embed_color
 class ConnectFourGame(Game):
     """A ConnectFourGame object that holds information about a Connect Four game
 
-    Parameters
-    ----------
-        bot : AutoShardedBot
-            The bot object used to wait for reactions
-        ctx : context
-            The context of where this game is being played
-        challenger : ConnectFourPlayer
-            The challenging player
-        opponent : ConnectFourPlayer
-            The player opposing the challenger
+    :param bot: The bot object used to wait for reactions
+    :param ctx: The context of where this game is being played
+    :param challenger: The challenging player
+    :param opponent: The player opposing the challenger
 
-    Raises
-    ------
-        TypeError
-            When either the challenger or opponent is not given
+    :raises TypeError: When either the challenger or opponent is not given
     """
 
     DEFAULT_WIDTH = 7
@@ -79,13 +70,6 @@ class ConnectFourGame(Game):
 
     async def play(self):
         """Let's the challenger and opponent play this game of Connect Four
-
-        Parameters
-        ----------
-            ctx : context
-                The context that the game is being played in
-            bot : AutoShardedBot
-                The bot object used to wait for reactions
         """
 
         # Send a message to start the game and add the reactions
@@ -205,10 +189,7 @@ class ConnectFourGame(Game):
     def get_valid_reactions(self):
         """Returns a list of valid reactions a player can make when it is their turn
 
-        Returns
-        -------
-            list
-                Valid reactions a player can make during their turn
+        :rtype: list
         """
 
         # Setup a list of valid reactions

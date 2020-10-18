@@ -4,12 +4,8 @@ class Board:
     """A Board object holds information about an arbitrarily sized board in a minigame
     that uses a board to display the game state
 
-    Parameters
-    ----------
-        width : int
-            The width of the board
-        height : int
-            The height of the board
+    :param width: The width of the Board
+    :param height: The height of the Board
     """
 
     WIN = 10000
@@ -69,10 +65,7 @@ class Board:
     def get_legal_moves(self):
         """Returns a list of legal moves that can be made based off the state of the board
 
-        Returns
-        -------
-            legal_moves : tuple[]
-                A list of (row, column) tuples that are valid moves
+        :returns: A list of (row, column) tuples that are valid moves
         """
         return [
             (r, c)
@@ -84,18 +77,14 @@ class Board:
     def get_max_moves(self):
         """Returns the maximum number of moves that can be made in this game
 
-        Returns
-        -------
-            int
+        :rtype: int
         """
         return self.height * self.width
     
     def is_full(self):
         """Returns whether or not this Board object is full
 
-        Returns
-        -------
-            boolean
+        :rtype: boolean
         """
         for row in range(self.height):
             for col in range(self.width):
@@ -106,16 +95,15 @@ class Board:
     def make_move(self, row, column, is_challenger_turn):
         """Makes a move for the specified challenger at the specified row and column
 
-        Parameters
-        ----------
-            row : int
-                The row of the move
-            column : int
-                The column of the move
-            is_challenger_turn : boolean    
-                Whether this move is for the player or the AI
+        :param row: The row of the move
+        :param column: The column of the move
+        :param is_challenger_turn: Whether this move is for the player (True) or the AI (False)
         """
         self.board[row][column] = is_challenger_turn
     
     @abstractmethod
-    def check_for_winner(self): pass
+    def check_for_winner(self):
+        """An abstract method meant to be inherited in subclasses of Board
+        to check for a winner
+        """
+        pass
