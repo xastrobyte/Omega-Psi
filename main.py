@@ -21,8 +21,12 @@ from util.ifttt import IFTTT
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+# Due to Discord's new API update, we must specify our intent
+#   with using their API specifically regarding member's and their presences
 intents = Intents.default()
 intents.members = True
+intents.presences = True
+intents.typing = True
 
 bot = AutoShardedBot(
     command_prefix = get_prefix, case_insensitive = True,
@@ -34,10 +38,16 @@ bot = AutoShardedBot(
 
 @bot.check
 async def command_enabled(ctx):
+    """A check done on every command to determine if 
+    the command that was specified is enabled or not
+
+    :param ctx: The context of where the message was sent
+    """
     return await is_command_enabled_predicate(ctx)
 
 @bot.event
 async def on_ready():
+    """This is run when the bot is ready to run"""
 
     # Set the presence of the bot when it's ready
     await bot.change_presence(
@@ -75,10 +85,21 @@ async def on_ready():
 
 @bot.event
 async def on_command(ctx):
+    """Emulates the bot typing to show the user their
+    command is being processed
+
+    :param ctx: The context of where to send the typing dialogue to
+    """
     async with ctx.typing(): pass
 
 @bot.event
 async def on_command_error(ctx, error):
+    """This is an event that happens when an error
+    occurs on any command
+
+    :param ctx: The context of where the error occurred
+    :param error: The error that occurred
+    """
 
     # Check if the error pertains to a disabled command
     #   dont send a message to the error channel
@@ -136,6 +157,10 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_guild_join(guild):
+    """This is run whenever Omega Psi is added to a new server
+
+    :param guild: The guild that Omega Psi was added to
+    """
     await update_top_gg(bot)
     await bot.change_presence(
         status = Status.online,
@@ -148,6 +173,10 @@ async def on_guild_join(guild):
 
 @bot.event
 async def on_guild_remove(guild):
+    """This is run whenever Omega Psi is removed from a server
+
+    :param guild: The guild that Omega Psi was removed from
+    """
     await update_top_gg(bot)
     await bot.change_presence(
         status = Status.online,

@@ -38,7 +38,6 @@ class Website:
     <script src="/static/js/suggestions.js"></script>
     <script src="/static/js/settings.js"></script>
     <script src="/static/js/pendingUpdate.js"></script>
-    <script src="/static/js/fileChanges.js"></script>
     <script src="/static/js/tasks.js"></script>
 
 </head>
