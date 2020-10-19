@@ -36,6 +36,11 @@ cogs = {
         "emoji": ":asterisk: ",
         "extension": "cogs.math.math"
     },
+    "music": {
+        "name": "Music",
+        "emoji": ":musical_note: ",
+        "extension": "cogs.music.music"
+    },
     "comics": {
         "name": "Comics",
         "emoji": ":notebook: ",

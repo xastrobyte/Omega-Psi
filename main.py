@@ -23,10 +23,7 @@ from util.ifttt import IFTTT
 
 # Due to Discord's new API update, we must specify our intent
 #   with using their API specifically regarding member's and their presences
-intents = Intents.default()
-intents.members = True
-intents.presences = True
-intents.typing = True
+intents = Intents.all()
 
 bot = AutoShardedBot(
     command_prefix = get_prefix, case_insensitive = True,

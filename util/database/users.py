@@ -116,11 +116,12 @@ class User:
         ----------
             user : str or User
         """
+        user_id = user if isinstance(user, str) else str(user.id)
         if insert:
             self._users.insert_one(user_data)
         else:
             self._users.update_one(
-                {"_id": user},
+                {"_id": user_id},
                 {"$set": user_data},
                 upsert=False)
 

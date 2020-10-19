@@ -9,7 +9,7 @@ from sys import executable, argv
 from cogs.errors import get_error_message
 from cogs.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, CHECK_MARK, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, \
     NEXT_PAGE, LEAVE, loop, NOT_CONSIDER, CONSIDER
-from cogs.predicates import is_developer
+from cogs.predicates import is_developer, is_tester
 
 from util.database.database import database
 from util.discord import update_top_gg
@@ -98,6 +98,101 @@ class Developer(Cog, name="developer"):
                 colour=await get_embed_color(ctx.author)
             )
         )
+    
+    @command(
+        name="addTester",
+        description="Adds a new tester to the bot.",
+        cog_name="tester"
+    )
+    @is_tester()
+    async def add_tester(self, ctx, members: Greedy[Member] = []):
+        """Adds a tester to the list of testers of Omega Psi
+
+        :param ctx: The context of where the message was sent
+        :param members: A list of Discord Users to add as testers
+        """
+
+        # Check if there are no members in the list
+        if len(members) == 0:
+            await ctx.send(embed=get_error_message("You need to mention members to add as a tester."))
+
+        # There are members
+        else:
+            results = []
+            for member in members:
+                if not await database.bot.is_tester(member):
+                    await database.bot.add_tester(str(member.id))
+                    success = True
+                    reason = "{} was added as a tester.".format(str(member))
+                else:
+                    success = False
+                    reason = "{} is already a tester.".format(str(member))
+                results.append({"success": success, "reason": reason})
+
+            await ctx.send(
+                embed=Embed(
+                    title="Members Added" if len(results) > len(
+                        [result for result in results if not result["success"]]) else "Members Not Added",
+                    description="\n".join([result["reason"] for result in results]),
+                    colour=await get_embed_color(ctx.author)
+                )
+            )
+
+    @command(
+        name="removeTester",
+        aliases=["remTester"],
+        description="Allows you to remove a tester from the bot.",
+        cog_name="bot"
+    )
+    @is_tester()
+    async def remove_tester(self, ctx, members: Greedy[Member] = []):
+        """Removes a tester from the list of testers of Omega Psi
+
+        :param ctx: The context of where the message was sent
+        :param members: A list of Discord Users to remove as testers
+        """
+
+        # Check if there are no members in the list
+        if len(members) == 0:
+            await ctx.send(embed=get_error_message("You need to mention members to remove as a tester."))
+
+        # There are members
+        else:
+
+            # Keep track of whether or not the member was removed
+            results = []
+            for member in members:
+                if await database.bot.is_tester(member):
+
+                    # Make sure it's not self
+                    if ctx.author == member:
+                        success = True
+                        reason = "You can't remove yourself as a tester."
+
+                    # Make sure it's not owner
+                    elif str(member.id) == await database.bot.get_owner():
+                        success = True
+                        reason = "You can't remove the bot's owner as a tester."
+
+                    # Everything is good
+                    else:
+                        await database.bot.remove_tester(str(member.id))
+                        success = True
+                        reason = "{} was removed as a tester.".format(str(member))
+                else:
+                    success = False
+                    reason = "{} was not a tester.".format(str(member))
+
+                results.append({"success": success, "reason": reason})
+
+            await ctx.send(
+                embed=Embed(
+                    title="Members Removed" if len(results) > len(
+                        [result for result in results if not result["success"]]) else "Members Not Removed",
+                    description="\n".join([result["reason"] for result in results]),
+                    colour=await get_embed_color(ctx.author)
+                )
+            )
 
     @command(
         name="addDeveloper",

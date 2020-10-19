@@ -668,11 +668,11 @@ class Bot(Cog, name="bot"):
             colour=await get_embed_color(ctx.author)
         ).set_image(
             url=(
-                "https://discordbots.org/api/widget/535587516816949248.png?" +
-                "topcolor={1}&avatarbg={1}&datacolor={1}&highlightcolor={0}&" +
-                "middlecolor={0}&usernamecolor={0}&labelcolor={2}".format(
+                    "https://discordbots.org/api/widget/535587516816949248.png?" +
+                    "topcolor={1}&avatarbg={1}&datacolor={1}&highlightcolor={0}&" +
+                    "middlecolor={0}&usernamecolor={0}&labelcolor={2}"
+                ).format(
                     "293134", "ec7600", "808080"
-                )
             )
         ).set_footer(
             text="Created on {}. Omega Psi is {} old.".format(
@@ -693,7 +693,11 @@ class Bot(Cog, name="bot"):
         cog_name="bot"
     )
     async def support(self, ctx):
-        await ctx.send("discord.gg/W8yVrHt")
+        """Gives a user an invite link to my Discord server
+
+        :param ctx: The context of where the message was sent
+        """
+        await ctx.send("discord.gg/hBsax2U")
 
     @command(
         name="website",
@@ -720,17 +724,17 @@ class Bot(Cog, name="bot"):
         await ctx.send("https://omegapsi.fellowhashbrown.com")
 
     @command(
-        name="source", aliases=["src", "replit", "repl"],
-        description="Gives you the links to Omega Psi's source code.",
+        name="source", aliases=["src"],
+        description="Gives you the link to Omega Psi's source code.",
         cog_name="bot"
     )
     async def source(self, ctx):
-        """Gives the user links to the source code for Omega Psi
+        """Gives the user link to the source code for Omega Psi
 
         :param ctx: The context of where the message was sent
         """
         await ctx.send(
-            "https://repl.it/@FellowHashbrown/OmegaPsi\nhttps://github.com/FellowHashbrown/Omega-Psi"
+            "https://github.com/FellowHashbrown/Omega-Psi"
         )
 
     @command(

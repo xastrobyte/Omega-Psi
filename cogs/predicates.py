@@ -1,6 +1,6 @@
 from discord.ext.commands import check, when_mentioned_or
 
-from cogs.errors import NotADeveloper, NotAGuildManager, CommandDisabled, NotNSFWOrGuild
+from cogs.errors import NotADeveloper, NotATester, NotAGuildManager, CommandDisabled, NotNSFWOrGuild
 from util.database.database import database
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -14,6 +14,15 @@ async def is_developer_predicate(ctx):
     """
     if not await database.bot.is_developer(ctx.author):
         raise NotADeveloper()
+    return True
+
+async def is_tester_predicate(ctx):
+    """A predicate to test if a user is a tester
+
+    :param ctx: The context of the predicate
+    """
+    if not await database.bot.is_tester(ctx.author):
+        raise NotATester()
     return True
 
 async def guild_manager_predicate(ctx):
@@ -57,7 +66,10 @@ async def is_command_enabled_predicate(ctx):
     """
 
     # Check in the globally disabled commands
-    if not await database.bot.is_command_enabled(ctx.command.qualified_name) and not await database.bot.is_developer(ctx.author):
+    if (not await database.bot.is_command_enabled(ctx.command.qualified_name) and 
+        not await database.bot.is_developer(ctx.author) and
+        not await database.bot.is_tester(ctx.author)):
+        
         raise CommandDisabled()
     
     # Check in the guild disabled commands
@@ -86,6 +98,10 @@ async def can_disable_commands_predicate(ctx):
 def is_developer():
     """A check to make sure only a developer can run a command"""
     return check(is_developer_predicate)
+
+def is_tester():
+    """A check to make sure only a tester can run a command"""
+    return check(is_tester_predicate)
 
 def guild_manager():
     """A check to make sure only a guild manager can run a command"""

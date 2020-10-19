@@ -45,7 +45,10 @@ class Guild:
         data = {
             "_id": guild_id,
             "disabled_commands": [],
-            "prefix": "o."
+            "prefix": "o.",
+            "music": {
+                "playlists": {}
+            }
         }
 
         # Get guild data
@@ -66,11 +69,13 @@ class Guild:
             guild_data : dict
                 The JSON object of the guild data to set
         """
+        guild_id = guild if isinstance(guild, str) else str(guild.id)
+        
         if insert:
             self._guilds.insert_one(guild_data)
         else:
             self._guilds.update_one(
-                {"_id": guild},
+                {"_id": guild_id},
                 {"$set": guild_data},
                 upsert=False)
 
@@ -307,3 +312,178 @@ class Guild:
                 Whether or not the command was disabled
         """
         return await loop.run_in_executor(None, self.disable_command_sync, guild, command)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Music Access Methods
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_playlists_sync(self, guild: Union[Guild, str]) -> list:
+        """Returns the playlists saved to the specified server
+
+        :param guild: The server to get the playlists of
+        """
+        guild_data = self.get_guild_sync(guild)
+        return guild_data["music"]["playlists"]
+    
+    def set_playlists_sync(self, guild: Union[Guild, str], playlists_data: dict):
+        """Sets the playlists saved in the specified server
+
+        :param playlists_data: The data for the playlists in this server
+        """
+        guild_data = self.get_guild_sync(guild)
+        guild_data["music"]["playlists"] = playlists_data
+        self.set_guild_sync(guild, guild_data)
+    
+    def create_playlist_sync(self, guild: Union[Guild, str], name: str):
+        """Creates a new playlist in the specified server
+
+        :param guild: The server to add the playlist to
+        :param name: The name of the playlist
+        """
+        playlists_data = self.get_playlists_sync(guild)
+        playlists_data[name] = []
+        self.set_playlists_sync(guild, playlists_data)
+    
+    def delete_playlist_sync(self, guild: Union[Guild, str], name: str) -> str:
+        """Deletes a playlist from the specified server
+
+        :param guild: The server to delete the playlist from
+        :param name: The playlist to delete
+        """
+        playlists_data = self.get_playlists_sync(guild)
+        removed_playlist = None
+        if name in playlists_data:
+            removed_playlist = playlists_data.pop(name)
+        self.set_playlists_sync(guild, playlists_data)
+        return removed_playlist
+    
+    def get_playlist_sync(self, guild: Union[Guild, str], name: str) -> [dict, None]:
+        """Retrieves a specific playlist from the specified server
+
+        :param guild: The server to get the playlist from
+        :param name: The name of the playlist to get
+        """
+        playlists_data = self.get_playlists_sync(guild)
+        if name in playlists_data:
+            return playlists_data[name]
+        return None
+    
+    def set_playlist_sync(self, guild: Union[Guild, str], name: str, playlist_data: dict):
+        """Sets the data for a specific playlist in a specified server
+
+        :param guild: The server to set the playlist in
+        :param name: The name of the playlist to set
+        :param playlist_data: The data of the specified playlist
+        """
+        playlists_data = self.get_playlists_sync(guild)
+        if name in playlists_data:
+            playlists_data[name] = playlist_data
+        self.set_playlists_sync(guild, playlists_data)
+    
+    def does_playlist_exist_sync(self, guild: Union[Guild, str], name: str):
+        """Determines if a playlist exists in the specified guild
+
+        :param guild: The server to check for the playlist
+        :param name: The name of the playlist to check for
+        """
+        return self.get_playlist_sync(guild, name) is not None
+    
+    def add_song_to_playlist_sync(self, guild: Union[Guild, str], playlist: str, song: str):
+        """Adds a song to a specified playlist in the specified server
+
+        :param guild: The server to add the song to
+        :param playlist: The playlist to add the song to
+        :param song: The song to add
+        """
+        playlist_data = self.get_playlist_sync(guild, playlist)
+        playlist_data.append(song)
+        self.set_playlist_sync(guild, playlist, playlist_data)
+    
+    def remove_song_from_playlist_sync(self, guild: Union[Guild, str], playlist: str, index: int) -> str:
+        """Removes a song from a specified playlist in the specified server
+
+        :param guild: The server to remove the song from
+        :param playlist: The playlist to remove the song from
+        :param index: The index of the song to remove
+        """
+        playlist_data = self.get_playlist_sync(guild, playlist)
+        removed_song = None
+        if index < len(playlist_data):
+            removed_song = playlist_data.pop(index)
+        self.set_playlist_sync(guild, playlist, playlist_data)
+        return removed_song
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_playlists(self, guild: Union[Guild, str]) -> list:
+        """Returns the playlists saved to the specified server
+
+        :param guild: The server to get the playlists of
+        """
+        return await loop.run_in_executor(None, self.get_playlists_sync, guild)
+    
+    async def set_playlists(self, guild: Union[Guild, str], playlists_data: dict):
+        """Sets the playlists saved in the specified server
+
+        :param playlists_data: The data for the playlists in this server
+        """
+        await loop.run_in_executor(None, self.set_playlists_sync, guild, playlists_data)
+    
+    async def create_playlist(self, guild: Union[Guild, str], name: str):
+        """Creates a new playlist in the specified server
+
+        :param guild: The server to add the playlist to
+        :param name: The name of the playlist
+        """
+        await loop.run_in_executor(None, self.create_playlist_sync, guild, name)
+    
+    async def delete_playlist(self, guild: Union[Guild, str], name: str) -> str:
+        """Deletes a playlist from the specified server
+
+        :param guild: The server to delete the playlist from
+        :param name: The playlist to delete
+        """
+        return await loop.run_in_executor(None, self.delete_playlist_sync, guild, name)
+    
+    async def get_playlist(self, guild: Union[Guild, str], name: str) -> [dict, None]:
+        """Retrieves a specific playlist from the specified server
+
+        :param guild: The server to get the playlist from
+        :param name: The name of the playlist to get
+        """
+        return await loop.run_in_executor(None, self.get_playlist_sync, guild, name)
+    
+    async def set_playlist(self, guild: Union[Guild, str], name: str, playlist_data: dict):
+        """Sets the data for a specific playlist in a specified server
+
+        :param guild: The server to set the playlist in
+        :param name: The name of the playlist to set
+        :param playlist_data: The data of the specified playlist
+        """
+        return await loop.run_in_executor(None, self.set_playlist_sync, guild, name, playlist_data)
+    
+    async def does_playlist_exist(self, guild: Union[Guild, str], name: str) -> bool:
+        """Determines if a playlist exists in the specified guild
+
+        :param guild: The server to check for the playlist
+        :param name: The name of the playlist to check for
+        """
+        return await loop.run_in_executor(None, self.does_playlist_exist_sync, guild, name)
+    
+    async def add_song_to_playlist(self, guild: Union[Guild, str], playlist: str, song: str):
+        """Adds a song to a specified playlist in the specified server
+
+        :param guild: The server to add the song to
+        :param playlist: The playlist to add the song to
+        :param song: The song to add
+        """
+        await loop.run_in_executor(None, self.add_song_to_playlist_sync, guild, playlist, song)
+    
+    async def remove_song_from_playlist(self, guild: Union[Guild, str], playlist: str, index: int) -> str:
+        """Removes a song from a specified playlist in the specified server
+
+        :param guild: The server to remove the song from
+        :param playlist: The playlist to remove the song from
+        :param index: The index of the song to remove
+        """
+        return await loop.run_in_executor(None, self.remove_song_from_playlist_sync, guild, playlist, index)

@@ -1,2 +1,5 @@
 language = "python3"
-run = "pip install -r requirements.txt; python main.py"
+run="""
+export PATH="$PWD/node_modules/ffmpeg-static:$PATH"
+python main.py
+"""

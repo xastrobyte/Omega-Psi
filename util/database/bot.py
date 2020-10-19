@@ -22,19 +22,14 @@ class Bot:
     # Information Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def get_bot_sync(self):
-        """Synchronously retrieves the bot data stored in the database
-
-        Returns
-        -------
-            dict
-                The bot data
-        """
+    def get_bot_sync(self) -> dict:
+        """Synchronously retrieves the bot data stored in the database"""
 
         # Defaults
         data = {
             "_id": "bot_information",
             "developers": ["373317798430244864"],
+            "testers": ["373317798430244864"],
             "owner": "373317798430244864",
             "updates": [],
             "pending_update": {},
@@ -72,57 +67,34 @@ class Bot:
                 {"$set": bot_data},
                 upsert=False)
 
-    async def get_bot(self):
-        """Asynchronously retrieves the bot data stored in the database
-
-        Returns
-        -------
-            dict
-                The bot data
-        """
+    async def get_bot(self) -> dict:
+        """Asynchronously retrieves the bot data stored in the database"""
         return await loop.run_in_executor(None, self.get_bot_sync)
 
-    async def set_bot(self, bot_data):
+    async def set_bot(self, bot_data, *, insert=False):
         """Synchronously updates the bot data stored in the database
 
-        Parameters
-        ----------
-            bot_data : dict
-                A JSON object holding information about Omega Psi
+        :param bot_data: A JSON object holding information about Omega Psi
+        :param insert: Whether to insert or update data in the database
         """
         await loop.run_in_executor(None, self.set_bot_sync, bot_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    async def get_owner(self):
-        """Retrieves the owner of Omega Psi
-        
-        Returns
-        -------
-            str
-                The owner's Discord ID
-        """
+    async def get_owner(self) -> str:
+        """Retrieves the owner of Omega Psi's ID"""
         bot_data = await self.get_bot()
         return bot_data["owner"]
 
-    async def get_restart(self):
-        """Retrieves the data when the restart command is used
-
-        Returns
-        -------
-            dict
-                The restart data
-        """
+    async def get_restart(self) -> dict:
+        """Retrieves the data when the restart command is used"""
         bot_data = await self.get_bot()
         return bot_data["restart"]
 
-    async def set_restart(self, restart_data):
+    async def set_restart(self, restart_data: dict):
         """Sets the data for when the restart command is used
 
-        Parameters
-        ----------
-            restart_data : dict
-                A JSON object holding the data for restarting Omega Psi
+        :param restart_data: A JSON object holding the data for restarting Omega Psi
         """
         bot_data = await self.get_bot()
         bot_data["restart"] = restart_data
@@ -132,15 +104,14 @@ class Bot:
     # Developers Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def get_developers_sync(self):
+    def get_developers_sync(self) -> list:
         """Synchronously retrieves a list of developers of Omega Psi
-
-        :rtype: list
+        This will return a list of Discord IDs
         """
         bot_data = self.get_bot_sync()
         return bot_data["developers"]
 
-    def set_developers_sync(self, developers):
+    def set_developers_sync(self, developers: list):
         """Synchronously sets the list of developers of Omega Psi
 
         :param developers: A list of developer Discord IDs
@@ -149,13 +120,10 @@ class Bot:
         bot_data["developers"] = developers
         self.set_bot_sync(bot_data)
 
-    def is_developer_sync(self, user: Union[User, str]):
+    def is_developer_sync(self, user: Union[User, str]) -> bool:
         """Synchronously tests whether or not the specified user is a developer of Omega Psi
 
-        Parameters
-        ----------
-            user : discord.User, str
-                The Discord user or their Discord ID
+        :param user: The Discord user or their ID
         """
         developers = self.get_developers_sync()
         if isinstance(user, str):
@@ -165,10 +133,7 @@ class Bot:
     def add_developer_sync(self, user: Union[User, str]):
         """Synchronously adds the specified user to the list of developers of Omega Psi
 
-        Parameters
-        ----------
-            user : discord.User, str
-                The Discord user or their Discord ID
+        :param user: The Discord user or their ID
         """
         developers = self.get_developers_sync()
         if not isinstance(user, str):
@@ -179,10 +144,7 @@ class Bot:
     def remove_developer_sync(self, user: Union[User, str]):
         """Synchronously removes the specified user from the list of developers of Omega Psi
 
-        Parameters
-        ----------
-            user : discord.User, str
-                The Discord user or their Discord ID
+        :param user: The Discord user or their ID
         """
         developers = self.get_developers_sync()
         if not isinstance(user, str):
@@ -193,112 +155,176 @@ class Bot:
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    async def get_developers(self):
+    async def get_developers(self) -> list:
         """Asynchronously retrieves a list of developers of Omega Psi
-        
-        Returns
-        -------
-            list
-                A list of developer Discord IDs
+        This will return a list of Discord IDs
         """
         return await loop.run_in_executor(None, self.get_developers_sync)
 
-    async def set_developers(self, developers_data):
+    async def set_developers(self, developers_data: list):
         """Asynchronously sets the list of developers of Omega Psi
 
-        Parameters
-        ----------
-            developers_data : list
-                A list of developer Discord IDs
+        :param developers_data: A list of developer Discord IDs
         """
         await loop.run_in_executor(None, self.set_developers_sync, developers_data)
 
-    async def is_developer(self, user: Union[User, str]):
+    async def is_developer(self, user: Union[User, str]) -> bool:
         """Asynchronously tests whether or not the specified user is a developer of Omega Psi
 
-        Parameters
-        ----------
-            user : discord.User, str
-                The Discord user or their Discord ID
+        :param user: The Discord user or their ID
         """
         return await loop.run_in_executor(None, self.is_developer_sync, user)
 
     async def add_developer(self, user: Union[User, str]):
         """Asynchronously adds the specified user to the list of developers of Omega Psi
 
-        Parameters
-        ----------
-            user : discord.User, str
-                The Discord user or their Discord ID
+        :param user: The Discord user or their ID
         """
         await loop.run_in_executor(None, self.add_developer_sync, user)
 
     async def remove_developer(self, user: Union[User, str]):
         """Asynchronously removes the specified user from the list of developers of Omega Psi
 
-        Parameters
-        ----------
-            user : discord.User, str
-                The Discord user or their Discord ID
+        :param user: The Discord user or their ID
         """
         await loop.run_in_executor(None, self.remove_developer_sync, user)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Testers Access Methods
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_testers_sync(self) -> list:
+        """Synchronously retrieves a list of testers of Omega Psi
+        This will return a list of Discord IDs
+        """
+        bot_data = self.get_bot_sync()
+        return bot_data["testers"]
+
+    def set_testers_sync(self, testers: list):
+        """Synchronously sets the list of testers of Omega Psi
+
+        :param testers: A list of tester Discord IDs
+        """
+        bot_data = self.get_bot_sync()
+        bot_data["testers"] = testers
+        self.set_bot_sync(bot_data)
+
+    def is_tester_sync(self, user: Union[User, str]) -> bool:
+        """Synchronously tests whether or not the specified user is a tester of Omega Psi
+
+        :param user: The Discord user or their ID
+        """
+        testers = self.get_testers_sync()
+        if isinstance(user, str):
+            return str(user) in testers
+        return str(user.id) in testers
+
+    def add_tester_sync(self, user: Union[User, str]):
+        """Synchronously adds the specified user to the list of testers of Omega Psi
+
+        :param user: The Discord user or their ID
+        """
+        testers = self.get_testers_sync()
+        if not isinstance(user, str):
+            user = str(user.id)
+        testers.append(str(user))
+        self.set_testers_sync(testers)
+
+    def remove_tester_sync(self, user: Union[User, str]):
+        """Synchronously removes the specified user from the list of testers of Omega Psi
+
+        :param user: The Discord user or their ID
+        """
+        testers = self.get_testers_sync()
+        if not isinstance(user, str):
+            user = str(user.id)
+        if str(user) in testers:
+            testers.remove(str(user))
+        self.set_testers_sync(testers)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_testers(self) -> list:
+        """Asynchronously retrieves a list of testers of Omega Psi
+        This will return a list of Discord IDs
+        """
+        return await loop.run_in_executor(None, self.get_testers_sync)
+
+    async def set_testers(self, testers_data: list):
+        """Asynchronously sets the list of testers of Omega Psi
+
+        :param testers_data: A list of tester Discord IDs
+        """
+        await loop.run_in_executor(None, self.set_testers_sync, testers_data)
+
+    async def is_tester(self, user: Union[User, str]) -> bool:
+        """Asynchronously tests whether or not the specified user is a tester of Omega Psi
+
+        :param user: The Discord user or their ID
+        """
+        return await loop.run_in_executor(None, self.is_tester_sync, user)
+
+    async def add_tester(self, user: Union[User, str]):
+        """Asynchronously adds the specified user to the list of testers of Omega Psi
+
+        :param user: The Discord user or their ID
+        """
+        await loop.run_in_executor(None, self.add_tester_sync, user)
+
+    async def remove_tester(self, user: Union[User, str]):
+        """Asynchronously removes the specified user from the list of testers of Omega Psi
+
+        :param user: The Discord user or their ID
+        """
+        await loop.run_in_executor(None, self.remove_tester_sync, user)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Updates / Pending Update Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def get_updates_sync(self):
+    def get_updates_sync(self) -> list:
         """Synchronously retrieves a list of updates made to Omega Psi
 
-        Returns
-        -------
-            list
-                A list of JSON objects of updates made to Omega Psi
+        :returns: A list of JSON object of updates of the following format:
+            {
+                "date": ____,
+                "version": ____,
+                "description": ____,
+                "features": [
+                    {
+                        "feature": ____,
+                        "type": ____
+                    },
+                    ... More Features ...
+                ]
+            }
         """
         bot_data = self.get_bot_sync()
         return bot_data["updates"]
 
-    def set_updates_sync(self, updates):
+    def set_updates_sync(self, updates: list):
         """Synchronously sets the list of updates made to Omega Psi
 
-        Parameters
-        ----------
-            updates : list
-                A list of JSON object of updates made to Omega Psi
+        :param updates: A list of JSON objects for updates made to Omega Psi
         """
         bot_data = self.get_bot_sync()
         bot_data["updates"] = updates
         self.set_bot_sync(bot_data)
 
-    def get_recent_update_sync(self):
-        """Synchronously retrieves the most recent update made to Omega Psi
-
-        Returns
-        -------
-            dict
-                A JSON object of the most recent update made to Omega Psi
-        """
+    def get_recent_update_sync(self) -> dict:
+        """Synchronously retrieves the most recent update made to Omega Psi"""
         updates = self.get_updates_sync()
         return updates[0]
 
-    def get_pending_update_sync(self):
-        """Synchronously retrieves the pending update being made to Omega Psi
-
-        Returns
-        -------
-            dict
-                A JSON object of the current pending update being made to Omega Psi
-        """
+    def get_pending_update_sync(self) -> dict:
+        """Synchronously retrieves the pending update being made to Omega Psi"""
         bot_data = self.get_bot_sync()
         return bot_data["pending_update"]
 
-    def set_pending_update_sync(self, pending_update):
+    def set_pending_update_sync(self, pending_update: dict):
         """Synchronously sets the pending update being made to Omega Psi
 
-        Parameters
-        ----------
-            pending_update : dict
-                A JSON object of the pending update to set
+        :param pending_update: A JSON object of the pending update to set
         """
         bot_data = self.get_bot_sync()
         bot_data["pending_update"] = pending_update
@@ -311,15 +337,11 @@ class Bot:
                 "features": {}
             })
 
-    def commit_pending_update_sync(self, version, description):
+    def commit_pending_update_sync(self, version: str, description: str):
         """Synchronously commits and publishes the pending update as an update to Omega Psi
 
-        Parameters
-        ----------
-            version : str
-                The version of the update
-            description : str
-                The description of the update
+        :param version: The version of the update
+        :param description: The description of the update
         """
         updates = self.get_updates_sync()
         features = self.get_pending_update_sync()["features"]
@@ -339,14 +361,14 @@ class Bot:
         self.set_updates_sync(updates)
         self.set_pending_update_sync({})
 
-    def add_pending_feature_sync(self, feature, feature_type):
+    def add_pending_feature_sync(self, feature: str, feature_type: str) -> dict:
         """Synchronously adds a new pending feature to Omega Psi
 
         :param feature: The feature to add to the pending update
         :param feature_type: The type of feature that is being added to the pending update
         
-        :rtype: dict
-        :returns: The JSON object of the created feature
+        :returns: The JSON object of the created feature that contains the id,
+            the feature, the feature type, and the datetime it was added
         """
         pending_update = self.get_pending_update_sync()
         uid = uuid4()
@@ -360,14 +382,13 @@ class Bot:
         self.set_pending_update_sync(pending_update)
         return feature_json
 
-    def edit_pending_feature_sync(self, feature_id, feature, feature_type):
+    def edit_pending_feature_sync(self, feature_id: str, feature: str, feature_type: str) -> [dict, None]:
         """Synchronously edits the feature given in the pending update
 
         :param feature_id: The ID of the feature to edit
         :param feature: The new feature value
         :param feature_type: he new feature type value
             
-        :rtype: dict | None
         :returns: The JSON object of the resulting edit of the feature
             If None is returned, the feature_id was not found
         """
@@ -381,12 +402,11 @@ class Bot:
             return pending_update["features"][feature_id]
         return None
 
-    def remove_pending_feature_sync(self, feature_id):
+    def remove_pending_feature_sync(self, feature_id: str) -> [dict, None]:
         """Synchronously removes the feature given from the pending update
 
         :param feature_id: The ID of the feature to remove
             
-        :rtype: dict | None
         :returns: The JSON object of the removed feature
             If None is returned, the feature_id was not found
         """
@@ -399,38 +419,44 @@ class Bot:
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    async def get_updates(self):
+    async def get_updates(self) -> list:
         """Asynchronously retrieves a list of updates made to Omega Psi
 
-        :rtype: list
+        :returns: A list of JSON object of updates of the following format:
+            {
+                "date": ____,
+                "version": ____,
+                "description": ____,
+                "features": [
+                    {
+                        "feature": ____,
+                        "type": ____
+                    },
+                    ... More Features ...
+                ]
+            }
         """
         return await loop.run_in_executor(None, self.get_updates_sync)
 
-    async def set_updates(self, updates_data):
+    async def set_updates(self, updates_data: dict):
         """Asynchronously sets the list of updates made to Omega Psi
 
-        :param updates_data: A list of JSON object of updates made to Omega Psi
+        :param updates: A list of JSON objects for updates made to Omega Psi
         """
         await loop.run_in_executor(None, self.set_updates_sync, updates_data)
 
-    async def get_recent_update(self):
-        """Asynchronously retrieves the most recent update made to Omega Psi
-
-        :rtype: dict
-        """
+    async def get_recent_update(self) -> dict:
+        """Asynchronously retrieves the most recent update made to Omega Psi"""
         return await loop.run_in_executor(None, self.get_recent_update_sync)
 
-    async def get_pending_update(self):
-        """Asynchronously retrieves the pending update being made to Omega Psi
-
-        :rtype: dict
-        """
+    async def get_pending_update(self) -> dict:
+        """Asynchronously retrieves the pending update being made to Omega Psi"""
         return await loop.run_in_executor(None, self.get_pending_update_sync)
 
-    async def set_pending_update(self, pending_update_data):
+    async def set_pending_update(self, pending_update_data: dict):
         """Asynchronously sets the pending update being made to Omega Psi
 
-        :param pending_update_data: A JSON object of the pending update to set
+        :param pending_update: A JSON object of the pending update to set
         """
         await loop.run_in_executor(None, self.set_pending_update_sync, pending_update_data)
 
@@ -438,7 +464,7 @@ class Bot:
         """Asynchronously creates a pending update to Omega Psi"""
         await loop.run_in_executor(None, self.create_pending_update_sync)
 
-    async def commit_pending_update(self, version, description):
+    async def commit_pending_update(self, version: str, description: str):
         """Asynchronously commits and publishes the pending update as an update to Omega Psi
 
         :param version: The version of the update
@@ -446,14 +472,14 @@ class Bot:
         """
         await loop.run_in_executor(None, self.commit_pending_update_sync, version, description)
 
-    async def add_pending_feature(self, feature, feature_type):
+    async def add_pending_feature(self, feature: str, feature_type: str):
         """Asynchronously adds a new pending feature to Omega Psi
 
         :param feature: The feature to add to the pending update
         :param feature_type: The type of feature that is being added to the pending update
         
-        :rtype: dict
-        :returns: The JSON object of the created feature
+        :returns: The JSON object of the created feature that contains the id,
+            the feature, the feature type, and the datetime it was added
         """
         await loop.run_in_executor(None, self.add_pending_feature_sync, feature, feature_type)
 
@@ -461,15 +487,12 @@ class Bot:
     # Tasks Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def get_tasks_sync(self):
-        """Synchronously retrieves the task list from the database
-
-        :rtype: dict
-        """
+    def get_tasks_sync(self) -> dict:
+        """Synchronously retrieves the task list from the database"""
         bot_data = self.get_bot_sync()
         return bot_data["tasks"]
 
-    def set_tasks_sync(self, tasks):
+    def set_tasks_sync(self, tasks: dict):
         """Synchronously sets the task list in the database
 
         :param tasks: A JSON object for tasks to set in the database
@@ -478,12 +501,11 @@ class Bot:
         bot_data["tasks"] = tasks
         self.set_bot_sync(bot_data)
 
-    def add_task_sync(self, task):
+    def add_task_sync(self, task: str) -> dict:
         """Synchronously adds a new task to the task list
 
         :param task: The task to add to the database
-        
-        :rtype: dict
+
         :returns: A JSON object of the task and an ID for the task
         """
         tasks = self.get_tasks_sync()
@@ -495,13 +517,12 @@ class Bot:
             "id": str(uid)
         }
 
-    def edit_task_sync(self, task_id, task):
+    def edit_task_sync(self, task_id: str, task: str) -> [dict, None]:
         """Synchronously edits a task in the task list
 
         :param task_id: The ID of the task to edit
         :param task: The new task value
         
-        :rtype: dict | None
         :returns: The resulting task edit
             If None is returned, the task was not found
         """
@@ -515,12 +536,11 @@ class Bot:
             }
         return None
 
-    def remove_task_sync(self, task_id):
+    def remove_task_sync(self, task_id: str) -> [dict, None]:
         """Synchronously removes a task from the task list
 
         :param task_id: The ID of the task to remove
         
-        :rtype: dict | None
         :returns: The removed task
             If None is returned, the task was not found
         """
@@ -536,34 +556,33 @@ class Bot:
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    async def get_tasks(self):
-        """Asynchronously retrieves the task list from the database
-
-        :rtype: dict
-        """
+    async def get_tasks(self) -> dict:
+        """Asynchronously retrieves the task list from the database"""
         return await loop.run_in_executor(None, self.get_tasks_sync)
 
-    async def set_tasks(self, tasks_data):
+    async def set_tasks(self, tasks_data: dict):
         """Asynchronously sets the task list in the database
 
-        :param tasks_data: A JSON object for tasks to set in the database
+        :param tasks: A JSON object for tasks to set in the database
         """
         await loop.run_in_executor(None, self.set_tasks_sync, tasks_data)
 
-    async def add_task(self, task):
+    async def add_task(self, task: str) -> dict:
         """Asynchronously adds a new task to the task list
 
         :param task: The task to add to the database
-        """
-        await loop.run_in_executor(None, self.add_task_sync, task)
 
-    async def remove_task(self, task_id):
+        :returns: A JSON object of the task and an ID for the task
+        """
+        return await loop.run_in_executor(None, self.add_task_sync, task)
+
+    async def remove_task(self, task_id: str) -> [dict, None]:
         """Asynchronously removes a task from the task list
 
         :param task_id: The ID of the task to remove
         
-        :rtype: dict:
         :returns: The removed task
+            If None is returned, the task was not found
         """
         return await loop.run_in_executor(None, self.remove_task_sync, task_id)
 
