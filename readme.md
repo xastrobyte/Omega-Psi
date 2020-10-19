@@ -1,4 +1,5 @@
 [![Run on Repl.it](https://repl.it/badge/github/fellowhashbrown/Omega-Psi)](https://repl.it/github/fellowhashbrown/Omega-Psi)
+[![Add to Server](https://img.shields.io/badge/-Add%20Omega%20Psi%20to%20Server-important)](https://discord.com/oauth2/authorize?client_id=535587516816949248&scope=bot&permissions=519232)
 
 [![Discord Bots](https://top.gg/api/widget/owner/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 [![Discord Bots](https://top.gg/api/widget/status/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
@@ -10,7 +11,6 @@ Support Server: [![Discord Server](https://img.shields.io/discord/52118503896920
 
 Omega Psi Discord Bot
 ===
-[Add Omega Psi to Your Own Server](https://discordapp.com/oauth2/authorize?client_id=535587516816949248&scope=bot&permissions=519232)
 
 The default prefix is `o.` or you can mention it (i.e. `@Omega Psi#0025`). A server manager can change the prefix in case `o.` conflicts with another bot in the server
 

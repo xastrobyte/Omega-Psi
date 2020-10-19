@@ -25,7 +25,7 @@ keys = {
 
 class Page:
 
-    def __init__(self, *, title = None, description = None, homepage = False, target = None, ignore = False, sections = [], custom_html = None, custom_title = None, custom_description = None, custom_icon = None):
+    def __init__(self, *, title = None, description = None, homepage = False, target = None, ignore = False, sections = [], custom_html = None, custom_title = None, custom_description = None, custom_icon = None, strict_title = False):
 
         self._sections = sections
 
@@ -35,6 +35,7 @@ class Page:
         self._custom_html = custom_html
 
         self._title = title
+        self._strict_title = strict_title
         self._description = description
         self._homepage = homepage
 
@@ -77,7 +78,7 @@ class Page:
         html = (
                 """
                 <h1 class="page-title">
-                    <span class="section-name"><code class="field">website</code><code>.</code></span><code class="field">{}</code><code>();</code>
+                    {}
                 </h1>
 
                 <div class="page-title-block" style="max-width: 75%;">
@@ -93,6 +94,9 @@ class Page:
                 """
         )
 
+        page_title = "<span class=\"section-name\"><code class=\"field\">website</code><code>.</code></span><code class=\"field\">{}</code><code>();</code>"
+        page_title = page_title.format(self.get_title()) if not self._strict_title else self.get_title()
+
         # Generate section html if there is not a custom html
         sections = ""
         if self.get_custom_html() == None:
@@ -100,7 +104,7 @@ class Page:
                 sections += section.generate_html() + "\n"
         
         return html.format(
-            self.get_title(),
+            page_title,
             self.get_description(),
             sections if self.get_custom_html() == None else self.get_custom_html()
         )
@@ -159,11 +163,12 @@ class KeySection:
 
 class Section:
 
-    def __init__(self, *, title = None, description = None, commands = []):
+    def __init__(self, *, title = None, description = None, commands = [], strict_title = False):
         self._title = title
         self._commands = commands
 
         self._description = description
+        self._strict_title = strict_title
     
     def get_title(self):
         return self._title
@@ -179,16 +184,19 @@ class Section:
                 """
                 <h2 class="page-section">
                     <a name="{}"></a>
-                    <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">{}</code><code>();</code>
+                    {}
                 </h2>
                 <div class="page-section-block" style="text-align: center;">
-                    <p style="text-align: center;">
+                    <p style="text-align: {};">
                         {}
                     </p>
                     {}
                 </div>
                 """
         )
+
+        page_title = "<span class=\"section-name\"><code class=\"field\">page</code><code>.</code></span><code class=\"field\">{}</code><code>();</code>"
+        page_title = page_title.format(self.get_title()) if not self._strict_title else self.get_title()
 
         # Generate command html
         command_html = (
@@ -204,7 +212,8 @@ class Section:
 
         return html.format(
             self.get_title(),
-            self.get_title(),
+            page_title,
+            "left" if len(commands) == 0 else "center",
             self.get_description(),
             command_html.format(commands)
         )

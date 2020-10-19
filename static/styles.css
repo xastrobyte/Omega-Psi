@@ -382,7 +382,6 @@ tr {
 }
 
 .page-section-block {
-  padding: 5px;
   margin-left: 10%;
   margin-right: 10%;
   width: 80%;
@@ -538,38 +537,117 @@ tr {
   color: #678cb1;
 }
 
-/*
-.nav-link {
-  display: inline-block;
-  text-align: center;
-  margin-left: 1px;
-  margin-right: 1px;
-  color: #E0E2E4;
-  text-decoration: none;
-  font-weight: bold;
-  padding: 2em 1em 2em 1em;
+.topnav {
+    width: 100%;
+    height: 75px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    border-bottom: 1px solid #808080;
+    background-color: #202020;
+    display: flex;
 }
 
-.nav-link:hover {
-	color: #678cb1;
+.breadcrumbs {
+    width: 100%;
+    height: 100px;
+    position: fixed;
+    background-color: #202020;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    border-bottom: 1px solid #808080;
+    display: flex;
 }
 
-.nav-link::before {
-	content: '';
-	display: block;
-	vertical-align: bottom;
-	height: 5px;
-	background-color: #678cb1;
-	width: 0%;
-	
-	transition: all ease-in-out 150ms;
+.breadcrumbs span {
+    padding-left: 1%;
+    align-self: flex-end;
+    color: #E0E2E4;
+    transition: margin-left 0.3s;
+    font-family: 'Cutive Mono', monospace;
 }
 
-.nav-link:hover::before {
-	color: #EC7600;
-	width: 100%;
+.navbar { 
+    height: 100%;
+    width: 0;
+    max-width: 200px;
+    display: block;
+    position: fixed;
+    z-index: 4;
+    top: 0;
+    left: 0;
+    justify-content: left;
+    background-color: #222;
+    overflow-x: hidden;
+    transition: 0.3s;
 }
-*/
+
+.navbar a, .dropdown-button {
+    top: 0;
+    left: 0;
+    padding: 5px 5px;
+    text-decoration: none;
+    font-size: 2vw;
+    color: #678CB1;
+    display: block;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    transition: 0.3s;
+    font-family: 'Cutive Mono', monospace;
+}
+
+.navbar a:hover, .dropdown-button:hover {
+    color: #EC7600;
+}
+
+.navbar .dropdown-content a {
+    font-size: 2vw;
+}
+
+.navbar * {
+    padding: 5px;
+}
+
+.openbutton {
+    position: absolute;
+    width: 25px;
+    height: 75px;
+    margin: 0;
+    background-color: #202020;
+    color: white;
+    border: 1px solid #808080;
+    border-radius: 5px;
+    font-family: 'Cutive Mono', monospace;
+    font-size: 1vw;
+    transition: margin-left 0.3s;
+}
+
+.openbutton:hover {
+    background-color: #678CB1;
+}
+
+.active {
+    color: #EC7600;
+}
+
+.dropdown-content {
+    display: none;
+    border: 1px solid #808080;
+    border-radius: 5px;
+    background-color: #1C1C1C;
+    padding-left: 8px;
+}
+
+.no-border {
+    border: 0;
+}
+
 
 #nav-toggle input {
 	opacity: 0;
