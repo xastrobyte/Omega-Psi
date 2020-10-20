@@ -4,9 +4,8 @@ from discord import Embed
 from discord.ext.commands import Cog, group, command
 from os import environ
 
-from cogs.errors import (
-    NotADeveloper, NOT_A_DEVELOPER_ERROR, get_error_message
-)
+from cogs.errors import get_error_message
+
 from cogs.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, SCROLL_REACTIONS
 from cogs.globals import OMEGA_PSI_CREATION
 from cogs.predicates import is_developer
@@ -822,20 +821,6 @@ class Bot(Cog, name="bot"):
         )
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    @tasks_add.error
-    @tasks_remove.error
-    async def error_handling(self, ctx, error):
-        """Handles the error for this module
-
-        :param ctx: The context of where the message was sent
-        :param error: The error that occurred
-        """
-
-        # Check if the user who called the commands is not a developer
-        if isinstance(error, NotADeveloper):
-            await ctx.send(embed=NOT_A_DEVELOPER_ERROR)
-
 
 def setup(bot):
     """Add's this cog to the bot

@@ -530,10 +530,10 @@ class Game(Cog, name="game"):
                                 title="Smart or Random?",
                                 description=(
                                     "React with {} if you want the AI to be smart.\n" +
-                                    "React with {} if you want the AI to be random.".format(
+                                    "React with {} if you want the AI to be random."
+                                    ).format(
                                         SMART, RANDOM
-                                    )
-                                ),
+                                    ),
                                 colour=await get_embed_color(ctx.author)
                             )
                         )

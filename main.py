@@ -9,7 +9,8 @@ from cogs.errors import (
     COMMAND_FAILED_ERROR, 
     CommandDisabled, COMMAND_DISABLED_ERROR, 
     NotNSFWOrGuild, NOT_NSFW_OR_GUILD_ERROR,
-    NotADeveloper, NOT_A_DEVELOPER_ERROR)
+    NotADeveloper, NOT_A_DEVELOPER_ERROR,
+    NotAGuildManager, NOT_A_GUILD_MANAGER_ERROR)
 
 from cogs.help_command import Help, cogs
 from cogs.predicates import get_prefix, is_command_enabled_predicate
@@ -110,6 +111,10 @@ async def on_command_error(ctx, error):
     # Check if the error pertains to not_a_developer error
     elif isinstance(error, NotADeveloper):
         await ctx.send(embed = NOT_A_DEVELOPER_ERROR)
+    
+    # Check if the error pertains to not_a_guild_manager error
+    elif isinstance(error, NotAGuildManager):
+        await ctx.send(embed = NOT_A_GUILD_MANAGER_ERROR)
 
     # Display that the command failed at some point to the user
     #   and send the error to the error channel

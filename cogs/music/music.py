@@ -11,7 +11,7 @@ from cogs.predicates import guild_manager
 from cogs.errors import (
     NOT_IN_VOICE_CHANNEL_ERROR, ALREADY_IN_VOICE_CHANNEL_ERROR, EMPTY_QUEUE_ERROR,
     ALREADY_VOTED_ERROR, NOTHING_PLAYING_ERROR, INVALID_VOLUME_ERROR,
-    MUSIC_NOT_FOUND_ERROR, get_error_message)
+    MUSIC_NOT_FOUND_ERROR, get_error_message, NotAGuildManager, NOT_A_GUILD_MANAGER_ERROR)
 
 from util.discord import get_embed_color
 from util.database.database import database
@@ -111,21 +111,28 @@ class Music(Cog, name="music"):
         description = "Sets the volume of the music!",
         cog_name="music"
     )
-    async def volume(self, ctx: Context, *, volume: int):
+    async def volume(self, ctx: Context, *, volume: [int, float] = None):
         """Sets the volume of the player.
 
         :param ctx: The context of where the message was sent
         :param volume: The volume to set the music of
         """
+        
+        try:
+            volume = int(volume)
+            if not ctx.voice_state.is_playing:
+                await ctx.send(embed=NOTHING_PLAYING_ERROR)
 
-        if not ctx.voice_state.is_playing:
-            return await ctx.send(embed=NOTHING_PLAYING_ERROR)
+            elif volume < 0 or volume > 100:
+                await ctx.send(embed=INVALID_VOLUME_ERROR(volume))
 
-        if 0 > volume > 100:
-            return await ctx.send(embed=INVALID_VOLUME_ERROR(volume))
-
-        ctx.voice_state.volume = volume / 100
-        await ctx.send('Volume of the player set to {}%'.format(volume))
+            else:
+                ctx.voice_state.volume = volume / 100
+                await ctx.send('Volume of the player set to {}%'.format(volume))
+        except ValueError:
+            await ctx.send(embed=get_error_message(
+                "That's an invalid volume :eyes:"
+            ))
 
     @command(
         name='now', aliases=['current', 'playing'],
@@ -353,7 +360,7 @@ class Music(Cog, name="music"):
             playlists_data = await database.guilds.get_playlists(ctx.guild)
             no_playlists = len(playlists_data) == 0
             await ctx.send(embed = Embed(
-                title = "{}Saved Playlists".format("No "),
+                title = "{}Saved Playlists".format("No " if no_playlists else ""),
                 description = "\n".join(list(playlists_data.keys())) if not no_playlists else "_ _",
                 colour = await get_embed_color(ctx.author)
             ))
@@ -386,14 +393,21 @@ class Music(Cog, name="music"):
                 "You must specify a playlist name!"
             ))
         
-        # Otherwise, create the playlist in the server database
-        else:
+        # Check that the name is alphanumeric
+        elif name.isalnum():
             await database.guilds.create_playlist(ctx.guild, name)
             await ctx.send(embed=Embed(
                 title = "Playlist Created!",
                 description = f"The playlist `{name}` was created!",
                 colour = await get_embed_color(ctx.author)
             ))
+        
+        # Otherwise, create the playlist in the server database
+        else:
+            await ctx.send(embed=get_error_message(
+                "You can't set a playlist name that isn't alphanumeric :eyes:"
+            ))
+            
     
     @playlist.command(
         name="delete",
@@ -423,15 +437,24 @@ class Music(Cog, name="music"):
                 u.id == ctx.author.id and
                 r.message.id == confirm_message.id
             ))
-            await database.guilds.delete_playlist(ctx.guild, name)
             await confirm_message.delete()
-            await ctx.send(
-                embed=Embed(
-                    title = f"Playlist {name} Deleted",
-                    description = "_ _",
-                    colour = await get_embed_color(ctx.author)
+            if str(reaction) == "✅":
+                await database.guilds.delete_playlist(ctx.guild, name)
+                await ctx.send(
+                    embed=Embed(
+                        title = f"Playlist {name} Deleted",
+                        description = "_ _",
+                        colour = await get_embed_color(ctx.author)
+                    )
                 )
-            )
+            else:
+                await ctx.send(
+                    embed = Embed(
+                        title = f"Playlist {name} Not Deleted",
+                        description = "smart move :ok_hand:",
+                        colour = await get_embed_color(ctx.author)
+                    )
+                )
         
         # The playlist does not exist
         else:
@@ -443,7 +466,7 @@ class Music(Cog, name="music"):
         cog_name="music"
     )
     @guild_manager()
-    async def playlist_add(self, ctx: Context, playlist = None, *, song = None):
+    async def playlist_add(self, ctx: Context, playlist: str = None, *, song: str = None):
         
         # Check if no playlist is given
         if playlist is None:
@@ -478,7 +501,7 @@ class Music(Cog, name="music"):
         cog_name="music"
     )
     @guild_manager()
-    async def playlist_remove(self, ctx: Context, playlist: str = None, *, index: int = None):
+    async def playlist_remove(self, ctx: Context, playlist = None, *, index = None):
         
         # Check if the playlist is not given
         if playlist is None:
@@ -494,13 +517,17 @@ class Music(Cog, name="music"):
         
         # Check if the playlist exists
         elif await database.guilds.does_playlist_exist(ctx.guild, playlist):
-            song = await database.guilds.remove_song_from_playlist(ctx.guild, playlist, index)
-            await ctx.send(embed=Embed(
-                title = "Song {}Removed!".format("" if song is not None else "Not "),
-                description = f"`{song}` was removed from the playlist `{playlist}`"
-                    if song is not None else "That song number does not exist!",
-                colour = await get_embed_color(ctx.author)
-            ))
+            try:
+                index = int(index)
+                song = await database.guilds.remove_song_from_playlist(ctx.guild, playlist, index)
+                await ctx.send(embed=Embed(
+                    title = "Song {}Removed!".format("" if song is not None else "Not "),
+                    description = f"`{song}` was removed from the playlist `{playlist}`"
+                        if song is not None else "That song number does not exist!",
+                    colour = await get_embed_color(ctx.author)
+                ))
+            except TypeError:
+                await ctx.send(embed=get_error_message("That's not an integer ..."))
         
         # The playlist does not exist
         else:

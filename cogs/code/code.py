@@ -82,7 +82,7 @@ WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={
 WOLFRAM_ALPHA_ICON = "https://cdn.iconscout.com/icon/free/png-512/wolfram-alpha-2-569293.png"
 
 JUDGE_POST_API_CALL = "https://judge0.p.rapidapi.com/submissions/"
-JUDGE_GET_API_CALL = "https://judge0.p.rapidapi.com/submissions/{}?fields=stdout,stderr,time,status"
+JUDGE_GET_API_CALL = "https://judge0.p.rapidapi.com/submissions/{}?fields=stdout,stderr,time,status&base64_encoded=true"
 JUDGE_GET_LANGUAGES_API_CALL = "https://judge0.p.rapidapi.com/languages"
 
 LANGUAGES = {
@@ -1445,7 +1445,11 @@ class Code(Cog, name = "code"):
                 )
             )
             response = response.json()
-            print(response)
+            if "error" in response:
+                await ctx.send(embed=get_error_message(
+                    response["error"]
+                ))
+                return
             if response["status"]["id"] not in [1, 2]: # ID 1 and 2 is in queue and processing the code
                 break
         

@@ -9,7 +9,7 @@ from sys import executable, argv
 from cogs.errors import get_error_message
 from cogs.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, CHECK_MARK, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, \
     NEXT_PAGE, LEAVE, loop, NOT_CONSIDER, CONSIDER
-from cogs.predicates import is_developer, is_tester
+from cogs.predicates import is_developer
 
 from util.database.database import database
 from util.discord import update_top_gg
@@ -104,7 +104,7 @@ class Developer(Cog, name="developer"):
         description="Adds a new tester to the bot.",
         cog_name="tester"
     )
-    @is_tester()
+    @is_developer()
     async def add_tester(self, ctx, members: Greedy[Member] = []):
         """Adds a tester to the list of testers of Omega Psi
 
@@ -144,7 +144,7 @@ class Developer(Cog, name="developer"):
         description="Allows you to remove a tester from the bot.",
         cog_name="bot"
     )
-    @is_tester()
+    @is_developer()
     async def remove_tester(self, ctx, members: Greedy[Member] = []):
         """Removes a tester from the list of testers of Omega Psi
 
