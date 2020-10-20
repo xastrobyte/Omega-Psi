@@ -203,7 +203,7 @@ class Code(Cog, name = "code"):
         description = "Let's you convert numbers from one base to another.",
         cog_name = "code"
     )
-    async def convert(self, ctx, start_base : int = None, end_base : int = None, value : str = None):
+    async def convert(self, ctx, start_base=None, end_base=None, value=None):
         """Allows the user to convert numbers from one base to another
 
         :param ctx: The context of where the message was sent
@@ -287,7 +287,7 @@ class Code(Cog, name = "code"):
         description = "Encodes text into decimal values using ASCII values",
         cog_name = "code"
     )
-    async def text_to_decimal_encode(self, ctx, *, text = None):
+    async def text_to_decimal_encode(self, ctx, *, text=None):
         """Allows the user to convert text to its ASCII equivalent
 
         :param ctx: The context of where the message was sent
@@ -324,7 +324,7 @@ class Code(Cog, name = "code"):
         description = "Decodes decimal values into text using ASCII values",
         cog_name = "code"
     )
-    async def text_to_decimal_decode(self, ctx, *, text = None):
+    async def text_to_decimal_decode(self, ctx, *, text=None):
         """Allows the user to convert ASCII values into text
 
         :param ctx: The context of where the message was sent
@@ -401,7 +401,7 @@ class Code(Cog, name = "code"):
         description = "Encode regular text into Base64.",
         cog_name = "code"
     )
-    async def base_64_encode(self, ctx, *, text : str = None):
+    async def base_64_encode(self, ctx, *, text: str=None):
         """Allows the user to convert text into Base-64
 
         :param ctx: The context of where the message was sent
@@ -428,7 +428,7 @@ class Code(Cog, name = "code"):
         description = "Decode Base64 text into regular text.",
         cog_name = "code"
     )
-    async def base_64_decode(self, ctx, *, text : str = None):
+    async def base_64_decode(self, ctx, *, text: str=None):
         """Allows the user to convert text from Base-64
 
         :param ctx: The context of where the message was sent
@@ -517,7 +517,7 @@ class Code(Cog, name = "code"):
         description = "Encode regular text into Morse code.",
         cog_name = "code"
     )
-    async def text_to_morse_encode(self, ctx, *, text : str = None):
+    async def text_to_morse_encode(self, ctx, *, text: str=None):
         """Allows the user to convert text into Morse
 
         :param ctx: The context of where the message was sent
@@ -552,7 +552,7 @@ class Code(Cog, name = "code"):
         description = "Decode Morse code into regular text.",
         cog_name = "code"
     )
-    async def text_to_morse_decode(self, ctx, *, text : str = None):
+    async def text_to_morse_decode(self, ctx, *, text: str=None):
         """Allows the user to convert Morse into text
 
         :param ctx: The context of where the message was sent
@@ -607,7 +607,7 @@ class Code(Cog, name = "code"):
         description = "Encodes text into binary using ASCII values",
         cog_name = "code"
     )
-    async def text_to_binary_encode(self, ctx, *, text = None):
+    async def text_to_binary_encode(self, ctx, *, text: str=None):
         """Allows the user to convert text into binary
 
         :param ctx: The context of where the message was sent
@@ -644,7 +644,7 @@ class Code(Cog, name = "code"):
         description = "Decodes binary into text using ASCII values",
         cog_name = "code"
     )
-    async def text_to_binary_decode(self, ctx, *, text = None):
+    async def text_to_binary_decode(self, ctx, *, text: str=None):
         """Allows the user to convert binary to text
 
         :param ctx: The context of where the message was sent
@@ -721,7 +721,7 @@ class Code(Cog, name = "code"):
         description = "Encodes text into octal using ASCII values",
         cog_name = "code"
     )
-    async def text_to_octal_encode(self, ctx, *, text = None):
+    async def text_to_octal_encode(self, ctx, *, text: str=None):
         """Allows the user to convert text into octal
 
         :param ctx: The context of where the message was sent
@@ -758,7 +758,7 @@ class Code(Cog, name = "code"):
         description = "Decodes octal into text using ASCII values",
         cog_name = "code"
     )
-    async def text_to_octal_decode(self, ctx, *, text = None):
+    async def text_to_octal_decode(self, ctx, *, text: str=None):
         """Allows the user to convert octal into text
 
         :param ctx: The context of where the message was sent
@@ -835,7 +835,7 @@ class Code(Cog, name = "code"):
         description = "Encodes text into hex using ASCII values",
         cog_name = "code"
     )
-    async def text_to_hex_encode(self, ctx, *, text = None):
+    async def text_to_hex_encode(self, ctx, *, text: str=None):
         """Allows the user to convert text into hex
 
         :param ctx: The context of where the message was sent
@@ -872,7 +872,7 @@ class Code(Cog, name = "code"):
         description = "Decodes hex into text using ASCII values",
         cog_name = "code"
     )
-    async def text_to_hex_decode(self, ctx, *, text = None):
+    async def text_to_hex_decode(self, ctx, *, text: str= None):
         """Allows the user to convert hex into text
 
         :param ctx: The context of where the message was sent
@@ -929,7 +929,7 @@ class Code(Cog, name = "code"):
         description = "Create a QR code from given text.",
         cog_name = "code"
     )
-    async def qr_code(self, ctx, *, text : str = None):
+    async def qr_code(self, ctx, *, text: str=None):
         """Allows the user to generate a QR code from text
 
         :param ctx: The context of where the message was sent
@@ -962,7 +962,7 @@ class Code(Cog, name = "code"):
         description = "Allows you to get a truth table for a logical expression and the expression simplified.",
         cog_name = "code"
     )
-    async def logic(self, ctx, *, expression : str = None):
+    async def logic(self, ctx, *, expression: str=None):
         """Allows the user retrieve a truth table from a logical expression
 
         :param ctx: The context of where the message was sent
@@ -1185,7 +1185,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["bash"]["name"]),
         cog_name = "code"
     )
-    async def execute_bash(self, ctx, *, code : str = None):
+    async def execute_bash(self, ctx, *, code: str=None):
         """Allows the user to execute Bash code
 
         :param ctx: The context of where the message was sent
@@ -1198,7 +1198,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["basic"]["name"]),
         cog_name = "code"
     )
-    async def execute_basic(self, ctx, *, code : str = None):
+    async def execute_basic(self, ctx, *, code: str=None):
         """Allows the user to execute BASIC code
 
         :param ctx: The context of where the message was sent
@@ -1211,7 +1211,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["c"]["name"]),
         cog_name = "code"
     )
-    async def execute_c(self, ctx, *, code : str = None):
+    async def execute_c(self, ctx, *, code: str=None):
         """Allows the user to execute C code
 
         :param ctx: The context of where the message was sent
@@ -1224,7 +1224,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["c++"]["name"]),
         cog_name = "code"
     )
-    async def execute_cpp(self, ctx, *, code : str = None):
+    async def execute_cpp(self, ctx, *, code: str=None):
         """Allows the user to execute C++ code
 
         :param ctx: The context of where the message was sent
@@ -1237,7 +1237,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["c#"]["name"]),
         cog_name = "code"
     )
-    async def execute_csharp(self, ctx, *, code : str = None):
+    async def execute_csharp(self, ctx, *, code: str=None):
         """Allows the user to execute C# code
 
         :param ctx: The context of where the message was sent
@@ -1250,7 +1250,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["go"]["name"]),
         cog_name = "code"
     )
-    async def execute_go(self, ctx, *, code : str = None):
+    async def execute_go(self, ctx, *, code: str=None):
         """Allows the user to execute Go code
 
         :param ctx: The context of where the message was sent
@@ -1263,7 +1263,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["haskell"]["name"]),
         cog_name = "code"
     )
-    async def execute_haskell(self, ctx, *, code : str = None):
+    async def execute_haskell(self, ctx, *, code: str=None):
         """Allows the user to execute Haskell code
 
         :param ctx: The context of where the message was sent
@@ -1276,7 +1276,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["fortran"]["name"]),
         cog_name = "code"
     )
-    async def execute_fortran(self, ctx, *, code : str = None):
+    async def execute_fortran(self, ctx, *, code: str=None):
         """Allows the user to execute Fortran code
 
         :param ctx: The context of where the message was sent
@@ -1289,7 +1289,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["java"]["name"]),
         cog_name = "code"
     )
-    async def execute_java(self, ctx, *, code : str = None):
+    async def execute_java(self, ctx, *, code: str=None):
         """Allows the user to execute Java code
 
         :param ctx: The context of where the message was sent
@@ -1303,7 +1303,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["javascript"]["name"]),
         cog_name = "code"
     )
-    async def execute_javascript(self, ctx, *, code : str = None):
+    async def execute_javascript(self, ctx, *, code: str=None):
         """Allows the user to execute JavaScript code
 
         :param ctx: The context of where the message was sent
@@ -1316,7 +1316,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["pascal"]["name"]),
         cog_name = "code"
     )
-    async def execute_pascal(self, ctx, *, code : str = None):
+    async def execute_pascal(self, ctx, *, code: str=None):
         """Allows the user to execute Pascal code
 
         :param ctx: The context of where the message was sent
@@ -1329,7 +1329,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["php"]["name"]),
         cog_name = "code"
     )
-    async def execute_php(self, ctx, *, code : str = None):
+    async def execute_php(self, ctx, *, code: str=None):
         """Allows the user to execute PHP code
 
         :param ctx: The context of where the message was sent
@@ -1342,7 +1342,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["prolog"]["name"]),
         cog_name = "code"
     )
-    async def execute_prolog(self, ctx, *, code : str = None):
+    async def execute_prolog(self, ctx, *, code: str=None):
         """Allows the user to execute Prolog code
 
         :param ctx: The context of where the message was sent
@@ -1355,7 +1355,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["python"]["name"]),
         cog_name = "code"
     )
-    async def execute_python(self, ctx, *, code : str = None):
+    async def execute_python(self, ctx, *, code: str=None):
         """Allows the user to execute Python code
 
         :param ctx: The context of where the message was sent
@@ -1368,7 +1368,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["ruby"]["name"]),
         cog_name = "code"
     )
-    async def execute_ruby(self, ctx, *, code : str = None):
+    async def execute_ruby(self, ctx, *, code: str=None):
         """Allows the user to execute Ruby code
 
         :param ctx: The context of where the message was sent
@@ -1381,7 +1381,7 @@ class Code(Cog, name = "code"):
         description = "Run code using the {} language.".format(LANGUAGES["rust"]["name"]),
         cog_name = "code"
     )
-    async def execute_rust(self, ctx, *, code : str = None):
+    async def execute_rust(self, ctx, *, code: str=None):
         """Allows the user to execute Rust code
 
         :param ctx: The context of where the message was sent

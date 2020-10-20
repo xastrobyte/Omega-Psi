@@ -128,7 +128,7 @@ class Misc(Cog, name = "misc"):
         description = "Gives you the information about a color given the HEX code.",
         cog_name = "misc"
     )
-    async def color(self, ctx, hex_code = None):
+    async def color(self, ctx, hex_code: str=None):
         """Allows a user to get info about a color
 
         :param ctx: The context of where the message was sent
@@ -171,7 +171,7 @@ class Misc(Cog, name = "misc"):
         description = "Gives you text but in Emoji style.",
         cog_name = "misc"
     )
-    async def emojify(self, ctx, *, text = None):
+    async def emojify(self, ctx, *, text: str=None):
         """Allows a user to emojify a piece of text
 
         :param ctx: The context of where the message was sent
@@ -209,7 +209,7 @@ class Misc(Cog, name = "misc"):
         description = "Sets the color of the embed for all embeds that are sent.",
         cog_name = "misc"
     )
-    async def set_embed_color(self, ctx, hex_code = None):
+    async def set_embed_color(self, ctx, hex_code: str=None):
         """Allows a user to set their embed color when using the bot
 
         :param ctx: The context of where the message was sent
@@ -293,7 +293,7 @@ class Misc(Cog, name = "misc"):
         description = "Sends a robohash avatar based off the text you enter.",
         cog_name = "image"
     )
-    async def robohash(self, ctx, *, text = None):
+    async def robohash(self, ctx, *, text: str=None):
         
         # Generate personal robohash if content is empty
         if text == None:
@@ -421,7 +421,7 @@ class Misc(Cog, name = "misc"):
         description = "Gives you information about a movie on IMDb.",
         cog_name = "misc"
     )
-    async def movie(self, ctx, *, movie = None):
+    async def movie(self, ctx, *, movie: str=None):
         """Allows a user to search up movie information from IMDb
 
         :param ctx: The context of where the message was sent
@@ -457,7 +457,7 @@ class Misc(Cog, name = "misc"):
         description = "Gives you information about a TV show on IMDb.",
         cog_name = "misc"
     )
-    async def tv_show(self, ctx, *, tv_show = None):
+    async def tv_show(self, ctx, *, tv_show: str=None):
         """Allows a user to search up tv show information from IMDb
 
         :param ctx: The context of where the message was sent

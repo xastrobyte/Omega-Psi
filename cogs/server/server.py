@@ -97,7 +97,7 @@ class Server(Cog, name="server"):
         cog_name="server"
     )
     @guild_only()
-    async def user_info(self, ctx, *, user: Union[Member, str] = None):
+    async def user_info(self, ctx, *, user: Union[Member, str]=None):
         """Allows a user to retrieve info on a user or themselves
 
         :param ctx: The context of where the message was sent
@@ -196,7 +196,7 @@ class Server(Cog, name="server"):
     )
     @guild_only()
     @guild_manager()
-    async def prefix(self, ctx, *, prefix: str = None):
+    async def prefix(self, ctx, *, prefix: str=None):
         """Allows a user to change the prefix for a server
         only if they're a guild manager
 
@@ -238,7 +238,7 @@ class Server(Cog, name="server"):
     )
     @guild_only()
     @guild_manager()
-    async def enable_command(self, ctx, cmd=None):
+    async def enable_command(self, ctx, cmd: str=None):
         """Allows a user to enable a command in the guild
         if they're a guild manager
 
@@ -286,7 +286,7 @@ class Server(Cog, name="server"):
     )
     @guild_only()
     @guild_manager()
-    async def disable_command(self, ctx, cmd=None):
+    async def disable_command(self, ctx, cmd: str=None):
         """Allows a user to disable a command in the guild
         as long as they're a guild manager
 
