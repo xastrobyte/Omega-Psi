@@ -11,7 +11,7 @@ from cogs.predicates import guild_manager
 from cogs.errors import (
     NOT_IN_VOICE_CHANNEL_ERROR, ALREADY_IN_VOICE_CHANNEL_ERROR, EMPTY_QUEUE_ERROR,
     ALREADY_VOTED_ERROR, NOTHING_PLAYING_ERROR, INVALID_VOLUME_ERROR,
-    MUSIC_NOT_FOUND_ERROR, get_error_message, NotAGuildManager, NOT_A_GUILD_MANAGER_ERROR)
+    MUSIC_NOT_FOUND_ERROR, get_error_message)
 
 from util.discord import get_embed_color
 from util.database.database import database
@@ -61,8 +61,9 @@ class Music(Cog, name="music"):
         destination = ctx.author.voice.channel
         if ctx.voice_state.voice:
             await ctx.voice_state.voice.move_to(destination)
-            return
-        ctx.voice_state.voice = await destination.connect()
+            
+        else:
+            ctx.voice_state.voice = await destination.connect()
 
     @command(
         name='summon',
@@ -101,17 +102,18 @@ class Music(Cog, name="music"):
         """
 
         if not ctx.voice_state.voice:
-            return await ctx.send(embed = NOT_IN_VOICE_CHANNEL_ERROR)
+            await ctx.send(embed = NOT_IN_VOICE_CHANNEL_ERROR)
 
-        await ctx.voice_state.stop()
-        del self.voice_states[ctx.guild.id]
+        else:
+            await ctx.voice_state.stop()
+            del self.voice_states[ctx.guild.id]
 
     @command(
         name='volume',
         description = "Sets the volume of the music!",
         cog_name="music"
     )
-    async def volume(self, ctx: Context, *, volume: [int, float] = None):
+    async def volume(self, ctx: Context, *, volume=None):
         """Sets the volume of the player.
 
         :param ctx: The context of where the message was sent
@@ -144,9 +146,13 @@ class Music(Cog, name="music"):
 
         :param ctx: The context of where the message was sent
         """
-        await ctx.send(embed=ctx.voice_state.current.create_embed(
-            await get_embed_color(ctx.author)
-        ))
+
+        if ctx.voice_state.voice.is_playing():
+            await ctx.send(embed=ctx.voice_state.current.create_embed(
+                await get_embed_color(ctx.author)
+            ))
+        else:
+            await ctx.send(embed=NOTHING_PLAYING_ERROR)
 
     @command(
         name='pause',
@@ -233,33 +239,40 @@ class Music(Cog, name="music"):
         description="Show the queue of which songs are next!",
         cog_name="music"
     )
-    async def queue(self, ctx: Context, *, page: int = 1):
+    async def queue(self, ctx: Context, *, page=None):
         """Shows the player's queue.
 
         You can optionally specify the page to show. Each page contains 10 elements.
         """
+        
+        if page is None:
+            page = 1
 
-        if len(ctx.voice_state.songs) == 0:
-            return await ctx.send(embed=EMPTY_QUEUE_ERROR)
+        try:
+            page = int(page)
+            if len(ctx.voice_state.songs) == 0:
+                return await ctx.send(embed=EMPTY_QUEUE_ERROR)
 
-        items_per_page = 10
-        pages = math.ceil(len(ctx.voice_state.songs) / items_per_page)
+            items_per_page = 10
+            pages = math.ceil(len(ctx.voice_state.songs) / items_per_page)
 
-        start = (page - 1) * items_per_page
-        end = start + items_per_page
+            start = (page - 1) * items_per_page
+            end = start + items_per_page
 
-        queue = ''
-        for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
-            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
+            queue = ''
+            for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
+                queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
 
-        embed = Embed(
-            description='**{} tracks:**\n\n{}'.format(
-                len(ctx.voice_state.songs), 
-                queue
-            )).set_footer(
-                text='Viewing page {}/{}'.format(page, pages)
-            )
-        await ctx.send(embed=embed)
+            embed = Embed(
+                description='**{} tracks:**\n\n{}'.format(
+                    len(ctx.voice_state.songs), 
+                    queue
+                )).set_footer(
+                    text='Viewing page {}/{}'.format(page, pages)
+                )
+            await ctx.send(embed=embed)
+        except TypeError:
+            await ctx.send(embed=get_error_message("That is not a valid page number!"))
 
     @command(
         name='shuffle',
@@ -270,10 +283,11 @@ class Music(Cog, name="music"):
         """Shuffles the queue."""
 
         if len(ctx.voice_state.songs) == 0:
-            return await ctx.send(embed=EMPTY_QUEUE_ERROR)
+            await ctx.send(embed=EMPTY_QUEUE_ERROR)
 
-        ctx.voice_state.songs.shuffle()
-        await ctx.message.add_reaction('✅')
+        else:
+            ctx.voice_state.songs.shuffle()
+            await ctx.message.add_reaction('✅')
 
     @command(
         name='remove',
@@ -284,10 +298,11 @@ class Music(Cog, name="music"):
         """Removes a song from the queue at a given index."""
 
         if len(ctx.voice_state.songs) == 0:
-            return await ctx.send(empty=EMPTY_QUEUE_ERROR)
+            await ctx.send(empty=EMPTY_QUEUE_ERROR)
 
-        ctx.voice_state.songs.remove(index - 1)
-        await ctx.message.add_reaction('✅')
+        else:
+            ctx.voice_state.songs.remove(index - 1)
+            await ctx.message.add_reaction('✅')
 
     @command(
         name='loop',
@@ -304,8 +319,9 @@ class Music(Cog, name="music"):
             return await ctx.send(embed=NOTHING_PLAYING_ERROR)
 
         # Inverse boolean value to loop and unloop.
-        ctx.voice_state.loop = not ctx.voice_state.loop
-        await ctx.message.add_reaction('✅')
+        else:
+            ctx.voice_state.loop = not ctx.voice_state.loop
+            await ctx.message.add_reaction('✅')
 
     @command(
         name='play',

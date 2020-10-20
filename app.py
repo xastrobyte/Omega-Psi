@@ -40,6 +40,7 @@ DISCORD_TOKEN_LINK = "https://discord.com/api/oauth2/token"
 OMEGA_PSI = None
 
 ALLOW_ORIGIN = "https://omegapsi.fellowhashbrown.com"
+BUG, SUGGESTION, INSULT, COMPLIMENT = 0, 1, 2, 3
 
 notification_descriptions = {
     "update": "receive notifications when an update is made to Omega Psi",
@@ -210,6 +211,60 @@ def not_a_guild_manager(error):
 # Feedback Routes
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+def create_case_embed(user, case_number, case_data, description, seen_data=None, *, case_type = 0):
+    """Creates a Discord Embed to send to the user and the case channel
+
+    :param user: The user that submitted the bug/suggestion
+    :param case: The case number to give the bug/suggestion
+    :param case_data: The request data which holds the source type and the source
+    :param description: The description of the case
+    :param seen_data: The data to determine if something has been seen by a developer
+    :param case_type: The type of case to create an embed for
+        0 = Bug
+        1 = Suggestion
+        2 = Insult
+        3 = Compliment
+    """
+    title = ["Bug (#{})", "Suggestion (#{})", "Insult (#{})", "Compliment (#{})"][case_type]
+
+    # Create the base embed for all case types
+    #   which include bugs, suggestions, insults, and compliments
+    embed = Embed(
+        title = title.format(case_number),
+        description = "_ _",
+        colour = get_embed_color_sync(user),
+        timestamp = datetime.now()
+    ).add_field(
+        name = "User", value = str(user)
+    )
+
+    # Bug Case Type
+    if case_type == 0:
+        embed.add_field(
+            name = "Source Type", value = case_data["sourceType"]
+        ).add_field(
+            name = "Source", value = case_data["source"]
+        )
+    
+    # Add more fields based on the type of case
+    embed.add_field(
+        name = ["Description", "Suggestion", "Insult", "Compliment"][case_type], 
+        value = description
+    ).add_field(
+        name = "Seen?", value = "Yes, by {}".format(
+            str(seen_data["dev"])
+        ) if seen_data is not None else "No"
+    ).add_field(
+        name = "Fixed?" if case_type == 0 else "Considered?",
+        value = "{}".format(
+            "No" if case_type == 0 else "Not Yet"
+        ) if not seen_data else "{}".format(
+            seen_data["text"]
+        )
+    )
+
+    return embed
+
 @app.route("/reportBug", methods = ["POST", "PUT"])
 def report_bug():
     """Processes the report bug API endpoint"""
@@ -229,30 +284,10 @@ def report_bug():
 
             # Create an embed that will be sent to the developers, the bug reporter
             #   and the bug channel
-            embed = Embed(
-                title = "Bug (#{})".format(case_number),
-                description = "_ _",
-                colour = get_embed_color_sync(user),
-                timestamp = datetime.now()
-            ).add_field(
-                name = "User",
-                value = str(user)
-            ).add_field(
-                name = "Source Type",
-                value = request.json["sourceType"]
-            ).add_field(
-                name = "Source",
-                value = request.json["source"]
-            ).add_field(
-                name = "Bug",
-                value = description,
-                inline = False
-            ).add_field(
-                name = "Seen?",
-                value = "No"
-            ).add_field(
-                name = "Fixed?",
-                value = "No"
+            embed = create_case_embed(
+                user, case_number,
+                request.json, description,
+                case_type = BUG
             )
             
             channel = OMEGA_PSI.get_channel(int(environ["BUG_CHANNEL"]))
@@ -264,7 +299,6 @@ def report_bug():
                 request.json["sourceType"], request.json["source"],
                 user, description, msg.id
             )
-            database.users.add_user_bug_sync(user, case_number)
 
             # Send a message to each developer displaying what the bug is
             for dev in database.bot.get_developers_sync():
@@ -293,34 +327,14 @@ def report_bug():
                 seen_dev = OMEGA_PSI.get_user(int(case["seen"])) if case["seen"] is not None else None
 
                 # Update the embed with the new values and edit the original message in the bug channel
-                embed = Embed(
-                    title = "Bug (#{})".format(case_number),
-                    description = "_ _",
-                    colour = get_embed_color_sync(user),
-                    timestamp = datetime.now()
-                ).add_field(
-                    name = "User",
-                    value = str(user)
-                ).add_field(
-                    name = "Source Type",
-                    value = case["source_type"]
-                ).add_field(
-                    name = "Source",
-                    value = case["source"]
-                ).add_field(
-                    name = "Bug",
-                    value = case["bug"],
-                    inline = False
-                ).add_field(
-                    name = "Seen?",
-                    value = "Yes, by {}".format(
-                        str(dev) if seen_dev is None else str(seen_dev)
-                    )
-                ).add_field(
-                    name = "Fixed?",
-                    value = "{}".format(
-                        "No" if "fixed" not in request.json else "Yes"
-                    ) if not case["fixed"] else "Yes"
+                embed = create_case_embed(
+                    user, case_number,
+                    case, case["bug"],
+                    {
+                        "dev": str(dev) if seen_dev is None else str(seen_dev),
+                        "text": "Yes" if case["fixed"] else "No"
+                    },
+                    case_type = BUG
                 )
 
                 # Only update the message if the bug has been marked as seen or if the fixed key exists
@@ -413,24 +427,10 @@ def suggest():
             case_number = database.case_numbers.get_suggestion_number_sync()
 
             # Add the suggestion to the database and send a message to all developers
-            embed = Embed(
-                title = "Suggestion (#{})".format(case_number),
-                description = "_ _",
-                colour = get_embed_color_sync(user),
-                timestamp = datetime.now()
-            ).add_field(
-                name = "User",
-                value = str(user)
-            ).add_field(
-                name = "Suggestion",
-                value = description,
-                inline = False
-            ).add_field(
-                name = "Seen?",
-                value = "No"
-            ).add_field(
-                name = "Considered?",
-                value = "Not Yet"
+            embed = create_case_embed(
+                user, case_number,
+                None, description,
+                case_type = SUGGESTION
             )
 
             channel = OMEGA_PSI.get_channel(int(environ["SUGGESTION_CHANNEL"]))
@@ -439,7 +439,6 @@ def suggest():
 
             # Add the suggestion into the database
             database.case_numbers.add_suggestion_sync(user, description, msg.id)
-            database.users.add_user_suggestion_sync(user, case_number)
 
             # Send a message to each developer displaying what the suggestion is
             for dev in database.bot.get_developers_sync():
@@ -479,26 +478,14 @@ def suggest():
                         ) if not case["consideration"]["considered"] else "Yes"
                     else:
                         considered_text = "Not Yet"
-                embed = Embed(
-                    title = "Suggestion (#{})".format(case_number),
-                    description = "_ _",
-                    colour = get_embed_color_sync(user),
-                    timestamp = datetime.now()
-                ).add_field(
-                    name = "User",
-                    value = str(user)
-                ).add_field(
-                    name = "Suggestion",
-                    value = case["suggestion"],
-                    inline = False
-                ).add_field(
-                    name = "Seen?",
-                    value = "Yes, by {}".format(
-                        str(dev) if seen_dev is None else str(seen_dev)
-                    )
-                ).add_field(
-                    name = "Considered?",
-                    value = considered_text
+                embed = create_case_embed(
+                    user, case_number,
+                    None, case["suggestion"],
+                    { 
+                        "dev": str(dev) if seen_dev is None else str(seen_dev),
+                        "text": considered_text
+                    },
+                    case_type = SUGGESTION
                 )
 
                 # Only update the message if the suggestion has been marked as seen or if the consideration key exists
