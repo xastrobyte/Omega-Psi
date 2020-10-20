@@ -778,8 +778,8 @@ class Developer(Cog, name="developer"):
                 developer = self.bot.get_user(int(get_case(current_case)["seen"])) if get_case(current_case)[
                     "seen"] else None
 
-                def create_bug_embed(color):
-                    return Embed(
+                def create_bug_embed(color, *, without_reactions=True):
+                    embed = Embed(
                         title="Bug (#{})".format(str(case_numbers[current_case])),
                         description="_ _",
                         colour=color,
@@ -802,8 +802,19 @@ class Developer(Cog, name="developer"):
                         value="No" if not get_case(current_case)["fixed"] else "Yes"
                     )
 
-                def create_suggestion_embed(color):
-                    return Embed(
+                    if not without_reactions:
+                        embed.add_field(
+                            name = "_ _",
+                            value = (
+                                "React with {} to view the bug\n" +
+                                "React with {} to mark the bug as fixed\n"
+                            ).format(CHECK_MARK, CONSIDER),
+                            inline = False
+                        )
+                    return embed
+
+                def create_suggestion_embed(color, *, without_reactions=True):
+                    embed = Embed(
                         title="Suggestion (#{})".format(str(case_numbers[current_case])),
                         description="_ _",
                         colour=color,
@@ -822,26 +833,41 @@ class Developer(Cog, name="developer"):
                             if not get_case(current_case)["consideration"]["considered"] else "Yes"
                         )
                     )
+
+                    if not without_reactions:
+                        embed.add_field(
+                            name = "_ _",
+                            value = (
+                                "React with {} to mark the suggestion as seen\n" +
+                                "React with {} to consider the suggestion\n" +
+                                "React with {} to not consider the suggestion\n"
+                            ).format(CHECK_MARK, CONSIDER, NOT_CONSIDER),
+                            inline = False
+                        )
+                    return embed
                 if bugs:
                     embed = create_bug_embed(await get_embed_color(author))
+                    embed_copy = create_bug_embed(await get_embed_color(author), without_reactions = False)
 
                     # Update the message in the Bug channel
                     channel = self.bot.get_channel(int(environ["BUG_CHANNEL"]))
                     bug_message = await channel.fetch_message(get_case(current_case)["message_id"])
                 else:
                     embed = create_suggestion_embed(await get_embed_color(author))
+                    embed_copy = create_suggestion_embed(await get_embed_color(author), without_reactions = False)
 
                     # Update the message in the Suggestion channel
                     channel = self.bot.get_channel(int(environ["SUGGESTION_CHANNEL"]))
                     suggestion_message = await channel.fetch_message(get_case(current_case)["message_id"])
 
                 # Let the user view all the bug reports in a scrolling embed
-                message = await ctx.send(embed=embed)
+                message = await ctx.send(embed=embed_copy)
                 await add_scroll_reactions(message, cases)
                 await message.add_reaction(CHECK_MARK)
                 await message.add_reaction(CONSIDER)
                 if not bugs:
                     await message.add_reaction(NOT_CONSIDER)
+
                 while True:
 
                     # Wait for the user to react with what reaction they want to do
@@ -850,7 +876,7 @@ class Developer(Cog, name="developer"):
                         return (
                             r.message.id == message.id and
                             u.id == ctx.author.id and
-                            str(reaction) in (SCROLL_REACTIONS + [CHECK_MARK, CONSIDER, NOT_CONSIDER])
+                            str(r) in (SCROLL_REACTIONS + [CHECK_MARK, CONSIDER, NOT_CONSIDER])
                         )
                     done, pending = await wait([
                         self.bot.wait_for("reaction_add", check=check_reaction),
@@ -976,7 +1002,7 @@ class Developer(Cog, name="developer"):
                                             description="Attempt to notify {} of fixing bug failed.".format(
                                                 str(user)
                                             ),
-                                            colour=0x800000
+                                            colour=0x00000
                                         ),
                                         delete_after=15
                                     )

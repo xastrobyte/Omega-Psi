@@ -335,7 +335,7 @@ class Bot(Cog, name="bot"):
 
         # Get the suggestion case numbers the author has reported
         cases = await database.case_numbers.get_suggestion_cases(
-            key=lambda c: c["author"] == str(ctx.author.id)
+            key=lambda c: str(c["author"]) == str(ctx.author.id)
         )
         cases = cases["cases"]
 

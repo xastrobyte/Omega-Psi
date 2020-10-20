@@ -24,6 +24,7 @@ class CaseNumber:
         """Synchronously retrieves all the suggestion cases that have been submitted
 
         :param key: A function that filters out suggestions
+            The function should only take in one parameter: the suggestion case
 
         :returns: A JSON object of suggestion cases
         """
@@ -46,12 +47,12 @@ class CaseNumber:
             filtered = {}
             for case in suggestion_data["cases"]:
                 if key(suggestion_data["cases"][case]):
-                    filtered[case] = suggestion_data[case]
+                    filtered[case] = suggestion_data["cases"][case]
             return {
                 "number": suggestion_data["number"],
                 "cases": filtered
             }
-        return dict(suggestion_data)
+        return suggestion_data
 
     def set_suggestion_cases_sync(self, suggestion_cases, *, insert=False):
         """Synchronously sets the suggestion case data
@@ -232,12 +233,12 @@ class CaseNumber:
             filtered = {}
             for case in bug_data["cases"]:
                 if key(bug_data["cases"][case]):
-                    filtered[case] = bug_data[case]
+                    filtered[case] = bug_data["cases"][case]
             return {
                 "number": bug_data["number"],
                 "cases": filtered
             }
-        return dict(bug_data)
+        return bug_data
 
     def set_bug_cases_sync(self, bug_cases, *, insert=False):
         """Synchronously sets the bug case data
