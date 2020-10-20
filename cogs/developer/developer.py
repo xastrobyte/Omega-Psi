@@ -349,7 +349,7 @@ class Developer(Cog, name="developer"):
                 title="No Pending Update",
                 description=(
                     "There is currently no pending update to add this to. " +
-                    "Use the `createUpdate` command to create a pending update."
+                    "Use the `date` command to create a pending update."
                 ),
                 colour=await get_embed_color(ctx.author)
             ))
@@ -436,9 +436,6 @@ class Developer(Cog, name="developer"):
 
         # The version and description of the update
         else:
-
-            # Clear the file changes
-            await database.bot.set_changed_files({})
 
             # Commit the update in the database and get the most recent
             await database.bot.commit_pending_update(version, description)
