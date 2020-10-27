@@ -7,6 +7,7 @@ from os import environ
 from PIL import Image
 from requests import get, post
 from urllib.parse import quote
+import json
 
 from cogs.errors import get_error_message
 from cogs.globals import loop, FIELD_THRESHOLD
@@ -86,6 +87,11 @@ JUDGE_GET_API_CALL = "https://judge0.p.rapidapi.com/submissions/{}?fields=stdout
 JUDGE_GET_LANGUAGES_API_CALL = "https://judge0.p.rapidapi.com/languages"
 
 LANGUAGES = {
+    "assembly": {
+        "name": "Assembly (NASM 2.14.02)",
+        "id": 45,
+        "code_black": "assembly"
+    },
     "bash": {
         "name": "Bash (5.0.0)",
         "id": 46,
@@ -1445,6 +1451,7 @@ class Code(Cog, name = "code"):
                 )
             )
             response = response.json()
+            print(json.dumps(response), end = "\n\n")
             if "error" in response:
                 await ctx.send(embed=get_error_message(
                     response["error"]
@@ -1454,7 +1461,7 @@ class Code(Cog, name = "code"):
                 break
         
         # Split up the STDOUT and STDERR into separate fields
-        out = response["stdout"]
+        out = b64decode(response["stdout"]).decode()
         err = response["stderr"]
 
         # Only split if out is not None

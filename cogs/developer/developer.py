@@ -377,7 +377,7 @@ class Developer(Cog, name="developer"):
             reaction, user = await self.bot.wait_for("reaction_add", check=lambda r, u: (
                     r.message.id == message.id and
                     u.id == ctx.author.id and
-                    str(reaction) in FEATURE_TYPES
+                    str(r) in FEATURE_TYPES
             ))
             feature_type = FEATURE_TYPES[str(reaction)]
             await message.delete()
@@ -629,6 +629,7 @@ class Developer(Cog, name="developer"):
 
     @command(
         name="globallyEnableCommand",
+        aliases=["gec", "gEnable"],
         description="Enables a specified command in the entire bot",
         cog_name="developer"
     )
@@ -675,6 +676,7 @@ class Developer(Cog, name="developer"):
 
     @command(
         name="globallyDisableCommand",
+        aliases=["gdc", "gDisable"],
         description="Disables a specified command in the entire bot",
         cog_name="developer"
     )
@@ -715,6 +717,98 @@ class Developer(Cog, name="developer"):
                         embed=Embed(
                             title="Command disabled",
                             description="`{}` has been disabled".format(cmd.qualified_name),
+                            colour=await get_embed_color(ctx.author)
+                        )
+                    )
+    
+    @command(
+        name="globallyEnableCog",
+        aliases=["geco", "gEnableC"],
+        description="Enables a specified cog in the whole bot",
+        cog_name="developer"
+    )
+    async def enable_cog(self, ctx, cog_name=None):
+        """Enables a specified cog in the whole bot
+
+        :param cog_name: The cog to enable
+        """
+
+        # Check if there is no command to disable
+        if not cog_name:
+            await ctx.send(
+                embed=get_error_message("You need to specify the cog to disable.")
+            )
+
+        # There is a command to disable
+        else:
+
+            # Check that it's a valid command in the bot
+            cog = self.bot.get_cog(cog_name)
+            if not cog:
+                await ctx.send(
+                    embed=get_error_message("That cog does not exist!")
+                )
+
+            # The command is valid, disable it if possible
+            else:
+                disabled = await database.bot.disable_cog(cog.qualified_name)
+                if not disabled:
+                    await ctx.send(
+                        embed=get_error_message("That cog is already disabled!")
+                    )
+
+                else:
+                    await ctx.send(
+                        embed=Embed(
+                            title="Cog disabled",
+                            description="`{}` has been disabled".format(cog.qualified_name),
+                            colour=await get_embed_color(ctx.author)
+                        )
+                    )
+    
+    @command(
+        name="globallyDisableCog",
+        aliases=["gdco", "gDisableC"],
+        description="Disables a specified cog in the entire bot",
+        cog_name="developer"
+    )
+    @is_developer()
+    async def disable_cog(self, ctx, cog_name=None):
+        """Allows a developer to disable a cog in the whole bot
+
+        :param ctx: The context of where the message was sent
+        :param cmd: The cog to disable
+        """
+
+        # Check if there is no cog to disable
+        if not cog_name:
+            await ctx.send(
+                embed=get_error_message("You need to specify the cog to disable.")
+            )
+
+        # There is a cog to disable
+        else:
+
+            # Check that it's a valid cog in the bot
+            cog = self.bot.get_cog(cog_name)
+            if not cog:
+                await ctx.send(
+                    embed=get_error_message("That cog does not exist!")
+                )
+
+            # The cog is valid, disable it if possible
+            else:
+                disabled = await database.bot.disable_cog(cog.qualified_name)
+                if not disabled:
+                    await ctx.send(
+                        embed=get_error_message("That cog is already disabled!")
+                    )
+
+                else:
+                    await ctx.send(
+                        embed=Embed(
+                            title="Cog disabled",
+                            description="`{}` has been disabled".format(cog.qualified_name),
                             colour=await get_embed_color(ctx.author)
                         )
                     )

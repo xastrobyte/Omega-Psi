@@ -66,11 +66,13 @@ async def is_command_enabled_predicate(ctx):
     """
 
     # Check in the globally disabled commands
-    if (not await database.bot.is_command_enabled(ctx.command.qualified_name) and 
-        not await database.bot.is_developer(ctx.author) and
-        not await database.bot.is_tester(ctx.author)):
-        
-        raise CommandDisabled()
+    if ctx.command.cog is not None:
+        if ((not await database.bot.is_cog_enabled(ctx.command.cog.qualified_name) or
+            not await database.bot.is_command_enabled(ctx.command.qualified_name)) and 
+            not await database.bot.is_developer(ctx.author) and
+            not await database.bot.is_tester(ctx.author)):
+            
+            raise CommandDisabled()
     
     # Check in the guild disabled commands
     if ctx.guild:

@@ -5,7 +5,7 @@ from discord import VoiceChannel, Embed
 from discord.ext.commands import Cog, command, group, Context, Bot
 from discord.ext.commands import NoPrivateMessage
 
-from cogs.music.errors import VoiceError, YTDLError
+from cogs.music.errors import YTDLError
 from cogs.music.util import VoiceState, YTDLSource, Song
 from cogs.predicates import guild_manager
 from cogs.errors import (
@@ -58,11 +58,10 @@ class Music(Cog, name="music"):
 
         :param ctx: The context of where the message was sent
         """
-        destination = ctx.author.voice.channel
-        if ctx.voice_state.voice:
-            await ctx.voice_state.voice.move_to(destination)
-            
-        else:
+
+        # Check if the user is in a voice channel
+        if ctx.author.voice:
+            destination = ctx.author.voice.channel
             ctx.voice_state.voice = await destination.connect()
 
     @command(
@@ -79,15 +78,18 @@ class Music(Cog, name="music"):
         :param channel: The voice channel for Omega Psi to join
         """
 
+        # Check if the user is not in a voice channel
         if not channel and not ctx.author.voice:
-            raise VoiceError('You are neither connected to a voice channel nor specified a channel to join.')
+            await ctx.send(embed=NOT_IN_VOICE_CHANNEL_ERROR)
+        
+        # The user is in a voice channel
+        else:
+            destination = channel or ctx.author.voice.channel
+            if ctx.voice_state.voice:
+                await ctx.voice_state.voice.move_to(destination)
+                return
 
-        destination = channel or ctx.author.voice.channel
-        if ctx.voice_state.voice:
-            await ctx.voice_state.voice.move_to(destination)
-            return
-
-        ctx.voice_state.voice = await destination.connect()
+            ctx.voice_state.voice = await destination.connect()
 
     @command(
         name='leave', aliases=['disconnect'],

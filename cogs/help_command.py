@@ -126,7 +126,7 @@ class Help(HelpCommand):
         # Add fields for each cog in the bot
         #   only add cogs with a name, not None
         for cog in mapping:
-            if cog and (cog.qualified_name != "developer" or await database.bot.is_developer(self.context.author)):
+            if cog and ((cog.qualified_name != "developer" and await database.bot.is_cog_enabled(cog.qualified_name)) or await database.bot.is_developer(self.context.author)):
                 embed.add_field(
                     name = "{} {}".format(
                         cogs[cog.qualified_name]["emoji"],
@@ -147,7 +147,10 @@ class Help(HelpCommand):
         """
 
         # Make sure the user can access this cog
-        if cog.qualified_name != "developer" or await database.bot.is_developer(self.context.author):
+        if ((
+                cog.qualified_name != "developer" and 
+                await database.bot.is_cog_enabled(cog.qualified_name)
+            ) or await database.bot.is_developer(self.context.author)):
 
             # Filter the commands so the checks are done for each command
             commands = await self.filter_commands(cog.get_commands(), sort = True)

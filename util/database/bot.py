@@ -39,6 +39,7 @@ class Bot:
                 "send": False
             },
             "disabled_commands": [],
+            "disabled_cogs": [],
             "notifications": {
                 "update": [],
                 "new_feature": []
@@ -587,22 +588,19 @@ class Bot:
         return await loop.run_in_executor(None, self.remove_task_sync, task_id)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Command Invocation Access Methods
+    # Command/Cog Invocation Access Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    def get_disabled_commands_sync(self):
-        """Synchronously returns a list of disabled commands in the entire bot
-
-        Returns
-        -------
-            list
-                A list of disabled commands in the entire bot
+    def get_disabled_commands_sync(self) -> list:
+        """Synchronously returns a list of disabled 
+        commands in the entire bot
         """
         bot_data = self.get_bot_sync()
         return bot_data["disabled_commands"]
 
     def is_command_enabled_sync(self, command_name):
-        """Synchronously returns whether or not the specified command is enabled
+        """Synchronously returns whether or not the specified 
+        command is enabled
 
         Parameters
         ----------
@@ -656,63 +654,116 @@ class Bot:
             self.set_bot_sync(bot_data)
             return True
         return False
+    
+    # # # # # # # # # # # # # # #
+
+    def get_disabled_cogs_sync(self) -> list:
+        """Synchronously returns a list of disabled 
+        cogs in the entire bot
+        """
+        bot_data = self.get_bot_sync()
+        return bot_data["disabled_cogs"]        
+
+    def is_cog_enabled_sync(self, cog_name):
+        """Synchronously returns whether or not the specified
+        cog is enabled
+
+        :param cog_name: The name of the cog to check if it's enabled
+        """
+        bot_data = self.get_bot_sync()
+        return cog_name not in bot_data["disabled_cogs"]    
+
+    def enable_cog_sync(self, cog_name) -> bool:
+        """Synchronously enables the specified cog
+
+        :param cog_name: The cog to enable
+        :returns: Whether or not the cog was enabled
+        """
+        bot_data = self.get_bot_sync()
+        if cog_name in bot_data["disabled_cogs"]:
+            bot_data["disabled_cogs"].remove(cog_name)
+            self.set_bot_sync(bot_data)
+            return True
+        return False    
+    
+    def disable_cog_sync(self, cog_name):
+        """Synchronously disables the specified cog
+
+        :param cog_name: The cog to disable
+        :returns: Whether or not the cog was disabled
+        """
+        bot_data = self.get_bot_sync()
+        if cog_name not in bot_data["disabled_cogs"]:
+            bot_data["disabled_cogs"].append(cog_name)
+            self.set_bot_sync(bot_data)
+            return True
+        return False
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    async def get_disabled_commands(self):
-        """Asynchronously returns a list of disabled commands in the entire bot
-
-        Returns
-        -------
-            list
-                A list of disabled commands in the entire bot
+    async def get_disabled_commands(self) -> list:
+        """Asynchronously returns a list of disabled 
+        commands in the entire bot
         """
         return await loop.run_in_executor(None, self.get_disabled_commands_sync)
 
-    async def is_command_enabled(self, command_name):
-        """Asynchronously returns whether or not the specified command is enabled
+    async def is_command_enabled(self, command_name) -> bool:
+        """Asynchronously returns whether or not the specified 
+        command is enabled
 
-        Parameters
-        ----------
-            command_name : str
-                The name of the command to check if it's enabled
-        
-        Returns
-        -------
-            bool
-                Whether or not the command is enabled
+
+        :param command_name: The name of the command to check if it's enabled
         """
         return await loop.run_in_executor(None, self.is_command_enabled_sync, command_name)
 
-    async def enable_command(self, command_name):
+    async def enable_command(self, command_name) -> bool:
         """Asynchronously enables the specified command
 
-        Parameters
-        ----------
-            command_name : str
-                The command to enable
-        
-        Returns
-        -------
-            bool
-                Whether or not the command was enabled
+        :param command_name: The command to enable
+        :returns: Whether or not the command was enabled
         """
         return await loop.run_in_executor(None, self.enable_command_sync, command_name)
 
-    async def disable_command(self, command_name):
+    async def disable_command(self, command_name) -> bool:
         """Asynchronously disables the specified command
 
-        Parameters
-        ----------
-            command_name : str
-                The command to disable
-        
-        Returns
-        -------
-            bool
-                Whether or not the command was disabled
+        :param command_name: The command to disable
+        :returns: Whether or not the command was disabled
         """
         return await loop.run_in_executor(None, self.disable_command_sync, command_name)
+    
+    # # # # # # # # # # # # # # #
+    
+    async def get_disabled_cogs(self) -> list:
+        """Asynchronously returns a list of disabled 
+        cogs in the entire bot
+        """
+        return await loop.run_in_executor(None, self.get_disabled_cogs_sync)
+
+    async def is_cog_enabled(self, cog_name) -> bool:
+        """Asynchronously returns whether or not the specified 
+        cog is enabled
+
+
+        :param cog_name: The name of the cog to check if it's enabled
+        """
+        return await loop.run_in_executor(None, self.is_cog_enabled_sync, cog_name)
+
+    async def enable_cog(self, cog_name) -> bool:
+        """Asynchronously enables the specified cog
+
+        :param cog_name: The cog to enable
+        :returns: Whether or not the cog was enabled
+        """
+        return await loop.run_in_executor(None, self.enable_cog_sync, cog_name)
+
+    async def disable_cog(self, cog_name) -> bool:
+        """Asynchronously disables the specified cog
+
+        :param cog_name: The cog to disable
+        :returns: Whether or not the cog was disabled
+        """
+        return await loop.run_in_executor(None, self.disable_cog_sync, cog_name)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Notifications Access Methods

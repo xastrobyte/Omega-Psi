@@ -77,7 +77,11 @@ class YTDLSource(PCMVolumeTransformer):
         # Retrieve the loop or create a new one, then call the YTDL
         #   to retrieve the song from the given search parameter
         loop = loop or asyncio.get_event_loop()
-        partial_data = partial(cls.ytdl.extract_info, search, download=False, process=False)
+        partial_data = partial(
+            cls.ytdl.extract_info, 
+            search, 
+            download=False, 
+            process=False)
         data = await loop.run_in_executor(None, partial_data)
 
         # Check if anything was found.
@@ -99,7 +103,10 @@ class YTDLSource(PCMVolumeTransformer):
 
         # Get the URL of the source of the song and process the information
         webpage_url = process_info['webpage_url']
-        partial_data= partial(cls.ytdl.extract_info, webpage_url, download=False)
+        partial_data = partial(
+            cls.ytdl.extract_info, 
+            webpage_url,
+            download=False)
         processed_info = await loop.run_in_executor(None, partial_data)
 
         if processed_info is None:
