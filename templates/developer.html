@@ -113,7 +113,7 @@
                                         <tbody>
                                             {% for case in bug_cases -%}
                                                 <tr>
-                                                    <td>Bug #{{ case }}</td>
+                                                    <td>#{{ case }}</td>
                                                     <td>{{ bug_cases[case]["source_type"] }}</td>
                                                     <td>{{ bug_cases[case]["source"] }}</td>
                                                     <td>{{ bug_cases[case]["bug"] }}</td>
@@ -174,7 +174,7 @@
                                     <tbody>
                                         {% for case in suggestion_cases -%}
                                             <tr>
-                                                <td>Suggestion #{{ case }}</td>
+                                                <td>#{{ case }}</td>
                                                 <td>{{ suggestion_cases[case]["suggestion"] }}</td>
                                                 <td>{{ suggestion_cases[case]["author"] }}</td>
                                                 <td id="suggestion{{ case }}SeenText">

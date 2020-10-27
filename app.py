@@ -137,6 +137,12 @@ def settings():
             )
         )
         minigames[data.replace("_", " ")] = minigame_data[data]
+    
+    # Get the suggestion and bug cases from the user
+    bug_cases = database.case_numbers.get_bug_cases_sync(
+            key = lambda case: case["author"] == session.get("user_id"))["cases"]
+    suggestion_cases = database.case_numbers.get_suggestion_cases_sync(
+            key = lambda case: case["author"] == session.get("user_id"))["cases"]
 
     return render_template("settings.html",
         manageable_guilds = manageable_guilds,
@@ -147,7 +153,9 @@ def settings():
             user_data["embed_color"]
             if user_data["embed_color"] is not None else
             PRIMARY_EMBED_COLOR
-        )[2:].rjust(6, "0")
+        )[2:].rjust(6, "0"),
+        bug_cases = bug_cases,
+        suggestion_cases = suggestion_cases
     ), 200
 
 @app.route("/server/<string:guild_id>")

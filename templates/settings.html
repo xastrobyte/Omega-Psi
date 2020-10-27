@@ -173,6 +173,120 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!--Case Section-->
+                        <h2 class="page-section">
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">yourBugs</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block">
+                        {% if bug_cases|length == 0 %}
+                            <h3>No Bugs Found</3>
+                        {% else %}
+                            <div class="cases-box">
+                                <table class="case-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="5%">Number</th>
+                                            <th width="15%">Website or Bot?</th>
+                                            <th width="20%">Source</th>
+                                            <th width="35%">Description</th>
+                                            <th width="15%">Reporter</th>
+                                            <th width="5%">Seen?</th>
+                                            <th width="5%">Fixed?</th>
+                                        <tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for case in bug_cases -%}
+                                            <tr>
+                                                <td>#{{ case }}</td>
+                                                <td>{{ bug_cases[case]["source_type"] }}</td>
+                                                <td>{{ bug_cases[case]["source"] }}</td>
+                                                <td>{{ bug_cases[case]["bug"] }}</td>
+                                                <td>{{ bug_cases[case]["author"] }}</td>
+                                                <td id="bug{{ case }}SeenText">
+                                                    {% if bug_cases[case]["seen"] %}
+                                                        Yes
+                                                    {% else %}
+                                                        No
+                                                    {% endif %}
+                                                </td>
+                                                <td id="bug{{ case }}FixedText">
+                                                    {% if bug_cases[case]["fixed"] %}
+                                                        Yes
+                                                    {% else %}
+                                                        No
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                        </div>
+
+                        <!--Suggestion Section-->
+                        <h2 class="page-section">
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">yourSuggestions</code><code>();</code>
+                        </h2>
+                        <div class="page-section-block">
+                        {% if suggestion_cases|length == 0 %}
+                            <h3>No Suggestions Found</3>
+                        {% else %}
+                            <div class="cases-box">
+                                <table class="case-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="10%">Number</th>
+                                            <th width="45%">Description</th>
+                                            <th width="15%">Suggester</th>
+                                            <th width="5%">Seen?</th>
+                                            <th width="5%">Considered?</th>
+                                            <th width="45%">Reason</th>
+                                        <tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for case in suggestion_cases -%}
+                                            <tr>
+                                                <td>#{{ case }}</td>
+                                                <td>{{ suggestion_cases[case]["suggestion"] }}</td>
+                                                <td>{{ suggestion_cases[case]["author"] }}</td>
+                                                <td id="suggestion{{ case }}SeenText">
+                                                    {% if suggestion_cases[case]["seen"] %}
+                                                        Yes
+                                                    {% else %}
+                                                        No
+                                                    {% endif %}
+                                                </td>
+                                                <td id="suggestion{{ case }}ConsideredText">
+                                                    {% if not suggestion_cases[case]["consideration"] %}
+                                                        Not Yet
+                                                    {% else %}
+                                                        {% if suggestion_cases[case]["consideration"]["considered"] %}
+                                                            Yes
+                                                        {% else %}
+                                                            No
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </td>
+                                                <td id="suggestion{{ case }}ReasonText">
+                                                    {% if not suggestion_cases[case]["consideration"] %}
+                                                        None Yet
+                                                    {% else %}
+                                                        {% if suggestion_cases[case]["consideration"]["considered"] %}
+                                                            N/A
+                                                        {% else %}
+                                                            {{ suggestion_cases[case]["consideration"]["reason"] }}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                        </div>
         
 
 
