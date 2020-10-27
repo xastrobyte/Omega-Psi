@@ -732,7 +732,9 @@ def developer():
         
         # Get a list of globally active commands in the bot
         all_commands = []
+        all_cogs = []
         disabled_commands = database.bot.get_disabled_commands_sync()
+        disabled_cogs = database.bot.get_disabled_cogs_sync()
         for command in OMEGA_PSI.walk_commands():
 
             # Don't add commands that have the is_developer check on it
@@ -743,6 +745,12 @@ def developer():
                 command.qualified_name != "help"
             ):
                 all_commands.append(command.qualified_name)
+        for cog in OMEGA_PSI.cogs:
+            if (cog not in all_cogs and
+                cog not in disabled_cogs and
+                cog != "developer"):
+
+                all_cogs.append(cog)
         
         # Get the pending update data
         pending_update = database.bot.get_pending_update_sync()
@@ -765,7 +773,9 @@ def developer():
             pending_update = pending_update,
             tasks = tasks,
             disabled_commands = disabled_commands,
-            all_commands = all_commands
+            disabled_cogs = disabled_cogs,
+            all_commands = all_commands,
+            all_cogs = all_cogs
         )
     
     # The session user is not a developer
@@ -931,19 +941,29 @@ def settings_bot():
         
         # Get all active commands
         all_commands = []
+        all_cogs = []
         disabled_commands = database.bot.get_disabled_commands_sync()
+        disabled_cogs = database.bot.get_disabled_cogs_sync()
         for command in OMEGA_PSI.walk_commands():
 
             # Don't add commands that have the is_developer check on it
-            if (
-                is_developer_predicate not in command.checks and 
+            if (is_developer_predicate not in command.checks and 
                 command.qualified_name not in all_commands and
                 command.qualified_name not in disabled_commands and
-                command.qualified_name != "help"
-            ):
-                all_commands.append(command.qualified_name)
+                command.qualified_name != "help"):
 
-        return jsonify(all_commands), 200
+                all_commands.append(command.qualified_name)
+        for cog in OMEGA_PSI.cogs:
+            if (cog not in disabled_cogs and 
+                cog != "developer" and 
+                cog not in all_cogs):
+
+                all_cogs.append(cog)
+
+        return jsonify({
+            "commands": all_commands,
+            "cogs": all_cogs
+        }), 200
 
     else:
 
@@ -953,13 +973,23 @@ def settings_bot():
             # Enabling/Disabling a command
             if request.method == "PUT":
                 if request.json["enable"]:
-                    if database.bot.enable_command_sync(request.json["command"]):
-                        return jsonify({"success": True}), 201
-                    return jsonify({"error": "That command is already enabled!"}), 401
+                    if "command" in request.json:
+                        if database.bot.enable_command_sync(request.json["command"]):
+                            return jsonify({"success": True}), 201
+                        return jsonify({"error": "That command is already enabled!"}), 401
+                    elif "cog" in request.json:
+                        if database.bot.enable_cog_sync(request.json["cog"]):
+                            return jsonify({"success": True}), 201
+                        return jsonify({"error": "That cog is already enabled!"}), 401
                 else:
-                    if database.bot.disable_command_sync(request.json["command"]):
-                        return jsonify({"success": True}), 201
-                    return jsonify({"error": "That command is already disabled!"}), 401
+                    if "command" in request.json:
+                        if database.bot.disable_command_sync(request.json["command"]):
+                            return jsonify({"success": True}), 201
+                        return jsonify({"error": "That command is already disabled!"}), 401
+                    elif "cog" in request.json:
+                        if database.bot.disable_cog_sync(request.json["cog"]):
+                            return jsonify({"success": True}), 201
+                        return jsonify({"error": "That cog is already disabled!"}), 401
         
         # The origin does not match ALLOW_ORIGIN
         return jsonify({"error": "Unauthorized"}), 401
@@ -1052,6 +1082,11 @@ def keep_alive(bot, cogs):
                         title = "disabledCommands",
                         description = "",
                         custom_html = get_bot_settings_html("disabledCommands")
+                    ),
+                    HomeSection(
+                        title = "disabledCogs",
+                        description = "",
+                        custom_html = get_bot_settings_html("disabledCogs")
                     ),
                     HomeSection(
                         title = "tasks",

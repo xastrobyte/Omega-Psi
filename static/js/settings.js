@@ -206,7 +206,7 @@ async function globallyDisableCommand(command) {
     
     // If the GET request succeeds, continue with asking the user which command to disable
     }).done(async function(data) {
-        var allCommands = data;
+        var allCommands = data.commands;
 
         // Ask the user to select a command to disable
         var command;
@@ -454,6 +454,167 @@ async function disableCommand(guildID) {
         console.log(error);
     })
     
+}
+
+/**
+ * Lets the developer enable a command globally in the bot
+ */
+function globallyEnableCog(cog) {
+
+    // Call a PUT request on /settings/bot to enable the cog
+    $.ajax({
+        url: `${BASE_URL}/settings/bot`,
+        type: "PUT",
+        data: JSON.stringify({
+            enable: true,
+            cog: cog
+        }),
+        contentType: "application/json; charset=utf-8"
+    
+    // If the request succeeds, remove the command from the disabled commands table
+    //  and let the developer know the command was enabled
+    }).done(function(data) {
+
+        // Check if there are no disabled commands, reinsert the "No Disabled Commands" text
+        document.getElementById(`disabledCog${cog}`).remove();
+        if (document.getElementById("disabledCogs").children.length == 0) {
+            document.getElementById("disabledCogsTable").remove();
+            var p = document.createElement("p");
+            p.id = "noDisabledCogs";
+            var text = document.createTextNode("No Disabled Cogs");
+            p.appendChild(text);
+            document.getElementById("disabledCogsDiv").insertBefore(
+                p,
+                document.getElementById("disableCog")
+            );
+        }
+
+        Swal.fire({
+            title: "Cog Enabled",
+            text: `The "${cog}" cog has been enabled!`,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup',
+                content: 'swal-content',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm',
+                input: 'swal-input'
+            }
+        })
+
+    // If the request fails, let the developer know why
+    }).fail(function(data) {
+        Swal.fire({
+            title: "Something Went Wrong :(",
+            text: error.responseJSON.error,
+            icon: "failed",
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup',
+                content: 'swal-content',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm'
+            }
+        })
+    })
+}
+
+/**
+ * Lets the developer disable a command globally in the bot
+ */
+
+async function globallyDisableCog(cog) {
+
+    // Get an array of all commands that are active in the bot
+    $.ajax({
+        url: `${BASE_URL}/settings/bot`,
+        type: "GET",
+        contentType: "application/json; charset=utf-8"
+    
+    // If the GET request succeeds, continue with asking the user which command to disable
+    }).done(async function(data) {
+        var allCogs = data.cogs;
+
+        // Ask the user to select a command to disable
+        var cog;
+        await Swal.fire({
+            title: "Select Cog",
+            text: "Select a cog to disable in the bot",
+            input: 'select',
+            inputOptions: allCogs,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup',
+                content: 'swal-content',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm',
+                input: 'swal-input'
+            },
+            inputValidator: (result) => {
+                if (result) { cog = allCogs[result]; }
+            }
+        })
+
+        // Call a PUT request on /settings/server to disable the command
+        if (cog) {
+            $.ajax({
+                url: `${BASE_URL}/settings/bot`,
+                type: "PUT",
+                data: JSON.stringify({
+                    enable: false,
+                    cog: cog
+                }),
+                contentType: "application/json; charset=utf-8"
+            
+            // If the request succeeds, add the command to the disabled commands table
+            //  and let the developer know the command was disabled
+            }).done(function(data) {
+
+                // Check if disabling a command, add the disabled elements to the proper Node
+                if (document.getElementById("disabledCogsTable")) {
+                    document.getElementById("disabledCogs").appendChild(createDisabledElements(null, cog));
+                } else {
+                    document.getElementById("noDisabledCogs").remove();
+                    document.getElementById("disabledCogsDiv").insertBefore(
+                        createDisabledElements(null, cog, true),
+                        document.getElementById("disableCog")
+                    );
+                }
+
+                Swal.fire({
+                    title: "Cog Disabled",
+                    text: `The "${cog}" cog has been disabled!`,
+                    customClass: {
+                        container: 'swal-container',
+                        popup: 'swal-popup',
+                        content: 'swal-content',
+                        title: 'swal-title',
+                        confirmButton: 'swal-confirm',
+                        input: 'swal-input'
+                    }
+                })
+
+            // If the request fails, let the developer know why
+            }).fail(function(error) {
+                Swal.fire({
+                    title: "Something Went Wrong :(",
+                    text: error.responseJSON.error,
+                    icon: "failed",
+                    customClass: {
+                        container: 'swal-container',
+                        popup: 'swal-popup',
+                        content: 'swal-content',
+                        title: 'swal-title',
+                        confirmButton: 'swal-confirm'
+                    }
+                })
+            })
+        }
+
+    // If the GET request fails, log it to the console
+    }).fail(function(error) {
+        console.log(error);
+    })
 }
 
 /**

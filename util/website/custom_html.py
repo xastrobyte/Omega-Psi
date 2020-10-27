@@ -331,6 +331,41 @@ def get_bot_settings_html(settings):
                         </div>
             """
         )
+    
+    elif settings == "disabledCogs":
+        return (
+            """
+                        <!--Disabled Cogs Section-->
+                        <h2 class="page-section">
+                            <span class="section-name"><code class="field">page</code><code>.</code></span><code class="field">disabledCogs</code><code>();</code>
+                        </h2>
+                        <div id="disabledCogsDiv" class="page-section-block" style="text-align: center;">
+                            {% if disabled_cogs|length == 0 %}
+                                <p id="noDisabledCogs">No Disabled Cogs</p>
+                            {% else %}
+                                <div class="cases-box">
+                                    <table id="disabledCogsTable" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="100%">disabled cog</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="disabledCogs">
+                                        {% for cog in disabled_cogs -%}
+                                            <tr id="disabledCog{{ cog }}">
+                                                <td>{{ cog }}</td>
+                                                <td><button class="page-form-button" onclick="globallyEnableCog('{{ cog }}')">Enable</button>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                            <button id="disableCog" class="page-form-button" onclick="globallyDisableCog({{ all_cogs }})">Disable Cog</button>
+                        </div>
+            """
+        )
 
 def get_feedback_html():
     return (
@@ -395,7 +430,7 @@ def get_server_settings_html(view_guild = False, section = None):
                         </div>
                 """
             )
-    
+        
     # If guild ID is NOT given, the user is looking at which guilds they can manage on the /settings page
     return (
         """
