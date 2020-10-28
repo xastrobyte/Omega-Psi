@@ -645,7 +645,8 @@ class Bot(Cog, name="bot"):
                       await database.bot.get_developers()]
 
         # Setup the embed fields
-        globally_disabled = await database.bot.get_disabled_commands()
+        globally_disabled_commands = await database.bot.get_disabled_commands()
+        globally_disabled_cogs = await database.bot.get_disabled_cogs()
         fields = {
             "Owner": "{}".format(str(owner)),
             "Developers": "\n".join([
@@ -656,8 +657,12 @@ class Bot(Cog, name="bot"):
             ]),
             "Globally Disabled Commands": "\n".join([
                 "`{}`".format(command)
-                for command in globally_disabled
-            ]) if len(globally_disabled) > 0 else "No Globally Disabled Commands",
+                for command in globally_disabled_commands
+            ]) if len(globally_disabled_commands) > 0 else "No Globally Disabled Commands",
+            "Globally Disabled Cogs": "\n".join([
+                "`{}`".format(cog)
+                for cog in globally_disabled_cogs
+            ]) if len(globally_disabled_cogs) > 0 else "No Globally Disabled Cogs"
         }
 
         # Create the embed and send the message
