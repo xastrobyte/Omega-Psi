@@ -7,7 +7,7 @@
 [![Discord Bots](https://top.gg/api/widget/servers/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 [![Discord Bots](https://top.gg/api/widget/lib/535587516816949248.svg)](https://discordbots.org/bot/535587516816949248)
 
-Support Server: [![Discord Server](https://img.shields.io/discord/521185038969208850.svg)](https://discord.gg/W8yVrHt)
+Support Server: [![Discord Server](https://img.shields.io/discord/770795715483140147.svg)](https://discord.gg/F3fn57f)
 
 Omega Psi Discord Bot
 ===
@@ -30,11 +30,14 @@ has a list of commands and any subcommands in it.
 * As a server manager, you can choose what commands to enable or disable using the `enableCommand` and `disableCommand` commands.
     * Note that you *cannot* disable the `help` command. That would be completely unhelpful to your server's members
     * You can also change the prefix for your server.
-        * Note that if you change the prefix to something that ends in a letter or a number, you will need to add a space when calling a command (which makes sense)
+        * Note that if you change the prefix to something that ends in a letter or a number, you will need to add a space when calling a command (which just makes sense)
 
 ### Members
 * As a member in a server, you can change only one thing at the moment
-    * Using the `setEmbedColor` command (shorthand `embed`), you can change the color of the embed when running commands. It is not server-specific either
+    * Using the `setEmbedColor` command (shorthand `embed`), you can change the color of the embed when running commands. It is not server-specific either so it will be used across all servers that you're in!
+
+#### Users
+* You can decide whether or not you want notifications whenever a new feature is added to Omega Psi or whenever it is updated!
 
 In addition, you can also use [Omega Psi's website](https://omegapsi.fellowhashbrown.com/settings) to configure your server or yourself.
 
