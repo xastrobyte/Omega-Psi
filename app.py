@@ -249,7 +249,7 @@ def create_case_embed(user, case_number, case_data, description, seen_data=None,
     # Bug Case Type
     if case_type == 0:
         embed.add_field(
-            name = "Source Type", value = case_data["sourceType"]
+            name = "Source Type", value = case_data["source_type"]
         ).add_field(
             name = "Source", value = case_data["source"]
         )

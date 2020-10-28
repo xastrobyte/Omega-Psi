@@ -63,7 +63,7 @@ class Bot(Cog, name="bot"):
         reaction, user = await self.bot.wait_for("reaction_add", check=lambda r, u: (
                 r.message.id == message.id and
                 u.id == ctx.author.id and
-                str(reaction) in [WEBSITE, BOT, LEAVE]
+                str(r) in [WEBSITE, BOT, LEAVE]
         ))
 
         # Check if the user wants to stop reporting the bug
@@ -122,13 +122,13 @@ class Bot(Cog, name="bot"):
 
             done, pending = await wait([
                 self.bot.wait_for("message", check=lambda m: (
-                        msg.author.id == ctx.author.id and
-                        msg.channel.id == ctx.channel.id
+                        m.author.id == ctx.author.id and
+                        m.channel.id == ctx.channel.id
                 )),
                 self.bot.wait_for("reaction_add", check=lambda r, u: (
-                        reaction.message.id == message.id and
-                        user.id == ctx.author.id and
-                        str(reaction) == LEAVE
+                        r.message.id == message.id and
+                        u.id == ctx.author.id and
+                        str(r) == LEAVE
                 ))
             ], return_when=FIRST_COMPLETED)
             result = done.pop().result()
@@ -696,7 +696,7 @@ class Bot(Cog, name="bot"):
 
         :param ctx: The context of where the message was sent
         """
-        await ctx.send("discord.gg/hBsax2U")
+        await ctx.send("discord.gg/F3fn57f")
 
     @command(
         name="website",
