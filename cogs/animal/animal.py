@@ -9,9 +9,9 @@ from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-ANIMAL_API = "https://www.fellowhashbrown.com/api/animals?type={}"
-BABY_ANIMAL_API = "https://www.fellowhashbrown.com/api/animals?type={}&baby=true"
-ANIMAL_FACT_API = "https://www.fellowhashbrown.com/api/animals?type={}&fact=true"
+ANIMAL_API = "https://api.fellowhashbrown.com/animals?type={}"
+BABY_ANIMAL_API = "https://api.fellowhashbrown.com/animals?type={}&baby=true"
+ANIMAL_FACT_API = "https://api.fellowhashbrown.com/animals?type={}&fact=true"
 
 DOG_CAT_FACT_API = "https://cat-fact.herokuapp.com/facts/random?animal_type={}"
 

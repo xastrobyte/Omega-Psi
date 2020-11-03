@@ -3,7 +3,7 @@ from app import keep_alive
 from discord import Embed, Status, Activity, Intents
 from discord.ext.commands import AutoShardedBot
 from os import environ
-from traceback import format_exception
+from traceback import format_exception, extract_tb
 
 from cogs.errors import (
     COMMAND_FAILED_ERROR, 
@@ -123,7 +123,15 @@ async def on_command_error(ctx, error):
         await ctx.send(embed = COMMAND_FAILED_ERROR(ctx.command))
 
         # Create embed
-        exc = format_exception(type(error), error, error.__traceback__)
+        exc = []
+        for frame_summary in extract_tb(error.__traceback__):
+            exc.append(
+                "{}:{}\n\t{} - {}".format(
+                    frame_summary.filename, frame_summary.lineno,
+                    frame_summary.name, frame_summary.line
+                )
+            )
+
         embed = Embed(
             title = "Command Failed",
             description = str(error),
@@ -147,8 +155,7 @@ async def on_command_error(ctx, error):
 
         # Create and add traceback fields
         add_fields(embed, "Traceback", create_fields(
-            exc, 
-            key = lambda field: f"```py\n{field}\n```"
+            exc,  key = lambda field: f"```py\n{field}\n```"
         ))
         
         # Get the error channel

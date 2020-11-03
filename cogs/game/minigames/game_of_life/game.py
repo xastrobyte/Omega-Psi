@@ -35,7 +35,7 @@ class GameOfLifeGame(Game):
         )
 
         # Save the cards into this game instance
-        game_of_life = get("https://fellowhashbrown.com/api/gameOfLife?target=game_of_life")
+        game_of_life = get("https://api.fellowhashbrown.com/games/gameOfLife?target=game_of_life")
         game_of_life = game_of_life.json()
 
         self.career_cards = [ CareerCard(json = card) for card in game_of_life["career_cards"] ]

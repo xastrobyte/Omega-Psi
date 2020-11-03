@@ -21,7 +21,7 @@ from util.functions import get_embed_color
 MARVEL_CHARACTER_API = "http://gateway.marvel.com/v1/public/characters?name={}&limit=10&apikey={}&ts={}&hash={}"
 MARVEL_SERIES_API = "http://gateway.marvel.com/v1/public/series?title={}&limit=10&apikey={}&ts={}&hash={}"
 MARVEL_COMIC_API = "http://gateway.marvel.com/v1/public/comics?title={}&limit=10&apikey={}&ts={}&hash={}"
-STRANGE_PLANET_RANDOM_API = "https://fellowhashbrown.com/api/strangePlanet"
+STRANGE_PLANET_RANDOM_API = "https://api.fellowhashbrown.com/strangePlanet"
 STRANGE_PLANET_RECENT_API = f"{STRANGE_PLANET_RANDOM_API}?recent=true"
 STRANGE_PLANET_SEARCH_API = f"{STRANGE_PLANET_RANDOM_API}?keywords={{}}&target={{}}&limit=-1"
 XKCD_API_CALL = "https://xkcd.com/{}/info.0.json"

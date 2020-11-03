@@ -727,6 +727,7 @@ class Developer(Cog, name="developer"):
         description="Enables a specified cog in the whole bot",
         cog_name="developer"
     )
+    @is_developer()
     async def enable_cog(self, ctx, cog_name=None):
         """Enables a specified cog in the whole bot
 
