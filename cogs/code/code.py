@@ -75,9 +75,9 @@ OPERATORS = [
     { "NOT ": "~",    "NOT": "~",   "NAND": "~&",   "XNOR": "~^",   "NOR": "~|",    "XOR": "^",   "AND": "&",     "OR": "|"   }
 ]
 
-LOGIC_TRUTH_TABLE_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&table=true&operator={}"
-LOGIC_SIMPLIFY_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&simplify=true"
-LOGIC_RAW_API_CALL = "https://www.fellowhashbrown.com/api/logic?expression={}&raw=true"
+LOGIC_TRUTH_TABLE_API_CALL = "https://api.fellowhashbrown.com/logic/parse?expression={}&table=true&operator={}"
+LOGIC_SIMPLIFY_API_CALL = "https://api.fellowhashbrown.com/logic/parse?expression={}&simplify=true"
+LOGIC_RAW_API_CALL = "https://api.fellowhashbrown.com/logic/parse?expression={}&raw=true"
 QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}"
 WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={}&includepodid=LogicCircuit&output=json"
 WOLFRAM_ALPHA_ICON = "https://cdn.iconscout.com/icon/free/png-512/wolfram-alpha-2-569293.png"

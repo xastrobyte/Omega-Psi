@@ -85,7 +85,6 @@ class MastermindGame(Game):
 
             # Display the message and ask the challenger player to make a guess
             guess = await self.challenger.ask_for_guess(self)
-            print(guess)
 
             # Check if the guess is the same as the code
             if guess == self.code:
