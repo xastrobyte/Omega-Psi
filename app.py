@@ -456,9 +456,20 @@ def suggest():
             case_number = database.case_numbers.get_suggestion_number_sync()
 
             # Add the suggestion to the database and send a message to all developers
+            issue_number = create_issue_sync(
+                f"Suggestion #{case_number} - {str(user)}",
+                "# Description\n{}".format(description),
+                is_bug = False
+            )["number"]
+
+            case_data = {
+                "description": description,
+                "github_issue": issue_number
+            }
+
             embed = create_case_embed(
                 user, case_number,
-                None, description,
+                case_data, description,
                 case_type = SUGGESTION
             )
 
@@ -467,11 +478,6 @@ def suggest():
             msg = channel_send.result()
 
             # Add the suggestion into the database
-            issue_number = create_issue_sync(
-                f"Suggestion #{case_number} - {str(user)}",
-                "# Description\n{}".format(description),
-                is_bug = False
-            )["number"]
             database.case_numbers.add_suggestion_sync(
                 user, description, 
                 msg.id, github_issue = issue_number)
@@ -516,7 +522,7 @@ def suggest():
                         considered_text = "Not Yet"
                 embed = create_case_embed(
                     user, case_number,
-                    None, case["suggestion"],
+                    case, case["suggestion"],
                     { 
                         "dev": str(dev) if seen_dev is None else str(seen_dev),
                         "text": considered_text
