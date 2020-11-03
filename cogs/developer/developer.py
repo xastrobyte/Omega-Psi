@@ -740,7 +740,7 @@ class Developer(Cog, name="developer"):
                 embed=get_error_message("You need to specify the cog to disable.")
             )
 
-        # There is a command to disable
+        # There is a command to enable
         else:
 
             # Check that it's a valid command in the bot
@@ -752,8 +752,8 @@ class Developer(Cog, name="developer"):
 
             # The command is valid, disable it if possible
             else:
-                disabled = await database.bot.disable_cog(cog.qualified_name)
-                if not disabled:
+                enabled = await database.bot.enable_cog(cog.qualified_name)
+                if enabled:
                     await ctx.send(
                         embed=get_error_message("That cog is already disabled!")
                     )
@@ -761,8 +761,8 @@ class Developer(Cog, name="developer"):
                 else:
                     await ctx.send(
                         embed=Embed(
-                            title="Cog disabled",
-                            description="`{}` has been disabled".format(cog.qualified_name),
+                            title="Cog enabled",
+                            description="`{}` has been enabled".format(cog.qualified_name),
                             colour=await get_embed_color(ctx.author)
                         )
                     )
