@@ -14,6 +14,7 @@ from cogs.predicates import is_developer
 from util.database.database import database
 from util.discord import update_top_gg
 from util.functions import get_embed_color, add_scroll_reactions, create_fields, add_fields
+from util.github import fix_issue
 from util.string import dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1003,6 +1004,7 @@ class Developer(Cog, name="developer"):
 
                             # Mark the bug as fixed
                             if str(reaction) == CONSIDER and not get_case(current_case)["fixed"]:
+                                await fix_issue(get_case(current_case)["github_issue"])
                                 await database.case_numbers.fix_bug(case_numbers[current_case])
                             await database.case_numbers.mark_bug_seen(case_numbers[current_case], ctx.author)
                         else:
@@ -1027,11 +1029,12 @@ class Developer(Cog, name="developer"):
                                     await reason_message.delete()
 
                                 # Consider or Don't Consider the suggestion
+                                await fix_issue(
+                                    get_case(current_case)["github_issue"], 
+                                    reason = reason if reason is not None else True)
                                 await database.case_numbers.consider_suggestion(
                                     case_numbers[current_case],
-                                    str(reaction) == CONSIDER,
-                                    reason
-                                )
+                                    str(reaction) == CONSIDER, reason)
                             await database.case_numbers.mark_suggestion_seen(case_numbers[current_case], ctx.author)
 
                         # Notify the author that their case was seen
@@ -1147,12 +1150,19 @@ class Developer(Cog, name="developer"):
 
                     # Update the embed and the message
                     author = self.bot.get_user(int(get_case(current_case)["author"]))
-                    developer = self.bot.get_user(int(get_case(current_case)["seen"])) if get_case(current_case)[
-                        "seen"] else None
+                    developer = self.bot.get_user(int(get_case(current_case)["seen"])) if get_case(current_case)["seen"] else None
                     if bugs:
+                        
+                        # Update the message in the Bug channel
+                        channel = self.bot.get_channel(int(environ["BUG_CHANNEL"]))
+                        bug_message = await channel.fetch_message(get_case(current_case)["message_id"])
                         embed = create_bug_embed(await get_embed_color(author))
                         await bug_message.edit(embed=embed)
                     else:
+
+                        # Update the message in the Suggestion channel
+                        channel = self.bot.get_channel(int(environ["SUGGESTION_CHANNEL"]))
+                        suggestion_message = await channel.fetch_message(get_case(current_case)["message_id"])
                         embed = create_suggestion_embed(await get_embed_color(author))
                         await suggestion_message.edit(embed=embed)
                     await message.edit(embed=embed)

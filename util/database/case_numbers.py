@@ -5,6 +5,7 @@ from typing import Union
 
 from cogs.globals import loop
 
+from util.github import create_issue, fix_issue
 from util.string import datetime_to_dict
 
 
@@ -76,12 +77,13 @@ class CaseNumber:
         suggestion_data = self.get_suggestion_cases_sync()
         return suggestion_data["number"]
 
-    def add_suggestion_sync(self, submitter: Union[User, str], suggestion, message_id: Union[int, str]):
+    def add_suggestion_sync(self, submitter: Union[User, str], suggestion, message_id: Union[int, str], *, github_issue: int=None):
         """Synchronously adds a new suggestion
 
         :param submitter: The Discord User who submitted the suggestion
         :param suggestion: The suggestion
         :param message_id: The ID of the message sent to the suggestion channel
+        :param github_issue: The issue number on GitHub that this suggestion relates to
         """
         suggestion_data = self.get_suggestion_cases_sync()
 
@@ -96,7 +98,8 @@ class CaseNumber:
             "time": datetime_to_dict(datetime.now()),
             "message_id": str(message_id),
             "seen": None,
-            "consideration": None
+            "consideration": None,
+            "github_issue": github_issue
         }
         self.set_suggestion_cases_sync(suggestion_data)
 
@@ -167,14 +170,19 @@ class CaseNumber:
         """
         return await loop.run_in_executor(None, self.get_suggestion_number_sync)
 
-    async def add_suggestion(self, submitter: Union[User, str], suggestion, message_id):
+    async def add_suggestion(self, submitter: Union[User, str], suggestion, message_id, *, github_issue: int=None):
         """Asynchronously adds a new suggestion
 
         :param submitter: The Discord User who submitted the suggestion
         :param suggestion: The suggestion
         :param message_id: The ID of the message sent to the suggestion channel
+        :param github_issue: The issue number on GitHub that this suggestion relates to
         """
-        await loop.run_in_executor(None, self.add_suggestion_sync, submitter, suggestion, message_id)
+        await loop.run_in_executor(None, 
+            partial(
+                self.add_suggestion_sync, 
+                submitter, suggestion, message_id,
+                github_issue = github_issue))
 
     async def get_suggestion(self, suggestion_number):
         """Asynchronously retrieves the suggestion associated with the specified number
@@ -262,7 +270,7 @@ class CaseNumber:
         bug_data = self.get_bug_cases_sync()
         return bug_data["number"]
 
-    def add_bug_sync(self, source_type, source, reporter: Union[User, str], bug_description, message_id):
+    def add_bug_sync(self, source_type, source, reporter: Union[User, str], bug_description, message_id, *, github_issue: int=None):
         """Synchronously adds a new bug
 
         :param source_type: The type of source of the bug, either website or bot
@@ -270,6 +278,7 @@ class CaseNumber:
         :param reporter: The Discord User who reported the bug
         :param bug_description: A description of the bug itself
         :param message_id: The ID of the message sent to the Bug Channel
+        :param github_issue: The issue number of the bug on GitHub that this relates to
         """
         bug_data = self.get_bug_cases_sync()
 
@@ -286,7 +295,8 @@ class CaseNumber:
             "time": datetime_to_dict(datetime.now()),
             "message_id": str(message_id),
             "seen": None,
-            "fixed": False
+            "fixed": False,
+            "github_issue": github_issue
         }
         self.set_bug_cases_sync(bug_data)
 
@@ -348,7 +358,7 @@ class CaseNumber:
         """
         return await loop.run_in_executor(None, self.get_bug_number_sync)
 
-    async def add_bug(self, source_type, source, reporter: Union[User, str], bug_description, message_id):
+    async def add_bug(self, source_type, source, reporter: Union[User, str], bug_description, message_id, *, github_issue: int=None):
         """Asynchronously adds a new bug
 
         :param source_type: The type of source of the bug, either website or bot
@@ -356,8 +366,15 @@ class CaseNumber:
         :param reporter: The Discord User who reported the bug
         :param bug_description: A description of the bug itself
         :param message_id: The ID of the message sent to the Bug Channel
+        :param github_issue: The issue number of the bug on GitHub that this relates to
         """
-        await loop.run_in_executor(None, self.add_bug_sync, source_type, source, reporter, bug_description, message_id)
+        await loop.run_in_executor(None, 
+            partial(
+                self.add_bug_sync, 
+                source_type, source, 
+                reporter, bug_description, 
+                message_id,
+                github_issue = github_issue))
 
     async def get_bug(self, bug_number):
         """Asynchronously retrieves the bug associated with the specified number

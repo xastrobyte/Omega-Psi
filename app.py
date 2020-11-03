@@ -12,6 +12,7 @@ from cogs.globals import loop, PRIMARY_EMBED_COLOR
 from cogs.predicates import is_developer_predicate
 
 from util.database.database import database
+from util.github import create_issue_sync, fix_issue_sync
 from util.website.custom_html import get_case_html, get_pending_update_html, get_tasks_html, get_feedback_html, get_user_settings_html, get_server_settings_html, get_bot_settings_html
 from util.website.page import Page, Section, HomeSection
 from util.website.website import Website, Footer, Link
@@ -36,6 +37,7 @@ Session(app)
 
 DISCORD_OAUTH_LINK = "https://discord.com/api/oauth2/authorize?client_id=535587516816949248&redirect_uri=https%3A%2F%2Fomegapsi.fellowhashbrown.com%2Flogin&response_type=code&scope=identify"
 DISCORD_TOKEN_LINK = "https://discord.com/api/oauth2/token"
+GITHUB_ISSUE_URL = "https://github.com/FellowHashbrown/Omega-Psi/issues/{}"
 
 OMEGA_PSI = None
 
@@ -241,13 +243,14 @@ def create_case_embed(user, case_number, case_data, description, seen_data=None,
         title = title.format(case_number),
         description = "_ _",
         colour = get_embed_color_sync(user),
-        timestamp = datetime.now()
+        timestamp = datetime.now(),
+        url = GITHUB_ISSUE_URL.format(case_data["github_issue"])
     ).add_field(
         name = "User", value = str(user)
     )
 
     # Bug Case Type
-    if case_type == 0:
+    if case_type == BUG:
         embed.add_field(
             name = "Source Type", value = case_data["source_type"]
         ).add_field(
@@ -292,9 +295,11 @@ def report_bug():
 
             # Create an embed that will be sent to the developers, the bug reporter
             #   and the bug channel
+            case_data = dict(request.json)
+            case_data["source_type"] = case_data.pop("sourceType")
             embed = create_case_embed(
                 user, case_number,
-                request.json, description,
+                case_data, description,
                 case_type = BUG
             )
             
@@ -302,10 +307,23 @@ def report_bug():
             channel_send = run_coroutine_threadsafe(channel.send(embed = embed), loop)
             msg = channel_send.result()
 
-            # Add the bug into the database
+            # Add the bug into the database and post it onto GitHub
+            issue_number = create_issue_sync(
+                f"Bug #{case_number} - {str(user)}",
+                (
+                    "# Source Type\n {}\n" +
+                    "## Source\n {}\n" +
+                    "# Description\n {}\n"
+                ).format(
+                    case_data["source_type"],
+                    case_data["source"],
+                    description
+                )
+            )["number"]
             database.case_numbers.add_bug_sync(
-                request.json["sourceType"], request.json["source"],
-                user, description, msg.id
+                case_data["source_type"], case_data["source"],
+                user, description, msg.id,
+                github_issue = issue_number
             )
 
             # Send a message to each developer displaying what the bug is
@@ -365,7 +383,10 @@ def report_bug():
 
                     # Send a message to the user saying a developer has marked their bug as fixed
                     #   only if the user was found
+                    # Update the issue on GitHub
+                    bug = database.case_numbers.get_bug_sync(case_number)
                     database.case_numbers.fix_bug_sync(case_number)
+                    fix_issue_sync(bug["github_issue"])
                     if user and not case["fixed"]:
                         user_send = run_coroutine_threadsafe(
                             user.send(
@@ -446,7 +467,14 @@ def suggest():
             msg = channel_send.result()
 
             # Add the suggestion into the database
-            database.case_numbers.add_suggestion_sync(user, description, msg.id)
+            issue_number = create_issue_sync(
+                f"Suggestion #{case_number} - {str(user)}",
+                "# Description\n{}".format(description),
+                is_bug = False
+            )["number"]
+            database.case_numbers.add_suggestion_sync(
+                user, description, 
+                msg.id, github_issue = issue_number)
 
             # Send a message to each developer displaying what the suggestion is
             for dev in database.bot.get_developers_sync():
@@ -516,11 +544,18 @@ def suggest():
                     
                     # Send a message to the user saying their suggestion is being considered/not considered
                     #   only if the user was found
+                    # Update the suggestion in GitHub
+                    suggestion = database.case_numbers.get_suggestion_sync(case_number)
                     database.case_numbers.consider_suggestion_sync(
                         case_number, 
                         request.json["consideration"]["consider"],
                         request.json["consideration"]["reason"]
                     )
+                    fix_issue_sync(
+                        suggestion["github_issue"],
+                        reason = (
+                            True if request.json["consideration"]["consider"]
+                            else request.json["consideration"]["reason"]))
                     if user:
 
                         # Set up the embed
@@ -553,6 +588,7 @@ def suggest():
 
                     # Send a message to the user saying a developer has viewed their suggestion
                     #   only if the user was found and if the suggestion hasn't been seen already
+                    suggestion = database.case_numbers.get_suggestion_sync(case_number)
                     database.case_numbers.mark_suggestion_seen_sync(case_number, dev)
                     if user and case["seen"] is None:
                         user_send = run_coroutine_threadsafe(

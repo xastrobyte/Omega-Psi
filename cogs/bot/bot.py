@@ -14,6 +14,7 @@ from util.database.database import database
 
 from util.discord import process_scrolling
 from util.functions import get_embed_color, create_fields, add_fields, add_scroll_reactions
+from util.github import create_issue, fix_issue, GITHUB_ISSUE_URL
 from util.string import datetime_to_string, datetime_to_length, dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -156,11 +157,25 @@ class Bot(Cog, name="bot"):
 
                 # Create an embed that will be sent to the developers and 
                 # as a confirmation message to the reporter
+                issue_number = await create_issue(
+                    f"Bug #{bug_number} - {str(ctx.author)}",
+                    (
+                        "# Source Type\n {}\n" +
+                        "## Source\n {}\n" +
+                        "# Description\n {}\n"
+                    ).format(
+                        source_type, source,
+                        bug_description
+                    )
+                )
+                issue_number = issue_number["number"]
+
                 embed = Embed(
                     title="Bug (#{})".format(bug_number),
                     description="_ _",
                     colour=await get_embed_color(ctx.author),
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
+                    url = GITHUB_ISSUE_URL.format(issue_number)
                 ).add_field(
                     name="User",
                     value=str(ctx.author)
@@ -194,13 +209,14 @@ class Bot(Cog, name="bot"):
                 await ctx.send(embed=embed)
 
                 # Send a message to the bug channel and save the bug into the database
+                #   Also send the bug to GitHub as an issue
                 channel = self.bot.get_channel(int(environ["BUG_CHANNEL"]))
                 msg = await channel.send(embed=embed)
+
                 await database.case_numbers.add_bug(
-                    source_type, source,
-                    str(ctx.author.id),
-                    bug_description,
-                    str(msg.id)
+                    source_type, source, str(ctx.author.id),
+                    bug_description, str(msg.id),
+                    github_issue = issue_number
                 )
 
     @command(
@@ -228,11 +244,19 @@ class Bot(Cog, name="bot"):
 
             # Create an embed that will be sent to the developers and
             # as a confirmation message to the suggestor
+            issue_number = await create_issue(
+                f"Suggestion #{suggestion_number} - {str(ctx.author)}",
+                "# Description\n{}".format(suggestion),
+                is_bug = False
+            )
+            issue_number = issue_number["number"]
+
             embed = Embed(
                 title="Suggestion (#{})".format(suggestion_number),
                 description="_ _",
                 colour=await get_embed_color(ctx.author),
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
+                url = GITHUB_ISSUE_URL.format(issue_number)
             ).add_field(
                 name="User",
                 value=str(ctx.author)
@@ -259,7 +283,10 @@ class Bot(Cog, name="bot"):
             # Send a message to the suggestion channel
             channel = self.bot.get_channel(int(environ["SUGGESTION_CHANNEL"]))
             msg = await channel.send(embed=embed)
-            await database.case_numbers.add_suggestion(ctx.author, suggestion, msg.id)
+            
+            await database.case_numbers.add_suggestion(
+                ctx.author, suggestion, msg.id,
+                github_issue = issue_number)
 
         # Send a confirmation message to the user
         await ctx.send(embed=embed)
