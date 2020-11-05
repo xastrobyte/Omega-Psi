@@ -56,3 +56,5 @@ bug report or suggestion has been seen, fixed, or considered.
 
 Whenever a developer marks your bug or suggestion as seen, you will be notified through Omega Psi **_but you must allow Omega Psi to send you messages for this to work_**
 Otherwise, you will have to view the *bugs* or *suggestions* channel or use the `myBugs` or `mySuggestions` command to stay updated on whether or not your bug has been seen
+
+Your bug report or suggestion will also automatically be sent to GitHub just to keep the bugs and suggestions up to date on GitHub as well that way there is some form of issue history that can be referenced. It will not be posted by your GitHub account because I do not have GitHub OAuth in Omega Psi (although I might if it's beneficial), but you will be able to view the bug report or suggestion on GitHub using the `myBugs` or `mySuggestions` command which will give you a link to the GitHub issue on each bug or suggestion that you've sent.
