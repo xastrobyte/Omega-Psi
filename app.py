@@ -859,6 +859,21 @@ def pending_update():
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401
 
+@app.route("/pendingUpdate/commit", methods = ["POST"])
+def commit_pending_update():
+    """Processes the pending update API endpoint"""
+
+    # Only run if the origin is from ALLOW_ORIGIN
+    if 'HTTP_ORIGIN' in request.environ and request.environ['HTTP_ORIGIN'] == ALLOW_ORIGIN and session.get("user_id") and database.bot.is_developer_sync(session.get("user_id")):
+        
+        # Committing the update
+        if request.method == "POST":
+            pass
+    
+    # The origin does not match ALLOW_ORIGIN
+    return jsonify({"error": "Unauthorized"}), 401
+
+
 @app.route("/pendingUpdate/feature", methods = ["POST", "PUT", "DELETE"])
 def create_feature():
     """Processes the feature API endpoint"""

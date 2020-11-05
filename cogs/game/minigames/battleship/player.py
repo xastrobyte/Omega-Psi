@@ -403,14 +403,16 @@ class BattleshipPlayer(Player):
                     # If there was a hit, save the last hit and check if the ship was sunk
                     if result == BattleshipBoard.HIT:
                         self.last_hit = row, column
-                        if game.get_current_board().did_ship_sink(game.get_current_board().get_at(*self.last_hit)):
+                        if game.get_current_board().did_ship_sink(
+                                game.get_current_board().get_at(*self.last_hit)):
                             self.last_hit = None
                             self.current_direction = None
                     
                     # If there was not a hit, check if the last hit was not sunk yet
                     #   if not, reverse the direction
                     else:
-                        if not game.get_current_board().did_ship_sink(game.get_current_board().get_at(*self.last_hit)):
+                        if not game.get_current_board().did_ship_sink(
+                                game.get_current_board().get_at(*self.last_hit)):
                             self.current_direction = (
                                 -self.current_direction[0],
                                 -self.current_direction[1]

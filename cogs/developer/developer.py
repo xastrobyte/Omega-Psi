@@ -754,9 +754,9 @@ class Developer(Cog, name="developer"):
             # The command is valid, disable it if possible
             else:
                 enabled = await database.bot.enable_cog(cog.qualified_name)
-                if enabled:
+                if not enabled:
                     await ctx.send(
-                        embed=get_error_message("That cog is already disabled!")
+                        embed=get_error_message("That cog is already enabled!")
                     )
 
                 else:
