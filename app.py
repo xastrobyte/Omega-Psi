@@ -868,7 +868,7 @@ def commit_pending_update():
         
         # Committing the update
         if request.method == "POST":
-            pass
+            return jsonify({"success": True}), 201
     
     # The origin does not match ALLOW_ORIGIN
     return jsonify({"error": "Unauthorized"}), 401

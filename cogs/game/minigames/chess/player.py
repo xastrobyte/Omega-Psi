@@ -15,10 +15,10 @@ from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-MAKE_ONE_PLAYER_MOVE = "https://chess-api-chess.herokuapp.com/api/v1/chess/one/move/player"
-MAKE_ONE_AI_MOVE = "https://chess-api-chess.herokuapp.com/api/v1/chess/one/move/ai"
-MAKE_TWO_PLAYER_MOVE = "https://chess-api-chess.herokuapp.com/api/v1/chess/two/move"
-VALIDATE_MOVE = "https://chess-api-chess.herokuapp.com/api/v1/chess/{}/moves"
+MAKE_ONE_PLAYER_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/one/move/player"
+MAKE_ONE_AI_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/one/move/ai"
+MAKE_TWO_PLAYER_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/two/move"
+VALIDATE_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/{}/moves"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -70,10 +70,8 @@ class ChessPlayer(Player):
         if self.is_ai:
 
             response = await loop.run_in_executor(
-                None,
-                partial(
-                    post,
-                    MAKE_ONE_AI_MOVE,
+                None, partial(
+                    post, MAKE_ONE_AI_MOVE,
                     data = {
                         "game_id": game.id
                     },

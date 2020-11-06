@@ -13,7 +13,7 @@ function createUpdate() {
     //  and let the user know the update was created
     }).done(function(data) {
 
-        // Create the "No Features Yet" text and the "Add New Feature" button
+        // Create the "No Features Yet" text and the "Add New Feature" and "Commit Update" button
         var p = document.createElement("p");
         p.id = "noFeatures";
         var textNode = document.createTextNode("No Features Yet");
@@ -119,9 +119,10 @@ async function commitUpdate() {
         //  and let the user know the update was committed
         }).done(function(data) {
 
-            // Clear the pending update div and the file change div
+            // Clear the pending update div
             document.getElementById("featuresTable").remove();
             document.getElementById("addNewFeature").remove();
+            document.getElementById("commitUpdate").remove();
             var p = document.createElement("p");
             p.id = "noPendingUpdate";
             var textNode = document.createTextNode("No Pending Update");
@@ -130,11 +131,17 @@ async function commitUpdate() {
             var button = document.createElement("button");
             button.className = "page-form-button";
             button.id = "createUpdate";
-            // button.setAttribute("");
+            button.setAttribute("onclick", "createUpdate()");
+            button.innerHTML = "Create Update";
+
+            // Update the pending update div with the text and button
+            //  to create a new update
+            document.getElementById("pendingUpdateDiv").appendChild(p);
+            document.getElementById("pendingUpdateDiv").appendChild(button);
 
             Swal.fire({
                 title: "Update Committed!",
-                text: `Version ${version} has been committed to Omega Psi`,
+                text: `Version ${version} has been committed to Omega Psi!`,
                 icon: "success",
                 customClass: {
                     container: 'swal-container',

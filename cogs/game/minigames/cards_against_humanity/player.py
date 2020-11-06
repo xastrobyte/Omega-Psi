@@ -202,14 +202,16 @@ class CardsAgainstHumanityPlayer(Player):
                 
                 # Check if the player wants to leave
                 if str(reaction) == LEAVE:
-                    return LEAVE
+                    submission = CardsAgainstHumanityPlayer.Submission(self)
+                    submission.cards.append(LEAVE)
+                    return submission
                 
                 # The player chose a card
                 selected[str(reaction)] = self.cards.pop(NUMBER_EMOJIS.index(str(reaction)))
             await message.delete()
 
             # Add each card to the player's submission and return the submission
-            submission = self.Submission(self)
+            submission = CardsAgainstHumanityPlayer.Submission(self)
             for card in selected:
                 submission.cards.append(selected[card])
             return submission

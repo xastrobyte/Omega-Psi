@@ -158,6 +158,7 @@ def get_pending_update_html(on_developer_page = True):
                                 {% else %}
                                     {% if pending_update["features"]|length == 0 %}
                                         <p id="noFeatures">No Features Yet</p>
+                                        <button id="createUpdate" class="page-from-button">Create Update</button>
                                     {% else %}
                                         <div class="cases-box">
                                             <table id="featuresTable" class="case-table" width="100%">
@@ -185,6 +186,7 @@ def get_pending_update_html(on_developer_page = True):
                                         </div>
                                     {% endif %}
                                     <button id="addNewFeature" class="page-form-button" onclick="addFeature()">Add New Feature</button>
+                                    <button id="commitUpdate" class="page-form-button" onclick="commitUpdate()">Commit Update</button>
                                 {% endif %}
                             </div>
             """

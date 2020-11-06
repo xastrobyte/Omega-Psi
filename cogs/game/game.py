@@ -191,7 +191,7 @@ class Game(Cog, name="game"):
                                            is_two_player=False,
                                            allow_ai=False,
                                            timeout=30,
-                                           min_players=3
+                                           min_players=2
                                            )
 
         # The result is not None, there are players

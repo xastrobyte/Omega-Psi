@@ -3,6 +3,8 @@ from discord import Embed
 from random import shuffle
 from requests import get
 
+from cogs.globals import LEAVE
+
 from cogs.game.minigames.base_game.game import Game
 from cogs.game.minigames.cards_against_humanity.cards import BlackCard, WhiteCard
 from cogs.game.minigames.cards_against_humanity.player import CardsAgainstHumanityPlayer
@@ -154,15 +156,16 @@ class CardsAgainstHumanityGame(Game):
         """Asks each player to submit their cards for the current black card in the game"""
         
         # Ask each player to make their submissions
-        done, pending = await wait([
-            player.ask_for_submission(self)
-            for player in self.players
-        ], return_when = ALL_COMPLETED)
-        for future in pending:
-            future.cancel()
-        for submission in done:
-            if submission.result():
-                self.submissions.append(submission.result())
+        while True:
+            done, pending = await wait([
+                player.ask_for_submission(self)
+                for player in self.players
+            ], return_when = ALL_COMPLETED)
+            for future in pending:  # There shouldn't be any, but do so just in case
+                future.cancel()
+            for submission in done:
+                if submission.result():
+                    self.submissions.append(submission.result())
         
         # Show the submissions to everybody and wait for the judge to choose their favorite submission
         await self.add_action(
