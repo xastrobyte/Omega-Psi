@@ -138,6 +138,16 @@ class CardsAgainstHumanityGame(Game):
             # Wait for all the submissions to come in and wait for the judge
             #   to choose their favorite submission
             winning_submission = await self.wait_for_submissions()
+            if winning_submission == LEAVE:
+                embed = Embed(
+                    title = "Too many people left!",
+                    description = "There are not enough people to continue this game so it's done :(",
+                    colour = 0x800000
+                )
+                for player in self.players:
+                    await player.member.send(embed = embed)
+                await self.ctx.send(embed = embed)
+                break
 
             # Show the results of this round, give the winning player a point
             #   and check if the player has reached 7 points
@@ -148,24 +158,35 @@ class CardsAgainstHumanityGame(Game):
             self.next_judge()
         
         # Show the winner of this game and update everyone's stats
-        await self.show_winner(winner)
-        for player in self.players:
-            await database.users.update_cards_against_humanity(player.member, player.id == winner.id)
+        if winner is not None:
+            await self.show_winner(winner)
+            for player in self.players:
+                await database.users.update_cards_against_humanity(player.member, player.id == winner.id)
     
     async def wait_for_submissions(self):
         """Asks each player to submit their cards for the current black card in the game"""
         
         # Ask each player to make their submissions
-        while True:
-            done, pending = await wait([
-                player.ask_for_submission(self)
-                for player in self.players
-            ], return_when = ALL_COMPLETED)
-            for future in pending:  # There shouldn't be any, but do so just in case
-                future.cancel()
-            for submission in done:
-                if submission.result():
-                    self.submissions.append(submission.result())
+        done, pending = await wait([
+            player.ask_for_submission(self)
+            for player in self.players
+        ], return_when = ALL_COMPLETED)
+        for future in pending:  # There shouldn't be any, but do so just in case
+            future.cancel()
+        for submission in done:
+            submission = submission.result()
+            if submission:
+                try:
+                    submission.cards.index(LEAVE)  # If this fails, it will raise
+                                                    #    an exception, if not, keep going
+                    await self.kick_player(submission.player)
+                    continue
+                except ValueError: pass
+                self.submissions.append(submission)
+        
+        # Check if there are not enough submissions (people left)
+        if len(self.submissions) < 2 or len(self.players) < 3:
+            return LEAVE
         
         # Show the submissions to everybody and wait for the judge to choose their favorite submission
         await self.add_action(
@@ -221,7 +242,30 @@ class CardsAgainstHumanityGame(Game):
         )
         for player in self.players:
             await player.show_winner(self, winner)
+        
+    async def kick_player(self, player):
+        """Removes the specified player from this Cards Against Humanity
 
+        :param player: The player to remove
+        """
+        found = False
+        for index in range(len(self.players)):
+            if self.players[index].member.id == player.member.id:
+                found = True
+                break
+        if found:
+            await self.ctx.send(embed = Embed(
+                title = "Someone left!",
+                description = f"{player.get_name()} left the game!",
+                colour = await get_embed_color(player.member)
+            ))
+            for player in self.players:
+                await player.member.send(embed = Embed(
+                    title = "Someone left!",
+                    description = f"{player.get_name()} left the game!",
+                    colour = await get_embed_color(player.member)
+                ))
+    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Other Methods
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
