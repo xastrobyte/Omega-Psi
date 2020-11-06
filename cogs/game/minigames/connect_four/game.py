@@ -75,7 +75,7 @@ class ConnectFourGame(Game):
         # Send a message to start the game and add the reactions
         self.message = await self.ctx.send(
             embed = Embed(
-                title = "Tic Tac Toe",
+                title = "Connect Four",
                 description = "{}'s Turn\n{}\n{}\n{}".format(
                     self.get_current_player().get_name(),
                     str(self.board),

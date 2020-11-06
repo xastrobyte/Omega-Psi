@@ -97,6 +97,10 @@ class User:
                 "mastermind": {
                     "won": 0,
                     "lost": 0
+                },
+                "chess": {
+                    "won": 0,
+                    "lost": 0
                 }
             }
         }
@@ -715,6 +719,16 @@ class User:
         """
         user_data = self.get_user_sync(user)
         return user_data["minigames"]["mastermind"]
+    
+    def get_chess_sync(self, user: Union[User, str]):
+        """Synchronously retrieves ther user's chess data from the database
+
+        :param user: The User to get the Chess data of
+
+        :returns: The User's Chess data
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["minigames"]["chess"]
 
     # # # # # # # # # # # # # # #
 
@@ -800,6 +814,16 @@ class User:
         """
         user_data = self.get_user_sync(user)
         user_data["minigames"]["mastermind"]["won" if won else "lost"] += 1
+        self.set_user_sync(user, user_data)
+    
+    def update_chess_sync(self, user: Union[User, str], won):
+        """Synchronously updates the user's chess data in the database
+
+        :param user: The User to update the Chess data of
+        :param won: Whether or not the User won
+        """
+        user_data = self.get_user_sync(user)
+        user_data["minigames"]["chess"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

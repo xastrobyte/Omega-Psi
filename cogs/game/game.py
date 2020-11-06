@@ -8,6 +8,7 @@ from cogs.predicates import is_nsfw_and_guild
 
 from cogs.game.minigames.battleship.game import BattleshipGame
 from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanityGame
+from cogs.game.minigames.chess.game import ChessGame
 from cogs.game.minigames.connect_four.game import ConnectFourGame
 from cogs.game.minigames.game_of_life.game import GameOfLifeGame
 from cogs.game.minigames.kings_cup.game import KingsCupGame
@@ -220,6 +221,47 @@ class Game(Cog, name="game"):
                     colour=await get_embed_color(ctx.author)
                 )
             )
+    
+    @command(
+        name="chess",
+        description="Play a game of Chess against an opponent or an AI",
+        cog_name="game"
+    )
+    async def chess(self, ctx):
+        """Allows a user to play a game of Chess
+
+        :param ctx: The context of where the message was sent
+        """
+
+        # Wait for other players
+        result = await self.wait_for_users(
+            ctx, "Waiting for a Chess opponent",
+            is_two_player = True,
+            allow_intelligent_ai = False,
+            timeout = 30
+        )
+
+        # The result is not None, it must either be a user or
+        #   the SMART/RANDOM reaction
+        if result is not None:
+            game = ChessGame(
+                self.bot, ctx,
+                ctx.author,
+                1 if result == RANDOM else result,
+                is_smart = result == SMART
+            )
+            await game.play()
+        
+        # The result is None, no one wanted to play the game
+        else:
+            await ctx.send(
+                embed=Embed(
+                    title="No responses :frowning2:",
+                    description="It seems like no one wanted to play with you.",
+                    colour=await get_embed_color(ctx.author)
+                )
+            )
+
 
     @command(
         name="connectFour",

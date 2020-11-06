@@ -131,12 +131,11 @@ class BattleshipPlayer(Player):
                         # Iterate through the offsets based off the length of the ship and the direction of the ship
                         valid_direction = True
                         for offset in range(ship["length"]):
-                            if (
-                                row + (offset * direction[0]) > board.height - 1 or 
-                                row + (offset * direction[0]) < 0 or
-                                column + (offset * direction[1]) > board.width - 1 or
-                                column + (offset * direction[1]) < 0
-                            ):
+                            if (row + (offset * direction[0]) > board.height - 1 or 
+                                    row + (offset * direction[0]) < 0 or
+                                    column + (offset * direction[1]) > board.width - 1 or
+                                    column + (offset * direction[1]) < 0):
+                                    
                                 valid_direction = False
                                 break
                             if board.get_at(row + (offset * direction[0]), column + (offset * direction[1])) is not None:
