@@ -9,7 +9,7 @@ from cogs.errors import get_error_message
 
 from cogs.game.minigames.base_game.player import Player
 from cogs.game.minigames.chess.board import ChessBoard
-from cogs.game.minigames.chess.pieces import COLUMNS, NUMBERS
+from cogs.game.minigames.chess.pieces import COLUMNS, NUMBERS, UNDO, RESIGN
 
 from util.functions import get_embed_color
 
@@ -35,12 +35,15 @@ class ChessPlayer(Player):
         :param game: The ChessGame object this player is connected to
         """
 
-        # Determine the flip value
+        # Determine the flip value that is used
+        #   to rotate the board to make it easier on the
+        #   current player's turn
         if game.opponent.is_ai:
             flip = True
         else:
             flip = game.current_player == 0
 
+        # Edit the game message
         await game.message.edit(
             embed = Embed(
                 title = "Chess",
@@ -73,27 +76,60 @@ class ChessPlayer(Player):
                 )
             )
             response = loads(response.text)
-            print(response)
             game.board.push_uci(response["from"] + response["to"])
         
         # This player is not an AI
         else:
 
             # Get the player's desired piece to move
-            column_from, row_from = None, None
+            column_from, row_from = "", ""
+            column_to, row_to = "", ""
             col_num, row_num = 0, 0
 
             while True:  # Ask the player for their move while
                          #  the move they choose is invalid
 
-                # Column is 0, Row is 1
-                for entry in range(2):
+                # Column_from is 0, Row_from is 1
+                # column_to is 2, row_to is 3
+                entry = 0
+                while entry < 4:
                     while True:
+
+                        # "Highlight" the player's selected piece (when possible)
+                        board = ChessBoard.from_FEN(
+                            game.board.board_fen(),
+                            None if entry < 2 else (row_num, col_num),
+                            flip = flip
+                        )
+                        await game.message.edit(
+                            embed = Embed(
+                                title = "Chess",
+                                description = (
+                                    f"{self.get_name()}'s turn\n" +
+                                    f"{board}\n" +
+                                    f"White: {game.opponent.get_name()}\n" +
+                                    f"Black: {game.challenger.get_name()}\n"
+                                ),
+                                colour = PRIMARY_EMBED_COLOR if self.is_ai else await get_embed_color(self.member)
+                            ).add_field(
+                                name = "Current Move: {} -> {}".format(
+                                    "".join([column_from, row_from][:entry]),
+                                    "".join([column_to, row_to][:entry // 2]) if entry >= 2 else ""
+                                ),
+                                value = (
+                                    f"React with {UNDO} to undo your last move\n" +
+                                    f"React with {RESIGN} to resign"
+                                )
+                            ).set_footer(
+                                text = "❕❕React with your chosen column first and then the row❕❕"
+                            ))
+
                         def check_reaction(reaction, user):
                             return (
                                 reaction.message.id == game.message.id and
                                 user.id == self.member.id and
-                                str(reaction) in COLUMNS
+                                (str(reaction) in COLUMNS or
+                                 str(reaction) in [UNDO, RESIGN])
                             )
                         done, pending = await wait([
                             game.bot.wait_for("reaction_add", check = check_reaction),
@@ -102,10 +138,28 @@ class ChessPlayer(Player):
                         reaction, user = done.pop().result()
                         for future in pending:
                             future.cancel()
+
+                        # Check if the user chose the undo button (remove their last entry)
+                        #   and have them input their desired value
+                        if str(reaction) == UNDO:
+                            if entry == 1:
+                                column_from = ""
+                                col_num = 0
+                            elif entry == 2:
+                                row_from = ""
+                                row_num = 0
+                            elif entry == 3:
+                                column_to = ""
+                            entry -= 1
+                            continue
+                        
+                        # Check if the user chose to resign
+                        elif str(reaction) == RESIGN:
+                            return False
                         
                         # Get the column first, then the row
                         #   but validate the input
-                        if entry == 0:  # Column
+                        if entry in [0, 2]:  # Column
                             if str(reaction) not in COLUMNS:
                                 await game.ctx.send(
                                     embed = get_error_message(
@@ -117,12 +171,17 @@ class ChessPlayer(Player):
                                 #   (challenger's turn)
                                 if game.current_player == 0:
                                     reaction = NUMBERS[7 - NUMBERS.index(str(reaction))]
-                                    col_num = 7 - NUMBERS.index(str(reaction))
+                                    if entry < 2:
+                                        col_num = 7 - NUMBERS.index(str(reaction))
 
                                 else:
-                                    col_num = NUMBERS.index(str(reaction))
-                                column_from = COLUMNS[str(reaction)]
-                                break
+                                    if entry < 2:
+                                        col_num = NUMBERS.index(str(reaction))
+                                if entry < 2:
+                                    column_from = COLUMNS[str(reaction)]
+                                else:
+                                    column_to = COLUMNS[str(reaction)]
+                                break  # This input was okay
                         else:
                             if str(reaction) not in COLUMNS:
                                 await game.ctx.send(
@@ -130,89 +189,27 @@ class ChessPlayer(Player):
                                         "That is an invalid row! Try again!"
                                     ), delete_after = 10)
                             else:
-                                row_from = str(reaction)[0]  # This will get the number
-                                row_num = int(row_from) - 1
-                                break
-                
-                # "Highlight" the player's selected piece
-                await game.message.edit(
-                    embed = Embed(
-                        title = "Chess",
-                        description = (
-                            f"{self.get_name()}'s turn\n" +
-                            f"{ChessBoard.from_FEN(game.board.board_fen(), (row_num, col_num), flip=flip)}\n" +
-                            f"White: {game.opponent.get_name()}\n" +
-                            f"Black: {game.challenger.get_name()}\n"
-                        ),
-                        colour = PRIMARY_EMBED_COLOR if self.is_ai else await get_embed_color(self.member)
-                    ).set_footer(
-                        text = "❕❕React with your chosen column first and then the row❕❕"
-                    ))
-                    
-                # Get the player's desired place to move the piece to and 
-                #   validate that the piece can be moved there
-                column_to, row_to = None, None
+                                if entry < 2:
+                                    row_from = str(reaction)[0]  # This will get the number
+                                    row_num = int(row_from) - 1
+                                else:
+                                    row_to = str(reaction)[0]
+                                break  # this input was okay
+                    entry += 1
 
-                # Column is 0, Row is 1
-                for entry in range(2):
-                    while True:
-                        def check_reaction(reaction, user):
-                            return (
-                                reaction.message.id == game.message.id and
-                                user.id == self.member.id and
-                                str(reaction) in COLUMNS
-                            )
-                        done, pending = await wait([
-                            game.bot.wait_for("reaction_add", check = check_reaction),
-                            game.bot.wait_for("reaction_remove", check = check_reaction)
-                        ], return_when = FIRST_COMPLETED)
-                        reaction, user = done.pop().result()
-                        for future in pending:
-                            future.cancel()
-                        
-                        # Get the column first, then the row
-                        #   but validate the input
-                        if entry == 0:  # Column
-                            if str(reaction) not in COLUMNS:
-                                await game.ctx.send(
-                                    embed = get_error_message(
-                                        "That is an invalid column! Try again."
-                                    ), delete_after = 10)
-                            else:
-
-                                # Shift the reaction if the board is flipped 
-                                #   (challenger's turn)
-                                if game.current_player == 0:
-                                    reaction = NUMBERS[7 - NUMBERS.index(str(reaction))]
-                                    
-                                column_to = COLUMNS[str(reaction)]
-                                break
-                        else:
-                            if str(reaction) not in COLUMNS:
-                                await game.ctx.send(
-                                    embed = get_error_message(
-                                        "That is an invalid row! Try again!"
-                                    ), delete_after = 10)
-                            else:
-                                row_to = str(reaction)[0]  # This will get the number
-                                break
-                
                 # Check if the player made a valid move
-                found = False
-                valid_moves = game.board.legal_moves
-                for move in valid_moves:
-                    if f"{column_from}{row_from}{column_to}{row_to}" == str(move):
-                        found = True
-                        break
-                        
-                if not found:
-                    await game.ctx.send(
-                        embed = get_error_message(
-                            "You can't move that piece like that! Try again."
-                        ), delete_after = 10
-                    )
-                else:
+                valid_moves = [
+                    str(move)
+                    for move in game.board.legal_moves
+                ]
+                if f"{column_from}{row_from}{column_to}{row_to}" in valid_moves:
                     break
+
+                await game.ctx.send(
+                    embed = get_error_message(
+                        "You can't move that piece like that! Try again."
+                    ), delete_after = 10
+                )
             
             from_position = column_from + row_from
             to_position = column_to + row_to
@@ -222,8 +219,7 @@ class ChessPlayer(Player):
             game.board.push_uci(from_position + to_position)
             url = MAKE_ONE_PLAYER_MOVE if game.opponent.is_ai else MAKE_TWO_PLAYER_MOVE
             await loop.run_in_executor(
-                None,
-                partial(
+                None, partial(
                     post, url,
                     data = {
                         "game_id": game.id,
@@ -233,5 +229,4 @@ class ChessPlayer(Player):
                     headers = {
                         "Content-Type": "application/x-www-form-urlencoded"
                     }
-                )
-            )
+                ))

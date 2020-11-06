@@ -2,8 +2,6 @@ from functools import partial
 from requests import post
 from json import loads
 
-from chess import Board
-
 from cogs.globals import loop
 
 from cogs.game.minigames.chess.pieces import PIECES, COLUMNS, HIGHLIGHT
@@ -67,8 +65,6 @@ class ChessBoard:
 
         # Create a Chess Board object from the FEN string
         rows = fen_string.split("/")
-
-        # Temporary function to use
         def is_white(row, col) -> bool:
             """Returns whether or not the board space is a white space
 

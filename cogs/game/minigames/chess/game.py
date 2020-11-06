@@ -1,18 +1,18 @@
 from asyncio import sleep
 from discord import Embed
-from functools import partial
 from json import loads
-from requests import get, post
+from requests import get
 
 from chess import Board
 
-from cogs.globals import loop, PRIMARY_EMBED_COLOR
+from cogs.globals import PRIMARY_EMBED_COLOR
 
 from cogs.game.minigames.base_game.game import Game
 from cogs.game.minigames.chess.board import ChessBoard
 from cogs.game.minigames.chess.player import ChessPlayer
-from cogs.game.minigames.chess.pieces import COLUMNS
+from cogs.game.minigames.chess.pieces import NUMBERS, RESIGN, UNDO
 
+from util.database.database import database
 from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -70,28 +70,38 @@ class ChessGame(Game):
         ))
 
         # Add the reactions to the game message
-        for reaction in COLUMNS:
+        for reaction in (NUMBERS + [UNDO, RESIGN]):
             await self.message.add_reaction(reaction)
         
         # Play the game while there is no winner
         winner = None
-        while winner == None:
-
-            # Let the player take their turn
-            #   and check if there is a winner
-            await self.get_current_player().process_turn(self)
-            winner = await ChessBoard.check_for_winner(self)
+        while winner is None:
             if self.opponent.is_ai:
                 flip = True
             else:
                 flip = self.current_player == 0
 
+            # Let the player take their turn
+            #   and check if there is a winner
+            result = await self.get_current_player().process_turn(self)
+            if result is False:
+                winner = self.get_next_player()
+                break
+
+            # Check if there is a check, checkmate, or stalemate
+            #   give the player an option to resign
+            title = "Chess"
+            if self.board.is_check():
+                title = "Chess - Check!"
+            elif self.board.is_stalemate():
+                title = "Chess - Stalemate"
+
             # There is no winner yet
-            if winner == None:
+            if self.board.result() == "*":
                 self.next_player()
                 await self.message.edit(
                     embed = Embed(
-                        title = "Chess",
+                        title = title,
                         description = (
                             f"{self.get_current_player().get_name()}'s turn\n" +
                             f"{ChessBoard.from_FEN(self.board.board_fen(), flip=flip)}\n" +
@@ -103,6 +113,25 @@ class ChessGame(Game):
                         text = "❕❕React with your chosen column first and then the row❕❕"
                     )
                 )
-            await sleep(3)
+                await sleep(3)
+            
+            # There is a winner/draw
+            else:
+                winner = self.get_current_player()
+
+        await self.message.edit(
+            embed = Embed(
+                title = f"{winner.get_name()} Won!",
+                description = (
+                    f"{ChessBoard.from_FEN(self.board.board_fen(), flip=flip)}\n" +
+                    f"White: {self.opponent.get_name()}\n" +
+                    f"Black: {self.challenger.get_name()}\n"
+                ),
+                colour = PRIMARY_EMBED_COLOR if winner.is_ai else await get_embed_color(winner.member)
+            )
+        )
+        if not self.opponent.is_ai:
+            await database.users.update_chess(self.opponent.member, self.opponent.member.id == winner.member.id)
+        await database.users.update_chess(self.challenger.member, self.opponent.member.id == winner.member.id)
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
