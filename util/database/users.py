@@ -932,6 +932,14 @@ class User:
                 The User's Mastermind data
         """
         return await loop.run_in_executor(None, self.get_mastermind_sync, user)
+    
+    async def get_chess(self, user: Union[User, str]):
+        """Asynchronously retrieves the user's chess data from the database
+
+        :param user: The User to get the Chess data of
+        :returns: The User's Chess data
+        """
+        return await loop.run_in_executor(None, self.get_chess_sync, user)
 
     # # # # # # # # # # # # # # #
 
@@ -1006,6 +1014,14 @@ class User:
                 Whether or not the User won
         """
         await loop.run_in_executor(None, self.update_mastermind_sync, user, won)
+    
+    async def update_chess(self, user: Union[User, str], won):
+        """Asynchronously updates the user's chess data in the database
+
+        :param user: The User to update the Chess data of
+        :param won: Whether or not the User won
+        """
+        await loop.run_in_executor(None, self.update_chess_sync, user, won)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Card Game Access Methods
