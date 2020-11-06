@@ -3,7 +3,7 @@ from discord import Embed
 from json import loads
 from requests import get
 
-from chess import Board
+from chess import Board, WHITE, BLACK
 
 from cogs.globals import PRIMARY_EMBED_COLOR
 
@@ -76,6 +76,7 @@ class ChessGame(Game):
         # Play the game while there is no winner
         winner = None
         while winner is None:
+            self.board.turn = WHITE if self.current_player == 1 else BLACK
             if self.opponent.is_ai:
                 flip = True
             else:
@@ -117,7 +118,10 @@ class ChessGame(Game):
             
             # There is a winner/draw
             else:
-                winner = self.get_current_player()
+                if not self.board.is_stalemate():
+                    winner = self.get_current_player()
+                else:
+                    break
 
         await self.message.edit(
             embed = Embed(
@@ -130,8 +134,9 @@ class ChessGame(Game):
                 colour = PRIMARY_EMBED_COLOR if winner.is_ai else await get_embed_color(winner.member)
             )
         )
-        if not self.opponent.is_ai:
-            await database.users.update_chess(self.opponent.member, self.opponent.member.id == winner.member.id)
-        await database.users.update_chess(self.challenger.member, self.opponent.member.id == winner.member.id)
+        if winner is not None:
+            if not self.opponent.is_ai:
+                await database.users.update_chess(self.opponent.member, self.opponent.member.id == winner.member.id)
+            await database.users.update_chess(self.challenger.member, self.challenger.member.id == winner.member.id)
     
     # # # # # # # # # # # # # # # # # # # # # # # # #

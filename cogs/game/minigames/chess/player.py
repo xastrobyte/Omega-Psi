@@ -44,9 +44,16 @@ class ChessPlayer(Player):
             flip = game.current_player == 0
 
         # Edit the game message
+        # Check if there is a check, checkmate, or stalemate
+        #   give the player an option to resign
+        title = "Chess"
+        if game.board.is_check():
+            title = "Chess - Check!"
+        elif game.board.is_stalemate():
+            title = "Chess - Stalemate"
         await game.message.edit(
             embed = Embed(
-                title = "Chess",
+                title = title,
                 description = (
                     f"{self.get_name()}'s turn\n" +
                     f"{ChessBoard.from_FEN(game.board.board_fen(), flip=flip)}\n" +
@@ -103,7 +110,7 @@ class ChessPlayer(Player):
                         )
                         await game.message.edit(
                             embed = Embed(
-                                title = "Chess",
+                                title = title,
                                 description = (
                                     f"{self.get_name()}'s turn\n" +
                                     f"{board}\n" +
@@ -150,7 +157,8 @@ class ChessPlayer(Player):
                                 row_num = 0
                             elif entry == 3:
                                 column_to = ""
-                            entry -= 1
+                            if entry > 0:
+                                entry -= 1
                             continue
                         
                         # Check if the user chose to resign
@@ -173,7 +181,6 @@ class ChessPlayer(Player):
                                     reaction = NUMBERS[7 - NUMBERS.index(str(reaction))]
                                     if entry < 2:
                                         col_num = 7 - NUMBERS.index(str(reaction))
-
                                 else:
                                     if entry < 2:
                                         col_num = NUMBERS.index(str(reaction))
@@ -189,9 +196,18 @@ class ChessPlayer(Player):
                                         "That is an invalid row! Try again!"
                                     ), delete_after = 10)
                             else:
+                                
+                                # Shift the row if the board is not flipped
+                                #   (opponent's turn)
+                                if game.current_player == 1:
+                                    reaction = NUMBERS[7 - NUMBERS.index(str(reaction))]
+                                    if entry < 2:
+                                        row_num = 7 - NUMBERS.index(str(reaction))
+                                else:
+                                    if entry < 2:
+                                        row_num = NUMBERS.index(str(reaction))
                                 if entry < 2:
                                     row_from = str(reaction)[0]  # This will get the number
-                                    row_num = int(row_from) - 1
                                 else:
                                     row_to = str(reaction)[0]
                                 break  # this input was okay
