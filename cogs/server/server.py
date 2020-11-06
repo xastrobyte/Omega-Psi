@@ -402,10 +402,8 @@ class Server(Cog, name="server"):
                 ),
                 description=(
                     "You will {} receive notifications when a new feature is " +
-                    "added to a pending update in Omega Psi".format(
-                        "now" if activated else "not"
-                    )
-                ),
+                    "added to a pending update in Omega Psi"
+                ).format("now" if activated else "not"),
                 colour=await get_embed_color(ctx.author)
             )
         )
