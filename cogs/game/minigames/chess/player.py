@@ -93,7 +93,7 @@ class ChessPlayer(Player):
             ]
 
             # Generate a random number of best moves
-            for move_try in range(randint(0, len(legal_moves) - 1)):
+            for move_try in range(randint(1, len(legal_moves) - 1)):
                 best_move = choice(legal_moves)
             game.board.push_uci(best_move)
         
