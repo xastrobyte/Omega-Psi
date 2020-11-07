@@ -1,7 +1,8 @@
 from asyncio import wait, FIRST_COMPLETED
 from discord import Embed
-from json import loads
 from functools import partial
+from json import loads
+from random import choice, randint
 from requests import post
 
 from cogs.globals import loop, PRIMARY_EMBED_COLOR
@@ -16,9 +17,8 @@ from util.functions import get_embed_color
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 MAKE_ONE_PLAYER_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/one/move/player"
-MAKE_ONE_AI_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/one/move/ai"
+MAKE_ONE_AI_MOVE     = "http://chess-api-chess.herokuapp.com/api/v1/chess/one/move/ai"
 MAKE_TWO_PLAYER_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/two/move"
-VALIDATE_MOVE = "http://chess-api-chess.herokuapp.com/api/v1/chess/{}/moves"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -69,19 +69,33 @@ class ChessPlayer(Player):
         # Check if this player is an AI
         if self.is_ai:
 
-            response = await loop.run_in_executor(
-                None, partial(
-                    post, MAKE_ONE_AI_MOVE,
-                    data = {
-                        "game_id": game.id
-                    },
-                    headers = {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    }
+            # Try 5 times to make sure the move is captured without failing
+            response = None
+            for tries in range(5):
+                response = await loop.run_in_executor(
+                    None, partial(
+                        post, MAKE_ONE_AI_MOVE,
+                        data = f"game_id={game.id}",
+                        headers = {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        }
+                    )
                 )
-            )
-            response = loads(response.text)
-            game.board.push_uci(response["from"] + response["to"])
+                response = loads(response.text)
+                if "from" in response and "to" in response:
+                    game.board.push_uci(response["from"] + response["to"])
+                    return None
+
+            # Choose a random move from the game boards legal moves generator
+            legal_moves = [
+                str(move)
+                for move in game.board.legal_moves
+            ]
+
+            # Generate a random number of best moves
+            for move_try in range(randint(0, len(legal_moves) - 1)):
+                best_move = choice(legal_moves)
+            game.board.push_uci(best_move)
         
         # This player is not an AI
         else:

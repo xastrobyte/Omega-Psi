@@ -1,15 +1,9 @@
-from functools import partial
-from requests import post
-from json import loads
-
-from cogs.globals import loop
-
 from cogs.game.minigames.chess.pieces import PIECES, COLUMNS, HIGHLIGHT
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-GET_POSSIBLE_MOVES = "https://chess-api-chess.herokuapp.com/api/v1/chess/{}/moves"
-CHECK_GAME_OVER = "https://chess-api-chess.herokuapp.com/api/v1/chess/{}/check"
+GET_POSSIBLE_MOVES = "http://chess-api-chess.herokuapp.com/api/v1/chess/{}/moves"
+CHECK_GAME_OVER = "http://chess-api-chess.herokuapp.com/api/v1/chess/{}/check"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
