@@ -17,7 +17,7 @@ from util.website.custom_html import get_case_html, get_pending_update_html, get
 from util.website.page import Page, Section, HomeSection
 from util.website.website import Website, Footer, Link
 
-from util.functions import get_embed_color_sync
+from util.functions import get_embed_color_sync, create_fields, add_fields
 from util.string import dict_to_datetime, datetime_to_string
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -868,6 +868,103 @@ def commit_pending_update():
         
         # Committing the update
         if request.method == "POST":
+            version = request.json["version"]
+            description = request.json["description"]
+            user = OMEGA_PSI.get_user(int(session.get("user_id")))
+
+            # Commit the update in the database and get the most recent
+            database.bot.commit_pending_update_sync(version, description)
+            update = database.bot.get_recent_update_sync()
+
+            # Create an Embed to notify all developers
+            devs = database.bot.get_developers_sync()
+            for dev in devs:
+                dev = OMEGA_PSI.get_user(int(dev))
+
+                # Send to other developers except author
+                if True or dev.id != user.id:
+                    embed = Embed(
+                        title="Update Committed by {} - (Version {})".format(
+                            user, update["version"]
+                        ),
+                        description=update["description"],
+                        colour=get_embed_color_sync(dev)
+                    )
+                    change_fields = create_fields(update["features"], key=lambda feature: (
+                        "`{}` | {}".format(feature["type"], feature["feature"])
+                    ))
+                    add_fields(embed, "Changes", change_fields, empty_message="No Changes Made")
+                    dev_send = run_coroutine_threadsafe(
+                        dev.send(embed = embed),
+                        loop)
+                    dev_send.result()
+            
+            # Send an embed to the announcements channel
+            announcements_embed = embed = Embed(
+                title="New Update! Version {}".format(version),
+                description=description,
+                colour=PRIMARY_EMBED_COLOR)
+            fields = create_fields(update["features"], key=lambda feature: (
+                "`{}` | {}".format(feature["type"], feature["feature"])
+            ))
+            add_fields(announcements_embed, "Changes", fields, empty_message="No Changes Made")
+            channel_send = run_coroutine_threadsafe(
+                OMEGA_PSI.get_channel(
+                    int(environ["ANNOUNCEMENTS_OMEGA_PSI"])).send(
+                        "@everyone", embed=announcements_embed
+                    ),
+                loop)
+            channel_send.result()
+
+            # Notify users who want to be notified about the update
+            notification_data = database.bot.get_notifications_sync()
+            users = notification_data["update"]
+            for user_id in users:
+                user = OMEGA_PSI.get_user(int(user_id))
+
+                # The user is found, try sending them a message
+                if user is not None:
+                    try:
+                        announcements_embed.colour = get_embed_color_sync(user)
+                        user_send = run_coroutine_threadsafe(
+                            user.send(embed=announcements_embed),
+                            loop)
+                        user_send.result()
+
+                    except Exception as _:
+                        pass
+
+                # The user is not found, they should be removed from the update notifications
+                else:
+                    database.bot.manage_notifications_sync("update", user_id, False)
+
+            # Send a webhook to integromat to update Facebook, Twitter, GitHub, etc.
+            markdown = {
+                "description": description,
+                "changes": "\n".join([
+                    " * `{}` | {}".format(
+                        feature["type"],
+                        feature["feature"]
+                    )
+                    for feature in update["features"]
+                ])}
+            regular = {
+                "description": description.replace("`", ""),
+                "changes": "\n".join([
+                    " * |{}| - {}".format(
+                        feature["type"],
+                        feature["feature"].replace("`", "\'")
+                    )
+                    for feature in update["features"]
+                ])}
+            post(
+                environ["INTEGROMAT_WEBHOOK_CALL"],
+                json = {
+                    "version": version,
+                    "markdown": markdown,
+                    "regular": regular
+                })
+
             return jsonify({"success": True}), 201
     
     # The origin does not match ALLOW_ORIGIN

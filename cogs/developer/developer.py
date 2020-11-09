@@ -451,7 +451,7 @@ class Developer(Cog, name="developer"):
                 if dev.id != ctx.author.id:
                     embed = Embed(
                         title="Update Committed by {} - (Version {})".format(
-                            ctx.author, update["verson"]
+                            ctx.author, update["version"]
                         ),
                         description=update["description"],
                         colour=await get_embed_color(ctx.author)
@@ -515,16 +515,16 @@ class Developer(Cog, name="developer"):
                     for feature in update["features"]
                 ])
             }
-            await loop.run_in_executor(None,
-                                       partial(
-                                           post, environ["INTEGROMAT_WEBHOOK_CALL"],
-                                           json={
-                                               "version": version,
-                                               "markdown": markdown,
-                                               "regular": regular
-                                           }
-                                       )
-                                       )
+            await loop.run_in_executor(
+                None,
+                partial(
+                    post, environ["INTEGROMAT_WEBHOOK_CALL"],
+                    json={
+                        "version": version,
+                        "markdown": markdown,
+                        "regular": regular
+                    }
+                ))
 
         await ctx.send(embed=embed)
 
