@@ -385,12 +385,15 @@ class BattleshipPlayer(Player):
 
                     # Check if the new row and column exceed the board boundaries
                     #   if so, reverse the direction
-                    if row < 0 or row >= game.get_current_board().height or column < 0 or column > game.get_current_board().width:
+                    if row < 0 or row >= game.get_current_board().height:
                         self.current_direction = (
                             -self.current_direction[0],
-                            -self.current_direction[1]
-                        )
+                            self.current_direction[1])
                         row += self.current_direction[0]
+                    elif column < 0 or column >= game.get_current_board().width:
+                        self.current_direction = (
+                            self.current_direction[0],
+                            -self.current_direction[1])
                         column += self.current_direction[1]
 
                     # Continue generating a new position until the position is not in shots
