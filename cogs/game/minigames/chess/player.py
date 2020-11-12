@@ -10,7 +10,7 @@ from cogs.errors import get_error_message
 
 from cogs.game.minigames.base_game.player import Player
 from cogs.game.minigames.chess.board import ChessBoard
-from cogs.game.minigames.chess.pieces import COLUMNS, NUMBERS, UNDO, RESIGN
+from cogs.game.minigames.chess.pieces import COLUMNS, NUMBERS, UNDO, RESIGN, HIGHLIGHT
 
 from util.functions import get_embed_color
 
@@ -71,7 +71,7 @@ class ChessPlayer(Player):
 
             # Try 5 times to make sure the move is captured without failing
             response = None
-            for tries in range(5):
+            for tries in range(0):
                 response = await loop.run_in_executor(
                     None, partial(
                         post, MAKE_ONE_AI_MOVE,
@@ -231,7 +231,8 @@ class ChessPlayer(Player):
                     str(move)
                     for move in game.board.legal_moves
                 ]
-                if f"{column_from}{row_from}{column_to}{row_to}" in valid_moves:
+                if (f"{column_from}{row_from}{column_to}{row_to}" in valid_moves or
+                        f"{column_from}{row_from}{column_to}{row_to}q" in valid_moves):
                     break
 
                 await game.ctx.send(
@@ -242,10 +243,51 @@ class ChessPlayer(Player):
             
             from_position = column_from + row_from
             to_position = column_to + row_to
+            player_move = from_position + to_position
+
+            # Check if the position being moved to ends with a letter
+            #   Ask the player if they'd like to promote the pawn into a:
+            #       Queen, Rook, Bishop, or Knight
+            ask_promote = False
+            for move in [str(mv).lower() for mv in game.board.legal_moves]:
+                if (move.startswith(player_move) and 
+                        (move.endswith("q") or 
+                         move.endswith("r") or 
+                         move.endswith("n") or
+                         move.endswith("b"))):
+                    
+                    ask_promote = True
+                    break
+            
+            if ask_promote:
+                promote_message = await game.ctx.send(
+                    embed = Embed(
+                        title = "Promote Your Pawn",
+                        description = "Choose a piece to promote your pawn to!",
+                        colour = await get_embed_color(self.member)
+                    )
+                )
+                for promoted_piece in "qrnb":
+                    await promote_message.add_reaction(HIGHLIGHT[promoted_piece].strip())
+                def check_reaction(reaction, user):
+                    return (
+                        reaction.message.id == promote_message.id and
+                        user.id == self.member.id and
+                        (str(reaction) == HIGHLIGHT["q"].strip() or
+                            str(reaction) == HIGHLIGHT["r"].strip() or
+                            str(reaction) == HIGHLIGHT["n"].strip() or
+                            str(reaction) == HIGHLIGHT["b"].strip())
+                    )
+                reaction, user = await game.bot.wait_for("reaction_add", check = check_reaction)
+                await promote_message.delete()
+                for promoted_piece in "qrnb":
+                    if str(reaction) == HIGHLIGHT[promoted_piece].strip():
+                        player_move += promoted_piece
+                        break
 
             # Check if the game is against an AI or not
             #   and let the player make their move
-            game.board.push_uci(from_position + to_position)
+            game.board.push_uci(player_move)
             url = MAKE_ONE_PLAYER_MOVE if game.opponent.is_ai else MAKE_TWO_PLAYER_MOVE
             await loop.run_in_executor(
                 None, partial(

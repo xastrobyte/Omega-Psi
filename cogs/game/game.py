@@ -227,7 +227,7 @@ class Game(Cog, name="game"):
         description="Play a game of Chess against an opponent or an AI",
         cog_name="game"
     )
-    async def chess(self, ctx):
+    async def chess(self, ctx, *, fen_string=None):
         """Allows a user to play a game of Chess
 
         :param ctx: The context of where the message was sent
@@ -248,7 +248,8 @@ class Game(Cog, name="game"):
                 self.bot, ctx,
                 ctx.author,
                 1 if result == RANDOM else result,
-                is_smart = result == SMART
+                is_smart = result == SMART,
+                fen_string = fen_string
             )
             await game.play()
         

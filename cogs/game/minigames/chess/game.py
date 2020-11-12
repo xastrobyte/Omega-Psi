@@ -26,12 +26,14 @@ class ChessGame(Game):
     in a Chess game
     """
 
-    def __init__(self, bot, ctx, challenger, opponent, *, is_smart=False):
+    def __init__(self, bot, ctx, challenger, opponent, *, is_smart=False, fen_string=None):
         super().__init__(
             bot, ctx,
             challenger = ChessPlayer(challenger),
             opponent = ChessPlayer(opponent)
         )
+        if fen_string is None:
+            fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
         # Create a new game using the Chess API
         response = get(
@@ -41,7 +43,7 @@ class ChessGame(Game):
         response = loads(response.text)
 
         # Set the Game's data
-        self.board = Board()
+        self.board = Board(fen_string)
         self.message = None
         self.id = str(response["game_id"])
     
