@@ -383,6 +383,7 @@ class Server(Cog, name="server"):
 
     @notify.command(
         name="newFeature",
+        aliases=["feature"],
         description="Toggles whether or not you want to receive new feature notifications.",
         cog_name="server"
     )
@@ -404,6 +405,32 @@ class Server(Cog, name="server"):
                     "You will {} receive notifications when a new feature is " +
                     "added to a pending update in Omega Psi"
                 ).format("now" if activated else "not"),
+                colour=await get_embed_color(ctx.author)
+            )
+        )
+    
+    @notify.command(
+        name="tasks",
+        description="Toggles whether or not you want to receive notifications when a task is added or removed.",
+        cog_name="server"
+    )
+    async def notify_tasks(self, ctx):
+        """Allows a user to toggle their task notification settings
+
+        :param ctx: The context of where the message was sent
+        """
+
+        # Toggle the user's task notifications
+        activated = await database.users.toggle_tasks_notification(ctx.author)
+        await database.bot.manage_notifications("tasks", ctx.author, activated)
+        await ctx.send(
+            embed=Embed(
+                title = "Task Notifications {}".format(
+                    "Activated" if activated else "Deactivated"
+                ),
+                description = "You will {} receive notifications when a task is added or removed by a developer".format(
+                    "now" if activated else "not"
+                ),
                 colour=await get_embed_color(ctx.author)
             )
         )

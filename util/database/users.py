@@ -63,6 +63,9 @@ class User:
                 },
                 "new_feature": {
                     "active": False
+                },
+                "tasks": {
+                    "active": False
                 }
             },
             "minigames": {
@@ -456,6 +459,77 @@ class User:
             "active"] if is_active is None else is_active
         self.set_new_feature_notification_sync(user, new_feature_notification_data)
         return new_feature_notification_data["active"]
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_tasks_notification_sync(self, user: Union[User, str]):
+        """Synchronously retrieves the user's new feature notification data
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the new feature notification data of
+        
+        Returns
+        -------
+            dict
+                The User's new feature notification data
+        """
+        notification_data = self.get_notifications_sync(user)
+        return notification_data["tasks"]
+
+    def set_tasks_notification_sync(self, user: Union[User, str], tasks_notification_data):
+        """Synchronously sets the user's new feature notification data
+
+        Parameters
+        ----------
+            user : str or User
+                The User to set the new feature notification data of
+            tasks_notification_data : dict
+                The JSON object of the User's new feature notification data
+        """
+        notification_data = self.get_notifications_sync(user)
+        notification_data["tasks"] = tasks_notification_data
+        self.set_notifications_sync(user, notification_data)
+
+    def is_tasks_notification_active_sync(self, user: Union[User, str]):
+        """Synchronously retrieves whether or not the user's new feature notifications are active
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the status of the user's new feature notification
+        
+        Returns
+        -------
+            boolean
+                Whether or not the User's new feature notification is active
+        """
+        tasks_notification_data = self.get_tasks_notification_sync(user)
+        return tasks_notification_data["active"]
+
+    def toggle_tasks_notification_sync(self, user: Union[User, str], is_active=None):
+        """Synchronously toggles the status of the user's new feature notifications
+
+        Parameters
+        ----------
+            user : str or User
+                The User to toggle the status of the user's new feature notification
+            is_active : boolean
+                The active status to manually set the user's new feature notification
+                Note that if this is ignored (set to None), the user's new feature notification will be toggled
+                    like normal
+        
+        Returns
+        -------
+            boolean
+                Whether the User's new feature notification has been activated or not
+        """
+        tasks_notification_data = self.get_tasks_notification_sync(user)
+        tasks_notification_data["active"] = not tasks_notification_data[
+            "active"] if is_active is None else is_active
+        self.set_tasks_notification_sync(user, tasks_notification_data)
+        return tasks_notification_data["active"]
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -603,6 +677,65 @@ class User:
                 Whether the User's new feature notification has been activated or not
         """
         return await loop.run_in_executor(None, self.toggle_new_feature_notification_sync, user)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    async def get_tasks_notification(self, user: Union[User, str]):
+        """Asynchronously retrieves the user's tasks notification data
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the tasks notification data of
+        
+        Returns
+        -------
+            dict
+                The User's tasks notification data
+        """
+        return await loop.run_in_executor(None, self.get_tasks_notification_sync, user)
+
+    async def set_tasks_notification(self, user: Union[User, str], tasks_notification_data):
+        """Asynchronously sets the user's tasks notification data
+
+        Parameters
+        ----------
+            user : str or User
+                The User to set the tasks notification data of
+            tasks_notification_data : dict
+                The JSON object of the User's tasks notification data
+        """
+        await loop.run_in_executor(None, self.set_tasks_notification_sync, user, tasks_notification_data)
+
+    async def is_tasks_notification_active(self, user: Union[User, str]):
+        """Asynchronously retrieves whether or not the user's tasks notifications are active
+
+        Parameters
+        ----------
+            user : str or User
+                The User to get the status of the user's tasks notification
+        
+        Returns
+        -------
+            boolean
+                Whether or not the User's tasks notification is active
+        """
+        return await loop.run_in_executor(None, self.is_tasks_notification_active_sync, user)
+
+    async def toggle_tasks_notification(self, user: Union[User, str]):
+        """Asynchronously toggles the status of the user's tasks notifications
+
+        Parameters
+        ----------
+            user : str or User
+                The User to toggle the status of the user's tasks notification
+        
+        Returns
+        -------
+            boolean
+                Whether the User's tasks notification has been activated or not
+        """
+        return await loop.run_in_executor(None, self.toggle_tasks_notification_sync, user)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Minigame Access Methods

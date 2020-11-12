@@ -17,6 +17,7 @@ from util.website.custom_html import get_case_html, get_pending_update_html, get
 from util.website.page import Page, Section, HomeSection
 from util.website.website import Website, Footer, Link
 
+from util.discord import notification_handler
 from util.functions import get_embed_color_sync, create_fields, add_fields
 from util.string import dict_to_datetime, datetime_to_string
 
@@ -46,7 +47,8 @@ BUG, SUGGESTION, INSULT, COMPLIMENT = 0, 1, 2, 3
 
 notification_descriptions = {
     "update": "receive notifications when an update is made to Omega Psi",
-    "new_feature": "receive notifications when a new feature is added to the current pending update in Omega Psi"
+    "new_feature": "receive notifications when a new feature is added to the current pending update in Omega Psi",
+    "tasks": "receive notifications when a task is added or removed by a developer"
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -639,10 +641,16 @@ def settings_user():
         
         # Changing the user's notifications
         elif "notification" in request.json:
+            database.bot.manage_notifications_sync(
+                request.json["notification"], 
+                session.get("user_id"), 
+                request.json["enable"])
             if request.json["notification"] == "update":
                 database.users.toggle_update_notification_sync(session.get("user_id"), request.json["enable"])
             elif request.json["notification"] == "new_feature":
                 database.users.toggle_new_feature_notification_sync(session.get("user_id"), request.json["enable"])
+            elif request.json["notification"] == "tasks":
+                database.users.toggle_tasks_notification_sync(session.get("user_id"), request.json["enable"])
             return jsonify({"success": True}), 201
     
     # The origin does not match ALLOW_ORIGIN
@@ -917,26 +925,13 @@ def commit_pending_update():
             channel_send.result()
 
             # Notify users who want to be notified about the update
-            notification_data = database.bot.get_notifications_sync()
-            users = notification_data["update"]
-            for user_id in users:
-                user = OMEGA_PSI.get_user(int(user_id))
-
-                # The user is found, try sending them a message
-                if user is not None:
-                    try:
-                        announcements_embed.colour = get_embed_color_sync(user)
-                        user_send = run_coroutine_threadsafe(
-                            user.send(embed=announcements_embed),
-                            loop)
-                        user_send.result()
-
-                    except Exception as _:
-                        pass
-
-                # The user is not found, they should be removed from the update notifications
-                else:
-                    database.bot.manage_notifications_sync("update", user_id, False)
+            commit_update_notify = run_coroutine_threadsafe(
+                notification_handler(
+                    OMEGA_PSI, announcements_embed,
+                    "update"
+                ), loop
+            )
+            commit_update_notify.result()
 
             # Send a webhook to integromat to update Facebook, Twitter, GitHub, etc.
             markdown = {
@@ -987,32 +982,17 @@ def create_feature():
                 feature["datetime"] = datetime_to_string(dict_to_datetime(feature["datetime"]), short = True)
                 
                 # Update all users who want to be notified of a new feature
-                notification_data = database.bot.get_notifications_sync()
-                users = notification_data["new_feature"]
-                for user_id in users:
-                    user = OMEGA_PSI.get_user(int(user_id))
-
-                    # Check if the user is valid
-                    if user is not None:
-                        try:
-                            user_send = run_coroutine_threadsafe(
-                                user.send(
-                                    embed = Embed(
-                                        title = "Feature Added",
-                                        description = "\"{}\" has been added as a feature to the pending update.".format(
-                                            request.json["feature"]
-                                        ),
-                                        colour = get_embed_color_sync(user)
-                                    )
-                                ),
-                                loop
+                new_feature_notify = run_coroutine_threadsafe(
+                    notification_handler(
+                        OMEGA_PSI, Embed(
+                            title = "Feature Added",
+                            description = "\"{}\" has been added as a feature to the pending update.".format(
+                                request.json["feature"]
                             )
-                            user_send.result()
-                        except: pass
-                    
-                    # The user is invalid, remove them from the notifications
-                    else:
-                        database.bot.manage_notifications_sync("new_feature", user_id, False)
+                        ), "new_feature"
+                    ), loop
+                )
+                new_feature_notify.result()
 
                 return jsonify(feature), 201
             
@@ -1075,6 +1055,15 @@ def tasks():
         # Adding a new task
         if request.method == "POST":
             task_json = database.bot.add_task_sync(request.json["task"])
+            user_add_task = run_coroutine_threadsafe(
+                notification_handler(
+                    OMEGA_PSI, Embed(
+                        title = "Task Added",
+                        description = "*{}* was added to the tasklist".format(request.json["task"])
+                    ), "tasks"
+                ), loop)
+            user_add_task.result()
+            
             return jsonify(task_json), 201
 
         # Editing an existing task
@@ -1088,6 +1077,14 @@ def tasks():
         elif request.method == "DELETE":
             task_json = database.bot.remove_task_sync(request.json["taskID"])
             if task_json:
+                user_remove_task = run_coroutine_threadsafe(
+                    notification_handler(
+                        OMEGA_PSI, Embed(
+                            title = "Task Removed",
+                            description = "*{}* was removed from the tasklist".format(request.json["task"])
+                        ), "tasks"
+                    ), loop)
+                user_remove_task.result()
                 return jsonify(task_json), 200
             return jsonify({"error": "Task does not exist"}), 404
     

@@ -42,7 +42,8 @@ class Bot:
             "disabled_cogs": [],
             "notifications": {
                 "update": [],
-                "new_feature": []
+                "new_feature": [],
+                "tasks": []
             }
         }
 

@@ -12,7 +12,7 @@ from cogs.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, CHECK_MARK, FIRS
 from cogs.predicates import is_developer
 
 from util.database.database import database
-from util.discord import update_top_gg
+from util.discord import update_top_gg, notification_handler
 from util.functions import get_embed_color, add_scroll_reactions, create_fields, add_fields
 from util.github import fix_issue
 from util.string import dict_to_datetime
@@ -393,22 +393,7 @@ class Developer(Cog, name="developer"):
             await ctx.send(embed=embed)
 
             # Notify users who want to be notified about the new feature
-            notification_data = await database.bot.get_notifications()
-            users = notification_data["new_feature"]
-            for user_id in users:
-                user = self.bot.get_user(int(user_id))
-
-                # The user is found, try sending them a message
-                if user is not None:
-                    try:
-                        embed.colour = await get_embed_color(user)
-                        await user.send(embed=embed)
-                    except Exception as _:
-                        pass
-
-                # The user is not found, they should be removed from the new feature notifications
-                else:
-                    await database.bot.manage_notifications("new_feature", user_id, False)
+            await notification_handler(self.bot, embed, "new_feature")
 
     @command(
         name="commitUpdate",
@@ -476,23 +461,8 @@ class Developer(Cog, name="developer"):
                 "@everyone", embed=announcements_embed
             )
 
-            # Notify users who want to be notified about the update
-            notification_data = await database.bot.get_notifications()
-            users = notification_data["update"]
-            for user_id in users:
-                user = self.bot.get_user(int(user_id))
-
-                # The user is found, try sending them a message
-                if user is not None:
-                    try:
-                        announcements_embed.colour = await get_embed_color(user)
-                        await user.send(embed=announcements_embed)
-                    except Exception as _:
-                        pass
-
-                # The user is not found, they should be removed from the update notifications
-                else:
-                    await database.bot.manage_notifications("update", user_id, False)
+            # Notify users who want to be notified about the new feature
+            await notification_handler(self.bot, embed, "update")
 
             # Send a webhook to integromat to update Facebook, Twitter, GitHub, etc.
             markdown = {

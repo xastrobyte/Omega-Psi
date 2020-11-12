@@ -7,6 +7,7 @@ from requests import post
 from cogs.globals import loop, SCROLL_REACTIONS
 from cogs.globals import FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, NEXT_PAGE, LEAVE, DELETE, CHECK_MARK
 
+from util.database.database import database
 from util.ifttt import IFTTT
 from util.functions import add_scroll_reactions, get_embed_color
 
@@ -281,3 +282,28 @@ async def process_scrolling(ctx, bot, *, base_embed = None, title = None, pages 
         else:
             embed = await refresh_function(ctx, current_page)
         await message.edit(embed = embed)
+
+async def notification_handler(bot, embed, notification: str):
+    """Handles notifying people with specific notifications
+
+    :param notification: The type of notification
+    :param prompt_text: The text to show the user
+    """
+
+    # Notify users who want to be notified about the new feature
+    notification_data = await database.bot.get_notifications()
+    users = notification_data[notification]
+    for user_id in users:
+        user = bot.get_user(int(user_id))
+
+        # The user is found, try sending them a message
+        if user is not None:
+            try:
+                embed.colour = await get_embed_color(user)
+                await user.send(embed=embed)
+            except Exception as _:
+                pass
+
+        # The user is not found, they should be removed from the new feature notifications
+        else:
+            await database.bot.manage_notifications(notification, user_id, False)

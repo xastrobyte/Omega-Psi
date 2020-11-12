@@ -12,7 +12,7 @@ from cogs.predicates import is_developer
 
 from util.database.database import database
 
-from util.discord import process_scrolling
+from util.discord import process_scrolling, notification_handler
 from util.functions import get_embed_color, create_fields, add_fields, add_scroll_reactions
 from util.github import create_issue, fix_issue, GITHUB_ISSUE_URL
 from util.string import datetime_to_string, datetime_to_length, dict_to_datetime
@@ -810,14 +810,16 @@ class Bot(Cog, name="bot"):
         :param ctx: The context of where the message was sent
         :param task: The task to add to the tasklist
         """
-        await database.bot.add_task(task)
-        await ctx.send(
-            embed=Embed(
-                title="Task Added",
-                description="*{}* was added to the tasklist".format(task),
-                colour=await get_embed_color(ctx.author)
-            )
+
+        # Notify all the users who want to be notified
+        embed = Embed(
+            title = "Task Added",
+            description = "*{}* was added to the tasklist".format(task)
         )
+        await notification_handler(self.bot, embed, "tasks")
+        await database.bot.add_task(task)
+        embed.colour = await get_embed_color(ctx.author)
+        await ctx.send(embed = embed)
 
     @tasks.command(
         name="remove",
@@ -840,17 +842,23 @@ class Bot(Cog, name="bot"):
                 raise Exception()
             task_id = list(tasks.keys())[task_number - 1]
             removed = await database.bot.remove_task(task_id)
+        
+        # The task number specified is not a number
         except Exception as _:
             removed = None
-        await ctx.send(
-            embed=Embed(
-                title="Task Removed" if removed else "No Task Removed",
-                description="*{}* was removed from the tasklist".format(
-                    removed["task"]
-                ) if removed else "That task number is invalid.",
-                colour=await get_embed_color(ctx.author)
-            )
+        
+        # Create a base embed for people who want notifications
+        embed=Embed(
+            title="Task Removed" if removed else "No Task Removed",
+            description="*{}* was removed from the tasklist".format(
+                removed["task"]
+            ) if removed else "That task number is invalid."
         )
+        if removed is not None:     # Don't send a notification to users
+                                    # if there was an issue
+            await notification_handler(self.bot, embed, "tasks")
+        embed.colour = await get_embed_color(ctx.author)
+        await ctx.send(embed = embed)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
