@@ -11,11 +11,6 @@ from util.functions import get_embed_color
 GITHUB_RELEASE = "https://github.com/FellowHashbrown/Omega-Psi/releases/tag/{}"
 
 cogs = {
-    "api": {
-        "name": "API",
-        "emoji": "",
-        "extension": "cogs.code.api"
-    },
     "animal": {
         "name": "Animal",
         "emoji": ":unicorn: ",

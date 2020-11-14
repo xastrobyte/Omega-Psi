@@ -29,23 +29,21 @@ class API(Cog, name="api"):
     )
     async def api_morse(self, ctx):
         if not ctx.invoked_subcommand:
-            await ctx.send(
-                embed = get_error_message(
-                    "You must either do encode or decode! Try `{}.help apiMorse`".format(
-                        await get_prefix(ctx.guild)
-                    )
-                )
-            )
+            await ctx.send(embed = get_error_message(
+                "You must either do encode or decode! Try `{}.help apiMorse`".format(
+                    await get_prefix(ctx.guild)
+                )))
     
     @api_morse.command(
         name="encode",
         description="Test the encode morse API using this command",
         cog_name="api"
     )
-    async def api_morse_encode(self, ctx, *, text=""):
+    async def api_morse_encode(self, ctx, *, params=""):
+
+        # Get each parameter
         response = await loop.run_in_executor(
-            None, get, API_BASE_URL + "/morse/encode", 
-            {"text": quote(text)}
+            None, get, API_BASE_URL + "/morse/encode"
         )
         try:
             response = response.json()
