@@ -34,7 +34,7 @@ NOT_A_DEVELOPER_ERROR = get_error_message("You are not a developer.")
 NOT_A_TESTER_ERROR = get_error_message("You are not a tester.")
 NOT_A_GUILD_MANAGER_ERROR = get_error_message("You don't have `Manage Server` permissions ¯\_(ツ)_/¯")
 NOT_IN_GUILD_ERROR = get_error_message("You must be in a server to run this command.")
-COMMAND_FAILED_ERROR = lambda command: get_error_message("The `{}` command seems to have failed. All developers have been notified and it should be fixed soon.".format(command))
+COMMAND_FAILED_ERROR = lambda command: get_error_message("The `{}` command seems to have failed. There must be an issue or a bug. Report it using the `bug` command!".format(command))
 COMMAND_DISABLED_ERROR = lambda command: get_error_message("The `{}` command is currently disabled.".format(command))
 
 # # # # # Game Cog Errors # # # # #

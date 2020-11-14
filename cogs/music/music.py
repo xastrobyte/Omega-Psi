@@ -61,8 +61,18 @@ class Music(Cog, name="music"):
 
         # Check if the user is in a voice channel
         if ctx.author.voice:
-            destination = ctx.author.voice.channel
-            ctx.voice_state.voice = await destination.connect()
+
+            # Check if the bot is already in a voice channel
+            if ctx.voice_state.voice:
+                await ctx.send(embed=ALREADY_IN_VOICE_CHANNEL_ERROR)
+            
+            else:
+                destination = ctx.author.voice.channel
+                ctx.voice_state.voice = await destination.connect()
+        
+        # The user is not in a voice channel
+        else:
+            await ctx.send(embed=NOT_IN_VOICE_CHANNEL_ERROR)
 
     @command(
         name='summon',
@@ -115,6 +125,7 @@ class Music(Cog, name="music"):
         description = "Sets the volume of the music!",
         cog_name="music"
     )
+    @guild_manager()
     async def volume(self, ctx: Context, *, volume=None):
         """Sets the volume of the player.
 
@@ -348,10 +359,18 @@ class Music(Cog, name="music"):
 
         # There was something given
         else:
+
+            # Get the bot to try to join the voice channel
+            #   that the user is in
+            start_playing = True
             if not ctx.voice_state.voice:
-                await ctx.invoke(self.join)
+                try:
+                    await ctx.invoke(self.join)
+                except:
+                    start_playing = False
             
-            await self.play_song(ctx, [search])
+            if start_playing:
+                await self.play_song(ctx, [search])
     
     @group(
         name="playlist",
@@ -603,16 +622,6 @@ class Music(Cog, name="music"):
                     await ctx.voice_state.songs.put(song)
                     if ctx.voice_state.current is not None and not no_queue_message:
                         await ctx.send(embed=song_embed)
-
-    @join.before_invoke
-    @play.before_invoke
-    async def ensure_voice_state(self, ctx: Context):
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            await ctx.send(embed=NOT_IN_VOICE_CHANNEL_ERROR)
-
-        if ctx.voice_client:
-            if ctx.voice_client.channel != ctx.author.voice.channel:
-                await ctx.send(embed=ALREADY_IN_VOICE_CHANNEL_ERROR)
 
 def setup(bot):
     bot.add_cog(Music(bot))
