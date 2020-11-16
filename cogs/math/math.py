@@ -10,7 +10,7 @@ from util.functions import get_embed_color
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
-NEWTON_API_CALL = "https://newton.now.sh/{}/{}"
+NEWTON_API_CALL = "https://newton.now.sh/api/v2/{}/{}"
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
