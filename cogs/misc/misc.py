@@ -83,7 +83,7 @@ class Misc(Cog, name = "misc"):
 
         await ctx.send(
             embed = Embed(
-                title = "Advice Number {}".format(advice["slip"]["slip_id"]),
+                title = "Advice Number {}".format(advice["slip"]["id"]),
                 description = advice["slip"]["advice"],
                 colour = await get_embed_color(ctx.author),
                 timestamp = datetime.now()
