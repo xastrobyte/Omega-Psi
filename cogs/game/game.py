@@ -11,7 +11,6 @@ from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanity
 from cogs.game.minigames.chess.game import ChessGame
 from cogs.game.minigames.connect_four.game import ConnectFourGame
 from cogs.game.minigames.game_of_life.game import GameOfLifeGame
-from cogs.game.minigames.kings_cup.game import KingsCupGame
 from cogs.game.minigames.mastermind.game import MastermindGame
 from cogs.game.minigames.omok.game import OmokGame
 from cogs.game.minigames.tic_tac_toe.game import TicTacToeGame
