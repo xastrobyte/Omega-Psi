@@ -23,8 +23,8 @@ IMDB = IMDb()
 IMDB_LINK = "https://www.imdb.com/title/tt{}/?ref_=nv_sr_1"
 
 ADVICE_URL = "https://api.adviceslip.com/advice"
-AVATAR_LIST = "https://api.adorable.io/avatars/list"
-AVATAR_API = "https://api.adorable.io/avatars/face/{}/{}/{}/{}"
+AVATAR_LIST = "https://api.hello-avatar.com/adorables/list"
+AVATAR_API = "https://api.hello-avatar.com/adorables/face/{}/{}/{}/{}"
 CHUCK_NORRIS_URL = "https://api.chucknorris.io/jokes/random"
 COIT_URL = "https://coit.pw/{}"
 ROBOHASH_API = "https://robohash.org/{}"
