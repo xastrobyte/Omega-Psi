@@ -8,6 +8,8 @@ from cogs.globals import loop
 
 from util.functions import get_embed_color
 
+from .matrix import *
+
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 NEWTON_API_CALL = "https://newton.now.sh/api/v2/{}/{}"
@@ -59,6 +61,107 @@ class Math(Cog, name="math"):
         self.bot = bot
 
     # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @command(
+        name="matrix",
+        description="Gives you information about a matrix you enter. The format is tuples separated by semi-colons: (1, 2, 3); (4, 5, 6)",
+        cog_name="math"
+    )
+    async def matrix(self, ctx, *, matrix_entry=None):
+        """Allows a user to get information about a matrix
+        they enter
+
+        :param ctx: The context of where the message was sent
+        :param matrix_entry: The vectors of the matrix
+        """
+
+        if matrix_entry is not None:
+
+            try:
+
+                # Check if the format of the matrix entry is valid
+                #   by removing all whitespace from the entry
+                new_entry = ""
+                for c in matrix_entry:
+                    if c != " ":
+                        new_entry += c
+            
+                vectors = new_entry.split(";")
+                new_vectors = []
+                for i in range(len(vectors)):
+                    if len(vectors[i]) != 0:
+                        if vectors[i][0] != "(" and vectors[i][-1] != ")":
+                            raise ValueError()
+                        else:
+                            vector = vectors[i][1:-1].split(",")
+                            new_vectors.append([
+                                s for s in vector if len(s) > 0
+                            ])
+                
+                # Create the matrix and show the data
+                matrix = Matrix([
+                    Vector([
+                        Scalar(s)
+                        for s in v
+                    ])
+                    for v in new_vectors
+                ])
+                if matrix.width * matrix.height > 25:
+                    raise IndexError()
+
+                # Setup the embed fields
+                embed = Embed(
+                    title = "Matrix",
+                    description = f"```\n{str(matrix)}\n```",
+                    colour = await get_embed_color(ctx.author)
+                )
+                fields = {
+                    "REF": f"```\n{str(matrix.REF())}\n```",
+                    "RREF": f"```\n{str(matrix.RREF())}\n```",
+                    "Inverse": "N/A" if not matrix.is_square() else f"```\n{str(matrix.inverse())}\n```",
+
+                    "Trace": "N/A" if not matrix.is_square() else str(matrix.trace()),
+                    "Determinant": "N/A" if not matrix.is_square() else str(matrix.determinant()),
+                    "Rank": str(matrix.rank()),
+                    "Nullity": str(matrix.nullity()),
+
+                    "Linearly Independent Vectors": f"```\n{str(Matrix([ matrix.vectors[i] for i in matrix.get_li_vectors() ]))}\n```",
+                    "Linearly Dependent Vectors": "None" if len(matrix.get_ld_vectors()) == 0 else f"```\n{str(Matrix([ matrix.vectors[i] for i in matrix.get_ld_vectors() ]))}\n```",
+
+                    "Rowspace": f"```\n{str(matrix.rowspace())}\n```",
+                    "Colspace": f"```\n{str(matrix.columnspace())}\n```",
+                    "Nullspace": "None" if len(matrix.get_ld_vectors()) == 0 else f"```\n{str(matrix.nullspace())}\n```",
+
+                    "Orthogonal Bases": f"```\n{str(matrix.get_orthogonal_base())}\n```"
+                }
+                for field in fields:
+                    embed.add_field(
+                        name = field,
+                        value = fields[field]
+                    )
+
+                await ctx.send(embed = embed)
+            except ValueError:
+                await ctx.send(embed = get_error_message(
+                    "The matrix must follow the format of `({integers});({integers})`."
+                ))
+            except SizeMismatchError:
+                await ctx.send(embed = get_error_message(
+                    "The vectors are not all the same size :("
+                ))
+            except NotAnIntegerError:
+                await ctx.send(embed = get_error_message(
+                    "Matrices don't use text. Sorry try that again :)"
+                ))
+            except IndexError:
+                await ctx.send(embed = get_error_message(
+                    "There's a limit to the matrices of 25 entries. You passed that :("
+                ))
+        
+        else:
+            await ctx.send(embed = get_error_message(
+                "There is no matrix. You must specify the matrix!"
+            ))
 
     @command(
         name="simplify",

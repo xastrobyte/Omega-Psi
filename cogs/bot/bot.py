@@ -698,13 +698,7 @@ class Bot(Cog, name="bot"):
             description="Here's some information about me!",
             colour=await get_embed_color(ctx.author)
         ).set_image(
-            url=(
-                    "https://discordbots.org/api/widget/535587516816949248.png?" +
-                    "topcolor={1}&avatarbg={1}&datacolor={1}&highlightcolor={0}&" +
-                    "middlecolor={0}&usernamecolor={0}&labelcolor={2}"
-                ).format(
-                    "293134", "ec7600", "808080"
-            )
+            url="https://top.gg/api/widget/535587516816949248.png"
         ).set_footer(
             text="Created on {}. Omega Psi is {} old.".format(
                 datetime_to_string(OMEGA_PSI_CREATION, short=True),

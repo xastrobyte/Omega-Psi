@@ -123,14 +123,14 @@ async def on_command_error(ctx, error):
         await ctx.send(embed = COMMAND_FAILED_ERROR(ctx.command))
 
         # Create embed
-        exc = []
-        for frame_summary in extract_tb(error.__traceback__):
+        exc = format_exception(type(error), error, error.__traceback__)
+        """for frame_summary in extract_tb(error.__traceback__):
             exc.append(
                 "{}:{}\n\t{} - {}".format(
                     frame_summary.filename, frame_summary.lineno,
                     frame_summary.name, frame_summary.line
                 )
-            )
+            )"""
 
         embed = Embed(
             title = "Command Failed",

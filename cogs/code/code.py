@@ -1477,8 +1477,11 @@ class Code(Cog, name = "code"):
                 break
         
         # Split up the STDOUT and STDERR into separate fields
-        out = b64decode(response["stdout"]).decode()
-        err = response["stderr"]
+        out = err = None
+        if response["stdout"] is not None:
+            out = b64decode(response["stdout"]).decode()
+        if response["stderr"] is not None:
+            err = b64decode(response["stderr"]).decode()
 
         # Only split if out is not None
         out_threshold = False
