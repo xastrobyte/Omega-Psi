@@ -460,42 +460,6 @@ class Game(Cog, name="game"):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    @command(
-        name="kingsCup",
-        description="Play a drinking game of Kings Cup",
-        cog_name="game"
-    )
-    # @is_in_guild(521185038969208850, 450208093524066317)
-    @is_nsfw_and_guild()
-    async def kings_cup(self, ctx):
-        """Allows a user to play a drinking game of Kings Cup with friends
-
-        :param ctx: The context of where the message was sent
-        """
-
-        # Wait for other players
-        result = await self.wait_for_users(ctx, "Waiting for Kings Cup players",
-                                           allow_ai=False,
-                                           timeout=30
-                                           )
-
-        # The result is not None, it must be users
-        if result is not None:
-            game = KingsCupGame(self.bot, ctx, result)
-            await game.play()
-
-        # The result is None, no on wanted to play the game
-        else:
-            await ctx.send(
-                embed=Embed(
-                    title="No responses :frowning2:",
-                    description="It seems like no one wanted to play with you.",
-                    colour=await get_embed_color(ctx.author)
-                )
-            )
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
     async def wait_for_users(self, ctx, title, *, is_two_player=False, min_players=2, max_players=5, allow_ai=True,
                              allow_intelligent_ai=True, timeout=60):
         """Waits for users to react to a message when playing a minigame
