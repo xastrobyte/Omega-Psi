@@ -1,5 +1,5 @@
 from discord import Embed, Member, Status
-from discord.ext.commands import Cog, command, group, Greedy
+from discord.ext.commands import Cog, command, group
 from typing import Union
 
 from cogs.errors import get_error_message, NotAGuildManager, NotInGuild, NOT_A_GUILD_MANAGER_ERROR, NOT_IN_GUILD_ERROR

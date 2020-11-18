@@ -26,6 +26,11 @@ cogs = {
         "emoji": ":video_game: ",
         "extension": "cogs.game.game"
     },
+    "stats": {
+        "name": "Stats",
+        "emoji": ":clipboard: ",
+        "extension": "cogs.stats.stats"
+    },
     "insults": {
         "name": "Insult",
         "emoji": ":exclamation: ",
