@@ -1,5 +1,5 @@
 from discord import Embed
-from discord.ext.commands import Cog, group
+from discord.ext.commands import Cog, command, group
 from functools import partial
 from requests import get
 from os import environ
@@ -22,13 +22,8 @@ class Stats(Cog, name="stats"):
     
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    @group(
-        name="apex",
-        description="Retrieves game stats for a user that plays Apex Legends",
-        cog_name="stats"
-    )
-    async def apex(self, ctx):
-        await ctx.send(embed = UNIMPLEMENTED_ERROR)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # #
 
     @group(
         name="division2",
@@ -59,7 +54,7 @@ class Stats(Cog, name="stats"):
     
     @division_2.command(
         name="xbox", aliases=["xbl"],
-        description="Retrieves game stats for a user that plays The Division 2 on Uplay",
+        description="Retrieves game stats for a user that plays The Division 2 on Xbox",
         cog_name="stats"
     )
     async def division_2_xbl(self, ctx, *, username=None):
@@ -73,7 +68,7 @@ class Stats(Cog, name="stats"):
     
     @division_2.command(
         name="playstation", aliases=["psn", "ps"],
-        description="Retrieves game stats for a user that plays The Division 2 on Uplay",
+        description="Retrieves game stats for a user that plays The Division 2 on Playstation",
         cog_name="stats"
     )
     async def division_2_psn(self, ctx, *, username=None):
@@ -85,12 +80,14 @@ class Stats(Cog, name="stats"):
         """
         await self.division_2_lookup(ctx, "psn", username)
     
-    @group(
+    # # # # # # # # # # # # # # # # # # # # # # # # #
+    
+    @command(
         name="csGo",
         description="Retrieves game stats for a user that plays Counter Strike: Global Offensive (CSGO)",
         cog_name="stats"
     )
-    async def csgo(self, ctx):
+    async def csgo(self, ctx, *, username=None):
         await ctx.send(embed = UNIMPLEMENTED_ERROR)
 
     # # # # # # # # # # # # # # # # # # # # # # # # #
