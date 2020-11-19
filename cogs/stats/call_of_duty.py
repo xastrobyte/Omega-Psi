@@ -1,4 +1,5 @@
 from discord import Embed
+from datetime import datetime
 
 from .gamemodes import COD_MW_MODES, COD_MW_MAPS
 
@@ -21,7 +22,8 @@ def build_mw_match(match):
     embed = Embed(
         title = COD_MW_MODES[match["mode"]],
         description = COD_MW_MAPS[match["map"]],
-        colour = LOST if match["result"] == "loss" else WON
+        colour = LOST if match["result"] == "loss" else WON,
+        timestamp = datetime.fromtimestamp(match["utcStartSeconds"])
     )
     fields = {
         "Match Length": seconds_to_runtime(match["duration"] // 1000),

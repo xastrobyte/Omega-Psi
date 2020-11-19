@@ -8,9 +8,10 @@ from urllib.parse import quote
 from cogs.globals import loop
 from cogs.errors import get_error_message, UNIMPLEMENTED_ERROR
 
+from util.database.database import database
 from util.discord import process_scrolling
 from util.functions import get_embed_color
-from util.database.database import database
+from util.string import seconds_to_runtime
 
 from .call_of_duty import build_mw_match, build_wz_match
 
@@ -32,7 +33,7 @@ class Stats(Cog, name="stats"):
 
     @group(
         name="modernWarfare", aliases=["mw"],
-        description="Retrieves either the game stats or the 5 most recent matches for a user that plays Call of Duty: Modern Warfare (2019)",
+        description="Retrieves either the game stats or the 10 most recent matches for a user that plays Call of Duty: Modern Warfare (2019)",
         cog_name="stats"
     )
     async def modern_warfare(self, ctx):
@@ -60,7 +61,7 @@ class Stats(Cog, name="stats"):
     
     @modern_warfare.group(
         name="matches", aliases=["match"],
-        description="Retrieves the 5 most recent matches that a user played in Modern Warfare",
+        description="Retrieves the 10 most recent matches that a user played in Modern Warfare",
         cog_name="stats"
     )
     async def modern_warfare_matches(self, ctx):
@@ -130,11 +131,11 @@ class Stats(Cog, name="stats"):
     
     @modern_warfare_matches.command(
         name="steam",
-        description="Retrieves the 5 most recent matches for a user that plays Modern Warfare on Steam",
+        description="Retrieves the 10 most recent matches for a user that plays Modern Warfare on Steam",
         cog_name="stats"
     )
     async def modern_warfare_matches_steam(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Modern Warfare
+        """Gives the 10 most recent matches for a specified player that plays Modern Warfare
         on Steam (steam)
 
         :param ctx: The context of where the message was sent
@@ -144,11 +145,11 @@ class Stats(Cog, name="stats"):
     
     @modern_warfare_matches.command(
         name="battle",
-        description="Retrieves the 5 most recent matches for a user that plays Modern Warfare on Battle.net",
+        description="Retrieves the 10 most recent matches for a user that plays Modern Warfare on Battle.net",
         cog_name="stats"
     )
     async def modern_warfare_matches_battle(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Modern Warfare
+        """Gives the 10 most recent matches for a specified player that plays Modern Warfare
         on Battle.net (battle)
 
         :param ctx: The context of where the message was sent
@@ -158,11 +159,11 @@ class Stats(Cog, name="stats"):
     
     @modern_warfare_matches.command(
         name="xbox", aliases=["xbl"],
-        description="Retrieves the 5 most recent matches for a user that plays Modern Warfare on Xbox",
+        description="Retrieves the 10 most recent matches for a user that plays Modern Warfare on Xbox",
         cog_name="stats"
     )
     async def modern_warfare_matches_xbox(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Modern Warfare
+        """Gives the 10 most recent matches for a specified player that plays Modern Warfare
         on Xbox (xbl)
 
         :param ctx: The context of where the message was sent
@@ -172,11 +173,11 @@ class Stats(Cog, name="stats"):
     
     @modern_warfare_matches.command(
         name="playstation", aliases=["psn", "ps"],
-        description="Retrieves the 5 most recent matches for a user that plays Modern Warfare on Playstation",
+        description="Retrieves the 10 most recent matches for a user that plays Modern Warfare on Playstation",
         cog_name="stats"
     )
     async def modern_warfare_matches_playstation(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Modern Warfare
+        """Gives the 10 most recent matches for a specified player that plays Modern Warfare
         on Playstation (psn)
 
         :param ctx: The context of where the message was sent
@@ -188,7 +189,7 @@ class Stats(Cog, name="stats"):
 
     @group(
         name="warzone", aliases=["wz"],
-        description="Retrieves either the game stats or the 5 most recent matches for a user that plays Call of Duty: Warzone (2019)",
+        description="Retrieves either the game stats or the 10 most recent matches for a user that plays Call of Duty: Warzone (2019)",
         cog_name="stats"
     )
     async def warzone(self, ctx):
@@ -216,7 +217,7 @@ class Stats(Cog, name="stats"):
     
     @warzone.group(
         name="matches", aliases=["match"],
-        description="Retrieves the 5 most recent matches that a user played in Warzone",
+        description="Retrieves the 10 most recent matches that a user played in Warzone",
         cog_name="stats"
     )
     async def warzone_matches(self, ctx):
@@ -286,11 +287,11 @@ class Stats(Cog, name="stats"):
     
     @warzone_matches.command(
         name="steam",
-        description="Retrieves the 5 most recent matches for a user that plays Warzone on Steam",
+        description="Retrieves the 10 most recent matches for a user that plays Warzone on Steam",
         cog_name="stats"
     )
     async def warzone_matches_steam(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Warzone
+        """Gives the 10 most recent matches for a specified player that plays Warzone
         on Steam (steam)
 
         :param ctx: The context of where the message was sent
@@ -300,11 +301,11 @@ class Stats(Cog, name="stats"):
     
     @warzone_matches.command(
         name="battle",
-        description="Retrieves the 5 most recent matches for a user that plays Warzone on Battle.net",
+        description="Retrieves the 10 most recent matches for a user that plays Warzone on Battle.net",
         cog_name="stats"
     )
     async def warzone_matches_battle(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Warzone
+        """Gives the 10 most recent matches for a specified player that plays Warzone
         on Battle.net (battle)
 
         :param ctx: The context of where the message was sent
@@ -314,11 +315,11 @@ class Stats(Cog, name="stats"):
     
     @warzone_matches.command(
         name="xbox", aliases=["xbl"],
-        description="Retrieves the 5 most recent matches for a user that plays Warzone on Xbox",
+        description="Retrieves the 10 most recent matches for a user that plays Warzone on Xbox",
         cog_name="stats"
     )
     async def warzone_matches_xbox(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Warzone
+        """Gives the 10 most recent matches for a specified player that plays Warzone
         on Xbox (xbl)
 
         :param ctx: The context of where the message was sent
@@ -328,11 +329,11 @@ class Stats(Cog, name="stats"):
     
     @warzone_matches.command(
         name="playstation", aliases=["psn", "ps"],
-        description="Retrieves the 5 most recent matches for a user that plays Warzone on Playstation",
+        description="Retrieves the 10 most recent matches for a user that plays Warzone on Playstation",
         cog_name="stats"
     )
     async def warzone_matches_playstation(self, ctx, *, username=None):
-        """Gives the 5 most recent matches for a specified player that plays Warzone
+        """Gives the 10 most recent matches for a specified player that plays Warzone
         on Playstation (psn)
 
         :param ctx: The context of where the message was sent
@@ -607,27 +608,27 @@ class Stats(Cog, name="stats"):
                         *Level*: {}
                         """
                     ).format(
-                        stat["timePlayedTotal"],
-                        stat["totalGamesPlayed"],
+                        seconds_to_runtime(stat["timePlayedTotal"]),
+                        f"{stat['totalGamesPlayed']:,}",
                         multi_stats["level"]
                     )
 
                     # Create the fields and add them to the embed
                     fields = {
-                        "K/D Ratio": stat["kdRatio"],
-                        "Kills": stat["kills"],
-                        "Win %": stat["winLossRatio"],
-                        "Wins": stat["wins"],
+                        "K/D Ratio": f"{stat['kdRatio']:.2f}",
+                        "Kills": f"{stat['kills']:,}",
+                        "Win %": f"{stat['winLossRatio']:.2f}",
+                        "Wins": f"{stat['wins']:,}",
 
                         "Best Killstreak": stat["recordKillStreak"],
                         "Current Win Streak": stat["recordLongestWinStreak"],
-                        "Losses": stat["losses"],
+                        "Losses": f"{stat['losses']:,}",
                         "Ties": stat["ties"],
-                        "Assists": stat["assists"],
-                        "Deaths": stat["deaths"],
-                        "Score/min": stat["scorePerMinute"],
-                        "Score/game": stat["scorePerGame"],
-                        "Score": stat["score"],
+                        "Assists": f"{stat['assists']:,}",
+                        "Deaths": f"{stat['deaths']:,}",
+                        "Score/min": f"{stat['scorePerMinute']:,.2f}",
+                        "Score/game": f"{stat['scorePerGame']:,.2f}",
+                        "Score": f"{stat['score']:,}",
 
                         "Accuracy": (
                             """
@@ -636,9 +637,9 @@ class Stats(Cog, name="stats"):
                             *Headshots*: {}
                             """
                         ).format(
-                            stat["totalShots"] - stat["hits"] - stat["headshots"],
-                            stat["hits"],
-                            stat["headshots"]
+                            f"{stat['totalShots'] - stat['hits'] - stat['headshots']:,}",
+                            f"{stat['hits']:,}",
+                            f"{stat['headshots']:,}"
                         )
 
                     }
@@ -679,7 +680,7 @@ class Stats(Cog, name="stats"):
                             ctx, self.bot,
                             pages = [
                                 build_mw_match(match)
-                                for match in multi_match["matches"][:5]
+                                for match in multi_match["matches"][:10]
                             ]
                         )
         
