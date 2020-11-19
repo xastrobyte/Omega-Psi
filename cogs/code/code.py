@@ -186,7 +186,7 @@ class Code(Cog, name = "code"):
             JUDGE_GET_LANGUAGES_API_CALL,
             headers = {
                 "x-rapidapi-host": "judge0.p.rapidapi.com",
-                "x-rapidapi-key": environ["JUDGE0_API_KEY"]
+                "x-rapidapi-key": environ["RAPID_API_KEY"]
             }
         )
         languages = languages.json()
@@ -1447,7 +1447,7 @@ class Code(Cog, name = "code"):
                     "Content-Type": "application/json",
                     "accept": "application/json",
                     "x-rapidapi-host": "judge0.p.rapidapi.com",
-                    "x-rapidapi-key": environ["JUDGE0_API_KEY"]
+                    "x-rapidapi-key": environ["RAPID_API_KEY"]
                 }
             )
         )
@@ -1462,7 +1462,7 @@ class Code(Cog, name = "code"):
                     JUDGE_GET_API_CALL.format(token),
                     headers = {
                         "x-rapidapi-host": "judge0.p.rapidapi.com",
-                        "x-rapidapi-key": environ["JUDGE0_API_KEY"]
+                        "x-rapidapi-key": environ["RAPID_API_KEY"]
                     }
                 )
             )

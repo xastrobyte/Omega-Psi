@@ -15,6 +15,21 @@ def minutes_to_runtime(minutes):
     # Return the result
     return "{}h {}m".format(hours, minutes - (hours * 60))
 
+def seconds_to_runtime(seconds):
+    """Turns an amount of seconds into a runtime
+    
+    :param minutes: The amount of minutes to turn into a runtime
+    """
+
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+    
+    return "{}{}{}".format(
+        f"{hours}h " if hours > 0 else "",
+        f"{minutes}m " if minutes > 0 else "",
+        f"{seconds}s"
+    )
+
 def timestamp_to_datetime(timestamp):
     """Turns a string timestamp into a datetime.
 
