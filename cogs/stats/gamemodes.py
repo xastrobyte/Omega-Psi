@@ -20,13 +20,19 @@ COD_MW_MODES = {
     "war_hc": "Team Deathmatch Hardcore",
     "arm": "Ground War",
     "arena": "{gameMode}",
-    "grnd": "Grind"
+    "grnd": "Grind",
+    "br_brquads": "Quads",
+    "br_brtrios": "Trios",
+    "br_brduos": "Duos",
+    "br_brsolo": "Solo",
+    "br_89": "Quads Solo",
+    "br_mini_miniroyale": "Mini Royale"
 }
 
 COD_MW_MAPS = {
     "mp_cave_am": "Azhir Cave",
     "mp_farms2_gw": "{mapName}",
-    "mp_spear": "{mapName}",
+    "mp_spear": "Rammaza",
     "mp_m_stadium": "{mapName}",
     "mp_m_showers": "{mapName}",
     "mp_promenade_gw": "{mapName}",
@@ -77,6 +83,8 @@ COD_MW_MAPS = {
     "mp_m_fork": "{mapName}",
     "mp_port2_gw": "{mapName}",
     "mp_aniyah": "{mapName}",
-    "mp_crash2": "{mapName}",
-    "mp_hardhat": "{mapName}"
+    "mp_crash2": "Crash",
+    "mp_hardhat": "{mapName}",
+    "mp_don3": "Verdansk",
+    "mp_donetsk": "Verdansk"
 }

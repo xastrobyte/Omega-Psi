@@ -571,13 +571,6 @@ class Stats(Cog, name="stats"):
 
         # Check if the username was given
         if username is not None:
-
-            # Create the base embed
-            embed = Embed(
-                title = "",
-                description = "_ _",
-                colour = await get_embed_color(ctx.author)
-            )
             
             # Get the multiplayer stats or the most recent 5 matches
             if mode == "stats":
@@ -600,17 +593,22 @@ class Stats(Cog, name="stats"):
                     return None
                 else:
                     stat = multi_stats["lifetime"]["all"]["properties"]
-                    embed.title = multi_stats["username"]
-                    embed.description = (
-                        """
-                        *Time Played*: {}
-                        *Matches Played*: {}
-                        *Level*: {}
-                        """
-                    ).format(
-                        seconds_to_runtime(stat["timePlayedTotal"]),
-                        f"{stat['totalGamesPlayed']:,}",
-                        multi_stats["level"]
+
+                    # Create the base embed
+                    embed = Embed(
+                        title = multi_stats["username"],
+                        description = (
+                            """
+                            *Time Played*: {}
+                            *Matches Played*: {}
+                            *Level*: {}
+                            """
+                        ).format(
+                            seconds_to_runtime(stat["timePlayedTotal"]),
+                            f"{stat['totalGamesPlayed']:,}",
+                            multi_stats["level"]
+                        ),
+                        colour = await get_embed_color(ctx.author)
                     )
 
                     # Create the fields and add them to the embed
@@ -700,19 +698,8 @@ class Stats(Cog, name="stats"):
         :param username: The user to search for
         """
 
-        if True:
-            await ctx.send(embed = UNIMPLEMENTED_ERROR)
-            return None
-
         # Check if the username is given
         if username is not None:
-
-            # Create the base embed
-            embed = Embed(
-                title = "",
-                description = "_ _",
-                colour = await get_embed_color(ctx.author)
-            )
 
             # Get the warzone stats or the most recent 5 matches
             if mode == "stats":
@@ -734,16 +721,47 @@ class Stats(Cog, name="stats"):
                     ))
                     return None
                 else:
+                    stat = warzone_stats["br_all"]
+
+                    # Create the base embed
+                    embed = Embed(
+                        title = username,
+                        description = (
+                            """
+                            *Time Played*: {}
+                            *Matches Played*: {}
+                            """
+                        ).format(
+                            seconds_to_runtime(stat["timePlayed"]),
+                            f"{stat['gamesPlayed']:,}"
+                        ),
+                        colour = await get_embed_color(ctx.author)
+                    )
 
                     # Create the fields and add them to the embed
                     fields = {
+                        "Wins": f"{stat['wins']:,}",
+                        "Top 5": f"{stat['topFive']:,}",
+                        "K/D Ratio": f"{stat['kdRatio']:,.2f}",
 
+                        "Top 10": f"{stat['topTen']:,}",
+                        "Top 25": f"{stat['topTwentyFive']:,}",
+                        "Win %": f"{100 * stat['wins'] / stat['gamesPlayed']:.2f}",
+
+                        "Kills": f"{stat['kills']:,}",
+                        "Deaths": f"{stat['deaths']:,}",
+                        "Downs": f"{stat['downs']:,}",
+
+                        "Score": f"{stat['score']:,}",
+                        "Score/min": f"{stat['scorePerMinute']:,.2f}",
+                        "Score/game": f"{stat['score'] / stat['gamesPlayed']:,.2f}"
                     }
                     for field in fields:
                         embed.add_field(
                             name = field,
                             value = fields[field]
                         )
+                    await ctx.send(embed = embed)
             else:
                 warzone_match = await loop.run_in_executor(
                     None,
@@ -763,16 +781,13 @@ class Stats(Cog, name="stats"):
                     ))
                     return None
                 else:
-
-                    # Create the fields and add them to the embed
-                    fields = {
-
-                    }
-                    for field in fields:
-                        embed.add_field(
-                            name = field,
-                            value = fields[field]
-                        )
+                    await process_scrolling(
+                        ctx, self.bot,
+                        pages = [
+                            build_wz_match(match)
+                            for match in warzone_match["matches"]
+                        ]
+                    )
         
         # The username was not given
         else:

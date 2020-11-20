@@ -24,6 +24,8 @@ def build_mw_match(match):
         description = COD_MW_MAPS[match["map"]],
         colour = LOST if match["result"] == "loss" else WON,
         timestamp = datetime.fromtimestamp(match["utcStartSeconds"])
+    ).set_author(
+        name = match["player"]["username"]
     )
     fields = {
         "Match Length": seconds_to_runtime(match["duration"] // 1000),
@@ -32,8 +34,8 @@ def build_mw_match(match):
         "Score XP": match["playerStats"]["scoreXp"],
         "Total XP": match["playerStats"]["totalXp"],
 
-        "Most Killed": match["player"]["mostKilled"],
-        "Nemesis": match["player"]["nemesis"],
+        "Most Killed": match["player"]["mostKilled"] if "mostKilled" in match["player"] else "None",
+        "Nemesis": match["player"]["nemesis"] if "nemesis" in match["player"] else "None",
         "K/D/R": "{}/{}/{}".format(
             match["playerStats"]["kills"],
             match["playerStats"]["deaths"],
@@ -54,19 +56,46 @@ def build_mw_match(match):
         )
     return embed
 
-def build_wz_match(embed, matches):
-    """
+def build_wz_match(match):
+    """Creates a Discord Embed for the specified match
+
+    :param match: The Warzone match to build an embed for
     """
 
-    # Iterate through the matches
-    for match in matches:
+    # Create the embed and fields for the match
+    embed = Embed(
+        title = COD_MW_MODES[match["mode"]],
+        description = COD_MW_MAPS[match["map"]],
+        colour = LOST if match["playerStats"]["teamPlacement"] != 1 else WON,
+        timestamp = datetime.fromtimestamp(match["utcStartSeconds"])
+    ).set_author(
+        name = ""
+    )
+    fields = {
+        "Match Length": seconds_to_runtime(match["duration"] // 1000),
+
+        "Score": f"{match['playerStats']['score']:,}",
+        "Score XP": f"{match['playerStats']['scoreXp']:,}",
+        "Total XP": f"{match['playerStats']['matchXp']:,}",
+
+        "Damage Done": f"{match['playerStats']['damageDone']:,}",
+        "Damage Taken": f"{match['playerStats']['damageTaken']:,}",
+        "K/D/R": "{}/{}/{}".format(
+            match["playerStats"]["kills"],
+            match["playerStats"]["deaths"],
+            str(round(match["playerStats"]["kdRatio"], 2))
+        ),
+
+        "Headshots": match["playerStats"]["headshots"],
+        "Executions": match["playerStats"]["executions"],
+        "Assists": match["playerStats"]["assists"]
+    }
+
+    # Add the fields for the match
+    for field in fields:
         embed.add_field(
-            name = "",
-            value = (
-
-            ).format(
-
-            ),
-            inline = False
+            name = field,
+            value = fields[field],
+            inline = field != "Match Length"
         )
     return embed
