@@ -81,7 +81,7 @@ class Page:
                     {}
                 </h1>
 
-                <div class="page-title-block" style="max-width: 75%;">
+                <div class="page-title-block">
                     <p style="text-align: center;">
                         {}
                     </p>

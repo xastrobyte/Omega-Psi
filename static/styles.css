@@ -12,7 +12,6 @@
 /* - - - Page Styles - - - */
 
 body {
-  padding: 0;
   margin: 0;
 }
 
@@ -365,7 +364,7 @@ tr {
   font-size: 3vw;
 }
 
-.page-title-block {
+.page-title-block, .page-section-block {
   padding: 5px;
   margin-left: 15%;
   margin-right: 15%;
@@ -382,17 +381,11 @@ tr {
 }
 
 .page-section-block {
-  margin-left: 10%;
-  margin-right: 10%;
-  width: 80%;
-  
-  background: #202020;
-  
-  border: 1px solid #808080;
-  border-radius: 5px;
-  
-  font-family: 'Cutive Mono', monospace;
-  font-size: 1.5vw;
+    text-align: left;
+    margin-left: 10%;
+    margin-right: 10%;
+    width: 80%;
+    font-size: 1.5vw;
 }
 
 .field {
@@ -727,27 +720,27 @@ tr {
 	
 	.page-title {
 		text-align: center;
-		font-size: 7vw;
+		font-size: 5vw;
 	}
 	
 	.page-section {
 		padding-left: 0;
-		text-align: center;
-		font-size: 6vw;
+		text-align: left;
+		font-size: 4vw;
 	}
 	
 	.page-title-block {
-		margin-left: 10%;
-		margin-right: 10%;
-		width: 80%;
-		font-size: 5vw;
-	}
-	
-	.page-section-block {
 		margin-left: 5%;
 		margin-right: 5%;
 		width: 90%;
-		font-size: 4vw;
+		font-size: 4.5vw;
+	}
+	
+	.page-section-block {
+		margin-left: 1%;
+		margin-right: 1%;
+		width: 98%;
+		font-size: 3.5vw;
 	}
 	
 	#nav-toggle {

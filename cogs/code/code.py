@@ -247,22 +247,6 @@ class Code(Cog, name = "code"):
             embed = get_error_message("Start base and end base must be a number between 2 and 62.")
         
         await ctx.send(embed = embed)
-
-    @convert.command(
-        name = "signed",
-        aliases = ["s"],
-        cog_name = "code"
-    )
-    async def convert_signed(self, ctx, start_base=None, end_base=None, value=None):
-        pass
-    
-    @convert.command(
-        name = "unsigned",
-        aliases = ["u"],
-        cog_name = "code"
-    )
-    async def convert_unsigned(self, ctx, start_base=None, end_base=None, value=None):
-        pass
     
     @group(
         name = "textTo",
