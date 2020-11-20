@@ -41,7 +41,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help modernWarfare` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
     
@@ -55,7 +56,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help modernWarfare stats` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
     
@@ -69,7 +71,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help modernWarfare matches` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
     
@@ -197,7 +200,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help warzone` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
     
@@ -211,7 +215,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help warzone stats` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
     
@@ -225,7 +230,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help warzone matches` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
     
@@ -353,7 +359,8 @@ class Stats(Cog, name="stats"):
         if not ctx.invoked_subcommand:
             await ctx.send(embed = get_error_message(
                 "Try running `{}help division2` :)".format(
-                    await database.guilds.get_prefix(ctx.guild)
+                    await database.guilds.get_prefix(ctx.guild) 
+                    if ctx.guild is not None else ""
                 )
             ))
 
