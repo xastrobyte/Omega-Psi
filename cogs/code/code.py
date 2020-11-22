@@ -8,6 +8,7 @@ from PIL import Image
 from requests import get, post
 from urllib.parse import quote
 import json
+from asyncio import wait_for, TimeoutError
 
 from cogs.errors import get_error_message
 from cogs.globals import loop, FIELD_THRESHOLD
@@ -16,6 +17,7 @@ from util.database.database import database
 from util.functions import get_embed_color
 
 from cogs.code.base_converter import convert
+from cogs.code.brainf import compile_bf
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -203,6 +205,43 @@ class Code(Cog, name = "code"):
                 )
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @command(
+        name = "brainf", aliases=["bf"],
+        description = "Compiles and outputs brainf*** code. There is a timeout after 10 seconds so beware",
+        cog_name = "code"
+    )
+    async def brainf(self, ctx, *, code=None):
+        """Allows the user to compile and get output from 
+        brainfuck code
+
+        :param ctx: The context of where the message was sent
+        :param code: The brainfuck code to execute"
+        """
+
+        # Check if there is no code given
+        if code is None:
+            await ctx.send(embed = get_error_message(
+                "There was no brainf\*\*\* code supplied :("
+            ))
+        else:
+
+            # Timeout after 5 seconds
+            try:
+                result = await wait_for(loop.run_in_executor(
+                    None, compile_bf, code, 
+                ), timeout = 10.0)
+                await ctx.send(
+                    embed = Embed(
+                        title = "Brainf*** Output",
+                        description = f"```\n{result}\n```" if len(result) > 0 else "There was no output",
+                        colour = await get_embed_color(ctx.author)
+                    )
+                )
+            except TimeoutError:
+                await ctx.send(embed = get_error_message(
+                    "That brainfuck code took a little too long to compile :("
+                ))
 
     @group(
         name = "convert",
