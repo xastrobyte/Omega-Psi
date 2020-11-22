@@ -8,7 +8,7 @@ from cogs.globals import loop
 
 from util.functions import get_embed_color
 
-from .matrix import *
+from .matrix import Matrix, Vector, Scalar, SizeMismatchError, NotAnIntegerError
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
