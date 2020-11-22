@@ -99,6 +99,23 @@ class Math(Cog, name="math"):
                             ])
                 
                 # Create the matrix and show the data
+                vectors = []
+                invalid = False
+                for vector in new_vectors:
+                    for scalar in vector:
+                        if Scalar(scalar) >= 2 ** 16:
+                            invalid = True
+                            break
+                    if invalid:
+                        break
+                
+                # Only show the matrix if it is valid
+                if invalid:
+                    await ctx.send(embed = get_error_message(
+                        "There are values too large to use in the matrix :("
+                    ))
+                    return None
+
                 matrix = Matrix([
                     Vector([
                         Scalar(s)

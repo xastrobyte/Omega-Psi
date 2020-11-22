@@ -90,6 +90,20 @@ class Scalar:
     
     def __req__(self, scalar: Union['Scalar', int]) -> bool:
         return self == scalar
+    
+    def __gt__(self, value: Union['Scalar', int]) -> bool:
+        if isinstance(value, int):
+            return (self.numer // self.denom) > value
+        return (self.numer * value.denom) > (value.numer * self.denom)
+    
+    def __ge__(self, value: Union['Scalar', int]) -> bool:
+        return self > value or self == value
+    
+    def __lt__(self, value: Union['Scalar', int]) -> bool:
+        return not (self > value)
+    
+    def __le__(self, value: Union['Scalar', int]) -> bool:
+        return not (self > value) or self == value
 
     # # # # # # # # # # # # # # # # # # # # # # # # #
 
