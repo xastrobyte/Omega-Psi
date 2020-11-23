@@ -69,7 +69,7 @@ class Website:
 
             <!-- Navigation Bar -->
             <nav class="nav-bar">
-                <img src="https://i.imgur.com/Hy5Gyut.png" class="social-image" style="width: 50px; height: 50px;">
+                <img src="/static/logo.png" class="social-image" style="width: 50px; height: 50px;">
                 <div id="nav-toggle">
                     <input type="checkbox">
                     <span></span>

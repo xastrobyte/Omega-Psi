@@ -125,7 +125,7 @@ class Help(HelpCommand):
         ).set_author(
             name = "Version " + recent["version"],
             url = GITHUB_RELEASE.format(recent["version"]),
-            icon_url = "https://i.imgur.com/Hy5Gyut.png"
+            icon_url = "https://omegapsi.fellowhashbrown.com/static/logo.png"
         )
 
         # Add fields for each cog in the bot
