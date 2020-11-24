@@ -1442,6 +1442,12 @@ class Code(Cog, name = "code"):
         :param language: The language to execute the code in
         """
 
+        if code is None:
+            await ctx.send(embed = get_error_message(
+                f"You need to specify code to run {language} code"
+            ))
+            return None
+
         # Get the language ID from the language
         lang_id = LANGUAGES[language]["id"]
 
