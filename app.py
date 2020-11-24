@@ -1195,7 +1195,8 @@ def keep_alive(bot, cogs):
             Page(
                 title = "commands",
                 custom_title = "Omega Psi Commands",
-                description = "below is a list of commands in omega psi and what they do. hover over the colored commands for more information on it.",
+                description = "below is a list of commands in omega psi and what they do. hover over the colored commands for more information on it. you can <a href=\"https://discord.com/oauth2/authorize?client_id=535587516816949248&scope=bot&permissions=519232\" target=\"_blank\" class=\"link\">invite omega psi</a> to your server",
+                custom_description = "below is a list of commands in omega psi and what they do. hover over the colored commands for more information on it.",
                 sections = command_sections,
                 homepage = True
             ),
