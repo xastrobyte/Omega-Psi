@@ -1,8 +1,8 @@
 from asyncio import TimeoutError
 from discord import Embed, Member
-from discord.ext.commands import Cog, command
+from discord.ext.commands import Cog, command, group
 
-from cogs.errors import MEMBER_NOT_FOUND_ERROR
+from cogs.errors import MEMBER_NOT_FOUND_ERROR, UNIMPLEMENTED_ERROR
 from cogs.globals import JOIN, ROBOT, SMART, RANDOM, PLAY_NOW
 from cogs.predicates import is_nsfw_and_guild
 
@@ -133,6 +133,23 @@ class Game(Cog, name="game"):
                 )
 
         await ctx.send(embed=embed)
+    
+    @group(
+        name="leaderboards",
+        description="Shows the leaderboards in just this server",
+        cog_name="game"
+    )
+    async def leaderboards(self, ctx):
+        if not ctx.invoked_subcommand:
+            await ctx.send(embed = UNIMPLEMENTED_ERROR)
+    
+    @leaderboards.command(
+        name="global",
+        description="Shows the leaderboards for the whole bot",
+        cog_name="game"
+    )
+    async def leaderboards_globa(self, ctx):
+        await ctx.send(embed = UNIMPLEMENTED_ERROR)
 
     @command(
         name="battleship",
