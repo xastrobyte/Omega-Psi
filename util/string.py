@@ -147,15 +147,15 @@ def datetime_to_length(date_time):
     # Strip away any value that has a 0
     result = []
     if diff.years != 0:
-        result.append("{} year{}".format(diff.years, "s" if diff.years != 1 else ""))
+        result.append("{} year{}".format(abs(diff.years), "s" if diff.years != 1 else ""))
     if diff.months != 0:
-        result.append("{} month{}".format(diff.months, "s" if diff.months != 1 else ""))
+        result.append("{} month{}".format(abs(diff.months), "s" if diff.months != 1 else ""))
     if diff.days != 0:
-        result.append("{} day{}".format(diff.days, "s" if diff.days != 1 else ""))
+        result.append("{} day{}".format(abs(diff.days), "s" if diff.days != 1 else ""))
     if diff.hours != 0:
-        result.append("{} hour{}".format(diff.hours, "s" if diff.hours != 1 else ""))
+        result.append("{} hour{}".format(abs(diff.hours), "s" if diff.hours != 1 else ""))
     if diff.minutes != 0:
-        result.append("{} minute{}".format(diff.minutes, "s" if diff.minutes != 1 else ""))
+        result.append("{} minute{}".format(abs(diff.minutes), "s" if diff.minutes != 1 else ""))
     
     # Check if there is only 1 result
     if len(result) == 1:

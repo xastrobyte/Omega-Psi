@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from discord import Embed
 from discord.ext.commands import Cog, command, Paginator
 from imdb import IMDb
@@ -12,7 +12,7 @@ from util.database.database import database
 from util.discord import process_scrolling
 from util.functions import get_embed_color
 from util.imgur import Imgur
-from util.string import generate_random_string
+from util.string import generate_random_string, datetime_to_length
 
 from .imdb_util import get_movie_embed, get_tv_show_embed
 
@@ -202,6 +202,59 @@ class Misc(Cog, name = "misc"):
             await ctx.send(
                 result
             )
+    
+    @command(
+        name = "timeSince",
+        description = "Determines how long it's been since a date you enter in the format of MM/DD/YYYY",
+        cog_name = "misc"
+    )
+    async def time_since(self, ctx, *, entered_date: str=None):
+        """Allows a user to see how long it's been since a specific day
+
+        :param ctx: The context of where the message was sent
+        :param entered_date: The date to find the time since then
+        """
+
+        # Check if no date was given
+        if entered_date is None:
+            await ctx.send(embed = get_error_message(
+                "You didn't enter a date!"
+            ))
+            return None
+        
+        # There was a date given, create a datetime object
+        #   for the time entered, if the date is valid
+        date_split = entered_date.split("/")
+        try:
+            if len(date_split) != 3:
+                raise ValueError()
+            month = int(date_split[0])
+            day = int(date_split[1])
+            year = int(date_split[2])
+
+            then = date(year, month, day)
+        except ValueError:
+            await ctx.send(embed = get_error_message(
+                "The date you entered is not valid :("
+            ))
+            return None
+        
+        # Find out the time since the date entered
+        #   or time until (if the date entered is in the future)
+        now = datetime.now().date()
+        length = datetime_to_length(then)
+
+        await ctx.send(embed = Embed(
+            title = "Time {}".format(
+                "Since" if then < now else "Until"
+            ),
+            description = (
+                f"It has been {length} since {entered_date}!"
+            ) if then < now else (
+                f"There are {length} until {entered_date}!"
+            ),
+            colour = await get_embed_color(ctx.author)
+        ))
     
     @command(
         name = "setEmbedColor",
