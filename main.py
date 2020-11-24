@@ -127,15 +127,29 @@ async def on_command_error(ctx, error):
     elif ctx.command:
         await ctx.send(embed = COMMAND_FAILED_ERROR(ctx.command))
 
+        # Create a local function to split a path at a specific point
+        def trim_path(start, path):
+            split_path = path.split("/")
+            for i in range(len(split_path)):
+                if split_path[i] == start:
+                    break
+            return "/".join(split_path[i + 1:])
+
         # Create embed
-        exc = format_exception(type(error), error, error.__traceback__)
-        """for frame_summary in extract_tb(error.__traceback__):
+        exc = []
+        for frame_summary in extract_tb(error.original.__traceback__):
             exc.append(
-                "{}:{}\n\t{} - {}".format(
-                    frame_summary.filename, frame_summary.lineno,
-                    frame_summary.name, frame_summary.line
+                "{}:{}\n\t{} -> {}\n".format(
+                    trim_path(
+                        "Omega-Psi" 
+                        if "Omega-Psi" in frame_summary.filename 
+                        else "site-packages", 
+                        frame_summary.filename), 
+                    frame_summary.lineno,
+                    frame_summary.name, 
+                    frame_summary.line
                 )
-            )"""
+            )
 
         embed = Embed(
             title = "Command Failed",
