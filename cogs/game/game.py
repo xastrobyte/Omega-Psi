@@ -4,7 +4,7 @@ from discord.ext.commands import Cog, command, group
 
 from cogs.errors import MEMBER_NOT_FOUND_ERROR, UNIMPLEMENTED_ERROR
 from cogs.globals import JOIN, ROBOT, SMART, RANDOM, PLAY_NOW
-from cogs.predicates import is_nsfw_and_guild
+from cogs.predicates import is_nsfw_and_guild, guild_only
 
 from cogs.game.minigames.battleship.game import BattleshipGame
 from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanityGame
@@ -139,16 +139,104 @@ class Game(Cog, name="game"):
         description="Shows the leaderboards in just this server",
         cog_name="game"
     )
+    @guild_only()
     async def leaderboards(self, ctx):
         if not ctx.invoked_subcommand:
-            await ctx.send(embed = UNIMPLEMENTED_ERROR)
+
+            # Get all minigame data for users in this guild
+            members = []
+            for member in ctx.guild.members:
+                member_data = await database.users.get_user(member)
+                member_data = {
+                    "id": member_data["_id"],
+                    "member": member,
+                    "minigames": member_data["minigames"]
+                }
+                members.append(member_data)
+            
+            # Get the top 3 people for each game based off of ratio
+            fields = {
+                minigame: [
+                    {
+                        "id": member["id"],
+                        "member": member["member"],
+                        "ratio": round(
+                            member["minigames"][minigame]["won"] / 
+                            member["minigames"][minigame]["lost"]
+                                if member["minigames"][minigame]["lost"] != 0
+                                else 1,
+                            2   # Round the decimal to 2 places
+                        )
+                    }
+                    for member in members
+                ]
+                for minigame in members[0]["minigames"]
+            }
+            for minigame in fields:
+                fields[minigame] = sorted(fields[minigame], key = lambda m: m["ratio"], reverse = True)
+                fields[minigame] = fields[minigame][:3]
+
+            # Show who has won and lost the most games overall
+            #   for all minigames for each member
+            won_most_member = members[0], 0
+            lost_most_member = members[0], 0
+            for member in members:
+                total_wins = total_losses = 0
+                for minigame in member["minigames"]:
+                    total_wins   += member["minigames"][minigame]["won"]
+                    total_losses += member["minigames"][minigame]["lost"]
+                if total_wins > won_most_member[1]:
+                    won_most_member = member, total_wins
+                if total_losses > lost_most_member[1]:
+                    lost_most_member = member, total_losses
+
+            embed = Embed(
+                title = "Server Leaderboards",
+                description = "Top 3 Players in Each Minigame in this Server",
+                colour = await get_embed_color(ctx.author)
+            )
+            for field in fields:
+                embed.add_field(
+                    name = field.replace("_", " ").title(),
+                    value = "\n".join([
+                        f"{i + 1}.) {fields[field][i]['member']}: {fields[field][i]['ratio']}"
+                        for i in range(len(fields[field]))
+                    ])
+                )
+            embed.add_field(
+                name = "Won Most",
+                value = "{} ({}): {}".format(
+                    won_most_member[0]["member"].mention,
+                    str(won_most_member[0]["member"]),
+                    str(won_most_member[1])
+                )
+            ).add_field(
+                name = "Lost Most",
+                value = "{} ({}): {}".format(
+                    lost_most_member[0]["member"].mention,
+                    str(lost_most_member[0]["member"]),
+                    str(lost_most_member[1])
+                )
+            )
+
+            await ctx.send(embed = embed)
     
     @leaderboards.command(
         name="global",
         description="Shows the leaderboards for the whole bot",
         cog_name="game"
     )
-    async def leaderboards_globa(self, ctx):
+    async def leaderboards_global(self, ctx):
+
+        # Get the data for all users in the bot's database
+        users = database.users.get_users()
+
+        # Get the top 3 people for each game based off of ratio
+
+        # Show who has lost the most games overall
+
+        # Show who has won the most games overall
+
         await ctx.send(embed = UNIMPLEMENTED_ERROR)
 
     @command(
