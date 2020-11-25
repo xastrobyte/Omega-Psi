@@ -1,8 +1,8 @@
 from asyncio import TimeoutError
 from discord import Embed, Member
-from discord.ext.commands import Cog, command, group
+from discord.ext.commands import Cog, command
 
-from cogs.errors import MEMBER_NOT_FOUND_ERROR, UNIMPLEMENTED_ERROR
+from cogs.errors import MEMBER_NOT_FOUND_ERROR
 from cogs.globals import JOIN, ROBOT, SMART, RANDOM, PLAY_NOW
 from cogs.predicates import is_nsfw_and_guild, guild_only
 
@@ -134,7 +134,7 @@ class Game(Cog, name="game"):
 
         await ctx.send(embed=embed)
     
-    @group(
+    @command(
         name="leaderboards",
         description="Shows the leaderboards in just this server",
         cog_name="game"
@@ -220,24 +220,6 @@ class Game(Cog, name="game"):
             )
 
             await ctx.send(embed = embed)
-    
-    @leaderboards.command(
-        name="global",
-        description="Shows the leaderboards for the whole bot",
-        cog_name="game"
-    )
-    async def leaderboards_global(self, ctx):
-
-        # Get the data for all users in the bot's database
-        users = database.users.get_users()
-
-        # Get the top 3 people for each game based off of ratio
-
-        # Show who has lost the most games overall
-
-        # Show who has won the most games overall
-
-        await ctx.send(embed = UNIMPLEMENTED_ERROR)
 
     @command(
         name="battleship",
