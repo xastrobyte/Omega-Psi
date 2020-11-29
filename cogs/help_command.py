@@ -51,6 +51,11 @@ cogs = {
         "emoji": ":notebook: ",
         "extension": "cogs.comics.comics"
     },
+    "memes": {
+        "name": "Memes",
+        "emoji": ":joy: ",
+        "extension": "cogs.memes.memes"
+    },
     "misc": {
         "name": "Misc",
         "emoji": ":mag: ",
