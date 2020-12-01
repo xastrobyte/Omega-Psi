@@ -26,6 +26,7 @@ MW_WAR_MATCH_URL = "https://call-of-duty-modern-warfare.p.rapidapi.com/warzone-m
 # # # # # # # # # # # # # # # # # # # # # # # # #
 
 class Stats(Cog, name="stats"):
+    """View yours, or others, online game stats on multiple platforms!"""
     def __init__(self, bot):
         self.bot = bot
     
