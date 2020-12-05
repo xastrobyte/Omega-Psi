@@ -138,7 +138,7 @@ class ChessGame(Game):
                 )
             )
             if not self.opponent.is_ai:
-                await database.users.update_chess(self.opponent.member, self.opponent.member.id == winner.member.id)
-            await database.users.update_chess(self.challenger.member, self.challenger.member.id == winner.member.id)
+                await database.users.update_chess(self.opponent.member, self.opponent.member.id == winner.id)
+            await database.users.update_chess(self.challenger.member, self.challenger.member.id == winner.id)
     
     # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -333,7 +333,7 @@ class Game(Cog, name="game"):
             game = ChessGame(
                 self.bot, ctx,
                 ctx.author,
-                1 if result == RANDOM else result,
+                1 if result in [ RANDOM, SMART ] else result,
                 is_smart = result == SMART,
                 fen_string = fen_string
             )
