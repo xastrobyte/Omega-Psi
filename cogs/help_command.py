@@ -125,7 +125,17 @@ class Help(HelpCommand):
         # Create an embed with a list of cogs and their emojis/help commands
         embed = Embed(
             title = "Omega Psi Commands",
-            description = "Here's a list of categories in Omega Psi",
+            description = (
+                """
+                Below is a list of categories in Omega Psi
+
+                Commands can have multiple ways to call them. 
+                > Whenever you see a command such as `o.[source|src]`, you can call the command by doing either `o.source` or `o.src`
+                > Parameters surrounded by `[]` are optional and if they're surrounded by `<>`, they are required.
+                > If parameters have multiple ways to call them, they will show up as commands do:
+                > `o.grusPlan [firstPanel|panel1]` and you can specify them in multiple ways by doing either `o.grusPlan firstPanel` or `o.grusPlan panel1`
+                """
+            ),
             colour = await get_embed_color(self.context.author)
         ).set_author(
             name = "Version " + recent["version"],

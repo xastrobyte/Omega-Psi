@@ -1081,7 +1081,7 @@ def tasks():
                     notification_handler(
                         OMEGA_PSI, Embed(
                             title = "Task Removed",
-                            description = "*{}* was removed from the tasklist".format(request.json["task"])
+                            description = "*{}* was removed from the tasklist".format(task_json["task"])
                         ), "tasks"
                     ), loop)
                 user_remove_task.result()
