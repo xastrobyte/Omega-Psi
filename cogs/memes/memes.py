@@ -113,6 +113,10 @@ GRUS_PLAN = Meme("grusPlan",
     panel_4 = TextLocation(
         900, 530, 
         (0, 0, 0),
+        center_x = True, center_y = True),
+    person_text = TextLocation(
+        170, 190,
+        (255, 255, 255),
         center_x = True, center_y = True)
 )
 
@@ -511,9 +515,23 @@ class Memes(Cog, name="memes"):
                     "panel_1": "",
                     "panel_2": "",
                     "panel_3": "",
-                    "panel_3": ""
+                    "panel_3": "",
+                    "person_text": ""
                 }
             )
+    
+    @grus_plan.command(
+        name="person", aliases=["gru"],
+        description="Sets the text on top of Gru",
+        cog_name="memes"
+    )
+    async def grus_plan_person(self, ctx, *, text=None):
+        """Allows the user to set the text on top of Gru
+
+        :param ctx: The context of where the message was sent
+        :param text: The text to place on the meme
+        """
+        await self.add_text_to_meme(ctx, GRUS_PLAN, "person_text", text)
     
     @grus_plan.command(
         name="firstPanel", aliases=["panel1"],
