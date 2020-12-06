@@ -245,7 +245,7 @@ class Code(Cog, name = "code"):
 
     @group(
         name = "convert",
-        description = "Let's you convert signed or unsigned numbers from one base to another.",
+        description = "Let's you convert numbers from one base to another.",
         cog_name = "code"
     )
     async def convert(self, ctx, start_base=None, end_base=None, value=None):
