@@ -1,6 +1,6 @@
 from asyncio import wait, FIRST_COMPLETED
 from discord import Embed, Member, Status, Activity
-from discord.ext.commands import Cog, group, command, Greedy
+from discord.ext.commands import Cog, group, command, Greedy, Converter
 from functools import partial
 from os import environ, execv
 from requests import post
@@ -30,6 +30,19 @@ FEATURE_TYPES = {
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class CommandConverter(Converter):
+    async def convert(self, ctx, cmd):
+        """A converter function to get a command
+
+        :param ctx: The context of where the converter acts upon
+        :param cmd: The command to convert, if possible
+        :return: The command object or just the given cmd parameter
+        """
+        command = ctx.bot.get_command(cmd)
+        if command is not None:
+            return command
+        return cmd
 
 
 class Developer(Cog, name="developer"):
@@ -605,7 +618,7 @@ class Developer(Cog, name="developer"):
         cog_name="developer"
     )
     @is_developer()
-    async def enable_command(self, ctx, cmd=None):
+    async def enable_command(self, ctx, cmds: Greedy[CommandConverter]=None):
         """Allows a developer to enable a command in the whole bot
 
         :param ctx: The context of where the message was sent
@@ -613,37 +626,33 @@ class Developer(Cog, name="developer"):
         """
 
         # Check if there is no command to enable
-        if not cmd:
+        if not cmds:
             await ctx.send(
-                embed=get_error_message("You need to specify the command to enable.")
+                embed=get_error_message("You need to specify the command(s) to enable.")
             )
 
         # There is a command to enable
         else:
 
             # Check that it's a valid command in the bot
-            cmd = self.bot.get_command(cmd)
-            if not cmd:
-                await ctx.send(
-                    embed=get_error_message("That command does not exist!")
-                )
+            messages = []
+            for cmd in cmds:
+                if isinstance(cmd, str):
+                    messages.append(f"**{cmd} is not a valid command!**")
 
-            # The command is valid, enable it if possible
-            else:
-                enabled = await database.bot.enable_command(cmd.qualified_name)
-                if not enabled:
-                    await ctx.send(
-                        embed=get_error_message("That command is already enabled!")
-                    )
-
+                # The command is valid, enable it if possible
                 else:
-                    await ctx.send(
-                        embed=Embed(
-                            title="Command Enabled",
-                            description="`{}` has been enabled".format(cmd.qualified_name),
-                            colour=await get_embed_color(ctx.author)
-                        )
-                    )
+                    enabled = await database.bot.enable_command(cmd.qualified_name)
+                    if not enabled:
+                        messages.append(f"__`{cmd.qualified_name}` is already enabled!__")
+
+                    else:
+                        messages.append(f"*`{cmd.qualified_name}` has been enabled*")
+            await ctx.send(embed = Embed(
+                title = "Globally Enable Commands",
+                description = "\n".join(messages),
+                colour = await get_embed_color(ctx.author)
+            ))
 
     @command(
         name="globallyDisableCommand",
@@ -652,45 +661,41 @@ class Developer(Cog, name="developer"):
         cog_name="developer"
     )
     @is_developer()
-    async def disable_command(self, ctx, cmd=None):
+    async def disable_command(self, ctx, cmds: Greedy[CommandConverter]=None):
         """Allows a developer to disable a command in the whole bot
 
         :param ctx: The context of where the message was sent
         :param cmd: The command to disable
         """
 
-        # Check if there is no command to disable
-        if not cmd:
+        # Check if there is no command to enable
+        if not cmds:
             await ctx.send(
-                embed=get_error_message("You need to specify the command to disable.")
+                embed=get_error_message("You need to specify the command(s) to diable.")
             )
 
-        # There is a command to disable
+        # There is a command to enable
         else:
 
             # Check that it's a valid command in the bot
-            cmd = self.bot.get_command(cmd)
-            if not cmd:
-                await ctx.send(
-                    embed=get_error_message("That command does not exist!")
-                )
+            messages = []
+            for cmd in cmds:
+                if isinstance(cmd, str):
+                    messages.append(f"**{cmd} is not a valid command!**")
 
-            # The command is valid, disable it if possible
-            else:
-                disabled = await database.bot.disable_command(cmd.qualified_name)
-                if not disabled:
-                    await ctx.send(
-                        embed=get_error_message("That command is already disabled!")
-                    )
-
+                # The command is valid, enable it if possible
                 else:
-                    await ctx.send(
-                        embed=Embed(
-                            title="Command disabled",
-                            description="`{}` has been disabled".format(cmd.qualified_name),
-                            colour=await get_embed_color(ctx.author)
-                        )
-                    )
+                    disabled = await database.bot.disable_command(cmd.qualified_name)
+                    if not disabled:
+                        messages.append(f"__`{cmd.qualified_name}` is already disabled!__")
+
+                    else:
+                        messages.append(f"*`{cmd.qualified_name}` has been disabled*")
+            await ctx.send(embed = Embed(
+                title = "Globally Disable Commands",
+                description = "\n".join(messages),
+                colour = await get_embed_color(ctx.author)
+            ))
     
     @command(
         name="globallyEnableCog",
