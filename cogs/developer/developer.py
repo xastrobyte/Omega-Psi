@@ -14,7 +14,7 @@ from cogs.predicates import is_developer
 from util.database.database import database
 from util.discord import update_top_gg, notification_handler
 from util.functions import get_embed_color, add_scroll_reactions, create_fields, add_fields
-from util.github import fix_issue
+from util.github import fix_issue, GITHUB_ISSUE_URL
 from util.string import dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -846,7 +846,8 @@ class Developer(Cog, name="developer"):
                         title="Bug (#{})".format(str(case_numbers[current_case])),
                         description="_ _",
                         colour=color,
-                        timestamp=dict_to_datetime(get_case(current_case)["time"])
+                        timestamp=dict_to_datetime(get_case(current_case)["time"]),
+                        url = GITHUB_ISSUE_URL.format(get_case(current_case)["github_issue"])
                     ).add_field(
                         name="Source Type",
                         value=get_case(current_case)["source_type"]
@@ -881,7 +882,8 @@ class Developer(Cog, name="developer"):
                         title="Suggestion (#{})".format(str(case_numbers[current_case])),
                         description="_ _",
                         colour=color,
-                        timestamp=dict_to_datetime(get_case(current_case)["time"])
+                        timestamp=dict_to_datetime(get_case(current_case)["time"]),
+                        url = GITHUB_ISSUE_URL.format(get_case(current_case)["github_issue"])
                     ).add_field(
                         name="Suggestion",
                         value=get_case(current_case)["suggestion"],

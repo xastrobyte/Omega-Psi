@@ -14,7 +14,7 @@ from util.database.database import database
 
 from util.discord import process_scrolling, notification_handler
 from util.functions import get_embed_color, create_fields, add_fields, add_scroll_reactions
-from util.github import create_issue, fix_issue, GITHUB_ISSUE_URL
+from util.github import create_issue, GITHUB_ISSUE_URL
 from util.string import datetime_to_string, datetime_to_length, dict_to_datetime
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
