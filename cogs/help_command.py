@@ -196,8 +196,9 @@ class Help(HelpCommand):
             # Only add commands if there are any
             if len(commands) > 0:
                 for command in commands:
-                    paginator.add_line("`{}` - {}".format(
-                        self.get_command_signature(command),
+                    paginator.add_line("`{}{}` - {}".format(
+                        await database.guilds.get_prefix(self.context.guild),
+                        command.name,
                         command.description
                     ))
                 
@@ -235,18 +236,28 @@ class Help(HelpCommand):
                 colour = await get_embed_color(self.context.author)
             )
             
+            if len(group.aliases) > 0:
+                embed.add_field(
+                    name = "Aliases",
+                    value = ", ".join([
+                        f"`{alias}`"
+                        for alias in group.aliases
+                    ]),
+                    inline = False
+                )
+            
             # Only add subcommands if there are any
             if len(commands) > 0:
                 for command in commands:
                     paginator.add_line("`{}` - {}".format(
-                        self.get_command_signature(command),
+                        command.name,
                         command.description
                     ))
                 
                 # Add each page in the paginator to the embed
                 for i in range(len(paginator.pages)):
                     embed.add_field(
-                        name = "Commands",
+                        name = "Subcommands",
                         value = paginator.pages[i]
                     )
         
@@ -272,6 +283,16 @@ class Help(HelpCommand):
                 description = command.description,
                 colour = await get_embed_color(self.context.author)
             )
+
+            if len(command.aliases) > 0:
+                embed.add_field(
+                    name = "Aliases",
+                    value = ", ".join([
+                        f"`{alias}`"
+                        for alias in command.aliases
+                    ]),
+                    inline = False
+                )
             
             # Only add parameters if there are any 
             if len(command.clean_params) > 0:
