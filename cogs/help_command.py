@@ -125,35 +125,26 @@ class Help(HelpCommand):
         # Create an embed with a list of cogs and their emojis/help commands
         embed = Embed(
             title = "Omega Psi Commands",
-            description = (
-                """
-                Below is a list of categories in Omega Psi
-
-                Commands can have multiple ways to call them. 
-                > Whenever you see a command such as `o.[source|src]`, you can call the command by doing either `o.source` or `o.src`
-                > Parameters surrounded by `[]` are optional and if they're surrounded by `<>`, they are required.
-                > If parameters have multiple ways to call them, they will show up as commands do:
-                > `o.grusPlan [firstPanel|panel1]` and you can specify them in multiple ways by doing either `o.grusPlan firstPanel` or `o.grusPlan panel1`
-                """
-            ),
+            description = "Below is a list of categories in Omega Psi",
             colour = await get_embed_color(self.context.author)
         ).set_author(
             name = "Version " + recent["version"],
             url = GITHUB_RELEASE.format(recent["version"]),
             icon_url = "https://omegapsi.fellowhashbrown.com/static/logo.png"
+        ).set_footer(
+            text = "`[]` parameters are optional; `<>` parameters are required"
         )
 
         # Add fields for each cog in the bot
         #   only add cogs with a name, not None
-        #   and if the cog has at least one visible command
         for cog in mapping:
             if cog and (
                     (cog.qualified_name != "developer" and
                      await database.bot.is_cog_enabled(cog.qualified_name)) or 
                      await database.bot.is_developer(self.context.author)):
                 
-                visible_commands = await self.filter_commands(cog.get_commands())
-                if len(visible_commands) > 0:
+                # check if the cog is the music cog and the user is in a private message
+                if cog.qualified_name != "music" or self.context.guild:
                     embed.add_field(
                         name = "{} {}".format(
                             cogs[cog.qualified_name]["emoji"],
@@ -197,7 +188,7 @@ class Help(HelpCommand):
             if len(commands) > 0:
                 for command in commands:
                     paginator.add_line("`{}{}` - {}".format(
-                        await database.guilds.get_prefix(self.context.guild),
+                        await database.guilds.get_prefix(self.context.guild) if self.context.guild else "",
                         command.name,
                         command.description
                     ))
