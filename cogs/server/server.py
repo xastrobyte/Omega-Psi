@@ -1,7 +1,8 @@
 from discord import Embed, Member, Status
-from discord.ext.commands import Cog, command, group
+from discord.ext.commands import Cog, command, group, Greedy
 from typing import Union
 
+from cogs.converters import CommandConverter
 from cogs.errors import get_error_message, NotAGuildManager, NotInGuild, NOT_A_GUILD_MANAGER_ERROR, NOT_IN_GUILD_ERROR
 from cogs.predicates import guild_only, guild_manager
 
@@ -238,7 +239,7 @@ class Server(Cog, name="server"):
     )
     @guild_only()
     @guild_manager()
-    async def enable_command(self, ctx, cmd: str=None):
+    async def enable_command(self, ctx, cmds: Greedy[CommandConverter]=None):
         """Allows a user to enable a command in the guild
         if they're a guild manager
 
@@ -247,37 +248,33 @@ class Server(Cog, name="server"):
         """
 
         # Check if there is no command to enable
-        if not cmd:
+        if not cmds:
             await ctx.send(
-                embed=get_error_message("You need to specify the command to enable.")
+                embed=get_error_message("You need to specify the command(s) to enable.")
             )
 
         # There is a command to enable
         else:
 
             # Check that it's a valid command in the bot
-            cmd = self.bot.get_command(cmd)
-            if not cmd:
-                await ctx.send(
-                    embed=get_error_message("That command does not exist!")
-                )
+            messages = []
+            for cmd in cmds:
+                if isinstance(cmd, str):
+                    messages.append(f"**{cmd} is not a valid command!**")
 
-            # The command is valid, enable it if possible
-            else:
-                enabled = await database.guilds.enable_command(ctx.guild, cmd.qualified_name)
-                if not enabled:
-                    await ctx.send(
-                        embed=get_error_message("That command is already enabled!")
-                    )
-
+                # The command is valid, enable it if possible
                 else:
-                    await ctx.send(
-                        embed=Embed(
-                            title="Command Enabled",
-                            description="`{}` has been enabled".format(cmd.qualified_name),
-                            colour=await get_embed_color(ctx.author)
-                        )
-                    )
+                    enabled = await database.guilds.enable_command(ctx.guild, cmd.qualified_name)
+                    if not enabled:
+                        messages.append(f"__`{cmd.qualified_name}` is already enabled!__")
+
+                    else:
+                        messages.append(f"*`{cmd.qualified_name}` has been enabled*")
+            await ctx.send(embed = Embed(
+                title = "Enable Commands",
+                description = "\n".join(messages),
+                colour = await get_embed_color(ctx.author)
+            ))
 
     @command(
         name="disableCommand",
@@ -286,7 +283,7 @@ class Server(Cog, name="server"):
     )
     @guild_only()
     @guild_manager()
-    async def disable_command(self, ctx, cmd: str=None):
+    async def disable_command(self, ctx, cmds: Greedy[CommandConverter]=None):
         """Allows a user to disable a command in the guild
         as long as they're a guild manager
 
@@ -294,38 +291,34 @@ class Server(Cog, name="server"):
         :param cmd: The command to disable
         """
 
-        # Check if there is no command to disable
-        if not cmd:
+        # Check if there is no command to enable
+        if not cmds:
             await ctx.send(
-                embed=get_error_message("You need to specify the command to disable.")
+                embed=get_error_message("You need to specify the command(s) to disable.")
             )
 
-        # There is a command to disable
+        # There is a command to enable
         else:
 
             # Check that it's a valid command in the bot
-            cmd = self.bot.get_command(cmd)
-            if not cmd:
-                await ctx.send(
-                    embed=get_error_message("That command does not exist!")
-                )
+            messages = []
+            for cmd in cmds:
+                if isinstance(cmd, str):
+                    messages.append(f"**{cmd} is not a valid command!**")
 
-            # The command is valid, disable it if possible
-            else:
-                disabled = await database.guilds.disable_command(ctx.guild, cmd.qualified_name)
-                if not disabled:
-                    await ctx.send(
-                        embed=get_error_message("That command is already disabled!")
-                    )
-
+                # The command is valid, enable it if possible
                 else:
-                    await ctx.send(
-                        embed=Embed(
-                            title="Command disabled",
-                            description="`{}` has been disabled".format(cmd.qualified_name),
-                            colour=await get_embed_color(ctx.author)
-                        )
-                    )
+                    disabled = await database.guilds.disable_command(ctx.guild, cmd.qualified_name)
+                    if not disabled:
+                        messages.append(f"__`{cmd.qualified_name}` is already disabled!__")
+
+                    else:
+                        messages.append(f"*`{cmd.qualified_name}` has been disabled*")
+            await ctx.send(embed = Embed(
+                title = "Disable Commands",
+                description = "\n".join(messages),
+                colour = await get_embed_color(ctx.author)
+            ))
 
     @group(
         name="notify",

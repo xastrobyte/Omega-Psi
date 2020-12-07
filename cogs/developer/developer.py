@@ -1,11 +1,12 @@
 from asyncio import wait, FIRST_COMPLETED
 from discord import Embed, Member, Status, Activity
-from discord.ext.commands import Cog, group, command, Greedy, Converter
+from discord.ext.commands import Cog, group, command, Greedy
 from functools import partial
 from os import environ, execv
 from requests import post
 from sys import executable, argv
 
+from cogs.converters import CommandConverter
 from cogs.errors import get_error_message
 from cogs.globals import PRIMARY_EMBED_COLOR, SCROLL_REACTIONS, CHECK_MARK, FIRST_PAGE, LAST_PAGE, PREVIOUS_PAGE, \
     NEXT_PAGE, LEAVE, loop, NOT_CONSIDER, CONSIDER
@@ -30,19 +31,6 @@ FEATURE_TYPES = {
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-class CommandConverter(Converter):
-    async def convert(self, ctx, cmd):
-        """A converter function to get a command
-
-        :param ctx: The context of where the converter acts upon
-        :param cmd: The command to convert, if possible
-        :return: The command object or just the given cmd parameter
-        """
-        command = ctx.bot.get_command(cmd)
-        if command is not None:
-            return command
-        return cmd
 
 
 class Developer(Cog, name="developer"):
