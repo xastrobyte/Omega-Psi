@@ -145,18 +145,25 @@ class Help(HelpCommand):
 
         # Add fields for each cog in the bot
         #   only add cogs with a name, not None
+        #   and if the cog has at least one visible command
         for cog in mapping:
-            if cog and ((cog.qualified_name != "developer" and await database.bot.is_cog_enabled(cog.qualified_name)) or await database.bot.is_developer(self.context.author)):
-                embed.add_field(
-                    name = "{} {}".format(
-                        cogs[cog.qualified_name]["emoji"],
-                        cogs[cog.qualified_name]["name"]
-                    ),
-                    value = "`{}help {}`".format(
-                        await database.guilds.get_prefix(self.context.guild) if self.context.guild else "",
-                        cog.qualified_name
+            if cog and (
+                    (cog.qualified_name != "developer" and
+                     await database.bot.is_cog_enabled(cog.qualified_name)) or 
+                     await database.bot.is_developer(self.context.author)):
+                
+                visible_commands = await self.filter_commands(cog.get_commands())
+                if len(visible_commands) > 0:
+                    embed.add_field(
+                        name = "{} {}".format(
+                            cogs[cog.qualified_name]["emoji"],
+                            cogs[cog.qualified_name]["name"]
+                        ),
+                        value = "`{}help {}`".format(
+                            await database.guilds.get_prefix(self.context.guild) if self.context.guild else "",
+                            cog.qualified_name
+                        )
                     )
-                )
 
         await self.context.send(embed = embed)
 
