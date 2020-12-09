@@ -104,6 +104,18 @@ class User:
                 "chess": {
                     "won": 0,
                     "lost": 0
+                },
+                "checkers": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "hangman": {
+                    "won": 0,
+                    "lost": 0
+                },
+                "black_box": {
+                    "won": 0,
+                    "lost": 0
                 }
             }
         }
@@ -854,7 +866,7 @@ class User:
         return user_data["minigames"]["mastermind"]
     
     def get_chess_sync(self, user: Union[User, str]):
-        """Synchronously retrieves ther user's chess data from the database
+        """Synchronously retrieves the user's chess data from the database
 
         :param user: The User to get the Chess data of
 
@@ -862,6 +874,36 @@ class User:
         """
         user_data = self.get_user_sync(user)
         return user_data["minigames"]["chess"]
+    
+    def get_checkers_sync(self, user: Union[User, str]):
+        """Synchronously retrieves the user's checkers data from the database
+        
+        :param user: The User to get the Checkers data of
+
+        :returns: The User's Checkers data
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["minigames"]["checkers"]
+    
+    def get_hangman_sync(self, user: Union[User, str]):
+        """Synchronously retrieves the user's hangman data from the database
+        
+        :param user: The User to get the Hangman data of
+
+        :returns: The User's Hangman data
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["minigames"]["hangman"]
+    
+    def get_black_box_sync(self, user: Union[User, str]):
+        """Synchronously retrieves the user's black box data from the database
+        
+        :param user: The User to get the Black Box data of
+
+        :returns: The User's Black Box data
+        """
+        user_data = self.get_user_sync(user)
+        return user_data["minigames"]["black_box"]
 
     # # # # # # # # # # # # # # #
 
@@ -957,6 +999,36 @@ class User:
         """
         user_data = self.get_user_sync(user)
         user_data["minigames"]["chess"]["won" if won else "lost"] += 1
+        self.set_user_sync(user, user_data)
+    
+    def update_checkers_sync(self, user: Union[User, str], won):
+        """Synchronously updates the user's checkers data in the database
+
+        :param user: The User to update the Checkers data of
+        :param won: Whether or not the User won
+        """
+        user_data = self.get_user_sync(user)
+        user_data["minigames"]["checkers"]["won" if won else "lost"] += 1
+        self.set_user_sync(user, user_data)
+    
+    def update_hangman_sync(self, user: Union[User, str], won):
+        """Synchronously updates the user's hangman data in the database
+
+        :param user: The User to update the Hangman data of
+        :param won: Whether or not the User won
+        """
+        user_data = self.get_user_sync(user)
+        user_data["minigames"]["hangman"]["won" if won else "lost"] += 1
+        self.set_user_sync(user, user_data)
+    
+    def update_black_box_sync(self, user: Union[User, str], won):
+        """Synchronously updates the user's black box data in the database
+
+        :param user: The User to update the Black Box data of
+        :param won: Whether or not the User won
+        """
+        user_data = self.get_user_sync(user)
+        user_data["minigames"]["black_box"]["won" if won else "lost"] += 1
         self.set_user_sync(user, user_data)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1073,6 +1145,30 @@ class User:
         :returns: The User's Chess data
         """
         return await loop.run_in_executor(None, self.get_chess_sync, user)
+    
+    async def get_checkers(self, user: Union[User, str]):
+        """Asynchronously retrieves the user's checkers data from the database
+
+        :param user: The User to get the Checkers data of
+        :returns: The User's Checkers data
+        """
+        return await loop.run_in_executor(None, self.get_checkers_sync, user)
+    
+    async def get_hangman(self, user: Union[User, str]):
+        """Asynchronously retrieves the user's hangman data from the database
+
+        :param user: The User to get the Hangman data of
+        :returns: The User's Hangman data
+        """
+        return await loop.run_in_executor(None, self.get_hangman_sync, user)
+    
+    async def get_black_box(self, user: Union[User, str]):
+        """Asynchronously retrieves the user's Black Box data from the database
+
+        :param user: The User to get the Black Box data of
+        :returns: The User's Black Box data
+        """
+        return await loop.run_in_executor(None, self.get_black_box_sync, user)
 
     # # # # # # # # # # # # # # #
 
@@ -1155,6 +1251,30 @@ class User:
         :param won: Whether or not the User won
         """
         await loop.run_in_executor(None, self.update_chess_sync, user, won)
+    
+    async def update_checkers(self, user: Union[User, str], won):
+        """Asynchronously updates the user's checkers data in the database
+
+        :param user: The User to update the Checkers data of
+        :param won: Whether or not the User won
+        """
+        await loop.run_in_executor(None, self.update_checkers_sync, user, won)
+
+    async def update_hangman(self, user: Union[User, str], won):
+        """Asynchronously updates the user's hangman data in the database
+
+        :param user: The User to update the Hangman data of
+        :param won: Whether or not the User won
+        """
+        await loop.run_in_executor(None, self.update_hangman_sync, user, won)
+
+    async def update_black_box(self, user: Union[User, str], won):
+        """Asynchronously updates the user's black box data in the database
+
+        :param user: The User to update the Black Box data of
+        :param won: Whether or not the User won
+        """
+        await loop.run_in_executor(None, self.update_black_box_sync, user, won)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Card Game Access Methods
