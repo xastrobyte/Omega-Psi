@@ -15,6 +15,7 @@ from cogs.game.minigames.mastermind.game import MastermindGame
 from cogs.game.minigames.omok.game import OmokGame
 from cogs.game.minigames.tic_tac_toe.game import TicTacToeGame
 from cogs.game.minigames.uno.game import UnoGame
+from cogs.game.minigames.hangman.game import HangmanGame
 
 from util.database.database import database
 from util.functions import get_embed_color
@@ -422,6 +423,18 @@ class Game(Cog, name="game"):
                     colour=await get_embed_color(ctx.author)
                 )
             )
+    
+    @command(
+        name="hangman",
+        description="Play a game of Hangman",
+        cog_name="game"
+    )
+    async def hangman(self,  ctx):
+        """Allows a user to play a game of Hangman
+
+        :param ctx: The context of where the message was sent
+        """
+        await HangmanGame(self.bot, ctx, ctx.author).play()
 
     @command(
         name="mastermind",

@@ -84,9 +84,9 @@ QR_API_CALL = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}
 WOLFRAM_ALPHA_API_CALL = "https://api.wolframalpha.com/v2/query?input={}&appid={}&includepodid=LogicCircuit&output=json"
 WOLFRAM_ALPHA_ICON = "https://cdn.iconscout.com/icon/free/png-512/wolfram-alpha-2-569293.png"
 
-JUDGE_POST_API_CALL = "https://judge0.p.rapidapi.com/submissions/"
-JUDGE_GET_API_CALL = "https://judge0.p.rapidapi.com/submissions/{}?fields=stdout,stderr,time,status&base64_encoded=true"
-JUDGE_GET_LANGUAGES_API_CALL = "https://judge0.p.rapidapi.com/languages"
+JUDGE_POST_API_CALL = "https://judge0-ce.p.rapidapi.com/submissions/"
+JUDGE_GET_API_CALL = "https://judge0-ce.p.rapidapi.com/submissions/{}?fields=stdout,stderr,time,status&base64_encoded=true"
+JUDGE_GET_LANGUAGES_API_CALL = "https://judge0-ce.p.rapidapi.com/languages"
 
 LANGUAGES = {
     "assembly": {
@@ -187,7 +187,7 @@ class Code(Cog, name = "code"):
         languages = get(
             JUDGE_GET_LANGUAGES_API_CALL,
             headers = {
-                "x-rapidapi-host": "judge0.p.rapidapi.com",
+                "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
                 "x-rapidapi-key": environ["RAPID_API_KEY"]
             }
         )

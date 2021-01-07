@@ -177,6 +177,14 @@ test = ["pytest", "pytest-cov", "pytest-profiling"]
 
 [[package]]
 category = "main"
+description = "Library for playing a standard game of checkers/draughts"
+name = "imparaai-checkers"
+optional = false
+python-versions = "*"
+version = "1.4.2"
+
+[[package]]
+category = "main"
 description = "Various helpers to pass data to untrusted environments and back."
 name = "itsdangerous"
 optional = false
@@ -391,7 +399,7 @@ python-versions = "*"
 version = "2020.11.1.1"
 
 [metadata]
-content-hash = "31dde65745f50aa0d6e382c523be7fa03f8568c6b43c8a8883e755d00c716692"
+content-hash = "d85b1a0befd07045273b21e3331f34fce92f38b5a5c9bb0906eb6aa7c7b7876f"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -499,6 +507,9 @@ idna = [
 imdbpy = [
     {file = "IMDbPY-6.8-py3-none-any.whl", hash = "sha256:d074bf8e11d5deb965944196a284e46521229b23308d4982f7b4df26a7733e6f"},
     {file = "IMDbPY-6.8.tar.gz", hash = "sha256:e3a0c9b97c444b2ce1a0d87f0ad2ac40937306859ef4aff8aa49b7c1a3073e63"},
+]
+imparaai-checkers = [
+    {file = "imparaai-checkers-1.4.2.tar.gz", hash = "sha256:668e8be70ca2bb94875af6f1c2645eb085f723d6d6a30bb19eb7ffb6dc57c725"},
 ]
 itsdangerous = [
     {file = "itsdangerous-1.1.0-py2.py3-none-any.whl", hash = "sha256:b12271b2047cb23eeb98c8b5622e2e5c5e9abd9784a153e9d8ef9cb4dd09d749"},

@@ -22,4 +22,5 @@ dnspython = "^2.0.0"
 pynacl = "^1.4.0"
 chess = "^1.2.2"
 youtube-dl = "^2020.11.1"
+imparaai-checkers = "^1.4.2"
 [tool.poetry.dev-dependencies]
