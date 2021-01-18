@@ -1475,7 +1475,7 @@ class Code(Cog, name = "code"):
                 headers = {
                     "Content-Type": "application/json",
                     "accept": "application/json",
-                    "x-rapidapi-host": "judge0.p.rapidapi.com",
+                    "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
                     "x-rapidapi-key": environ["RAPID_API_KEY"]
                 }
             )
@@ -1490,13 +1490,12 @@ class Code(Cog, name = "code"):
                     get,
                     JUDGE_GET_API_CALL.format(token),
                     headers = {
-                        "x-rapidapi-host": "judge0.p.rapidapi.com",
+                        "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
                         "x-rapidapi-key": environ["RAPID_API_KEY"]
                     }
                 )
             )
             response = response.json()
-            print(json.dumps(response), end = "\n\n")
             if "error" in response:
                 await ctx.send(embed=get_error_message(
                     response["error"]
