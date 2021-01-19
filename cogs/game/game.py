@@ -8,6 +8,7 @@ from cogs.predicates import is_nsfw_and_guild, guild_only
 
 from cogs.game.minigames.battleship.game import BattleshipGame
 from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanityGame
+from cogs.game.minigames.checkers.game import CheckersGame
 from cogs.game.minigames.chess.game import ChessGame
 from cogs.game.minigames.connect_four.game import ConnectFourGame
 from cogs.game.minigames.game_of_life.game import GameOfLifeGame
@@ -305,6 +306,46 @@ class Game(Cog, name="game"):
                 embed=Embed(
                     title="No responses :frowning2:",
                     description="It seems like no on wanted to play with you.",
+                    colour=await get_embed_color(ctx.author)
+                )
+            )
+    
+    @command(
+        name="checkers",
+        description="Play a game of Checkers against an opponent or an AI",
+        cog_name="game"
+    )
+    async def checkers(self, ctx):
+        """Allows a user to play a game of Checkers
+
+        :param ctx: The context of where the message was sent
+        """
+
+        # Wait for other players
+        result = await self.wait_for_users(
+            ctx, "Waiting for a Checkers opponent",
+            is_two_player = True,
+            allow_intelligent_ai = False,
+            timeout = 30
+        )
+
+        # The result is not None, it must either be a user or
+        #   the SMART/RANDOM reaction
+        if result is not None:
+            game = CheckersGame(
+                self.bot, ctx,
+                ctx.author,
+                1 if result in [ RANDOM, SMART ] else result,
+                is_smart = result == SMART
+            )
+            await game.play()
+        
+        # The result is None, no one wanted to play the game
+        else:
+            await ctx.send(
+                embed=Embed(
+                    title="No responses :frowning2:",
+                    description="It seems like no one wanted to play with you.",
                     colour=await get_embed_color(ctx.author)
                 )
             )

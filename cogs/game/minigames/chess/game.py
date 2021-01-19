@@ -51,6 +51,7 @@ class ChessGame(Game):
 
     async def play(self):
         """Lets the players play the game"""
+        
         self.current_player = 1  # opponent always goes first
         if self.opponent.is_ai:
             flip = True
