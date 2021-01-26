@@ -702,7 +702,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_2.command(
         name="leftSpiderman", aliases=["leftspiderman", "left"],
-        description="",
+        description="Sets the text on top of the left spiderman",
         cog_name="memes"
     )
     async def spiderman_2_left(self, ctx, *, text=None):
@@ -710,7 +710,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_2.command(
         name="rightSpiderman", aliases=["rightspiderman", "right"],
-        description="",
+        description="Sets the text on top of the right spiderman",
         cog_name="memes"
     )
     async def spiderman_2_right(self, ctx, *, text=None):
@@ -718,7 +718,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_2.command(
         name="finish",
-        description="",
+        description="Sends the generated meme for 2 spidermen pointing at each other",
         cog_name="memes"
     )
     async def spiderman_2_finish(self, ctx):
@@ -744,7 +744,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_3.command(
         name="leftSpiderman", aliases=["leftspiderman", "left"],
-        description="",
+        description="Sets the text on top of the left spiderman",
         cog_name="memes"
     )
     async def spiderman_3_left(self, ctx, *, text=None):
@@ -752,7 +752,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_3.command(
         name="rightSpiderman", aliases=["rightspiderman", "right"],
-        description="",
+        description="Sets the text on top of the right spiderman",
         cog_name="memes"
     )
     async def spiderman_3_right(self, ctx, *, text=None):
@@ -760,7 +760,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_3.command(
         name="backSpiderman", aliases=["backspiderman", "back"],
-        description="",
+        description="Sets the text on top of the spiderman in the back",
         cog_name="memes"
     )
     async def spiderman_3_back(self, ctx, *, text=None):
@@ -768,7 +768,7 @@ class Memes(Cog, name="memes"):
     
     @spiderman_3.command(
         name="finish",
-        description="",
+        description="Sends the generated meme for 3 spidermen pointing at each other",
         cog_name="memes"
     )
     async def spiderman_3_finish(self, ctx):
@@ -794,7 +794,7 @@ class Memes(Cog, name="memes"):
     
     @same_picture.command(
         name="leftPicture", aliases=["leftpicture", "left"],
-        description="",
+        description="Sets the text for the left picture on the meme",
         cog_name="memes"
     )
     async def same_picture_left(self, ctx, *, text=None):
@@ -802,7 +802,7 @@ class Memes(Cog, name="memes"):
     
     @same_picture.command(
         name="rightPicture", aliases=["rightpicture", "right"],
-        description="",
+        description="Sets the text for the right picture on the meme",
         cog_name="memes"
     )
     async def same_picture_right(self, ctx, *, text=None):
@@ -810,7 +810,7 @@ class Memes(Cog, name="memes"):
     
     @same_picture.command(
         name="person",
-        description="",
+        description="Sets the text on Pam, in the lower panel",
         cog_name="memes"
     )
     async def same_picture_person(self, ctx, *, text=None):
@@ -818,7 +818,7 @@ class Memes(Cog, name="memes"):
     
     @same_picture.command(
         name="finish",
-        description="",
+        description="Sends the generated meme for Same Picture",
         cog_name="memes"
     )
     async def same_picture_finish(self, ctx):
