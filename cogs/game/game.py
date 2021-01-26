@@ -7,6 +7,7 @@ from cogs.globals import JOIN, ROBOT, SMART, RANDOM, PLAY_NOW
 from cogs.predicates import is_nsfw_and_guild, guild_only
 
 from cogs.game.minigames.battleship.game import BattleshipGame
+from cogs.game.minigames.black_box.game import BlackBoxGame
 from cogs.game.minigames.cards_against_humanity.game import CardsAgainstHumanityGame
 from cogs.game.minigames.checkers.game import CheckersGame
 from cogs.game.minigames.chess.game import ChessGame
@@ -260,6 +261,18 @@ class Game(Cog, name="game"):
                     colour=await get_embed_color(ctx.author)
                 )
             )
+    
+    @command(
+        name="blackBox",
+        description="Play a single-player game of Black Box",
+        cog_name="game"
+    )
+    async def black_box(self, ctx):
+        """Allows a user to play a game of Black Box
+
+        :param ctx: The context of where the message was sent
+        """
+        await BlackBoxGame(self.bot, ctx, ctx.author).play()
 
     @command(
         name="cardsAgainstHumanity",
