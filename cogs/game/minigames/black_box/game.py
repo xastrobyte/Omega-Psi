@@ -230,8 +230,9 @@ class BlackBoxGame(Game):
         """Allows the player to play a game of Black Box"""
 
         # Continue looping until the player finishes their game
+        self.message = await self.ctx.send("_ _")
         while True:
-            self.message = await self.ctx.send(
+            await self.message.edit(
                 embed = Embed(
                     title = "Black Box",
                     description = "{}\n\n{}\n{}\n{}".format(
@@ -307,6 +308,7 @@ class BlackBoxGame(Game):
             row = await wait_for_reaction(
                 self.bot, self.message, 
                 self.challenger, NUMBERS)
+            await self.message.clear_reactions()
             column = NUMBERS.index(column)
             row = NUMBERS.index(row)
 
