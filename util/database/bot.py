@@ -848,3 +848,96 @@ class Bot:
                 Whether or not to add the user to the specified notification
         """
         await loop.run_in_executor(None, self.manage_notifications_sync, target, user, add)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Monthly Command Usage Methods
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    def get_usage_data_sync(self):
+        """Synchronously retrieves the monthly usage data of the bot"""
+
+        # Default
+        default = {
+            "_id": "monthly_usage",
+            "commands": {},
+            "cogs": {},
+            "unique_users": [],
+            "next_update": datetime(2021, 1, 1)
+        }
+
+        # Get monthly usage data
+        usage_data = self._bot.find_one({"_id": "monthly_usage"})
+        if usage_data is None:
+            self.set_usage_data_sync(default, insert=True)
+            usage_data = self.get_usage_data_sync()
+        return usage_data
+    
+    def set_usage_data_sync(self, usage_data, *, insert=False):
+        """Synchronously sets the monthly usage data of the bot
+
+        :param usage_data: The data to set/update
+        :param insert: Whether to insert or update the data in the database
+        """
+        if insert:
+            self._bot.insert_one(usage_data)
+        else:
+            self._bot.update_one(
+                {"_id": "monthly_usage"},
+                {"$set": usage_data},
+                upsert=False)
+    
+    def update_usage_data_sync(self, author: Union[User, str], command):
+        """Synchronously updates the current usage of the bot, ignoring any testers or developers
+        and, if applicable, ignores the developer cog
+
+        :param author: The author, or author ID of the User that used a command/cog
+        :param command: The command that was used
+        """
+
+        # Check if the author is not a tester or developer
+        #   and if the command is not help
+        if (not self.is_developer_sync(author) and not self.is_tester_sync(author) and 
+            command.qualified_name != "help" and command.cog.qualified_name != "developer"):
+            author = str(author.id) if isinstance(author, User) else str(author)
+
+            # Get the usage data
+            usage_data = self.get_usage_data_sync()
+
+            # Check if the command cog does not exist, create it
+            #   and do the same thing with the command
+            if command.cog.qualified_name not in usage_data["cogs"]:
+                usage_data["cogs"][command.cog.qualified_name] = 0
+            if command.qualified_name not in usage_data["commands"]:
+                usage_data["commands"][command.qualified_name] = 0
+            usage_data["cogs"][command.cog.qualified_name] += 1
+            usage_data["commands"][command.qualified_name] += 1
+
+            # Check if the author is a different user than previous users
+            if author not in usage_data["unique_users"]:
+                usage_data["unique_users"].append(author)
+            
+            # Set the usage data
+            self.set_usage_data_sync(usage_data)
+    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    async def get_usage_data(self):
+        """Asynchronously retrieves the monthly usage data of the bot"""
+        return await loop.run_in_executor(None, self.get_usage_data_sync)
+    
+    async def set_usage_data(self, usage_data, *, insert=False):
+        """Asynchronously sets the monthly usage data of the bot
+
+        :param usage_data: The data to set/update
+        :param insert: Whether to insert or update the data in the database
+        """
+        await loop.run_in_executor(None, self.set_usage_data_sync, usage_data, insert = insert)
+    
+    async def update_usage_data(self, author: Union[User, str], command):
+        """Asynchronously updates the current usage of the bot, ignoring any testers or developers
+        and, if applicable, ignores the developer cog
+
+        :param author: The author, or author ID of the User that used a command/cog
+        :param command: The command that was used
+        """
+        await loop.run_in_executor(None, self.update_usage_data_sync, author, command)

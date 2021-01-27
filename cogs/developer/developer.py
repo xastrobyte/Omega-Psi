@@ -1,8 +1,8 @@
 from asyncio import wait, FIRST_COMPLETED
-from discord import Embed, Member, Status, Activity
+from discord import Embed, Member, Status, Activity, File
 from discord.ext.commands import Cog, group, command, Greedy
 from functools import partial
-from os import environ, execv
+from os import environ, execv, remove
 from requests import post
 from sys import executable, argv
 
@@ -40,6 +40,74 @@ class Developer(Cog, name="developer"):
         self.bot = bot
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    @command(
+        name="monthlyUsage",
+        description="Displays the monthly usage of the bot",
+        cog_name="developer"
+    )
+    @is_developer()
+    async def monthly_usage(self, ctx):
+        """Displays the monthly usage of the bot
+
+        :param ctx: The context of where the message was sent
+        """
+
+        # Retrieve the usage data
+        usage_data = await database.bot.get_usage_data()
+
+        # The fields of the embed should include
+        #   top 10 most used commands (if less than 10, show only those)
+        #   top 3 most used cogs (if less than 3, show only those)
+        #   # of unique users
+        commands = sorted(
+            [ 
+                (command, usage_data["commands"][command]) 
+                for command in usage_data["commands"]
+            ], key=lambda obj: obj[1], reverse=True)
+        command_string = ""
+        for i in range(len(commands)):
+            command_string += "{}.) `{}` => *{}*\n".format(
+                i + 1, commands[i][0],
+                commands[i][1]
+            )
+        if len(command_string) == 0:
+            command_string = "No Statistics Yet :("
+        
+        cogs = sorted(
+            [
+                (cog, usage_data["cogs"][cog])
+                for cog in usage_data["cogs"]
+            ], key=lambda obj: obj[1], reverse=True)
+        cog_string = ""
+        for i in range(len(cogs)):
+            cog_string += "{}.) `{}` => *{}*\n".format(
+                i + 1, cogs[i][0],
+                cogs[i][1]
+            )
+        if len(cog_string) == 0:
+            cog_string = "No Statistics Yet :("
+
+        fields = {
+            "Top 10 Most Used Commands": command_string,
+            "Top 3 Most Used Cogs": cog_string,
+            "# of Unique Users": len(usage_data["unique_users"])
+        }
+
+        # Create the embed and add the fields
+        embed = Embed(
+            title = "Monthly Usage",
+            description = "Below is the usage stats for this month so far",
+            colour = await get_embed_color(ctx.author)
+        )
+        for field in fields:
+            embed.add_field(
+                name = field,
+                value = fields[field],
+                inline = False
+            )
+
+        await ctx.send(embed = embed)
 
     @command(
         name="restart",

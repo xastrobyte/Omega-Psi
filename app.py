@@ -1,9 +1,9 @@
 from asyncio import run_coroutine_threadsafe
 from datetime import datetime, timedelta
-from discord import Embed
+from discord import Embed, File
 from flask import Flask, session, request, redirect, url_for, render_template, jsonify, make_response, abort
 from flask_session import Session
-from os import environ
+from os import environ, remove
 from random import randint
 from requests import post, get
 from threading import Thread
@@ -82,10 +82,87 @@ def make_session_permanent():
 # Public Routes
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-@app.route("/")
+@app.route("/", methods = ["GET", "HEAD"])
 @app.route("/commands")
 def commands():
-    """Renders the commands webpage"""
+    """Renders the commands webpage
+    This will also control the monthly usage functionality
+    """
+
+    # If the method is HEAD, that means that UptimeRobot
+    #   pinged this wepbage
+    if request.method == "HEAD":
+
+        # Retrieve the monthly usage data and check if the current timestamp
+        #   is equal to or has surpassed the next update
+        usage_data = database.bot.get_usage_data_sync()
+        now = datetime.now()
+        now_timestamp = int(now.timestamp())
+        if now_timestamp >= int(usage_data["next_update"]):
+
+            # Change the next time the stats will be sent to developers
+            next_update = datetime(
+                now.year if now.month != 12 else (now.year + 1),
+                (now.month + 1) if now.month != 12 else 1,
+                1  # The first of the month will always be the day of report
+            )
+            
+            # Create the file for all the commands and cogs
+            #   That will be used for the statistics file
+            f = open("stats_year{}_month{}_day{}.txt".format(
+                now.year, now.month, now.day
+            ), "w")
+            cogs = {}
+            for command in OMEGA_PSI.walk_commands():
+                if command.qualified_name != "help":
+                    cog = command.cog.qualified_name
+                    command = command.qualified_name
+
+                    # Add the command/cog into cogs, if necessary
+                    if cog not in cogs:
+                        cogs[cog] = {}
+                    if command not in cogs[cog]:
+                        cogs[cog][command] = 0
+                    
+                    # Check if the command exists in the usage_data
+                    if command in usage_data["commands"]:
+                        cogs[cog][command] = usage_data["commands"][command]
+            
+            # Add the cog information to the file and the # of unique users
+            file_output = f"Stats for {now.ctime()}\n"
+            for cog in cogs:
+                file_output += f"{cog}\n"
+                for command in cogs[cog]:
+                    file_output += f"\t{command}: {cogs[cog][command]}\n"
+                file_output += "\n"
+            
+            # Write the file to the file object and send to the developer
+            file_output += f"# of Unique Users: {len(usage_data['unique_users'])}\n"
+            f.write(file_output)
+            f.close()
+            f = open(f.name, "r")
+            for dev in database.bot.get_developers_sync():
+                dev = OMEGA_PSI.get_user(int(dev))
+                if dev:
+                    developer_send = run_coroutine_threadsafe(
+                        dev.send(file = File(f)),
+                        loop
+                    )
+                    developer_send.result()
+            
+            # Afterwards, delete the file, it's no longer needed
+            f.close()
+            remove(f.name)
+            
+            # Now update the usage data in the database
+            usage_data.update(
+                cogs = {},
+                commands = {},
+                unique_users = [],
+                next_update = str(int(next_update.timestamp()))
+            )
+            database.bot.set_usage_data_sync(usage_data)
+
     return render_template("commands.html"), 200
 
 @app.route("/info")

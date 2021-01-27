@@ -89,6 +89,9 @@ async def on_command(ctx):
 
     :param ctx: The context of where to send the typing dialogue to
     """
+    await database.bot.update_usage_data(
+        str(ctx.author.id),
+        ctx.command)
     async with ctx.typing(): pass
 
 @bot.event

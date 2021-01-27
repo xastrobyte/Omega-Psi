@@ -5,9 +5,7 @@ from typing import Union
 
 from cogs.globals import loop
 
-from util.github import create_issue, fix_issue
 from util.string import datetime_to_dict
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
