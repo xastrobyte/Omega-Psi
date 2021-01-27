@@ -754,17 +754,17 @@ class Game(Cog, name="game"):
             except TimeoutError:
                 await message.delete()
 
-                # Check if an AI is allowed and an AI was not chosen
-                if allow_ai and not ai_chosen:
-                    return None
-
                 # Check if there are enough players
                 if len(players) >= min_players:
                     return players
-
+                
                 # Check if there are players but not enough
                 elif len(players) != 0:
                     return False
+
+                # Check if an AI is allowed and an AI was not chosen
+                if allow_ai and not ai_chosen:
+                    return None
 
                 # There weren't enough players
                 return None
