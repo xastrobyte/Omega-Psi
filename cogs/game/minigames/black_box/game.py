@@ -64,13 +64,13 @@ class BlackBoxGame(Game):
         """
 
         # Add the top layer of column emojis
-        grid = ":black_large_square: "
+        grid = ":white_large_square: "
         for column in range(8):
             if self.guesses["top"][column] is not None:
                 grid += self.guesses["top"][column] + " "
             else:
                 grid += NUMBERS[column] + " "
-        grid += ":black_large_square:\n"
+        grid += ":white_large_square:\n"
 
         # Add each row of the black box
         for row in range(8):
@@ -113,13 +113,13 @@ class BlackBoxGame(Game):
                 grid += NUMBERS[row] + "\n"
 
         # Add the bottom layer of column emojis
-        grid += ":black_large_square: "
+        grid += ":white_large_square: "
         for column in range(8):
             if self.guesses["bottom"][column] is not None:
                 grid += self.guesses["bottom"][column] + " "
             else:
                 grid += NUMBERS[column] + " "
-        grid += ":black_large_square: \n"
+        grid += ":white_large_square: \n"
         return grid
     
     def direct_laser(self, direction, offset):
