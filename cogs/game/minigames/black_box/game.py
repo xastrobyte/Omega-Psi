@@ -32,21 +32,6 @@ class BlackBoxGame(Game):
         )
         self.current_player = 0
         self.locations = []
-        invalid_locations = []
-
-        # Add the locations of the "atoms"
-        for locations in range(4):
-            location = (randint(0, 7), randint(0, 7))
-            while location in invalid_locations:
-                location = (randint(0, 7), randint(0, 7))
-            self.locations.append(location)
-
-            # Add invalid locations that exist around the created "atom"
-            for r_off in range(-1, 2):
-                for c_off in range(-1, 2):
-                    if (location[0] + c_off >= 0 and location[1] + r_off >= 0 and 
-                            location[0] + c_off < 8 and location[1] + r_off < 8):
-                        invalid_locations.append((location[0] + c_off, location[1] + r_off))
         self.message = None
         self.guesses = {
             "left": [ None ] * 8,
@@ -56,7 +41,6 @@ class BlackBoxGame(Game):
         }
         self.amt_guesses = 0
         self.location_guesses = []
-        print(self.locations)
     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -229,21 +213,71 @@ class BlackBoxGame(Game):
                 break
             current = (current[0] + movement[0], current[1] + movement[1])
             blocks_processed += 1
+    
+    async def setup(self):
+        """Sets up the game by asking the player how many atoms they want"""
+        message = await self.ctx.send(embed = Embed(
+            title = "Configuration",
+            description = "How many atoms do you want to exist in the black box?",
+            colour = await get_embed_color(self.challenger)
+        ))
+        for reaction in NUMBERS[2:5]:
+            await message.add_reaction(reaction)
+        num_atoms = await wait_for_reaction(
+            self.bot, message, 
+            self.challenger, NUMBERS[2:5])
+        num_atoms = NUMBERS.index(num_atoms) + 1
+
+        # Add the locations of the "atoms"
+        invalid_locations = []
+        for locations in range(num_atoms):
+            location = (randint(0, 7), randint(0, 7))
+            while location in invalid_locations:
+                location = (randint(0, 7), randint(0, 7))
+            self.locations.append(location)
+
+            # Add invalid locations that exist around the created "atom"
+            for r_off in range(-1, 2):
+                for c_off in range(-1, 2):
+                    if (location[0] + c_off >= 0 and location[1] + r_off >= 0 and 
+                            location[0] + c_off < 8 and location[1] + r_off < 8):
+                        invalid_locations.append((location[0] + c_off, location[1] + r_off))
 
     async def play(self):
         """Allows the player to play a game of Black Box"""
 
+        await self.setup()
+
         # Continue looping until the player finishes their game
         self.message = await self.ctx.send("_ _")
         while True:
+            found = False
+            valid_options = [GUESS]
+
+            # If there can still be lasers pushed through, add the DIRECT
+            #   reaction
+            for direction in self.guesses:
+                for item in self.guesses[direction]:
+                    if item is None:
+                        valid_options.append(DIRECT)
+                        found = True
+                        break
+                if found:
+                    break
+            
+            # If there are an equivalent amount of location guesses
+            #   as there are locations, give the option to finalize the guesses
+            if len(self.location_guesses) == len(self.locations):
+                valid_options.append(FINALIZE)
+
             await self.message.edit(
                 embed = Embed(
-                    title = "Black Box",
+                    title = "Black Box - {} Atoms".format(len(self.locations)),
                     description = "{}\n\n{}\n{}\n{}".format(
                         self.get_black_box(),
                         "To make a guess, react with {}".format(GUESS),
-                        "To direct a \"laser\", react with {}".format(DIRECT),
-                        "To finalize your guesses, react with {}".format(FINALIZE)
+                        "To direct a \"laser\", react with {}".format(DIRECT) if DIRECT in valid_options else "",
+                        "To finalize your guesses, react with {}".format(FINALIZE) if FINALIZE in valid_options else ""
                     ),
                     color = await get_embed_color(self.challenger)
                 ).add_field(
@@ -257,13 +291,13 @@ class BlackBoxGame(Game):
                         """
                     ).format(HIT, MISS)
                 ))
-            for reaction in [GUESS, DIRECT, FINALIZE]:
+            for reaction in valid_options:
                 await self.message.add_reaction(reaction)
 
             # Ask the player if they want to make a guess or direct a "laser" (or finalize their guesses)
             option = await wait_for_reaction(
                 self.bot, self.message,
-                self.challenger, [GUESS, DIRECT, FINALIZE])
+                self.challenger, valid_options)
             await self.message.clear_reactions()
             
             if option == GUESS:
@@ -277,49 +311,50 @@ class BlackBoxGame(Game):
     async def make_location_guess(self):
         """Allows the player to make a guess on where an atom may be"""
 
-        # Check if 4 guesses have been made
+        # Check if all guesses have been made
         #   if so, don't try asking for any more guesses
-        if len(self.location_guesses) == 4:
+        if len(self.location_guesses) == len(self.locations):
             await self.ctx.send(embed = get_error_message(
-                "You have already made 4 guesses. Remove one to make another!"
+                "You have already made {} guesses. Remove one to make another!".format(
+                    len(self.locations)
+                )
             ))
-        else:
-            await self.message.edit(
-                embed = Embed(
-                    title = "Black Box",
-                    description = "{0}\n\n{1} {2}\n{1} {3}".format(
-                        self.get_black_box(), GUESS,
-                        "To place a guess, react with the column first and then the row",
-                        "To remove a guess, react with the same column and row as it is in"
-                    ),
-                    colour = await get_embed_color(self.challenger)
-                ).add_field(
-                    name = "Symbol Meanings",
-                    value = (
-                        """
-                        {} This symbol means that you hit an atom
-                        {} This symbol means that the laser you directed came back to the same spot
-                        Any other symbol means that the directed laser went in through one spot
-                        and came out at the matching symbol's spot
-                        """
-                    ).format(HIT, MISS)
-                ))
-            for number in NUMBERS:
-                await self.message.add_reaction(number)
-            column = await wait_for_reaction(
-                self.bot, self.message, 
-                self.challenger, NUMBERS)
-            row = await wait_for_reaction(
-                self.bot, self.message, 
-                self.challenger, NUMBERS)
-            await self.message.clear_reactions()
-            column = NUMBERS.index(column)
-            row = NUMBERS.index(row)
+        await self.message.edit(
+            embed = Embed(
+                title = "Black Box - {} Atoms".format(len(self.locations)),
+                description = "{0}\n\n{1} {2}\n{1} {3}".format(
+                    self.get_black_box(), GUESS,
+                    "To place a guess, react with the column first and then the row",
+                    "To remove a guess, react with the same column and row as it is in"
+                ),
+                colour = await get_embed_color(self.challenger)
+            ).add_field(
+                name = "Symbol Meanings",
+                value = (
+                    """
+                    {} This symbol means that you hit an atom
+                    {} This symbol means that the laser you directed came back to the same spot
+                    Any other symbol means that the directed laser went in through one spot
+                    and came out at the matching symbol's spot
+                    """
+                ).format(HIT, MISS)
+            ))
+        for number in NUMBERS:
+            await self.message.add_reaction(number)
+        column = await wait_for_reaction(
+            self.bot, self.message, 
+            self.challenger, NUMBERS)
+        row = await wait_for_reaction(
+            self.bot, self.message, 
+            self.challenger, NUMBERS)
+        await self.message.clear_reactions()
+        column = NUMBERS.index(column)
+        row = NUMBERS.index(row)
 
-            if (column, row) in self.location_guesses:
-                self.location_guesses.remove((column, row))
-            else:
-                self.location_guesses.append((column, row))
+        if (column, row) in self.location_guesses:
+            self.location_guesses.remove((column, row))
+        elif len(self.location_guesses) < len(self.locations):
+            self.location_guesses.append((column, row))
     
     async def make_input_guess(self):
         """Allows the player to make a guess on the sides of the black box"""
@@ -328,10 +363,10 @@ class BlackBoxGame(Game):
         #   and which row or column they want to move input through
         await self.message.edit(
             embed = Embed(
-                title = "Black Box",
+                title = "Black Box - {} Atoms".format(len(self.locations)),
                 description = "{}\n\n{}{}".format(
                     self.get_black_box(), DIRECT,
-                    "Choose a direction to push input through using the directional arrows"
+                    "Choose a direction to push a laser through using the directional arrows"
                 ),
                 colour = await get_embed_color(self.challenger)
             ).add_field(
@@ -365,10 +400,10 @@ class BlackBoxGame(Game):
         await self.message.clear_reactions()
         await self.message.edit(
             embed = Embed(
-                title = "Black Box",
+                title = "Black Box - {} Atoms".format(len(self.locations)),
                 description = "{}\n\n{}{}".format(
                     self.get_black_box(), DIRECT,
-                    "Choose which {} to push the input through".format(
+                    "Choose which {} to push the laser through".format(
                         "row" if direction in ["left", "right"] else "column"
                     )
                 ),
@@ -408,14 +443,15 @@ class BlackBoxGame(Game):
     
     async def finalize_guesses(self):
         """Finalizes the guesses of the player and determines if they won or lost
-        In order for the player to win, they must get at least 3 of the spots correct
+        In order for the player to win, they must get up to one less than the amount of atoms
+        of the spots correct
         """
 
-        if len(self.location_guesses) != 4:
+        if len(self.location_guesses) != len(self.locations):
             await self.ctx.send(embed = get_error_message(
                 "You need to place at least {} more guess{}!".format(
-                    4 - len(self.location_guesses),
-                    "" if len(self.location_guesses) == 3 else "es"
+                    len(self.locations) - len(self.location_guesses),
+                    "" if len(self.location_guesses) == (len(self.locations) - 1) else "es"
                 )
             ))
             return False
@@ -425,11 +461,12 @@ class BlackBoxGame(Game):
                 if location in self.location_guesses:
                     correct += 1
             
+            won = correct >= (len(self.locations) - 1)
             embed = Embed(
-                title = "You Won!" if correct >= 3 else "You Lost :(",
+                title = "You Won!" if won else "You Lost :(",
                 description = self.get_black_box(show_atoms = True),
                 colour = await get_embed_color(self.challenger))
             
             await self.message.edit(embed = embed)
-            await database.users.update_black_box(self.challenger, correct >= 3)
+            await database.users.update_black_box(self.challenger, won)
             return True
