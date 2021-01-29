@@ -2,8 +2,9 @@ from asyncio import sleep
 from discord import Embed
 from json import loads
 from requests import get
+from os.path import abspath
 
-from chess import Board, WHITE, BLACK
+from chess import Board, WHITE, BLACK, engine
 
 from cogs.globals import PRIMARY_EMBED_COLOR, LEAVE
 from cogs.game.minigames.base_game.game import Game
@@ -36,11 +37,14 @@ class ChessGame(Game):
             fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
         # Create a new game using the Chess API
-        response = get(
-            CREATE_GAME.format(
-                "one" if self.opponent.is_ai else "two"
-            ))
-        response = loads(response.text)
+        try:
+            response = get(
+                CREATE_GAME.format(
+                    "one" if self.opponent.is_ai else "two"
+                ))
+            response = loads(response.text)
+        except:
+            response = {"game_id": str(self.challenger.id) + str(self.opponent.id)}
 
         # Set the Game's data
         self.board = Board(fen_string)

@@ -102,7 +102,7 @@ def commands():
 
             # Change the next time the stats will be sent to developers
             next_update = datetime(
-                now.year if now.month != 12 else (now.year + 1),
+                now.year + (1 if now.month != 12 else 0),
                 (now.month + 1) if now.month != 12 else 1,
                 1  # The first of the month will always be the day of report
             )

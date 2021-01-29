@@ -100,8 +100,8 @@ class CheckersGame(Game):
             description = (
                 f"{self.get_current_player().get_name()}'s turn\n" +
                 f"{self.get_board(flip = flip)}\n" +
-                f":red_large_circle:: {self.opponent.get_name()}\n" +
-                f":brown_large_circle:: {self.challenger.get_name()}\n"
+                f":brown_circle: {self.opponent.get_name()}\n" +
+                f":red_circle: {self.challenger.get_name()}\n"
             ),
             colour = PRIMARY_EMBED_COLOR if self.get_current_player().is_ai else await get_embed_color(self.get_current_player().member)
         ).set_footer(
@@ -150,8 +150,8 @@ class CheckersGame(Game):
                         description = (
                             f"{self.get_current_player().get_name()}'s turn\n" +
                             f"{self.get_board(flip = flip)}\n" +
-                            f":red_large_circle:: {self.opponent.get_name()}\n" +
-                            f":brown_large_circle:: {self.challenger.get_name()}\n"
+                            f":brown_circle: {self.opponent.get_name()}\n" +
+                            f":red_circle: {self.challenger.get_name()}\n"
                         ),
                         colour = PRIMARY_EMBED_COLOR if self.get_current_player().is_ai else await get_embed_color(self.get_current_player().member)
                     ).set_footer(
@@ -174,8 +174,8 @@ class CheckersGame(Game):
                     title = f"{winner.get_name()} Won!",
                     description = (
                         f"{self.get_board(flip = flip)}\n" +
-                        f":red_large_circle:: {self.opponent.get_name()}\n" +
-                        f":brown_large_circle:: {self.challenger.get_name()}\n"
+                        f":brown_circle: {self.opponent.get_name()}\n" +
+                        f":red_circle: {self.challenger.get_name()}\n"
                     ),
                     colour = PRIMARY_EMBED_COLOR if winner.is_ai else await get_embed_color(winner.member)
                 )

@@ -33,16 +33,20 @@ class BlackBoxGame(Game):
         self.current_player = 0
         self.locations = []
         invalid_locations = []
+
+        # Add the locations of the "atoms"
         for locations in range(4):
             location = (randint(0, 7), randint(0, 7))
             while location in invalid_locations:
                 location = (randint(0, 7), randint(0, 7))
             self.locations.append(location)
+
+            # Add invalid locations that exist around the created "atom"
             for r_off in range(-1, 2):
                 for c_off in range(-1, 2):
                     if (location[0] + c_off >= 0 and location[1] + r_off >= 0 and 
                             location[0] + c_off < 8 and location[1] + r_off < 8):
-                        invalid_locations.append((location[0] + c_off, location[0] + r_off))
+                        invalid_locations.append((location[0] + c_off, location[1] + r_off))
         self.message = None
         self.guesses = {
             "left": [ None ] * 8,

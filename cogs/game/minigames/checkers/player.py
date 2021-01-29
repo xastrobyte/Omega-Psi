@@ -1,12 +1,11 @@
 from asyncio import wait, FIRST_COMPLETED
 from discord import Embed
-from functools import partial
 from random import choice, randint
 
 from cogs.errors import get_error_message
-from cogs.globals import loop, PRIMARY_EMBED_COLOR
+from cogs.globals import PRIMARY_EMBED_COLOR
 from cogs.game.minigames.base_game.player import Player
-from cogs.game.minigames.checkers.pieces import COLUMNS, PIECES, UNDO, RESIGN, NUMBERS, HIGHLIGHT
+from cogs.game.minigames.checkers.pieces import COLUMNS, UNDO, RESIGN, NUMBERS
 
 from util.functions import get_embed_color
 
@@ -57,8 +56,8 @@ class CheckersPlayer(Player):
                 description = (
                     f"{self.get_name()}'s turn\n" +
                     f"{game.get_board(flip=flip)}\n" +
-                    f"Black: {game.opponent.get_name()}\n" +
-                    f"Red: {game.challenger.get_name()}\n"
+                    f":brown_circle: {game.opponent.get_name()}\n" +
+                    f":red_circle: {game.challenger.get_name()}\n"
                 ),
                 colour = PRIMARY_EMBED_COLOR if self.is_ai else await get_embed_color(self.member)
             ).set_footer(
@@ -103,8 +102,8 @@ class CheckersPlayer(Player):
                                 description = (
                                     f"{self.get_name()}'s turn\n" +
                                     f"{board}\n" +
-                                    f"Black: {game.opponent.get_name()}\n" +
-                                    f"Red: {game.challenger.get_name()}\n"
+                                    f":brown_circle: {game.opponent.get_name()}\n" +
+                                    f":red_circle: {game.challenger.get_name()}\n"
                                 ),
                                 colour = PRIMARY_EMBED_COLOR if self.is_ai else await get_embed_color(self.member)
                             ).add_field(
