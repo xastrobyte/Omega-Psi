@@ -109,8 +109,9 @@ def commands():
             
             # Create the file for all the commands and cogs
             #   That will be used for the statistics file
-            f = open("stats_year{}_month{}_day{}.txt".format(
-                now.year, now.month, now.day
+            f = open("{}-{}-{}-stats.txt".format(
+                now.year - (1 if (now.month - 1 == 0) else 0), 
+                12 if (now.month - 1 == 0) else (now.month - 1), 1
             ), "w")
             cogs = {}
             for command in OMEGA_PSI.walk_commands():

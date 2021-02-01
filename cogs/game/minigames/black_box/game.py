@@ -216,6 +216,7 @@ class BlackBoxGame(Game):
     
     async def setup(self):
         """Sets up the game by asking the player how many atoms they want"""
+        
         message = await self.ctx.send(embed = Embed(
             title = "Configuration",
             description = "How many atoms do you want to exist in the black box?",
