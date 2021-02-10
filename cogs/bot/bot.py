@@ -88,7 +88,7 @@ class Bot(Cog, name="bot"):
 
             # If the reaction is BOT, ask the user what command the bug happened on
             else:
-                question = "What command did the bug occur on?"
+                question = "What command did the bug occur on? (Note: you don't have to include the prefix of the command)"
                 source_type = "bot"
 
             # Wait for the user to reply with the source of the bug
