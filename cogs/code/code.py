@@ -490,7 +490,7 @@ class Code(Cog, name = "code"):
             # Try to decode the text
             try:
                 embed = Embed(
-                    title = "Encoded to Base64",
+                    title = "Decoded from Base64",
                     description = b64decode(text.encode()).decode(),
                     colour = await get_embed_color(ctx.author)
                 )
