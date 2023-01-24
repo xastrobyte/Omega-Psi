@@ -6,6 +6,5 @@ IMDbPY
 pymongo
 requests
 imdb-cli-tool
-request
 pyopenssl
 dnspython
